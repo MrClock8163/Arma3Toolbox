@@ -70,13 +70,13 @@ def group_LODs(LODs,groupBy = 'TYPE'):
     groupDict = data.LODgroups[groupBy]
     
     for lodObj,res in LODs:
-            lodIndex, lodRes = utils.getLODid(res)
-            groupName = groupDict[lodIndex]
+        lodIndex, lodRes = utils.getLODid(res)
+        groupName = groupDict[lodIndex]
+        
+        if groupName not in collections.keys():
+            collections[groupName] = bpy.data.collections.new(name=groupName)
             
-            if groupName not in collections.keys():
-                collections[groupName] = bpy.data.collections.new(name=groupName)
-                
-            collections[groupName].objects.link(lodObj)
+        collections[groupName].objects.link(lodObj)
             
     return collections
     
@@ -260,7 +260,6 @@ def read_LOD(context,file,preserveNormals):
                     if vertTable[0] == vertID:
                         loopNormals.insert(i,normalsDict[vertTable[1]])   
         
-        objData.validate(clean_customdata=False)
         objData.normals_split_custom_set(loopNormals)
         objData.free_normals_split()
     
@@ -268,7 +267,7 @@ def read_LOD(context,file,preserveNormals):
     
     return obj, LODresolution
     
-def import_file(context,file,groupBy,preserveNormals,encloseIn = ""):
+def import_file(context,file,groupBy,preserveNormals,validateMeshes,encloseIn = ""):
     
     timeFILEstart = time.time()
     
@@ -286,6 +285,9 @@ def import_file(context,file,groupBy,preserveNormals,encloseIn = ""):
     
     for i in range(LODcount):
         lodObj, res = read_LOD(context,file,preserveNormals)
+        
+        if validateMeshes:
+            lodObj.data.validate(clean_customdata=False)
         
         LODs.append((lodObj,res))
         
