@@ -7,6 +7,8 @@ LODtypeResolutionPosition = {
     26: 2
 }
 
+LODvisuals = (0,1,2,3,18)
+
 LODtypeIndex = {
     (0.0,0):   0, # Visual
     (1.0,3):   1, # View Gunner

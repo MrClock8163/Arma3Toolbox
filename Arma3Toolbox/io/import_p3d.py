@@ -4,6 +4,7 @@ import struct
 import math
 import re
 import time
+from mathutils import Vector
 from . import binary_handler as binary
 from .. import utility as utils
 from .. import data
@@ -27,7 +28,8 @@ def read_vertex(file):
     return x,z,y,flag
     
 def read_normal(file):
-    return struct.unpack('<fff',file.read(12))
+    x,y,z = struct.unpack('<fff',file.read(12))
+    return -x,-z,-y
     
 def read_pseudo_vertextable(file):
     pointID, normalID, U, V = struct.unpack('<IIff',file.read(16))
@@ -78,7 +80,7 @@ def group_LODs(LODs,groupBy = 'TYPE'):
             
     return collections
     
-def read_LOD(context,file):
+def read_LOD(context,file,preserveNormals):
     timeP3Dstart = time.time()
 
     # Read LOD header
@@ -100,18 +102,10 @@ def read_LOD(context,file):
     
     bm = bmesh.new()
     
-    # Read point table
-    # points = []
-    # vertsDict = {}
-    
+    # Read point table    
     timePOINTstart = time.time()
     for i in range(numPoints):
-        # points.append(read_vertex(file))
-        # read_vertex(file)
-        
-        # bm.verts.new(points[-1][:-1])
         bm.verts.new(read_vertex(file)[:-1])
-        # vertsDict[i] = bm.verts.new(points[-1][:-1])
         
     bm.verts.ensure_lookup_table()
     print(f"Points took {time.time()-timePOINTstart}")
@@ -119,22 +113,19 @@ def read_LOD(context,file):
     print(f"Points: {numPoints}")
     
     # Read face normals
-    # normals = []
+    normalsDict = {}
     for i in range(numNormals):
-        # normals.append(read_normal(file))
-        read_normal(file)
+        normalsDict[i] = read_normal(file)
     
     print(f"Normals: {numNormals}")
     
     # Read faces
-    # faces = []
+    faceDataDict = {}
     timeFACEstart = time.time()
     for i in range(numFaces):
-        # faces.append(read_face(file))
-        # bm.faces.new([bm.verts[i[0]] for i in faces[-1][0]]).smooth = True
-        # newFace = read_face(file)
-        bm.faces.new([bm.verts[i[0]] for i in read_face(file)[0]]).smooth = True
-        # bm.faces.new([vertsDict[i[0]] for i in faces[-1][0]]).smooth = True
+        newFace = read_face(file)
+        bm.faces.new([bm.verts[i[0]] for i in newFace[0]]).smooth = True
+        faceDataDict[i] = newFace
         
         
     bm.edges.ensure_lookup_table()
@@ -165,14 +156,13 @@ def read_LOD(context,file):
                 raise IOError("Invalid EOF")
             break
             
-        # Sharps
+        # Sharps (technically redundant with the split vertex normals, may be scrapped later)
         elif taggName == "#SharpEdges#":
             for i in range(int(taggLength / (4 * 2))):
                 point1ID = binary.readULong(file)
                 point2ID = binary.readULong(file)
                 
                 bm.edges.get([bm.verts[point1ID],bm.verts[point2ID]]).smooth = False
-                # bm.edges.get([vertsDict[point1ID],vertsDict[point2ID]]).smooth = False
         
         # Property
         elif taggName == "#Property#":
@@ -222,22 +212,17 @@ def read_LOD(context,file):
             binary.readBytes(file,taggLength) # dump all other TAGGs
             
     LODresolution = binary.readFloat(file)
-    LODname = ""
     
     print(LODresolution)
     print(int(LODresolution))
     
-    # try:
-        # LODname = utils.getLODname(LODresolution)
-    # except:
-        # LODname = f"Unknown {LODresolution}"
+    lodIndex, lodRes = utils.getLODid(LODresolution)
+    lodName = utils.formatLODname(lodIndex,lodRes)
         
-    LODname = f"LOD {LODresolution}"
-        
-    objData = bpy.data.meshes.new(LODname)
+    objData = bpy.data.meshes.new(lodName)
     objData.use_auto_smooth = True
     objData.auto_smooth_angle = math.radians(180)
-    obj = bpy.data.objects.new(LODname,objData)
+    obj = bpy.data.objects.new(lodName,objData)
     
     for name in namedSelections:
         obj.vertex_groups.new(name=name)
@@ -246,23 +231,36 @@ def read_LOD(context,file):
     bm.to_mesh(objData)
     bm.free()
     
-    # Add to scene
-    # bpy.context.scene.collection.objects.link(obj)
+    # Apply split normals
+    if preserveNormals and lodIndex in data.LODvisuals: 
+        
+        loopNormals = []
+        for face in objData.polygons:
+            vertTables = faceDataDict[face.index][0]
+            
+            for i in face.loop_indices:
+                loop = objData.loops[i]
+                vertID = loop.vertex_index
+                
+                for vertTable in vertTables:
+                    if vertTable[0] == vertID:
+                        loopNormals.insert(i,normalsDict[vertTable[1]])   
+        
+        objData.validate(clean_customdata=False)
+        objData.normals_split_custom_set(loopNormals)
+        objData.free_normals_split()
     
     print(f"LOD overall took {time.time()-timeP3Dstart}")
     
     return obj, LODresolution
     
-def import_file(context,file,groupBy,encloseIn = ""):
-    
-    # file = open(filepath, "rb")
+def import_file(context,file,groupBy,preserveNormals,encloseIn = ""):
     
     version, LODcount = read_header(file)
     
     print(f"File version: {version}")
     print(f"Number of LODs: {LODcount}")
     
-    print(groupBy)
     
     if version != 257:
         raise IOError(f"Unsupported file version: {version}")
@@ -271,18 +269,9 @@ def import_file(context,file,groupBy,encloseIn = ""):
     groups = []
     
     for i in range(LODcount):
-    # for i in range(1):
-        lodObj, res = read_LOD(context,file)
-        lodIndex, lodRes = utils.getLODid(res)
-        lodName = utils.formatLODname(lodIndex,lodRes)
-        
-        lodObj.name = lodName
-        lodObj.data.name = lodName
+        lodObj, res = read_LOD(context,file,preserveNormals)
         
         LODs.append((lodObj,res))
-        # coll.objects.link(lod)
-    
-    # print(LODs)
         
     rootCollection = bpy.context.scene.collection
     
@@ -290,7 +279,6 @@ def import_file(context,file,groupBy,encloseIn = ""):
         rootCollection = bpy.data.collections.new(name=encloseIn)
         bpy.context.scene.collection.children.link(rootCollection)       
     
-    # print(encloseIn, groupBy)
     if groupBy == 'NONE':
         for item in LODs:
             rootCollection.objects.link(item[0])
@@ -303,14 +291,3 @@ def import_file(context,file,groupBy,encloseIn = ""):
     for group in colls.values():
         rootCollection.children.link(group)
     
-        # coll = bpy.data.collections.new(name=encloseIn)
-        # bpy.context.scene.collection.children.link(coll)
-    
-        
-        
-        
-    # read_LOD(context,file)
-    
-    # bpy.context.scene.update()
-    
-    # file.close()
