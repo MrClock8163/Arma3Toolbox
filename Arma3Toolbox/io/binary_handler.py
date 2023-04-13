@@ -32,9 +32,13 @@ def readChar(file,count = 1):
     return chars.decode('utf-8')
     
 def readAsciiz(file):
-    string = ""
-    while file.peek(1)[:1] != b'\000':
-        string += readChar(file)
-        
-    readByte(file)
-    return string
+    res = b''
+    
+    while True:
+        a = file.read(1)
+        if a == b'\000':
+            break
+            
+        res += a
+    
+    return res.decode("utf-8")
