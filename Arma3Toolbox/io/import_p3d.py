@@ -162,7 +162,10 @@ def read_LOD(context,file,preserveNormals):
                 point1ID = binary.readULong(file)
                 point2ID = binary.readULong(file)
                 
-                bm.edges.get([bm.verts[point1ID],bm.verts[point2ID]]).smooth = False
+                edge = bm.edges.get([bm.verts[point1ID],bm.verts[point2ID]])
+                
+                if edge is not None:
+                    edge.smooth = False
         
         # Property
         elif taggName == "#Property#":
@@ -214,10 +217,10 @@ def read_LOD(context,file,preserveNormals):
     LODresolution = binary.readFloat(file)
     
     print(LODresolution)
-    print(int(LODresolution))
     
     lodIndex, lodRes = utils.getLODid(LODresolution)
     lodName = utils.formatLODname(lodIndex,lodRes)
+    print(lodName)
         
     objData = bpy.data.meshes.new(lodName)
     objData.use_auto_smooth = True
@@ -256,6 +259,8 @@ def read_LOD(context,file,preserveNormals):
     
 def import_file(context,file,groupBy,preserveNormals,encloseIn = ""):
     
+    timeFILEstart = time.time()
+    
     version, LODcount = read_header(file)
     
     print(f"File version: {version}")
@@ -290,4 +295,6 @@ def import_file(context,file,groupBy,preserveNormals,encloseIn = ""):
         
     for group in colls.values():
         rootCollection.children.link(group)
+        
+    print(f"File took {time.time()-timeFILEstart}")
     
