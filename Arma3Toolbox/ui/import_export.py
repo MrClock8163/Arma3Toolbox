@@ -47,7 +47,7 @@ class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
     
     preserveNormals: bpy.props.BoolProperty (
         name = "Custom normals",
-        description = "Attempt to import the split vertex normals of visual LODs (may produce unwanted results with some files)",
+        description = "Attempt to import the split vertex normals of visual LODs (may not work with certain files)",
         default = False
     )
     
