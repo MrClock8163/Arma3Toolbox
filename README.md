@@ -5,7 +5,7 @@ This fork of Alwarren's ArmAToolbox aims to clean up the old codebase, reorganiz
 Planned changes:
 - Removing unused functions of older versions
 - Reorganize the tools in the UI
-- Clear up confusing names, add and tooltip documentation to operators
+- Clear up confusing names, and add tooltip documentation to operators
 - Possibly integrate the [Arma 3 model.cfg node editor](https://github.com/MrClock8163/BlenderModelCfgEditor), and [Arma 3 Object Builder utility functions](https://github.com/MrClock8163/ToolsArchive/blob/main/Blender%20Python%20API/mrc_a3_objectbuilder.py) addons into the toolbox
 - Fix currently broken functions (eg.: due to API change)
 
