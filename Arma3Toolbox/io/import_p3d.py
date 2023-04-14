@@ -7,7 +7,7 @@ import time
 import os
 from mathutils import Vector
 from . import binary_handler as binary
-from .. import utility as utils
+from ..utilities import lod as lodutils
 from .. import data
 
 def read_signature(file):
@@ -71,7 +71,7 @@ def group_LODs(LODs,groupBy = 'TYPE'):
     groupDict = data.LODgroups[groupBy]
     
     for lodObj,res in LODs:
-        lodIndex, lodRes = utils.getLODid(res)
+        lodIndex, lodRes = lodutils.getLODid(res)
         groupName = groupDict[lodIndex]
         
         if groupName not in collections.keys():
@@ -230,8 +230,8 @@ def read_LOD(context,file,materialDict,additionalData):
     
     print(LODresolution)
     
-    lodIndex, lodRes = utils.getLODid(LODresolution)
-    lodName = utils.formatLODname(lodIndex,lodRes)
+    lodIndex, lodRes = lodutils.getLODid(LODresolution)
+    lodName = lodutils.formatLODname(lodIndex,lodRes)
     print(lodName)
         
     objData.use_auto_smooth = True
