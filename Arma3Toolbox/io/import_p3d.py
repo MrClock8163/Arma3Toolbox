@@ -70,13 +70,13 @@ def group_LODs(LODs,groupBy = 'TYPE'):
     groupDict = data.LODgroups[groupBy]
     
     for lodObj,res in LODs:
-            lodIndex, lodRes = utils.getLODid(res)
-            groupName = groupDict[lodIndex]
+        lodIndex, lodRes = utils.getLODid(res)
+        groupName = groupDict[lodIndex]
+        
+        if groupName not in collections.keys():
+            collections[groupName] = bpy.data.collections.new(name=groupName)
             
-            if groupName not in collections.keys():
-                collections[groupName] = bpy.data.collections.new(name=groupName)
-                
-            collections[groupName].objects.link(lodObj)
+        collections[groupName].objects.link(lodObj)
             
     return collections
     
@@ -100,14 +100,14 @@ def read_LOD(context,file,preserveNormals):
     
     flags = binary.readULong(file)
     
-    bm = bmesh.new()
     
     # Read point table    
     timePOINTstart = time.time()
+    points = []
     for i in range(numPoints):
-        bm.verts.new(read_vertex(file)[:-1])
+        newPoint = read_vertex(file)
+        points.append(newPoint[:-1])
         
-    bm.verts.ensure_lookup_table()
     print(f"Points took {time.time()-timePOINTstart}")
     
     print(f"Points: {numPoints}")
@@ -120,14 +120,25 @@ def read_LOD(context,file,preserveNormals):
     print(f"Normals: {numNormals}")
     
     # Read faces
+    faces = []
     faceDataDict = {}
     timeFACEstart = time.time()
     for i in range(numFaces):
         newFace = read_face(file)
-        bm.faces.new([bm.verts[i[0]] for i in newFace[0]]).smooth = True
+        faces.append([i[0] for i in newFace[0]])
         faceDataDict[i] = newFace
         
+    objData = bpy.data.meshes.new("Temp LOD")
+    objData.from_pydata(points,[],faces)
+    objData.update(calc_edges=True)
+    
+    for face in objData.polygons:
+        face.use_smooth = True
         
+    bm = bmesh.new()
+    bm.from_mesh(objData)
+    
+    bm.verts.ensure_lookup_table()
     bm.edges.ensure_lookup_table()
     bm.faces.ensure_lookup_table()
     print(f"Faces took {time.time()-timeFACEstart}")
@@ -146,7 +157,7 @@ def read_LOD(context,file,preserveNormals):
         taggName = binary.readAsciiz(file)
         taggLength = binary.readULong(file)
         
-        print(taggName)
+        print(taggName,taggLength)
         
         # EOF
         # masses = []
@@ -209,10 +220,10 @@ def read_LOD(context,file,preserveNormals):
                 if b != 0:
                     bm.verts[i][deform][len(namedSelections)-1] = weight
                 
-            binary.readBytes(file,numFaces)
+            file.read(numFaces)
             
         else:
-            binary.readBytes(file,taggLength) # dump all other TAGGs
+            file.read(taggLength) # dump all other TAGGs
             
     LODresolution = binary.readFloat(file)
     
@@ -222,9 +233,9 @@ def read_LOD(context,file,preserveNormals):
     lodName = utils.formatLODname(lodIndex,lodRes)
     print(lodName)
         
-    objData = bpy.data.meshes.new(lodName)
     objData.use_auto_smooth = True
     objData.auto_smooth_angle = math.radians(180)
+    objData.name = lodName
     obj = bpy.data.objects.new(lodName,objData)
     
     for name in namedSelections:
@@ -249,7 +260,6 @@ def read_LOD(context,file,preserveNormals):
                     if vertTable[0] == vertID:
                         loopNormals.insert(i,normalsDict[vertTable[1]])   
         
-        objData.validate(clean_customdata=False)
         objData.normals_split_custom_set(loopNormals)
         objData.free_normals_split()
     
@@ -257,7 +267,7 @@ def read_LOD(context,file,preserveNormals):
     
     return obj, LODresolution
     
-def import_file(context,file,groupBy,preserveNormals,encloseIn = ""):
+def import_file(context,file,groupBy,preserveNormals,validateMeshes,encloseIn = ""):
     
     timeFILEstart = time.time()
     
@@ -275,6 +285,9 @@ def import_file(context,file,groupBy,preserveNormals,encloseIn = ""):
     
     for i in range(LODcount):
         lodObj, res = read_LOD(context,file,preserveNormals)
+        
+        if validateMeshes:
+            lodObj.data.validate(clean_customdata=False)
         
         LODs.append((lodObj,res))
         

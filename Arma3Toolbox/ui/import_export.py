@@ -47,8 +47,14 @@ class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
     
     preserveNormals: bpy.props.BoolProperty (
         name = "Custom normals",
-        description = "Attempt to import the split vertex normals of visual LODs (may produce unwanted results with some files)",
-        default = False
+        description = "Attempt to import the split vertex normals of visual LODs (may not work with certain files)",
+        default = True
+    )
+    
+    validateMeshes: bpy.props.BoolProperty (
+        name = "Validate meshes",
+        description = "Validate LOD meshes after creation, and clean up duplicate faces and other problematic geometry",
+        default = True
     )
     
     def execute(self,context):
@@ -67,7 +73,7 @@ class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         # except Exception as e:
             # utils.show_infoBox(str(e),"Unexpected I/O error",'ERROR')
             
-        import_p3d.import_file(context,file,self.groupby,self.preserveNormals,filename.strip()) # Allow exceptions for testing
+        import_p3d.import_file(context,file,self.groupby,self.preserveNormals,self.validateMeshes,filename.strip()) # Allow exceptions for testing
         
         file.close()
         
