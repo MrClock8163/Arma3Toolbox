@@ -147,7 +147,7 @@ class A3OB_PT_import_P3D_data(bpy.types.Panel):
         col.prop(operator,"allowAdditionalData",text="")
         col2 = col.column()
         col2.enabled = operator.allowAdditionalData
-        prop = col2.prop(operator,"additionalData")
+        prop = col2.prop(operator,"additionalData",text=" ")
         layout.prop(operator,"validateMeshes")
         
 class A3OB_OP_export_P3D(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
