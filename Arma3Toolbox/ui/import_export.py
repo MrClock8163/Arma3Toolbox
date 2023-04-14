@@ -57,6 +57,12 @@ class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         default = True
     )
     
+    setupMaterials: bpy.props.BoolProperty (
+        name = "Setup materials",
+        description = "Create materials for every texture - RVMAT combination in the P3D",
+        default = True
+    )
+    
     def execute(self,context):
         print(self.filepath)
         
@@ -73,7 +79,7 @@ class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         # except Exception as e:
             # utils.show_infoBox(str(e),"Unexpected I/O error",'ERROR')
             
-        import_p3d.import_file(context,file,self.groupby,self.preserveNormals,self.validateMeshes,filename.strip()) # Allow exceptions for testing
+        import_p3d.import_file(context,file,self.groupby,self.preserveNormals,self.validateMeshes,self.setupMaterials,filename.strip()) # Allow exceptions for testing
         
         file.close()
         

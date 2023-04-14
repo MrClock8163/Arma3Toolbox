@@ -247,34 +247,35 @@ def read_LOD(context,file,preserveNormals,materialDict):
     bm.free()
     
     # Create materials
-    blenderMatIndices = {} # needed because otherwise materials and textures with same names, but in different folders may cause issues
-    for i in range(len(faceDataDict)):
-        faceData = faceDataDict[i]
-    
-        textureName = faceData[2]
-        materialName = faceData[3]
+    if materialDict is not None:
+        blenderMatIndices = {} # needed because otherwise materials and textures with same names, but in different folders may cause issues
+        for i in range(len(faceDataDict)):
+            faceData = faceDataDict[i]
         
-        blenderMat = None
-        
-        try:
-            blenderMat = materialDict[(textureName,materialName)]
-        except:
-            blenderMat = bpy.data.materials.new(f"P3D: {os.path.basename(textureName)} :: {os.path.basename(materialName)}")
-            materialDict[(textureName,materialName)] = blenderMat
-            # IMPLEMENT STORING THE ACTUAL PATHS
+            textureName = faceData[2]
+            materialName = faceData[3]
             
-        if blenderMat is None:
-            continue
+            blenderMat = None
             
-        matIndex = -1
-        if blenderMat.name not in objData.materials:
-            objData.materials.append(blenderMat)
-            matIndex = len(objData.materials)-1
-            blenderMatIndices[blenderMat] = matIndex
-        else:
-            matIndex = blenderMatIndices[blenderMat]
-            
-        objData.polygons[i].material_index = matIndex
+            try:
+                blenderMat = materialDict[(textureName,materialName)]
+            except:
+                blenderMat = bpy.data.materials.new(f"P3D: {os.path.basename(textureName)} :: {os.path.basename(materialName)}")
+                materialDict[(textureName,materialName)] = blenderMat
+                # IMPLEMENT STORING THE ACTUAL PATHS
+                
+            if blenderMat is None:
+                continue
+                
+            matIndex = -1
+            if blenderMat.name not in objData.materials:
+                objData.materials.append(blenderMat)
+                matIndex = len(objData.materials)-1
+                blenderMatIndices[blenderMat] = matIndex
+            else:
+                matIndex = blenderMatIndices[blenderMat]
+                
+            objData.polygons[i].material_index = matIndex
         
     
     # Apply split normals
@@ -299,7 +300,7 @@ def read_LOD(context,file,preserveNormals,materialDict):
     
     return obj, LODresolution
     
-def import_file(context,file,groupBy,preserveNormals,validateMeshes,encloseIn = ""):
+def import_file(context,file,groupBy,preserveNormals,validateMeshes,setupMaterials,encloseIn = ""):
     
     timeFILEstart = time.time()
     
@@ -314,9 +315,12 @@ def import_file(context,file,groupBy,preserveNormals,validateMeshes,encloseIn = 
     
     LODs = []
     groups = []
-    materialDict = {
-        ("",""): bpy.data.materials.get("P3D: no material",bpy.data.materials.new("P3D: no material"))
-    }
+    
+    materialDict = None
+    if setupMaterials:
+        materialDict = {
+            ("",""): bpy.data.materials.get("P3D: no material",bpy.data.materials.new("P3D: no material"))
+        }
     
     for i in range(LODcount):
         lodObj, res = read_LOD(context,file,preserveNormals,materialDict)
