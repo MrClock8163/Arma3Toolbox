@@ -9,6 +9,7 @@ class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
     '''Import Arma 3 MLOD P3D'''
     bl_idname = "a3ob.importp3d"
     bl_label = "Import P3D"
+    bl_options = {'UNDO', 'PRESET'}
     
     filename_ext = ".p3d"
     
@@ -17,20 +18,9 @@ class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         options = {'HIDDEN'}
     )
     
-    # lods: bpy.props.EnumProperty (
-        # name = "LODs",
-        # description = "Import the selected LOD(s)",
-        # default = 'ALL',
-        # items = (
-            # ('ALL',"All","All LODs"),
-            # ('VISUAL',"Visuals","Visual LODs only"),
-            # ('SHADOW',"Shadows","Visual LODs only"),
-            # ('GEO',"Geometry","Geometry LOD only")
-        # )
-    # )
     enclose: bpy.props.BoolProperty (
         name = "Enclose in collection",
-        description = "Enclose LODs in collection named after the original file name",
+        description = "Enclose LODs in collection named after the original file",
         default = True
     )
     
@@ -51,17 +41,39 @@ class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         default = True
     )
     
+    setupMaterials: bpy.props.BoolProperty (
+        name = "Setup materials",
+        description = "Create materials for every texture - RVMAT combination in the P3D",
+        default = True
+    )
+    
+    allowAdditionalData: bpy.props.BoolProperty (
+        name = "Allow additinal data",
+        description = "Import data in addition to the LOD geometries themselves",
+        default = True
+    )
+    
+    additionalData: bpy.props.EnumProperty (
+        name = "Data",
+        options = {'ENUM_FLAG'},
+        items = (
+            ('NORMALS',"Custom normals","WARNING: may not work properly on certain files"),
+            ('SELECTIONS',"Selections",""),
+            ('UV',"UV sets",""),
+            ('MATERIALS',"Materials","")
+        ),
+        description = "Data to import in addition to the LOD meshes themselves",
+        default = {'NORMALS','SELECTIONS','UV','MATERIALS'}
+    )
+    
     validateMeshes: bpy.props.BoolProperty (
         name = "Validate meshes",
         description = "Validate LOD meshes after creation, and clean up duplicate faces and other problematic geometry",
         default = True
     )
     
-    setupMaterials: bpy.props.BoolProperty (
-        name = "Setup materials",
-        description = "Create materials for every texture - RVMAT combination in the P3D",
-        default = True
-    )
+    def draw(self,context):
+        pass
     
     def execute(self,context):
         print(self.filepath)
@@ -71,6 +83,8 @@ class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         
         if not self.enclose:
             filename = ""
+            
+        # print(type(self.additionalData))
         
         # try:
             # import_p3d.import_file(context,file,self.groupby,filename.strip())
@@ -79,11 +93,63 @@ class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         # except Exception as e:
             # utils.show_infoBox(str(e),"Unexpected I/O error",'ERROR')
             
-        import_p3d.import_file(context,file,self.groupby,self.preserveNormals,self.validateMeshes,self.setupMaterials,filename.strip()) # Allow exceptions for testing
+        # import_p3d.import_file(context,file,self.groupby,self.preserveNormals,self.validateMeshes,self.setupMaterials,filename.strip()) # Allow exceptions for testing
+        import_p3d.import_file(self,context,file) # Allow exceptions for testing
         
         file.close()
         
         return {'FINISHED'}
+        
+class A3OB_PT_import_P3D_collections(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Collections"
+    bl_parent_id = "FILE_PT_operator"
+    
+    @classmethod
+    def poll(cls,context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        return operator.bl_idname == "A3OB_OT_importp3d"
+    
+    def draw(self,context):
+        layout = self.layout
+        layout.use_property_split = True
+        
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        layout.prop(operator,"enclose")
+        layout.prop(operator,"groupby")
+        
+class A3OB_PT_import_P3D_data(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Data"
+    bl_parent_id = "FILE_PT_operator"
+    
+    @classmethod
+    def poll(cls,context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        return operator.bl_idname == "A3OB_OT_importp3d"
+    
+    def draw(self,context):
+        layout = self.layout
+        layout.use_property_split = True
+        
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        col = layout.column(heading="Additional data")
+        col.prop(operator,"allowAdditionalData",text="")
+        col2 = col.column()
+        col2.enabled = operator.allowAdditionalData
+        prop = col2.prop(operator,"additionalData")
+        # prop.enabled = operator.allowAdditionalData = True
+        layout.prop(operator,"validateMeshes")
         
 class A3OB_OP_export_P3D(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
     '''Export to Arma 3 MLOD P3D'''
@@ -115,6 +181,8 @@ class A3OB_OP_export_P3D(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
         
 classes = (
     A3OB_OP_import_P3D,
+    A3OB_PT_import_P3D_collections,
+    A3OB_PT_import_P3D_data,
     A3OB_OP_export_P3D
 )
         

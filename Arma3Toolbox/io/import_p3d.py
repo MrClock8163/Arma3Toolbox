@@ -81,7 +81,8 @@ def group_LODs(LODs,groupBy = 'TYPE'):
             
     return collections
     
-def read_LOD(context,file,preserveNormals,materialDict):
+# def read_LOD(context,file,preserveNormals,materialDict):
+def read_LOD(context,file,materialDict,additionalData):
     timeP3Dstart = time.time()
 
     # Read LOD header
@@ -247,7 +248,7 @@ def read_LOD(context,file,preserveNormals,materialDict):
     bm.free()
     
     # Create materials
-    if materialDict is not None:
+    if 'MATERIALS' in additionalData:
         blenderMatIndices = {} # needed because otherwise materials and textures with same names, but in different folders may cause issues
         for i in range(len(faceDataDict)):
             faceData = faceDataDict[i]
@@ -279,7 +280,7 @@ def read_LOD(context,file,preserveNormals,materialDict):
         
     
     # Apply split normals
-    if preserveNormals and lodIndex in data.LODvisuals: 
+    if 'NORMALS' in additionalData and lodIndex in data.LODvisuals: 
         
         loopNormals = []
         for face in objData.polygons:
@@ -300,7 +301,13 @@ def read_LOD(context,file,preserveNormals,materialDict):
     
     return obj, LODresolution
     
-def import_file(context,file,groupBy,preserveNormals,validateMeshes,setupMaterials,encloseIn = ""):
+# def import_file(context,file,groupBy,preserveNormals,validateMeshes,setupMaterials,encloseIn = ""):
+def import_file(operator,context,file):
+
+    additionalData = set()
+    
+    if operator.allowAdditionalData:
+        additionalData = operator.additionalData
     
     timeFILEstart = time.time()
     
@@ -317,31 +324,32 @@ def import_file(context,file,groupBy,preserveNormals,validateMeshes,setupMateria
     groups = []
     
     materialDict = None
-    if setupMaterials:
+    if 'MATERIALS' in additionalData:
         materialDict = {
             ("",""): bpy.data.materials.get("P3D: no material",bpy.data.materials.new("P3D: no material"))
         }
     
     for i in range(LODcount):
-        lodObj, res = read_LOD(context,file,preserveNormals,materialDict)
+        # lodObj, res = read_LOD(context,file,preserveNormals,materialDict)
+        lodObj, res = read_LOD(context,file,materialDict,additionalData)
         
-        if validateMeshes:
+        if operator.validateMeshes:
             lodObj.data.validate(clean_customdata=False)
         
         LODs.append((lodObj,res))
         
     rootCollection = bpy.context.scene.collection
     
-    if encloseIn != "":
-        rootCollection = bpy.data.collections.new(name=encloseIn)
+    if operator.enclose:
+        rootCollection = bpy.data.collections.new(name=os.path.basename(operator.filepath))
         bpy.context.scene.collection.children.link(rootCollection)       
     
-    if groupBy == 'NONE':
+    if operator.groupby == 'NONE':
         for item in LODs:
             rootCollection.objects.link(item[0])
         return
         
-    colls = group_LODs(LODs,groupBy)
+    colls = group_LODs(LODs,operator.groupby)
 
         
         
