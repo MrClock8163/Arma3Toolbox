@@ -201,7 +201,7 @@ def read_LOD(context,file,materialDict,additionalData):
                 # vertsDict[i][massLayer] = mass
             
         # UV
-        elif taggName == "#UVSet#":
+        elif taggName == "#UVSet#" and 'UV' in additionalData:
             UVID = binary.readULong(file)
             UVlayer = bm.loops.layers.uv.new(f"UVSet {UVID}")
             
@@ -211,7 +211,7 @@ def read_LOD(context,file,materialDict,additionalData):
             
             
         # Named selections
-        elif not re.match("#.*#",taggName):
+        elif not re.match("#.*#",taggName) and 'SELECTIONS' in additionalData:
             namedSelections.append(taggName)
             bm.verts.layers.deform.verify()
             deform = bm.verts.layers.deform.active
