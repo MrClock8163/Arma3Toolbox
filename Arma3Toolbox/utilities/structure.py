@@ -1,0 +1,118 @@
+import bpy
+import bmesh
+import re
+from . import generic as utils
+
+def findComponents(doConvexHull=False):
+    utils.forceObjectMode()
+    activeObj = bpy.context.active_object
+    
+    # Remove pre-existing component selections
+    componentGroups = []
+    for group in activeObj.vertex_groups:
+        if re.match('component\d+',group.name,re.IGNORECASE):
+            componentGroups.append(group.name)
+    
+    for i,group in enumerate(componentGroups):
+        bpy.ops.object.vertex_group_set_active(group=group)
+        bpy.ops.object.vertex_group_remove()
+    
+    # Split mesh
+    bpy.ops.mesh.separate(type='LOOSE')
+    
+    # Iterate components
+    components = bpy.context.selected_objects
+    bpy.ops.object.select_all(action='DESELECT')
+    
+    componentID = 1
+    for obj in components:
+        bpy.context.view_layer.objects.active = obj
+            
+        if len(obj.data.vertices) < 4: # Ignore proxies
+            continue
+        
+        if doConvexHull:
+            convexHull()
+            
+        utils.forceEditMode()
+        bpy.ops.mesh.select_all(action='SELECT')
+        obj.vertex_groups.new(name=('Component%02d' % (componentID)))
+        bpy.ops.object.vertex_group_assign()
+        bpy.ops.mesh.select_all(action='DESELECT')
+        utils.forceObjectMode()
+            
+        obj.select_set(False)
+        
+        componentID += 1
+    
+    for obj in components:
+        obj.select_set(True)
+        
+    bpy.context.view_layer.objects.active = activeObj
+    bpy.ops.object.join()
+
+def convexHull():
+    utils.forceEditMode()
+    
+    bpy.ops.mesh.select_mode(type="EDGE")
+    bpy.ops.mesh.select_all(action = 'SELECT')
+
+    bpy.ops.mesh.convex_hull()
+    bpy.ops.mesh.select_all(action = 'DESELECT')
+    bpy.ops.mesh.reveal()
+    bpy.ops.object.mode_set(mode='OBJECT')    
+
+def componentConvexHull(): # DEPRECATED
+    utils.forceEditMode()
+    
+    bpy.ops.mesh.select_mode(type="VERT")
+    bpy.ops.mesh.select_all(action = 'DESELECT')
+    
+    activeObj = bpy.context.selected_objects[0]
+    activeObj.vertex_groups.active_index = 0
+    print(activeObj.vertex_groups.active_index)
+    
+    for i,group in enumerate(activeObj.vertex_groups):
+        if not re.match('component\d+',group.name,re.IGNORECASE):
+            continue
+                
+        bpy.ops.mesh.select_all(action = 'DESELECT')
+        activeObj.vertex_groups.active_index = i
+        bpy.ops.object.vertex_group_select()
+        bpy.ops.mesh.convex_hull()
+        
+    bpy.ops.mesh.select_all(action = 'DESELECT')
+
+def checkClosed():
+    utils.forceEditMode()
+    
+    bpy.ops.mesh.select_mode(type="EDGE")
+    
+    bpy.ops.mesh.select_non_manifold()
+
+def checkConvexity():
+    utils.forceObjectMode()
+    
+    activeObj = bpy.context.selected_objects[0]
+    bm = bmesh.new(use_operators=True)
+    bm.from_mesh(activeObj.data)
+    
+    concaveCount = 0
+    
+    for edge in bm.edges:
+        if not edge.is_convex:
+
+            face1 = edge.link_faces[0]
+            face2 = edge.link_faces[1]
+            dot = face1.normal.dot(face2.normal)
+            
+            if not (0.9999 <= dot and dot <=1.0001):
+                edge.select_set(True)
+                concaveCount += 1
+            
+    bm.to_mesh(activeObj.data)
+        
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_mode(type="EDGE")
+    
+    return activeObj.name, concaveCount
