@@ -4,6 +4,7 @@ import struct
 import math
 import re
 import time
+import os
 from mathutils import Vector
 from . import binary_handler as binary
 from .. import utility as utils
@@ -80,7 +81,7 @@ def group_LODs(LODs,groupBy = 'TYPE'):
             
     return collections
     
-def read_LOD(context,file,preserveNormals):
+def read_LOD(context,file,preserveNormals,materialDict):
     timeP3Dstart = time.time()
 
     # Read LOD header
@@ -245,6 +246,37 @@ def read_LOD(context,file,preserveNormals):
     bm.to_mesh(objData)
     bm.free()
     
+    # Create materials
+    blenderMatIndices = {} # needed because otherwise materials and textures with same names, but in different folders may cause issues
+    for i in range(len(faceDataDict)):
+        faceData = faceDataDict[i]
+    
+        textureName = faceData[2]
+        materialName = faceData[3]
+        
+        blenderMat = None
+        
+        try:
+            blenderMat = materialDict[(textureName,materialName)]
+        except:
+            blenderMat = bpy.data.materials.new(f"P3D: {os.path.basename(textureName)} :: {os.path.basename(materialName)}")
+            materialDict[(textureName,materialName)] = blenderMat
+            # IMPLEMENT STORING THE ACTUAL PATHS
+            
+        if blenderMat is None:
+            continue
+            
+        matIndex = -1
+        if blenderMat.name not in objData.materials:
+            objData.materials.append(blenderMat)
+            matIndex = len(objData.materials)-1
+            blenderMatIndices[blenderMat] = matIndex
+        else:
+            matIndex = blenderMatIndices[blenderMat]
+            
+        objData.polygons[i].material_index = matIndex
+        
+    
     # Apply split normals
     if preserveNormals and lodIndex in data.LODvisuals: 
         
@@ -282,9 +314,12 @@ def import_file(context,file,groupBy,preserveNormals,validateMeshes,encloseIn = 
     
     LODs = []
     groups = []
+    materialDict = {
+        ("",""): bpy.data.materials.get("P3D: no material",bpy.data.materials.new("P3D: no material"))
+    }
     
     for i in range(LODcount):
-        lodObj, res = read_LOD(context,file,preserveNormals)
+        lodObj, res = read_LOD(context,file,preserveNormals,materialDict)
         
         if validateMeshes:
             lodObj.data.validate(clean_customdata=False)
