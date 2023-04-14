@@ -81,7 +81,6 @@ def group_LODs(LODs,groupBy = 'TYPE'):
             
     return collections
     
-# def read_LOD(context,file,preserveNormals,materialDict):
 def read_LOD(context,file,materialDict,additionalData):
     timeP3Dstart = time.time()
 
@@ -301,7 +300,6 @@ def read_LOD(context,file,materialDict,additionalData):
     
     return obj, LODresolution
     
-# def import_file(context,file,groupBy,preserveNormals,validateMeshes,setupMaterials,encloseIn = ""):
 def import_file(operator,context,file):
 
     additionalData = set()
@@ -330,7 +328,6 @@ def import_file(operator,context,file):
         }
     
     for i in range(LODcount):
-        # lodObj, res = read_LOD(context,file,preserveNormals,materialDict)
         lodObj, res = read_LOD(context,file,materialDict,additionalData)
         
         if operator.validateMeshes:
