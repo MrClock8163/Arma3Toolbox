@@ -3,11 +3,8 @@ import bmesh
 import re
 from . import generic as utils
 
-def findComponents(convexHull=False):
-    utils.forceEditMode()
-    
-    bpy.ops.mesh.select_mode(type='VERT')
-    
+def findComponents(doConvexHull=False):
+    utils.forceObjectMode()
     activeObj = bpy.context.active_object
     
     # Remove pre-existing component selections
@@ -19,37 +16,40 @@ def findComponents(convexHull=False):
     for i,group in enumerate(componentGroups):
         bpy.ops.object.vertex_group_set_active(group=group)
         bpy.ops.object.vertex_group_remove()
-        
-    bpy.ops.mesh.select_all(action='DESELECT')
-    bpy.ops.object.mode_set(mode='OBJECT')
     
-    # Create new groups
+    # Split mesh
+    bpy.ops.mesh.separate(type='LOOSE')
+    
+    # Iterate components
+    components = bpy.context.selected_objects
+    bpy.ops.object.select_all(action='DESELECT')
+    
     componentID = 1
-    for i in range(len(activeObj.data.vertices)):
-        if activeObj.data.vertices[i].hide == True: # Will break because the convex hull decreases the number of vertices
+    for obj in components:
+        bpy.context.view_layer.objects.active = obj
+            
+        if len(obj.data.vertices) < 4: # Ignore proxies
             continue
         
-        activeObj.data.vertices[i].select = True
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.select_linked()
-        bpy.ops.object.mode_set(mode='OBJECT')
-        
-        if convexHull:
-            bpy.ops.object.mode_set(mode='EDIT')
-            bpy.ops.mesh.convex_hull()
-            bpy.ops.object.mode_set(mode='OBJECT')
+        if doConvexHull:
+            convexHull()
             
-        bpy.ops.object.mode_set(mode='EDIT')
-        activeObj.vertex_groups.new(name=('Component%02d' % componentID))
+        utils.forceEditMode()
+        bpy.ops.mesh.select_all(action='SELECT')
+        obj.vertex_groups.new(name=('Component%02d' % (componentID)))
         bpy.ops.object.vertex_group_assign()
-        componentID += 1
-        bpy.ops.mesh.hide()
-        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.mesh.select_all(action='DESELECT')
+        utils.forceObjectMode()
+            
+        obj.select_set(False)
         
-    bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.mesh.reveal()
-    bpy.ops.mesh.select_all(action='DESELECT')
-    bpy.ops.object.mode_set(mode='OBJECT')
+        componentID += 1
+    
+    for obj in components:
+        obj.select_set(True)
+        
+    bpy.context.view_layer.objects.active = activeObj
+    bpy.ops.object.join()
 
 def convexHull():
     utils.forceEditMode()
@@ -60,7 +60,7 @@ def convexHull():
     bpy.ops.mesh.convex_hull()
     bpy.ops.mesh.select_all(action = 'DESELECT')
     bpy.ops.mesh.reveal()
-    bpy.ops.object.mode_set(mode='OBJECT')
+    bpy.ops.object.mode_set(mode='OBJECT')    
 
 def componentConvexHull(): # DEPRECATED
     utils.forceEditMode()
