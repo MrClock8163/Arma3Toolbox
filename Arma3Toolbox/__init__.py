@@ -17,9 +17,11 @@ if "bpy" in locals():
     import importlib
 
     importlib.reload(ui.import_export)
+    importlib.reload(ui.utilities)
 
 else:    
     from .ui import import_export
+    from .ui import utilities
 
 import bpy
 import os
@@ -57,9 +59,9 @@ class A3OB_AT_Preferences(bpy.types.AddonPreferences):
             grid.label(text="Arma 3 Tools")
             grid.prop(self,"armaToolsFolder",text="")
 
-classes = [
-    A3OB_AT_Preferences
-]
+classes = (
+    A3OB_AT_Preferences,
+)
 
 def register():
     from bpy.utils import register_class
@@ -70,6 +72,7 @@ def register():
         register_class(cls)
         
     import_export.register()
+    utilities.register()
     
     print("Register done")
 
@@ -79,6 +82,7 @@ def unregister():
     for cls in reversed(classes):
         unregister_class(cls)
 
+    utilities.unregister()
     import_export.unregister()
     
 if __name__ == "__main__":
