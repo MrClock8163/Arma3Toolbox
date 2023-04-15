@@ -48,12 +48,12 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
         return proputils.canEditMass(context)
         
     def draw_header(self,context):
-        self.layout.prop(context.scene,"a3ob_enableVertexMass",text="")
+        self.layout.prop(context.window_manager,"a3ob_enableVertexMass",text="")
         
     def draw(self,context):
         layout = self.layout
         
-        if not context.scene.a3ob_enableVertexMass:
+        if not context.window_manager.a3ob_enableVertexMass:
             layout.label(text="The tools are currently disabled")
             layout.enabled = False
             return 
