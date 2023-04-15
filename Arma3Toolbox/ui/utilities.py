@@ -6,7 +6,7 @@ from ..utilities import generic as utils
 class A3OB_MT_ObjectBuilder_Topo(bpy.types.Menu):
     '''Object Builder topology functions'''
     
-    bl_label = 'Topology'
+    bl_label = "Topology"
     
     def draw(self,context):
         self.layout.operator(A3OB_OT_CheckClosed.bl_idname)
@@ -15,7 +15,7 @@ class A3OB_MT_ObjectBuilder_Topo(bpy.types.Menu):
 class A3OB_MT_ObjectBuilder_Convexity(bpy.types.Menu):
     '''Object Builder convexity functions'''
     
-    bl_label = 'Convexity'
+    bl_label = "Convexity"
     
     def draw(self,context):
         self.layout.operator(A3OB_OT_CheckConvexity.bl_idname)
@@ -25,7 +25,7 @@ class A3OB_MT_ObjectBuilder_Convexity(bpy.types.Menu):
 class A3OB_MT_ObjectBuilder(bpy.types.Menu):
     '''Arma 3 Object Builder utility functions'''
     
-    bl_label = 'Object Builder'
+    bl_label = "Object Builder"
     
     def draw(self,context):
         self.layout.menu('A3OB_MT_ObjectBuilder_Topo')
@@ -35,7 +35,7 @@ class A3OB_MT_ObjectBuilder(bpy.types.Menu):
 class A3OB_OT_CheckConvexity(bpy.types.Operator):
     '''Find concave edges'''
     
-    bl_label = 'Find Non-Convexities'
+    bl_label = "Find Non-Convexities"
     bl_idname = 'a3ob.nonconvexities'
     
     @classmethod
@@ -57,7 +57,7 @@ class A3OB_OT_CheckConvexity(bpy.types.Operator):
 class A3OB_OT_CheckClosed(bpy.types.Operator):
     '''Find non-closed parts of model'''
     
-    bl_label = 'Find Non-Closed'
+    bl_label = "Find Non-Closed"
     bl_idname = 'a3ob.nonclosed'
     
     @classmethod
@@ -73,7 +73,7 @@ class A3OB_OT_CheckClosed(bpy.types.Operator):
 class A3OB_OT_ConvexHull(bpy.types.Operator):
     '''Calculate convex hull for entire object'''
     
-    bl_label = 'Convex Hull'
+    bl_label = "Convex Hull"
     bl_idname = 'a3ob.convexhull'
     
     @classmethod
@@ -90,7 +90,7 @@ class A3OB_OT_ConvexHull(bpy.types.Operator):
 class A3OB_OT_ComponentConvexHull(bpy.types.Operator):
     '''Create convex named component selections'''
     
-    bl_label = 'Component Convex Hull'
+    bl_label = "Component Convex Hull"
     bl_idname = 'a3ob.componentconvexhull'
     
     @classmethod
@@ -107,7 +107,7 @@ class A3OB_OT_ComponentConvexHull(bpy.types.Operator):
 class A3OB_OT_FindComponents(bpy.types.Operator):
     '''Create named component selections'''
     
-    bl_label = 'Find Components'
+    bl_label = "Find Components"
     bl_idname = 'a3ob.findcomponents'
     
     @classmethod
