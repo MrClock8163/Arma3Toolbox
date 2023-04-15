@@ -6,7 +6,7 @@ class A3OB_PG_properties_material(bpy.types.PropertyGroup):
         name = "Texture type",
         description = "Source of face texture",
         items = (
-            ('TEX', "Texture", "Texture file"),
+            ('TEX', "File", "Texture file"),
             ('COLOR', "Color", "Procedural color"),
             ('CUSTOM', "Custom", "Raw custom input")
         ),
