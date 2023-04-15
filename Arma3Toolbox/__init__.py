@@ -18,14 +18,14 @@ if "bpy" in locals():
 
     importlib.reload(ui.import_export)
     importlib.reload(ui.utilities)
-    importlib.reload(ui.properties)
+    importlib.reload(ui.mass)
     importlib.reload(props.scene)
     importlib.reload(props.object)
 
 else:    
     from .ui import import_export
     from .ui import utilities
-    from .ui import properties
+    from .ui import mass
     from .props import scene
     from .props import object
 
@@ -79,7 +79,7 @@ def register():
         
     import_export.register()
     utilities.register()
-    properties.register()
+    mass.register()
     scene.register()
     object.register()
     
@@ -93,7 +93,7 @@ def unregister():
 
     object.unregister()
     scene.unregister()
-    properties.unregister()
+    mass.unregister()
     utilities.unregister()
     import_export.unregister()
     
