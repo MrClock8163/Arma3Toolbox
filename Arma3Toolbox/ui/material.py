@@ -4,6 +4,7 @@ class A3OB_PT_material(bpy.types.Panel):
     bl_region_type = 'WINDOW'
     bl_space_type = 'PROPERTIES'
     bl_label = "Object Builder: material settings"
+    bl_context = "material"
     
     @classmethod
     def poll(cls,context):
