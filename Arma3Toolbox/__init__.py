@@ -19,15 +19,19 @@ if "bpy" in locals():
     importlib.reload(ui.import_export)
     importlib.reload(ui.utilities)
     importlib.reload(ui.mass)
+    importlib.reload(ui.material)
     importlib.reload(props.scene)
     importlib.reload(props.object)
+    importlib.reload(props.rvmat)
 
 else:    
     from .ui import import_export
     from .ui import utilities
     from .ui import mass
+    from .ui import material
     from .props import scene
     from .props import object
+    from .props import rvmat
 
 import bpy
 import os
@@ -82,6 +86,8 @@ def register():
     mass.register()
     scene.register()
     object.register()
+    rvmat.register()
+    material.register()
     
     print("Register done")
 
@@ -91,6 +97,8 @@ def unregister():
     for cls in reversed(classes):
         unregister_class(cls)
 
+    material.unregister()
+    rvmat.unregister()
     object.unregister()
     scene.unregister()
     mass.unregister()

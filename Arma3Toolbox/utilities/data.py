@@ -92,9 +92,34 @@ LODgroupsContext = {
     **dict.fromkeys([5,7,8,9,10,11,12,13,14,15,25,29,30],"Misc")
 }
 
-
 LODgroups = {
     'TYPE': LODgroupsType,
     'CONTEXT': LODgroupsContext,
     'NONE': {}
 }
+
+textureTypes = (
+    ('CO', "CO", "Color Value"),
+    ('CA', "CA", "Texture with Alpha"),
+    ('LCO', "LCO", "Terrain Texture Layer Color"),
+    ('SKY', "SKY", "Sky texture"),
+    ('NO', "NO", "Normal Map"),
+    ('NS', "NS", "Normal map specular with Alpha"),
+    ('NOF', "NOF", "Normal map faded"),
+    ('NON', "NON", "Normal map noise"),
+    ('NOHQ', "NOHQ", "Normal map High Quality"),
+    ('NOPX', "NOPX", "Normal Map with paralax"),
+    ('NOVHQ', "NOVHQ", "two-part DXT5 compression"),
+    ('DT', "DT", "Detail Texture"),
+    ('CDT', "CDT", "Colored detail texture"),
+    ('MCO', "MCO", "Multiply color"),
+    ('DTSMDI', "DTSMDI", "Detail SMDI map"),
+    ('MC', "MC", "Macro Texture"),
+    ('AS', "AS", "Ambient Shadow texture"),
+    ('ADS', "ADS", "Ambient Shadow in Blue"),
+    ('PR', "PR", "Ambient shadow from directions"),
+    ('SM', "SM", "Specular Map"),
+    ('SMDI', "SMDI", "Specular Map, optimized"),
+    ('MASK', "MASK", "Mask for multimaterial"),
+    ('TI', "TI", "Thermal imaging map")
+)
