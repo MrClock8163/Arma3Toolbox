@@ -18,10 +18,16 @@ if "bpy" in locals():
 
     importlib.reload(ui.import_export)
     importlib.reload(ui.utilities)
+    importlib.reload(ui.properties)
+    importlib.reload(props.scene)
+    importlib.reload(props.object)
 
 else:    
     from .ui import import_export
     from .ui import utilities
+    from .ui import properties
+    from .props import scene
+    from .props import object
 
 import bpy
 import os
@@ -73,6 +79,9 @@ def register():
         
     import_export.register()
     utilities.register()
+    properties.register()
+    scene.register()
+    object.register()
     
     print("Register done")
 
@@ -82,6 +91,9 @@ def unregister():
     for cls in reversed(classes):
         unregister_class(cls)
 
+    object.unregister()
+    scene.unregister()
+    properties.unregister()
     utilities.unregister()
     import_export.unregister()
     
