@@ -174,10 +174,11 @@ def read_LOD(context,file,materialDict,additionalData):
                 point1ID = binary.readULong(file)
                 point2ID = binary.readULong(file)
                 
-                edge = bm.edges.get([bm.verts[point1ID],bm.verts[point2ID]])
-                
-                if edge is not None:
-                    edge.smooth = False
+                if point1ID != point2ID:
+                    edge = bm.edges.get([bm.verts[point1ID],bm.verts[point2ID]])
+                    
+                    if edge is not None:
+                        edge.smooth = False
         
         # Property
         elif taggName == "#Property#":
