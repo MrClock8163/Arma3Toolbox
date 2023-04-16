@@ -20,6 +20,7 @@ if "bpy" in locals():
     importlib.reload(ui.utilities)
     importlib.reload(ui.mass)
     importlib.reload(ui.material)
+    importlib.reload(ui.object_mesh)
     importlib.reload(props.windowmanager)
     importlib.reload(props.object)
     importlib.reload(props.rvmat)
@@ -29,6 +30,7 @@ else:
     from .ui import utilities
     from .ui import mass
     from .ui import material
+    from .ui import object_mesh
     from .props import windowmanager
     from .props import object
     from .props import rvmat
@@ -83,6 +85,7 @@ def register():
         
     import_export.register()
     utilities.register()
+    object_mesh.register()
     mass.register()
     windowmanager.register()
     object.register()
@@ -102,6 +105,7 @@ def unregister():
     object.unregister()
     windowmanager.unregister()
     mass.unregister()
+    object_mesh.unregister()
     utilities.unregister()
     import_export.unregister()
     
