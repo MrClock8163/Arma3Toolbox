@@ -3,7 +3,7 @@ from ..utilities import data
 
 class A3OB_PG_properties_material(bpy.types.PropertyGroup):
     textureType: bpy.props.EnumProperty ( 
-        name = "Texture type",
+        name = "Texture source",
         description = "Source of face texture",
         items = (
             ('TEX', "File", "Texture file"),
