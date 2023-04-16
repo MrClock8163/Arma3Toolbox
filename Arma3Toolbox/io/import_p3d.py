@@ -250,6 +250,8 @@ def read_LOD(context,file,materialDict,additionalData):
     # Create materials
     if 'MATERIALS' in additionalData:
         blenderMatIndices = {} # needed because otherwise materials and textures with same names, but in different folders may cause issues
+        proceduralStringPattern = "#\(.*?\)\w+\(.*?\)"
+        colorStringPattern = "#\(\s*argb\s*,\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)color\(\s*(\d+.?\d*)\s*,\s*(\d+.?\d*)\s*,\s*(\d+.?\d*)\s*,\s*(\d+.?\d*)\s*,([a-zA-Z]+)\)"
         for i in range(len(faceDataDict)):
             faceData = faceDataDict[i]
         
@@ -262,8 +264,32 @@ def read_LOD(context,file,materialDict,additionalData):
                 blenderMat = materialDict[(textureName,materialName)]
             except:
                 blenderMat = bpy.data.materials.new(f"P3D: {os.path.basename(textureName)} :: {os.path.basename(materialName)}")
+                OBprops = blenderMat.a3ob_properties_material
+                OBprops.texturePath = textureName
+                
+                if textureName.strip != "":
+                    
+                    if re.match(proceduralStringPattern,textureName):
+                        tex = re.match(colorStringPattern,textureName)
+                        if tex:
+                            OBprops.textureType = 'COLOR'
+                            groups = tex.groups()
+                            
+                            try:
+                                OBprops.colorType = groups[4].upper()
+                                OBprops.colorValue = (float(groups[0]),float(groups[1]),float(groups[2]),float(groups[3]))
+                            except:
+                                OBprops.textureType = 'CUSTOM'
+                                OBprops.colorString = textureName
+                                
+                        else:
+                            OBprops.textureType = 'CUSTOM'
+                            OBprops.colorString = textureName
+                    else:
+                        OBprops.texturePath = textureName
+                
+                OBprops.materialPath = materialName
                 materialDict[(textureName,materialName)] = blenderMat
-                # IMPLEMENT STORING THE ACTUAL PATHS
                 
             if blenderMat is None:
                 continue
