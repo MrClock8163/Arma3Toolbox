@@ -153,6 +153,7 @@ def read_LOD(context,file,materialDict,additionalData):
     
     # taggs = []
     namedSelections = []
+    properties = {}
     while True:
         taggActive = binary.readBool(file)
         taggName = binary.readAsciiz(file)
@@ -162,7 +163,6 @@ def read_LOD(context,file,materialDict,additionalData):
         
         # EOF
         # masses = []
-        properties = {}
         if taggName == "#EndOfFile#":
             if taggLength != 0:
                 raise IOError("Invalid EOF")
@@ -239,6 +239,23 @@ def read_LOD(context,file,materialDict,additionalData):
     objData.auto_smooth_angle = math.radians(180)
     objData.name = lodName
     obj = bpy.data.objects.new(lodName,objData)
+    
+    # Setup LOD property
+    OBprops = obj.a3ob_properties_object
+    
+    OBprops.isArma3LOD = True
+    try:
+        OBprops.LOD = str(lodIndex)
+    except:
+        OBprops.LOD = 30
+        
+    OBprops.resolution = lodRes
+    
+    # Add named properties
+    for key in properties:
+        item = OBprops.properties.add()
+        item.name = key
+        item.value = properties[key]
     
     for name in namedSelections:
         obj.vertex_groups.new(name=name)
