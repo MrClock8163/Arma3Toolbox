@@ -5,9 +5,11 @@ import math
 import re
 import time
 import os
+import mathutils
 from mathutils import Vector
 from . import binary_handler as binary
 from ..utilities import lod as lodutils
+from ..utilities import proxy as proxyutils
 from .. import data
 
 def read_signature(file):
@@ -256,9 +258,7 @@ def read_LOD(context,file,materialDict,additionalData):
         item = OBprops.properties.add()
         item.name = key
         item.value = properties[key]
-    
-    for name in namedSelections:
-        obj.vertex_groups.new(name=name)
+        
         
     bm.normal_update()
     bm.to_mesh(objData)
@@ -340,18 +340,21 @@ def read_LOD(context,file,materialDict,additionalData):
         objData.normals_split_custom_set(loopNormals)
         objData.free_normals_split()
     
+    # Named selections
+    for name in namedSelections:
+        obj.vertex_groups.new(name=name)
+    
     print(f"LOD overall took {time.time()-timeP3Dstart}")
     
     return obj, LODresolution
     
 def import_file(operator,context,file):
+    timeFILEstart = time.time()
 
     additionalData = set()
     
     if operator.allowAdditionalData:
         additionalData = operator.additionalData
-    
-    timeFILEstart = time.time()
     
     version, LODcount = read_header(file)
     
@@ -371,6 +374,7 @@ def import_file(operator,context,file):
             ("",""): bpy.data.materials.get("P3D: no material",bpy.data.materials.new("P3D: no material"))
         }
     
+    # for i in range(1):
     for i in range(LODcount):
         lodObj, res = read_LOD(context,file,materialDict,additionalData)
         
@@ -391,11 +395,57 @@ def import_file(operator,context,file):
         return
         
     colls = group_LODs(LODs,operator.groupby)
-
-        
         
     for group in colls.values():
         rootCollection.children.link(group)
+        
+    # Set up proxies
+    # For later reference: https://blender.stackexchange.com/questions/27234/python-how-to-completely-remove-an-object
+    if operator.proxyHandling != 'NOTHING':
+        selectionPattern = "proxy:(.*)\.(\d{3})"
+        for data in LODs:
+            LOD = data[0]
+                
+            bpy.context.view_layer.objects.active = LOD
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.mesh.select_all(action = 'DESELECT')
+            
+            for group in LOD.vertex_groups:
+                selection = group.name
+                proxy = re.match(selectionPattern,selection)
+                if not proxy:
+                    continue
+                    
+                LOD.vertex_groups.active_index = LOD.vertex_groups.get(selection).index
+                
+                bpy.ops.object.vertex_group_select()
+                bpy.ops.mesh.separate(type='SELECTED')
+                
+            bpy.ops.object.mode_set(mode='OBJECT')
+            
+            proxyObjects = [proxy for proxy in bpy.context.selected_objects if proxy != LOD]
+            
+            if operator.proxyHandling == 'CLEAR':
+                bpy.ops.object.delete({"selected_objects": proxyObjects})
+                
+            elif operator.proxyHandling == 'SEPARATE':
+                for obj in proxyObjects:
+                        
+                    rotate = proxyutils.getTransformRot(obj)
+                    obj.data.transform(rotate)
+                    obj.matrix_world = rotate.inverted()
+                    
+                    translate = mathutils.Matrix.Translation(-obj.data.vertices[proxyutils.findCenterIndex(obj.data)].co)
+                    
+                    obj.data.transform(translate)
+                    
+                    obj.matrix_world @= translate.inverted()
+                    
+                    obj.parent = LOD
+                    
+                    
+            bpy.ops.object.select_all(action='DESELECT')
+            
         
     print(f"File took {time.time()-timeFILEstart}")
     

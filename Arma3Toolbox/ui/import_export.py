@@ -72,6 +72,17 @@ class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         default = True
     )
     
+    proxyHandling: bpy.props.EnumProperty (
+        name = "Proxy action",
+        description = "Post-import handling of proxies",
+        items = (
+            ('NOTHING',"Nothing","Leave proxies embedded into the LOD meshes"),
+            ('SEPARATE',"Separate","Separate the proxies into proxy objects parented to the LOD mesh they belong to"),
+            ('CLEAR',"Purge","Remove all proxies")
+        ),
+        default = 'SEPARATE'
+    )
+    
     def draw(self,context):
         pass
     
@@ -99,6 +110,29 @@ class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         file.close()
         
         return {'FINISHED'}
+        
+class A3OB_PT_import_P3D_main(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Main"
+    bl_parent_id = "FILE_PT_operator"
+    bl_options = {'HIDE_HEADER'}
+    
+    @classmethod
+    def poll(cls,context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        return operator.bl_idname == "A3OB_OT_importp3d"
+    
+    def draw(self,context):
+        layout = self.layout
+        layout.use_property_split = True
+        
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        layout.prop(operator,"validateMeshes")
         
 class A3OB_PT_import_P3D_collections(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -148,7 +182,29 @@ class A3OB_PT_import_P3D_data(bpy.types.Panel):
         col2 = col.column()
         col2.enabled = operator.allowAdditionalData
         prop = col2.prop(operator,"additionalData",text=" ")
-        layout.prop(operator,"validateMeshes")
+        
+class A3OB_PT_import_P3D_proxies(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Proxies"
+    bl_parent_id = "FILE_PT_operator"
+    
+    @classmethod
+    def poll(cls,context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        return operator.bl_idname == "A3OB_OT_importp3d"
+        
+    def draw(self,context):
+        layout = self.layout
+        layout.use_property_split = True
+        
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        col = layout.column(align=True)
+        col.prop(operator,"proxyHandling",expand=True)
         
 class A3OB_OP_export_P3D(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
     '''Export to Arma 3 MLOD P3D'''
@@ -180,8 +236,10 @@ class A3OB_OP_export_P3D(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
         
 classes = (
     A3OB_OP_import_P3D,
+    A3OB_PT_import_P3D_main,
     A3OB_PT_import_P3D_collections,
     A3OB_PT_import_P3D_data,
+    A3OB_PT_import_P3D_proxies,
     A3OB_OP_export_P3D
 )
         
