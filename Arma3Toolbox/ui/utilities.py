@@ -45,7 +45,7 @@ class A3OB_OT_CheckConvexity(bpy.types.Operator):
     '''Find concave edges'''
     
     bl_label = "Find Non-Convexities"
-    bl_idname = 'a3ob.nonconvexities'
+    bl_idname = 'a3ob.find_non_convexities'
     
     @classmethod
     def poll(cls,context):
@@ -67,7 +67,7 @@ class A3OB_OT_CheckClosed(bpy.types.Operator):
     '''Find non-closed parts of model'''
     
     bl_label = "Find Non-Closed"
-    bl_idname = 'a3ob.nonclosed'
+    bl_idname = 'a3ob.find_non_closed'
     
     @classmethod
     def poll(cls,context):
@@ -83,7 +83,7 @@ class A3OB_OT_ConvexHull(bpy.types.Operator):
     '''Calculate convex hull for entire object'''
     
     bl_label = "Convex Hull"
-    bl_idname = 'a3ob.convexhull'
+    bl_idname = 'a3ob.convex_hull'
     
     @classmethod
     def poll(cls,context):
@@ -100,7 +100,7 @@ class A3OB_OT_ComponentConvexHull(bpy.types.Operator):
     '''Create convex named component selections'''
     
     bl_label = "Component Convex Hull"
-    bl_idname = 'a3ob.componentconvexhull'
+    bl_idname = 'a3ob.component_convex_hull'
     
     @classmethod
     def poll(cls,context):
@@ -117,7 +117,7 @@ class A3OB_OT_FindComponents(bpy.types.Operator):
     '''Create named component selections'''
     
     bl_label = "Find Components"
-    bl_idname = 'a3ob.findcomponents'
+    bl_idname = 'a3ob.find_components'
     
     @classmethod
     def poll(cls,context):
