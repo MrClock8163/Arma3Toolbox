@@ -116,3 +116,22 @@ def checkConvexity():
     bpy.ops.mesh.select_mode(type="EDGE")
     
     return activeObj.name, concaveCount
+
+def cleanupVertexGroups(obj):
+    mesh = obj.data
+    
+    removed = 0
+
+    usedGroups = {}
+    for vert in obj.data.vertices:
+        for vgroup in vert.groups:
+            gIndex = vgroup.group
+            if gIndex not in usedGroups:
+                usedGroups[gIndex] = obj.vertex_groups[gIndex]
+
+    for group in obj.vertex_groups:
+        if group not in usedGroups.values():
+            obj.vertex_groups.remove(group)
+            removed += 1
+        
+    return removed

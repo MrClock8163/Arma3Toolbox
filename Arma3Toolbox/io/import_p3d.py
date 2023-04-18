@@ -10,6 +10,7 @@ from mathutils import Vector
 from . import binary_handler as binary
 from ..utilities import lod as lodutils
 from ..utilities import proxy as proxyutils
+from ..utilities import structure as structutils
 from .. import data
 
 def read_signature(file):
@@ -392,7 +393,7 @@ def import_file(operator,context,file):
     if operator.groupby == 'NONE':
         for item in LODs:
             rootCollection.objects.link(item[0])
-        return
+        return # NOT GOOD BECAUSE IT HALTS EVERY OTHER OPERATION
         
     colls = group_LODs(LODs,operator.groupby)
         
@@ -430,10 +431,11 @@ def import_file(operator,context,file):
                 
             elif operator.proxyHandling == 'SEPARATE':
                 for obj in proxyObjects:
-                        
+                    
                     rotate = proxyutils.getTransformRot(obj)
                     obj.data.transform(rotate)
                     obj.matrix_world = rotate.inverted()
+                    obj.a3ob_properties_object_proxy.isArma3Proxy = True
                     
                     translate = mathutils.Matrix.Translation(-obj.data.vertices[proxyutils.findCenterIndex(obj.data)].co)
                     
@@ -441,7 +443,21 @@ def import_file(operator,context,file):
                     
                     obj.matrix_world @= translate.inverted()
                     
+                    structutils.cleanupVertexGroups(obj)
+                    
+                    for vgroup in obj.vertex_groups:
+                        proxyData = re.match(selectionPattern,vgroup.name)
+                        if proxyData:
+                            obj.vertex_groups.remove(vgroup)
+                            proxyDataGroups = proxyData.groups()
+                            obj.a3ob_properties_object_proxy.proxyPath = proxyDataGroups[0]
+                            obj.a3ob_properties_object_proxy.proxyIndex = int(proxyDataGroups[1])
+                    
+                    obj.data.materials.clear()
+                    obj.data.materials.append(materialDict[("","")])
+                    
                     obj.parent = LOD
+                    
                     
                     
             bpy.ops.object.select_all(action='DESELECT')
