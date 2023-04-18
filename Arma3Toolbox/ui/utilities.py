@@ -138,7 +138,8 @@ class A3OB_OT_CleanupVertexGroups(bpy.types.Operator):
     
     @classmethod
     def poll(cls,context):
-        return context.active_object and context.active_object.type == 'MESH'
+        obj = context.active_object
+        return obj and obj.type == 'MESH' and len(obj.vertex_groups) > 0
         
     def execute(self,context):
         removed = structutils.cleanupVertexGroups(context.active_object)
@@ -167,9 +168,10 @@ def menu_func(self,context):
     self.layout.menu('A3OB_MT_ObjectBuilder')
     
 def vertex_groups_func(self,context):
-    if len(context.object.vertex_groups) > 0:
-        layout = self.layout
-        layout.operator(A3OB_OT_CleanupVertexGroups.bl_idname,icon='TRASH')
+    layout = self.layout
+    row = layout.row(align=True)
+    row.operator(A3OB_OT_FindComponents.bl_idname,icon='STICKY_UVS_DISABLE')
+    row.operator(A3OB_OT_CleanupVertexGroups.bl_idname,icon='TRASH')
 
 def register():
     from bpy.utils import register_class
