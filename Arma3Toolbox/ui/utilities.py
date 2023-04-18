@@ -169,7 +169,7 @@ def menu_func(self,context):
 def vertex_groups_func(self,context):
     if len(context.object.vertex_groups) > 0:
         layout = self.layout
-        layout.operator(A3OB_OT_CleanupVertexGroups.bl_idname,icon='TRASH',text="Delete unused groups")
+        layout.operator(A3OB_OT_CleanupVertexGroups.bl_idname,icon='TRASH')
 
 def register():
     from bpy.utils import register_class

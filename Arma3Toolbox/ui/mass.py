@@ -5,7 +5,7 @@ class A3OB_OT_vertex_mass_set(bpy.types.Operator):
     '''Set same mass on all selected vertices'''
     
     bl_idname = "a3ob.vertex_mass_set"
-    bl_label = "Set mass on each"
+    bl_label = "Set Mass On Each"
     bl_options = {'UNDO'}
     
     @classmethod
@@ -23,7 +23,7 @@ class A3OB_OT_vertex_mass_distribute(bpy.types.Operator):
     '''Distribute mass equally to selected vertices'''
     
     bl_idname = "a3ob.vertex_mass_distribute"
-    bl_label = "Distribute mass"
+    bl_label = "Distribute Mass"
     bl_options = {'UNDO'}
     
     @classmethod
@@ -40,7 +40,7 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "Object Builder"
-    bl_label = "Vertex mass editing"
+    bl_label = "Vertex Mass Editing"
     
     @classmethod
     def poll(cls,context):
@@ -62,7 +62,7 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
         
         layout.prop(activeObj,"a3ob_selectionMass")
         layout.separator()
-        layout.label(text="Overwrite mass:")
+        layout.label(text="Overwrite Mass:")
         col = layout.column(align=True)
         col.prop(activeObj,"a3ob_selectionMassTarget")
         col.operator("a3ob.vertex_mass_set")

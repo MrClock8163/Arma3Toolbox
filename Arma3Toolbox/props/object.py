@@ -16,15 +16,13 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
     isArma3LOD: bpy.props.BoolProperty (
         name = "Arma 3 LOD",
         description = "This object is a LOD for an Arma 3 P3D",
-        default = False,
-        options = set()
+        default = False
     )
     LOD: bpy.props.EnumProperty (
-        name = "LOD type",
+        name = "LOD Type",
         description = "Type of LOD",
         items = data.LODTypes,
-        default = '0',
-        options = set()
+        default = '0'
     )
     resolution: bpy.props.IntProperty (
         name = "Resolution/Index",
@@ -32,42 +30,36 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
         default = 1,
         min = 0,
         soft_max = 10000,
-        step = 1,
-        options = set()
+        step = 1
     )
     properties: bpy.props.CollectionProperty (
-        name = "Named properties",
+        name = "Named Properties",
         description = "Named properties associated with the LOD",
-        type = A3OB_PG_properties_named_property,
-        options = set()
+        type = A3OB_PG_properties_named_property
     )
     propertyIndex: bpy.props.IntProperty (
-        name = "Named property index",
+        name = "Named Property Index",
         description = "Index of the currently selected named property",
-        default = -1,
-        options = set()
+        default = -1
     )
     
 class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
     isArma3Proxy: bpy.props.BoolProperty (
-        name = "Arma 3 model proxy",
+        name = "Arma 3 Model Proxy",
         description = "This object is a proxy",
-        default = False,
-        options = set()
+        default = False
     )
     proxyPath: bpy.props.StringProperty (
         name = "Path",
         description = "File path to the proxy model",
         default = "",
-        options = set(),
         subtype = 'FILE_PATH'
     )
     proxyIndex: bpy.props.IntProperty (
         name = "Index",
         description = "Index of proxy",
         default = 1,
-        min = 0,
-        options = set()
+        min = 0
     )
     
 classes = (
@@ -84,7 +76,7 @@ def register():
     bpy.types.Object.a3ob_properties_object_proxy = bpy.props.PointerProperty(type=A3OB_PG_properties_object_proxy)
         
     bpy.types.Object.a3ob_selectionMass = bpy.props.FloatProperty (
-        name = "Current mass",
+        name = "Current Mass",
         description = "Total mass of current selection",
         default = 0.0,
         min = 0,

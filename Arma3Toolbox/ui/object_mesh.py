@@ -5,7 +5,7 @@ class A3OB_OT_namedprops_add(bpy.types.Operator):
     '''Add named property to the active object'''
     
     bl_idname = "a3ob.namedprops_add"
-    bl_label = "Add named property"
+    bl_label = "Add Named Property"
     bl_options = {'UNDO'}
     
     @classmethod
@@ -28,7 +28,7 @@ class A3OB_OT_namedprops_remove(bpy.types.Operator):
     '''Remove named property from the active object'''
     
     bl_idname = "a3ob.namedprops_remove"
-    bl_label = "Remove named property"
+    bl_label = "Remove Named Property"
     bl_options = {'UNDO'}
     
     @classmethod
@@ -48,10 +48,7 @@ class A3OB_OT_namedprops_remove(bpy.types.Operator):
             if len(OBprops.properties) == 0:
                 OBprops.propertyIndex = -1
             elif index > len(OBprops.properties)-1:
-                OBprops.propertyIndex = len(OBprops.properties)-1
-            
-            # if index > len(OB)
-            
+                OBprops.propertyIndex = len(OBprops.properties)-1            
         
         return {'FINISHED'}
 
@@ -62,7 +59,7 @@ class A3OB_UL_namedprops(bpy.types.UIList):
 class A3OB_PT_object_mesh(bpy.types.Panel):
     bl_region_type = 'WINDOW'
     bl_space_type = 'PROPERTIES'
-    bl_label = "Object Builder: LOD properties"
+    bl_label = "Object Builder: LOD Properties"
     bl_context = "data"
     bl_options = {'DEFAULT_CLOSED'}
     
@@ -84,6 +81,7 @@ class A3OB_PT_object_mesh(bpy.types.Panel):
         
         layout.prop(OBprops,"isArma3LOD",text="Is P3D LOD",toggle=1)
         layout.use_property_split = True
+        layout.use_property_decorate = False
         
         if OBprops.isArma3LOD:
             layout.prop(OBprops,"LOD",text="Type")
@@ -94,7 +92,7 @@ class A3OB_PT_object_mesh(bpy.types.Panel):
 class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
     bl_region_type = 'WINDOW'
     bl_space_type = 'PROPERTIES'
-    bl_label = "Named properties"
+    bl_label = "Named Properties"
     bl_context = "data"
     bl_parent_id = 'A3OB_PT_object_mesh'
     
@@ -126,7 +124,7 @@ class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
 class A3OB_PT_object_proxy(bpy.types.Panel):
     bl_region_type = 'WINDOW'
     bl_space_type = 'PROPERTIES'
-    bl_label = "Object Builder: proxy properties"
+    bl_label = "Object Builder: Proxy Properties"
     bl_context = "data"
     bl_options = {'DEFAULT_CLOSED'}
     
@@ -147,10 +145,11 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
         layout = self.layout
         
         row = layout.row()
-        row.prop(OBprops,"isArma3Proxy",text="Is Arma 3 proxy",toggle=1)
+        row.prop(OBprops,"isArma3Proxy",text="Is Arma 3 Proxy",toggle=1)
         row.enabled = False
         
         layout.use_property_split = True
+        layout.use_property_decorate = False
         
         layout.separator()
         layout.prop(OBprops,"proxyPath",icon='MESH_CUBE',text="")

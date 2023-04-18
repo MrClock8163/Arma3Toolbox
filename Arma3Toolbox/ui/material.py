@@ -3,7 +3,7 @@ import bpy
 class A3OB_PT_material(bpy.types.Panel):
     bl_region_type = 'WINDOW'
     bl_space_type = 'PROPERTIES'
-    bl_label = "Object Builder: material properties"
+    bl_label = "Object Builder: Material Properties"
     bl_context = "material"
     
     @classmethod
