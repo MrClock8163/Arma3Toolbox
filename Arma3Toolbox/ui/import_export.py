@@ -58,12 +58,14 @@ class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         options = {'ENUM_FLAG'},
         items = (
             ('NORMALS',"Custom normals","WARNING: may not work properly on certain files"),
+            ('PROPS',"Named properties",""),
+            ('MASS',"Vertex mass","Mass of individual vertices (in Geometry LODs)"),
             ('SELECTIONS',"Selections",""),
             ('UV',"UV sets",""),
             ('MATERIALS',"Materials","")
         ),
         description = "Data to import in addition to the LOD meshes themselves",
-        default = {'NORMALS','SELECTIONS','UV','MATERIALS'}
+        default = {'NORMALS','PROPS','MASS','SELECTIONS','UV','MATERIALS'}
     )
     
     validateMeshes: bpy.props.BoolProperty (

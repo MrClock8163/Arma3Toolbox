@@ -184,7 +184,7 @@ def read_LOD(context,file,materialDict,additionalData):
                         edge.smooth = False
         
         # Property
-        elif taggName == "#Property#":
+        elif taggName == "#Property#" and 'PROPS' in additionalData:
             if taggLength != 128:
                 raise IOError(f"Invalid named property length: {taggLength}")
             key = binary.readChar(file,64)
@@ -194,7 +194,7 @@ def read_LOD(context,file,materialDict,additionalData):
             # IMPLEMENT HANDLING!!!
         
         # Mass
-        elif taggName == "#Mass#":
+        elif taggName == "#Mass#" and 'MASS' in additionalData:
             massLayer = bm.verts.layers.float.new("a3ob_mass") # create new BMesh layer to store mass data
             for i in range(numPoints):
                 mass = binary.readFloat(file)
@@ -402,7 +402,7 @@ def import_file(operator,context,file):
         
     # Set up proxies
     # For later reference: https://blender.stackexchange.com/questions/27234/python-how-to-completely-remove-an-object
-    if operator.proxyHandling != 'NOTHING':
+    if operator.proxyHandling != 'NOTHING' and 'SELECTIONS' in additionalData:
         selectionPattern = "proxy:(.*)\.(\d{3})"
         for data in LODs:
             LOD = data[0]
