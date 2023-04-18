@@ -205,8 +205,16 @@ class A3OB_PT_import_P3D_proxies(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
         
-        col = layout.column(align=True)
-        col.prop(operator,"proxyHandling",expand=True)
+        if 'SELECTIONS' not in operator.additionalData or not operator.allowAdditionalData:
+            layout.alert = True
+            layout.label(text="Enable selection data")
+        
+            col = layout.column(align=True)
+            col.prop(operator,"proxyHandling",expand=True)
+            col.enabled = False
+        else:
+            col = layout.column(align=True)
+            col.prop(operator,"proxyHandling",expand=True)
         
 class A3OB_OP_export_P3D(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
     '''Export to Arma 3 MLOD P3D'''

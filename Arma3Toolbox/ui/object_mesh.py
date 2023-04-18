@@ -153,8 +153,8 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
         layout.use_property_split = True
         
         layout.separator()
-        layout.prop(OBprops,"proxyPath",icon='MESH_CUBE')
-        layout.prop(OBprops,"proxyIndex")
+        layout.prop(OBprops,"proxyPath",icon='MESH_CUBE',text="")
+        layout.prop(OBprops,"proxyIndex",text="")
         
 classes = (
     A3OB_OT_namedprops_add,
