@@ -21,6 +21,14 @@ class A3OB_MT_ObjectBuilder_Convexity(bpy.types.Menu):
         self.layout.operator(A3OB_OT_CheckConvexity.bl_idname)
         self.layout.operator(A3OB_OT_ConvexHull.bl_idname)
         self.layout.operator(A3OB_OT_ComponentConvexHull.bl_idname)
+        
+class A3OB_MT_ObjectBuilder_Misc(bpy.types.Menu):
+    '''Object Builder miscellaneous functions'''
+    
+    bl_label = "Misc"
+    
+    def draw(self,context):
+        self.layout.operator(A3OB_OT_CleanupVertexGroups.bl_idname)
 
 class A3OB_MT_ObjectBuilder(bpy.types.Menu):
     '''Arma 3 Object Builder utility functions'''
@@ -30,6 +38,7 @@ class A3OB_MT_ObjectBuilder(bpy.types.Menu):
     def draw(self,context):
         self.layout.menu('A3OB_MT_ObjectBuilder_Topo')
         self.layout.menu('A3OB_MT_ObjectBuilder_Convexity')
+        self.layout.menu('A3OB_MT_ObjectBuilder_Misc')
 
 # Operators
 class A3OB_OT_CheckConvexity(bpy.types.Operator):
@@ -120,6 +129,25 @@ class A3OB_OT_FindComponents(bpy.types.Operator):
         bpy.ops.object.mode_set(mode=mode)
         
         return {'FINISHED'}
+        
+class A3OB_OT_CleanupVertexGroups(bpy.types.Operator):
+    '''Cleanup vertex groups with no vertices assigned'''
+    
+    bl_label = "Delete Unused Groups"
+    bl_idname = 'a3ob.vertex_groups_cleanup'
+    
+    @classmethod
+    def poll(cls,context):
+        return context.active_object and context.active_object.type == 'MESH'
+        
+    def execute(self,context):
+        removed = structutils.cleanupVertexGroups(context.active_object)
+        
+        self.report({'INFO'},f"Removed {removed} unused vertex group(s) from {context.active_object.name}")
+        utils.show_infoBox(f"Removed {removed} unused vertex group(s) from {context.active_object.name}","Info",'INFO')
+        
+        return {'FINISHED'}
+        
 
 classes = (
     A3OB_OT_CheckConvexity,
@@ -127,14 +155,21 @@ classes = (
     A3OB_OT_ConvexHull,
     A3OB_OT_ComponentConvexHull,
     A3OB_OT_FindComponents,
+    A3OB_OT_CleanupVertexGroups,
     A3OB_MT_ObjectBuilder,
     A3OB_MT_ObjectBuilder_Topo,
-    A3OB_MT_ObjectBuilder_Convexity
+    A3OB_MT_ObjectBuilder_Convexity,
+    A3OB_MT_ObjectBuilder_Misc
 )
 
 def menu_func(self,context):
     self.layout.separator()
     self.layout.menu('A3OB_MT_ObjectBuilder')
+    
+def vertex_groups_func(self,context):
+    if len(context.object.vertex_groups) > 0:
+        layout = self.layout
+        layout.operator(A3OB_OT_CleanupVertexGroups.bl_idname,icon='TRASH',text="Delete unused groups")
 
 def register():
     from bpy.utils import register_class
@@ -143,10 +178,12 @@ def register():
         register_class(cls)
     
     bpy.types.VIEW3D_MT_editor_menus.append(menu_func)
+    bpy.types.DATA_PT_vertex_groups.append(vertex_groups_func)
 
 def unregister():
     from bpy.utils import unregister_class
             
+    bpy.types.DATA_PT_vertex_groups.remove(vertex_groups_func)
     bpy.types.VIEW3D_MT_editor_menus.remove(menu_func)
 
     for cls in reversed(classes):
