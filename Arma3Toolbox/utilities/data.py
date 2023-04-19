@@ -4,10 +4,11 @@ LODtypeResolutionPosition = {
     4: 4,
     5: 4,
     16: 2,
-    26: 2
+    26: 2,
+    30: -1
 }
 
-LODvisuals = (0,1,2,3,18)
+LODvisuals = (0,1,2,3,18,30)
 
 LODtypeIndex = {
     (0.0,0):   0, # Visual
