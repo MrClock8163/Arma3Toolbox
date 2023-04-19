@@ -11,13 +11,14 @@ from ..utilities import lod as lodutils
 from ..utilities import proxy as proxyutils
 from ..utilities import structure as structutils
 from ..utilities import data
+from ..utilities.logger import ProcessLogger
 
 def read_signature(file):
     return binary.readChar(file,4)
 
 def read_header(file):
     signature = read_signature(file)
-    print(f"Header signature: {signature}")
+    # print(f"Header signature: {signature}")
     if signature != "MLOD":
         raise IOError(f"Invalid MLOD signature: {signature}")
         
@@ -67,17 +68,15 @@ def decode_selectionWeight(b):
     else:
         return 1.0 # ¯\_(ツ)_/¯
         
-def process_TAGGs(file,bm,additionalData,numPoints,numFaces):
-
+def process_TAGGs(file,bm,additionalData,numPoints,numFaces,logger):
+    count = 0
     namedSelections = []
     properties = {}
     while True:
-        # taggActive = binary.readBool(file)
+        count += 1
         file.read(1)
         taggName = binary.readAsciiz(file)
         taggLength = binary.readULong(file)
-        
-        # print(taggName,taggLength)
         
         # EOF
         if taggName == "#EndOfFile#":
@@ -141,6 +140,8 @@ def process_TAGGs(file,bm,additionalData,numPoints,numFaces):
             
         else:
             file.read(taggLength) # dump all other TAGGs
+            
+    logger.step("Read TAGGs: %d" % count)
             
     return namedSelections, properties
     
@@ -305,8 +306,8 @@ def process_proxies(LODs,operator,materialDict):
                 
         bpy.ops.object.select_all(action='DESELECT')
 
-def read_LOD(context,file,materialDict,additionalData):
-    timeP3Dstart = time.time()
+def read_LOD(context,file,materialDict,additionalData,logger):
+    logger.level_up()
 
     # Read LOD header
     signature = read_signature(file)
@@ -319,6 +320,9 @@ def read_LOD(context,file,materialDict,additionalData):
     if versionMajor != 0x1c or versionMinor != 0x100:
         raise IOError(f"Unsupported LOD version: {versionMajor}.{versionMinor}")
         
+    logger.step("Type: P3DM")
+    logger.step(f"Version: {versionMajor}.{versionMinor}")
+                
     numPoints = binary.readULong(file)
     numNormals = binary.readULong(file)
     numFaces = binary.readULong(file)
@@ -328,15 +332,11 @@ def read_LOD(context,file,materialDict,additionalData):
     # Read vertex table
     timePOINTstart = time.time()
     points = [read_vertex(file) for i in range(numPoints)]
-        
-    print(f"Points took {time.time()-timePOINTstart}")
-    
-    print(f"Points: {numPoints}")
+    logger.step("Read vertices: %d" % numPoints)
     
     # Read vertex normal table
     normalsDict = {i: read_normal(file) for i in range(numNormals)}
-    
-    print(f"Normals: {numNormals}")
+    logger.step("Read vertex normals: %d" % numNormals)
     
     # Read faces
     faces = []
@@ -346,6 +346,8 @@ def read_LOD(context,file,materialDict,additionalData):
         newFace = read_face(file)
         faces.append([i[0] for i in newFace[0]])
         faceDataDict[i] = newFace
+        
+    logger.step("Read faces: %d" % numFaces)
     
     # Construct mesh
     objData = bpy.data.meshes.new("Temp LOD")
@@ -361,23 +363,21 @@ def read_LOD(context,file,materialDict,additionalData):
     bm.verts.ensure_lookup_table()
     bm.edges.ensure_lookup_table()
     bm.faces.ensure_lookup_table()
-    print(f"Faces took {time.time()-timeFACEstart}")
-    
-    print(f"Faces: {numFaces}")
     
     taggSignature = read_signature(file)
     if taggSignature != "TAGG":
         raise IOError(f"Invalid TAGG section signature: {taggSignature}")
     
-    namedSelections, properties = process_TAGGs(file,bm,additionalData,numPoints,numFaces)
+    namedSelections, properties = process_TAGGs(file,bm,additionalData,numPoints,numFaces,logger)
     
     # EOF
     LODresolution = binary.readFloat(file)
+    logger.step("Resolution signature: %d" % LODresolution)
     
     # Create object
     lodIndex, lodRes = lodutils.getLODid(LODresolution)
     lodName = lodutils.formatLODname(lodIndex,lodRes)
-    print(lodName)
+    logger.step("Name: %s" % lodName)
         
     objData.use_auto_smooth = True
     objData.auto_smooth_angle = math.radians(180)
@@ -401,6 +401,9 @@ def read_LOD(context,file,materialDict,additionalData):
         item.name = key
         item.value = properties[key]
     
+    if len(properties) > 0:
+        logger.step("Added named properties: %d" % len(properties))
+    
     # Push to Mesh data
     bm.normal_update()
     bm.to_mesh(objData)
@@ -409,20 +412,27 @@ def read_LOD(context,file,materialDict,additionalData):
     # Create materials
     if 'MATERIALS' in additionalData:
         materialDict = process_materials(objData,faceDataDict,materialDict)
+        logger.step("Assigned materials")
         
     # Apply split normals
     if 'NORMALS' in additionalData and lodIndex in data.LODvisuals: 
         process_normals(objData,faceDataDict,normalsDict)
+        logger.step("Applied split normals")
         
     # Add vertex group names to object
     for name in namedSelections:
         obj.vertex_groups.new(name=name)
+        
+    if len(namedSelections) > 0:
+        logger.step("Added named selections: %d" % len(namedSelections))
     
-    print(f"LOD overall took {time.time()-timeP3Dstart}")
-    
+    logger.level_down()
     return obj, LODresolution, materialDict
 
 def import_file(operator,context,file):
+    logger = ProcessLogger()
+    logger.step("P3D Import from %s" % operator.filepath)
+    
     timeFILEstart = time.time()
 
     additionalData = set()
@@ -432,8 +442,8 @@ def import_file(operator,context,file):
     
     version, LODcount = read_header(file)
     
-    print(f"File version: {version}")
-    print(f"Number of LODs: {LODcount}")
+    logger.log(f"File version: {version}")
+    logger.log(f"Number of LODs: {LODcount}")
     
     
     if version != 257:
@@ -449,25 +459,30 @@ def import_file(operator,context,file):
         }
     
     # for i in range(1):
+    logger.level_up()
     for i in range(LODcount):
-        lodObj, res, materialDict = read_LOD(context,file,materialDict,additionalData)
+        timeLODStart = time.time()
+        logger.step("LOD %d" % i)
+        
+        lodObj, res, materialDict = read_LOD(context,file,materialDict,additionalData,logger)
         
         if operator.validateMeshes:
             lodObj.data.validate(clean_customdata=False)
         
         LODs.append((lodObj,res))
+        logger.log("Done in %f sec" % (time.time()-timeLODStart))
+        
+    logger.level_down()
     
     
     rootCollection = context.scene.collection
     
     build_collections(LODs,operator,rootCollection)
     
-        
     # Set up proxies
-    # For later reference: https://blender.stackexchange.com/questions/27234/python-how-to-completely-remove-an-object
     if operator.proxyHandling != 'NOTHING' and 'SELECTIONS' in additionalData:
         process_proxies(LODs,operator,materialDict)
-            
-        
-    print(f"File took {time.time()-timeFILEstart}")
+               
+    logger.step("")
+    logger.step("P3D Import finished in %f sec" % (time.time()-timeFILEstart))
     
