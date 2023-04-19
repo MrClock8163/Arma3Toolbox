@@ -58,7 +58,7 @@ class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         items = (
             ('NORMALS',"Custom Normals","WARNING: may not work properly on certain files"),
             ('PROPS',"Named Properties",""),
-            ('MASS',"Vertex Nass","Mass of individual vertices (in Geometry LODs)"),
+            ('MASS',"Vertex Mass","Mass of individual vertices (in Geometry LODs)"),
             ('SELECTIONS',"Selections",""),
             ('UV',"UV Sets",""),
             ('MATERIALS',"Materials","")
