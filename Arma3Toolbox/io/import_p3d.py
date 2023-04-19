@@ -43,7 +43,7 @@ def read_pseudo_vertextable(file): # UV can be dumped because they are read from
 def read_face(file):
     numSides = binary.readULong(file)
     
-    vertTables = []
+    vertTables = [] # should instead return the individual lists to avoid unecessary data
     for i in range(numSides):        
         vertTables.append(read_pseudo_vertextable(file))
     
@@ -197,8 +197,21 @@ def process_materials(objData,faceDataDict,materialDict):
         
     return materialDict
     
-def process_normals():
-    pass
+def process_normals(objData,faceDataDict,normalsDict):
+    loopNormals = []
+    for face in objData.polygons:
+        vertTables = faceDataDict[face.index][0]
+        
+        for i in face.loop_indices:
+            loop = objData.loops[i]
+            vertID = loop.vertex_index
+            
+            for vertTable in vertTables:
+                if vertTable[0] == vertID:
+                    loopNormals.insert(i,normalsDict[vertTable[1]])   
+    
+    objData.normals_split_custom_set(loopNormals)
+    objData.free_normals_split()
         
 def group_LODs(LODs,groupBy = 'TYPE'):    
     collections = {}
@@ -329,22 +342,8 @@ def read_LOD(context,file,materialDict,additionalData):
     
     # Apply split normals
     if 'NORMALS' in additionalData and lodIndex in data.LODvisuals: 
+        process_normals(objData,faceDataDict,normalsDict)
         
-        loopNormals = []
-        for face in objData.polygons:
-            vertTables = faceDataDict[face.index][0]
-            
-            for i in face.loop_indices:
-                loop = objData.loops[i]
-                vertID = loop.vertex_index
-                
-                for vertTable in vertTables:
-                    if vertTable[0] == vertID:
-                        loopNormals.insert(i,normalsDict[vertTable[1]])   
-        
-        objData.normals_split_custom_set(loopNormals)
-        objData.free_normals_split()
-    
     # Named selections
     for name in namedSelections:
         obj.vertex_groups.new(name=name)
