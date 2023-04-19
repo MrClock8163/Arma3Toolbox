@@ -11,8 +11,6 @@ bl_info = {
     "category": "3D View"
 }
 
-import sys, os
-
 if "bpy" in locals():
     import importlib
 
