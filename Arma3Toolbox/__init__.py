@@ -4,7 +4,7 @@ bl_info = {
     "author": "MrClock, Hans-Joerg \"Alwarren\" Frieden (original add-on)",
     "version": (0, 0, 1),
     "blender": (2, 80, 0),
-    "location": "View3D > Panels",
+    "location": "Object Builder panels in various views",
     "warning": '',
     "wiki_url": "",
     "tracker_url": "",
@@ -18,10 +18,22 @@ if "bpy" in locals():
 
     importlib.reload(ui.import_export)
     importlib.reload(ui.utilities)
+    importlib.reload(ui.mass)
+    importlib.reload(ui.material)
+    importlib.reload(ui.object_mesh)
+    importlib.reload(props.windowmanager)
+    importlib.reload(props.object)
+    importlib.reload(props.rvmat)
 
 else:    
     from .ui import import_export
     from .ui import utilities
+    from .ui import mass
+    from .ui import material
+    from .ui import object_mesh
+    from .props import windowmanager
+    from .props import object
+    from .props import rvmat
 
 import bpy
 import os
@@ -73,6 +85,12 @@ def register():
         
     import_export.register()
     utilities.register()
+    object_mesh.register()
+    mass.register()
+    windowmanager.register()
+    object.register()
+    rvmat.register()
+    material.register()
     
     print("Register done")
 
@@ -82,6 +100,12 @@ def unregister():
     for cls in reversed(classes):
         unregister_class(cls)
 
+    material.unregister()
+    rvmat.unregister()
+    object.unregister()
+    windowmanager.unregister()
+    mass.unregister()
+    object_mesh.unregister()
     utilities.unregister()
     import_export.unregister()
     

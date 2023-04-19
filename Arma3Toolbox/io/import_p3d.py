@@ -5,9 +5,12 @@ import math
 import re
 import time
 import os
+import mathutils
 from mathutils import Vector
 from . import binary_handler as binary
 from ..utilities import lod as lodutils
+from ..utilities import proxy as proxyutils
+from ..utilities import structure as structutils
 from .. import data
 
 def read_signature(file):
@@ -153,6 +156,7 @@ def read_LOD(context,file,materialDict,additionalData):
     
     # taggs = []
     namedSelections = []
+    properties = {}
     while True:
         taggActive = binary.readBool(file)
         taggName = binary.readAsciiz(file)
@@ -162,7 +166,6 @@ def read_LOD(context,file,materialDict,additionalData):
         
         # EOF
         # masses = []
-        properties = {}
         if taggName == "#EndOfFile#":
             if taggLength != 0:
                 raise IOError("Invalid EOF")
@@ -174,13 +177,14 @@ def read_LOD(context,file,materialDict,additionalData):
                 point1ID = binary.readULong(file)
                 point2ID = binary.readULong(file)
                 
-                edge = bm.edges.get([bm.verts[point1ID],bm.verts[point2ID]])
-                
-                if edge is not None:
-                    edge.smooth = False
+                if point1ID != point2ID:
+                    edge = bm.edges.get([bm.verts[point1ID],bm.verts[point2ID]])
+                    
+                    if edge is not None:
+                        edge.smooth = False
         
         # Property
-        elif taggName == "#Property#":
+        elif taggName == "#Property#" and 'PROPS' in additionalData:
             if taggLength != 128:
                 raise IOError(f"Invalid named property length: {taggLength}")
             key = binary.readChar(file,64)
@@ -190,7 +194,7 @@ def read_LOD(context,file,materialDict,additionalData):
             # IMPLEMENT HANDLING!!!
         
         # Mass
-        elif taggName == "#Mass#":
+        elif taggName == "#Mass#" and 'MASS' in additionalData:
             massLayer = bm.verts.layers.float.new("a3ob_mass") # create new BMesh layer to store mass data
             for i in range(numPoints):
                 mass = binary.readFloat(file)
@@ -239,8 +243,23 @@ def read_LOD(context,file,materialDict,additionalData):
     objData.name = lodName
     obj = bpy.data.objects.new(lodName,objData)
     
-    for name in namedSelections:
-        obj.vertex_groups.new(name=name)
+    # Setup LOD property
+    OBprops = obj.a3ob_properties_object
+    
+    OBprops.isArma3LOD = True
+    try:
+        OBprops.LOD = str(lodIndex)
+    except:
+        OBprops.LOD = 30
+        
+    OBprops.resolution = lodRes
+    
+    # Add named properties
+    for key in properties:
+        item = OBprops.properties.add()
+        item.name = key
+        item.value = properties[key]
+        
         
     bm.normal_update()
     bm.to_mesh(objData)
@@ -249,6 +268,8 @@ def read_LOD(context,file,materialDict,additionalData):
     # Create materials
     if 'MATERIALS' in additionalData:
         blenderMatIndices = {} # needed because otherwise materials and textures with same names, but in different folders may cause issues
+        proceduralStringPattern = "#\(.*?\)\w+\(.*?\)"
+        colorStringPattern = "#\(\s*argb\s*,\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)color\(\s*(\d+.?\d*)\s*,\s*(\d+.?\d*)\s*,\s*(\d+.?\d*)\s*,\s*(\d+.?\d*)\s*,([a-zA-Z]+)\)"
         for i in range(len(faceDataDict)):
             faceData = faceDataDict[i]
         
@@ -261,8 +282,32 @@ def read_LOD(context,file,materialDict,additionalData):
                 blenderMat = materialDict[(textureName,materialName)]
             except:
                 blenderMat = bpy.data.materials.new(f"P3D: {os.path.basename(textureName)} :: {os.path.basename(materialName)}")
+                OBprops = blenderMat.a3ob_properties_material
+                OBprops.texturePath = textureName
+                
+                if textureName.strip != "":
+                    
+                    if re.match(proceduralStringPattern,textureName):
+                        tex = re.match(colorStringPattern,textureName)
+                        if tex:
+                            OBprops.textureType = 'COLOR'
+                            groups = tex.groups()
+                            
+                            try:
+                                OBprops.colorType = groups[4].upper()
+                                OBprops.colorValue = (float(groups[0]),float(groups[1]),float(groups[2]),float(groups[3]))
+                            except:
+                                OBprops.textureType = 'CUSTOM'
+                                OBprops.colorString = textureName
+                                
+                        else:
+                            OBprops.textureType = 'CUSTOM'
+                            OBprops.colorString = textureName
+                    else:
+                        OBprops.texturePath = textureName
+                
+                OBprops.materialPath = materialName
                 materialDict[(textureName,materialName)] = blenderMat
-                # IMPLEMENT STORING THE ACTUAL PATHS
                 
             if blenderMat is None:
                 continue
@@ -296,18 +341,21 @@ def read_LOD(context,file,materialDict,additionalData):
         objData.normals_split_custom_set(loopNormals)
         objData.free_normals_split()
     
+    # Named selections
+    for name in namedSelections:
+        obj.vertex_groups.new(name=name)
+    
     print(f"LOD overall took {time.time()-timeP3Dstart}")
     
     return obj, LODresolution
     
 def import_file(operator,context,file):
+    timeFILEstart = time.time()
 
     additionalData = set()
     
     if operator.allowAdditionalData:
         additionalData = operator.additionalData
-    
-    timeFILEstart = time.time()
     
     version, LODcount = read_header(file)
     
@@ -327,6 +375,7 @@ def import_file(operator,context,file):
             ("",""): bpy.data.materials.get("P3D: no material",bpy.data.materials.new("P3D: no material"))
         }
     
+    # for i in range(1):
     for i in range(LODcount):
         lodObj, res = read_LOD(context,file,materialDict,additionalData)
         
@@ -344,14 +393,75 @@ def import_file(operator,context,file):
     if operator.groupby == 'NONE':
         for item in LODs:
             rootCollection.objects.link(item[0])
-        return
+        return # NOT GOOD BECAUSE IT HALTS EVERY OTHER OPERATION
         
     colls = group_LODs(LODs,operator.groupby)
-
-        
         
     for group in colls.values():
         rootCollection.children.link(group)
+        
+    # Set up proxies
+    # For later reference: https://blender.stackexchange.com/questions/27234/python-how-to-completely-remove-an-object
+    if operator.proxyHandling != 'NOTHING' and 'SELECTIONS' in additionalData:
+        selectionPattern = "proxy:(.*)\.(\d{3})"
+        for data in LODs:
+            LOD = data[0]
+                
+            bpy.context.view_layer.objects.active = LOD
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.mesh.select_all(action = 'DESELECT')
+            
+            for group in LOD.vertex_groups:
+                selection = group.name
+                proxy = re.match(selectionPattern,selection)
+                if not proxy:
+                    continue
+                    
+                LOD.vertex_groups.active_index = LOD.vertex_groups.get(selection).index
+                
+                bpy.ops.object.vertex_group_select()
+                bpy.ops.mesh.separate(type='SELECTED')
+                
+            bpy.ops.object.mode_set(mode='OBJECT')
+            
+            proxyObjects = [proxy for proxy in bpy.context.selected_objects if proxy != LOD]
+            
+            if operator.proxyHandling == 'CLEAR':
+                bpy.ops.object.delete({"selected_objects": proxyObjects})
+                
+            elif operator.proxyHandling == 'SEPARATE':
+                for obj in proxyObjects:
+                    
+                    rotate = proxyutils.getTransformRot(obj)
+                    obj.data.transform(rotate)
+                    obj.matrix_world = rotate.inverted()
+                    obj.a3ob_properties_object_proxy.isArma3Proxy = True
+                    
+                    translate = mathutils.Matrix.Translation(-obj.data.vertices[proxyutils.findCenterIndex(obj.data)].co)
+                    
+                    obj.data.transform(translate)
+                    
+                    obj.matrix_world @= translate.inverted()
+                    
+                    structutils.cleanupVertexGroups(obj)
+                    
+                    for vgroup in obj.vertex_groups:
+                        proxyData = re.match(selectionPattern,vgroup.name)
+                        if proxyData:
+                            obj.vertex_groups.remove(vgroup)
+                            proxyDataGroups = proxyData.groups()
+                            obj.a3ob_properties_object_proxy.proxyPath = proxyDataGroups[0]
+                            obj.a3ob_properties_object_proxy.proxyIndex = int(proxyDataGroups[1])
+                    
+                    obj.data.materials.clear()
+                    obj.data.materials.append(materialDict[("","")])
+                    
+                    obj.parent = LOD
+                    
+                    
+                    
+            bpy.ops.object.select_all(action='DESELECT')
+            
         
     print(f"File took {time.time()-timeFILEstart}")
     
