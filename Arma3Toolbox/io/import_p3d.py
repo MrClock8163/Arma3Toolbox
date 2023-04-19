@@ -6,7 +6,6 @@ import re
 import time
 import os
 import mathutils
-from mathutils import Vector
 from . import binary_handler as binary
 from ..utilities import lod as lodutils
 from ..utilities import proxy as proxyutils
@@ -215,7 +214,7 @@ def process_normals(objData,faceDataDict,normalsDict):
     objData.normals_split_custom_set(loopNormals)
     objData.free_normals_split()
         
-def group_LODs_by(LODs,groupBy = 'TYPE'):    
+def group_LODs(LODs,groupBy = 'TYPE'):    
     collections = {}
     
     groupDict = data.LODgroups[groupBy]
@@ -241,15 +240,27 @@ def build_collections(LODs,operator,rootCollection):
         for item in LODs:
             rootCollection.objects.link(item[0])
     else:
-        colls = group_LODs_by(LODs,operator.groupby)
+        colls = group_LODs(LODs,operator.groupby)
             
         for group in colls.values():
             rootCollection.children.link(group)
 
+def transform_proxy(obj): # Align the object coordinate system with the proxy directions
+    rotate = proxyutils.getTransformRot(obj)
+    obj.data.transform(rotate)
+    obj.matrix_world = rotate.inverted()
+    obj.a3ob_properties_object_proxy.isArma3Proxy = True
+    
+    translate = mathutils.Matrix.Translation(-obj.data.vertices[proxyutils.findCenterIndex(obj.data)].co)
+    
+    obj.data.transform(translate)
+    
+    obj.matrix_world @= translate.inverted()
+
 def process_proxies(LODs,operator,materialDict):
     selectionPattern = "proxy:(.*)\.(\d{3})"
     
-    for LOD,res in LODs:            
+    for LOD,_ in LODs:            
         bpy.context.view_layer.objects.active = LOD
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_all(action = 'DESELECT')
@@ -276,33 +287,23 @@ def process_proxies(LODs,operator,materialDict):
         elif operator.proxyHandling == 'SEPARATE':
             for obj in proxyObjects:
                 
-                rotate = proxyutils.getTransformRot(obj)
-                obj.data.transform(rotate)
-                obj.matrix_world = rotate.inverted()
-                obj.a3ob_properties_object_proxy.isArma3Proxy = True
-                
-                translate = mathutils.Matrix.Translation(-obj.data.vertices[proxyutils.findCenterIndex(obj.data)].co)
-                
-                obj.data.transform(translate)
-                
-                obj.matrix_world @= translate.inverted()
-                
+                transform_proxy(obj)
                 structutils.cleanupVertexGroups(obj)
                 
                 for vgroup in obj.vertex_groups:
                     proxyData = re.match(selectionPattern,vgroup.name)
-                    if proxyData:
-                        obj.vertex_groups.remove(vgroup)
-                        proxyDataGroups = proxyData.groups()
-                        obj.a3ob_properties_object_proxy.proxyPath = proxyDataGroups[0]
-                        obj.a3ob_properties_object_proxy.proxyIndex = int(proxyDataGroups[1])
+                    if not proxyData:
+                        continue
+                        
+                    obj.vertex_groups.remove(vgroup)
+                    proxyDataGroups = proxyData.groups()
+                    obj.a3ob_properties_object_proxy.proxyPath = proxyDataGroups[0]
+                    obj.a3ob_properties_object_proxy.proxyIndex = int(proxyDataGroups[1])
                 
                 obj.data.materials.clear()
                 obj.data.materials.append(materialDict[("","")])
                 
                 obj.parent = LOD
-                
-                
                 
         bpy.ops.object.select_all(action='DESELECT')
 
@@ -324,10 +325,9 @@ def read_LOD(context,file,materialDict,additionalData):
     numNormals = binary.readULong(file)
     numFaces = binary.readULong(file)
     
-    flags = binary.readULong(file)
+    file.read(4) # dump unknown flag byte
     
-    
-    # Read point table    
+    # Read vertex table
     timePOINTstart = time.time()
     points = []
     for i in range(numPoints):
@@ -338,7 +338,7 @@ def read_LOD(context,file,materialDict,additionalData):
     
     print(f"Points: {numPoints}")
     
-    # Read face normals
+    # Read vertex normal table
     normalsDict = {}
     for i in range(numNormals):
         normalsDict[i] = read_normal(file)
@@ -353,17 +353,18 @@ def read_LOD(context,file,materialDict,additionalData):
         newFace = read_face(file)
         faces.append([i[0] for i in newFace[0]])
         faceDataDict[i] = newFace
-        
+    
+    # Construct mesh
     objData = bpy.data.meshes.new("Temp LOD")
-    objData.from_pydata(points,[],faces)
+    objData.from_pydata(points,[],faces) # from_pydata is both faster than BMesh and does not break when fed invalid geometry
     objData.update(calc_edges=True)
     
     for face in objData.polygons:
         face.use_smooth = True
         
+    # Read TAGGs
     bm = bmesh.new()
     bm.from_mesh(objData)
-    
     bm.verts.ensure_lookup_table()
     bm.edges.ensure_lookup_table()
     bm.faces.ensure_lookup_table()
@@ -371,17 +372,16 @@ def read_LOD(context,file,materialDict,additionalData):
     
     print(f"Faces: {numFaces}")
     
-    # Read TAGGs 
     taggSignature = read_signature(file)
     if taggSignature != "TAGG":
         raise IOError(f"Invalid TAGG section signature: {taggSignature}")
     
     namedSelections, properties = process_TAGGs(file,bm,additionalData,numPoints,numFaces)
-            
+    
+    # EOF
     LODresolution = binary.readFloat(file)
     
-    # print(LODresolution)
-    
+    # Create object
     lodIndex, lodRes = lodutils.getLODid(LODresolution)
     lodName = lodutils.formatLODname(lodIndex,lodRes)
     print(lodName)
@@ -407,7 +407,8 @@ def read_LOD(context,file,materialDict,additionalData):
         item = OBprops.properties.add()
         item.name = key
         item.value = properties[key]
-        
+    
+    # Push to Mesh data
     bm.normal_update()
     bm.to_mesh(objData)
     bm.free()
@@ -416,12 +417,11 @@ def read_LOD(context,file,materialDict,additionalData):
     if 'MATERIALS' in additionalData:
         materialDict = process_materials(objData,faceDataDict,materialDict)
         
-    
     # Apply split normals
     if 'NORMALS' in additionalData and lodIndex in data.LODvisuals: 
         process_normals(objData,faceDataDict,normalsDict)
         
-    # Named selections
+    # Add vertex group names to object
     for name in namedSelections:
         obj.vertex_groups.new(name=name)
     
