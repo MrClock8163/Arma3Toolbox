@@ -3,7 +3,6 @@ import bpy_extras
 import os
 
 from ..io import import_p3d
-from .. import utility as utils
 
 class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
     '''Import Arma 3 MLOD P3D'''
@@ -59,7 +58,7 @@ class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         items = (
             ('NORMALS',"Custom Normals","WARNING: may not work properly on certain files"),
             ('PROPS',"Named Properties",""),
-            ('MASS',"Vertex Nass","Mass of individual vertices (in Geometry LODs)"),
+            ('MASS',"Vertex Mass","Mass of individual vertices (in Geometry LODs)"),
             ('SELECTIONS',"Selections",""),
             ('UV',"UV Sets",""),
             ('MATERIALS',"Materials","")
@@ -78,7 +77,7 @@ class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         name = "Proxy Action",
         description = "Post-import handling of proxies",
         items = (
-            ('NOTHING',"Nothing","Leave proxies embedded into the LOD meshes"),
+            ('NOTHING',"Nothing","Leave proxies embedded into the LOD meshes\n(the actual file paths will be lost because of Blender limitations)"),
             ('SEPARATE',"Separate","Separate the proxies into proxy objects parented to the LOD mesh they belong to"),
             ('CLEAR',"Purge","Remove all proxies")
         ),
@@ -103,6 +102,8 @@ class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
             # import_p3d.import_file(context,file,self.groupby,filename.strip())
         # except IOError as e:
             # utils.show_infoBox(str(e),"I/O error",'INFO')
+        # except struct.error as e:
+            # utils.show_infoBox("Unexpected EnfOfFile","I/O error",'INFO')
         # except Exception as e:
             # utils.show_infoBox(str(e),"Unexpected I/O error",'ERROR')
             

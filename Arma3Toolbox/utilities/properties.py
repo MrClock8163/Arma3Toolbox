@@ -77,3 +77,17 @@ def selectionMassDistribute(obj,value):
         
     for v in verts:
         v[layer] = vertValue
+        
+def clearMasses(obj):
+    mesh = obj.data
+    
+    layer = mesh.vertex_layers_float.get("a3ob_mass")
+    if layer is None:
+        return 
+    
+    bm = bmesh.from_edit_mesh(mesh)
+    
+    layer = bm.verts.layers.float.get("a3ob_mass")
+    bm.verts.layers.float.remove(layer)
+    
+    bmesh.update_edit_mesh(mesh)

@@ -25,9 +25,6 @@ def getLODid(value):
 def getLODname(index):
     return data.LODdata.get(index,data.LODdata[30])[0]
     
-def getLODinfo(index):
-    return data.LODdata.get(index,data.LODdata[30])
-    
 def formatLODname(index,res):
     if data.LODtypeResolutionPosition.get(index,None) is not None:
         return f"{getLODname(index)} {res}"
