@@ -4,7 +4,7 @@ bl_info = {
     "author": "MrClock, Hans-Joerg \"Alwarren\" Frieden (original add-on)",
     "version": (0, 0, 1),
     "blender": (2, 80, 0),
-    "location": "View3D > Panels",
+    "location": "Object Builder panels in various views",
     "warning": '',
     "wiki_url": "",
     "tracker_url": "",
