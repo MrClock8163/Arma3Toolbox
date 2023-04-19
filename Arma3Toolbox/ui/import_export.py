@@ -102,6 +102,8 @@ class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
             # import_p3d.import_file(context,file,self.groupby,filename.strip())
         # except IOError as e:
             # utils.show_infoBox(str(e),"I/O error",'INFO')
+        # except struct.error as e:
+            # utils.show_infoBox("Unexpected EnfOfFile","I/O error",'INFO')
         # except Exception as e:
             # utils.show_infoBox(str(e),"Unexpected I/O error",'ERROR')
             

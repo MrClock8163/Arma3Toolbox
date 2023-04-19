@@ -215,7 +215,7 @@ def process_normals(objData,faceDataDict,normalsDict):
     objData.normals_split_custom_set(loopNormals)
     objData.free_normals_split()
         
-def group_LODs(LODs,groupBy = 'TYPE'):    
+def group_LODs_by(LODs,groupBy = 'TYPE'):    
     collections = {}
     
     groupDict = data.LODgroups[groupBy]
@@ -224,13 +224,88 @@ def group_LODs(LODs,groupBy = 'TYPE'):
         lodIndex, lodRes = lodutils.getLODid(res)
         groupName = groupDict[lodIndex]
         
-        if groupName not in collections.keys():
+        if groupName not in collections:
             collections[groupName] = bpy.data.collections.new(name=groupName)
             
         collections[groupName].objects.link(lodObj)
             
     return collections
     
+def build_collections(LODs,operator,rootCollection):
+
+    if operator.enclose:
+        rootCollection = bpy.data.collections.new(name=os.path.basename(operator.filepath))
+        bpy.context.scene.collection.children.link(rootCollection)
+    
+    if operator.groupby == 'NONE':
+        for item in LODs:
+            rootCollection.objects.link(item[0])
+    else:
+        colls = group_LODs_by(LODs,operator.groupby)
+            
+        for group in colls.values():
+            rootCollection.children.link(group)
+
+def process_proxies(LODs,operator,materialDict):
+    selectionPattern = "proxy:(.*)\.(\d{3})"
+    
+    for LOD,res in LODs:            
+        bpy.context.view_layer.objects.active = LOD
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action = 'DESELECT')
+        
+        for group in LOD.vertex_groups:
+            selection = group.name
+            proxy = re.match(selectionPattern,selection)
+            if not proxy:
+                continue
+                
+            LOD.vertex_groups.active = group
+            
+            bpy.ops.object.vertex_group_select()
+            LOD.vertex_groups.remove(group)
+            bpy.ops.mesh.separate(type='SELECTED')
+            
+        bpy.ops.object.mode_set(mode='OBJECT')
+        
+        proxyObjects = [proxy for proxy in bpy.context.selected_objects if proxy != LOD]
+        
+        if operator.proxyHandling == 'CLEAR':
+            bpy.ops.object.delete({"selected_objects": proxyObjects})
+            
+        elif operator.proxyHandling == 'SEPARATE':
+            for obj in proxyObjects:
+                
+                rotate = proxyutils.getTransformRot(obj)
+                obj.data.transform(rotate)
+                obj.matrix_world = rotate.inverted()
+                obj.a3ob_properties_object_proxy.isArma3Proxy = True
+                
+                translate = mathutils.Matrix.Translation(-obj.data.vertices[proxyutils.findCenterIndex(obj.data)].co)
+                
+                obj.data.transform(translate)
+                
+                obj.matrix_world @= translate.inverted()
+                
+                structutils.cleanupVertexGroups(obj)
+                
+                for vgroup in obj.vertex_groups:
+                    proxyData = re.match(selectionPattern,vgroup.name)
+                    if proxyData:
+                        obj.vertex_groups.remove(vgroup)
+                        proxyDataGroups = proxyData.groups()
+                        obj.a3ob_properties_object_proxy.proxyPath = proxyDataGroups[0]
+                        obj.a3ob_properties_object_proxy.proxyIndex = int(proxyDataGroups[1])
+                
+                obj.data.materials.clear()
+                obj.data.materials.append(materialDict[("","")])
+                
+                obj.parent = LOD
+                
+                
+                
+        bpy.ops.object.select_all(action='DESELECT')
+
 def read_LOD(context,file,materialDict,additionalData):
     timeP3Dstart = time.time()
 
@@ -353,7 +428,7 @@ def read_LOD(context,file,materialDict,additionalData):
     print(f"LOD overall took {time.time()-timeP3Dstart}")
     
     return obj, LODresolution, materialDict
-    
+
 def import_file(operator,context,file):
     timeFILEstart = time.time()
 
@@ -388,84 +463,17 @@ def import_file(operator,context,file):
             lodObj.data.validate(clean_customdata=False)
         
         LODs.append((lodObj,res))
-        
-    rootCollection = bpy.context.scene.collection
     
-    if operator.enclose:
-        rootCollection = bpy.data.collections.new(name=os.path.basename(operator.filepath))
-        bpy.context.scene.collection.children.link(rootCollection)       
     
-    if operator.groupby == 'NONE':
-        for item in LODs:
-            rootCollection.objects.link(item[0])
-        return # NOT GOOD BECAUSE IT HALTS EVERY OTHER OPERATION
-        
-    colls = group_LODs(LODs,operator.groupby)
-        
-    for group in colls.values():
-        rootCollection.children.link(group)
+    rootCollection = context.scene.collection
+    
+    build_collections(LODs,operator,rootCollection)
+    
         
     # Set up proxies
     # For later reference: https://blender.stackexchange.com/questions/27234/python-how-to-completely-remove-an-object
     if operator.proxyHandling != 'NOTHING' and 'SELECTIONS' in additionalData:
-        selectionPattern = "proxy:(.*)\.(\d{3})"
-        for data in LODs:
-            LOD = data[0]
-                
-            bpy.context.view_layer.objects.active = LOD
-            bpy.ops.object.mode_set(mode='EDIT')
-            bpy.ops.mesh.select_all(action = 'DESELECT')
-            
-            for group in LOD.vertex_groups:
-                selection = group.name
-                proxy = re.match(selectionPattern,selection)
-                if not proxy:
-                    continue
-                    
-                LOD.vertex_groups.active_index = LOD.vertex_groups.get(selection).index
-                
-                bpy.ops.object.vertex_group_select()
-                bpy.ops.mesh.separate(type='SELECTED')
-                
-            bpy.ops.object.mode_set(mode='OBJECT')
-            
-            proxyObjects = [proxy for proxy in bpy.context.selected_objects if proxy != LOD]
-            
-            if operator.proxyHandling == 'CLEAR':
-                bpy.ops.object.delete({"selected_objects": proxyObjects})
-                
-            elif operator.proxyHandling == 'SEPARATE':
-                for obj in proxyObjects:
-                    
-                    rotate = proxyutils.getTransformRot(obj)
-                    obj.data.transform(rotate)
-                    obj.matrix_world = rotate.inverted()
-                    obj.a3ob_properties_object_proxy.isArma3Proxy = True
-                    
-                    translate = mathutils.Matrix.Translation(-obj.data.vertices[proxyutils.findCenterIndex(obj.data)].co)
-                    
-                    obj.data.transform(translate)
-                    
-                    obj.matrix_world @= translate.inverted()
-                    
-                    structutils.cleanupVertexGroups(obj)
-                    
-                    for vgroup in obj.vertex_groups:
-                        proxyData = re.match(selectionPattern,vgroup.name)
-                        if proxyData:
-                            obj.vertex_groups.remove(vgroup)
-                            proxyDataGroups = proxyData.groups()
-                            obj.a3ob_properties_object_proxy.proxyPath = proxyDataGroups[0]
-                            obj.a3ob_properties_object_proxy.proxyIndex = int(proxyDataGroups[1])
-                    
-                    obj.data.materials.clear()
-                    obj.data.materials.append(materialDict[("","")])
-                    
-                    obj.parent = LOD
-                    
-                    
-                    
-            bpy.ops.object.select_all(action='DESELECT')
+        process_proxies(LODs,operator,materialDict)
             
         
     print(f"File took {time.time()-timeFILEstart}")
