@@ -13,7 +13,7 @@ def findComponents(doConvexHull=False):
         if re.match('component\d+',group.name,re.IGNORECASE):
             componentGroups.append(group.name)
     
-    for i,group in enumerate(componentGroups):
+    for group in componentGroups:
         bpy.ops.object.vertex_group_set_active(group=group)
         bpy.ops.object.vertex_group_remove()
     
@@ -34,14 +34,8 @@ def findComponents(doConvexHull=False):
         if doConvexHull:
             convexHull()
             
-        utils.forceEditMode()
-        bpy.ops.mesh.select_all(action='SELECT')
-        obj.vertex_groups.new(name=('Component%02d' % (componentID)))
-        bpy.ops.object.vertex_group_assign()
-        bpy.ops.mesh.select_all(action='DESELECT')
-        utils.forceObjectMode()
-            
-        obj.select_set(False)
+        group = obj.vertex_groups.new(name=('Component%02d' % (componentID)))
+        group.add([vert.index for vert in obj.data.vertices],1,'REPLACE')
         
         componentID += 1
     
