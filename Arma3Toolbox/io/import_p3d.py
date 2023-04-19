@@ -18,7 +18,6 @@ def read_signature(file):
 
 def read_header(file):
     signature = read_signature(file)
-    # print(f"Header signature: {signature}")
     if signature != "MLOD":
         raise IOError(f"Invalid MLOD signature: {signature}")
         
@@ -218,7 +217,7 @@ def group_LODs(LODs,groupBy = 'TYPE'):
     
     groupDict = data.LODgroups[groupBy]
     
-    for lodObj,res in LODs:
+    for lodObj,res,_ in LODs:
         lodIndex, lodRes = lodutils.getLODid(res)
         groupName = groupDict[lodIndex]
         
@@ -258,23 +257,23 @@ def transform_proxy(obj): # Align the object coordinate system with the proxy di
 
 def process_proxies(LODs,operator,materialDict):
     selectionPattern = "proxy:(.*)\.(\d{3})"
+    placeholderPattern = "@proxy_(\d{4})"
     
-    for LOD,_ in LODs:            
+    for LOD,_,proxySelections in LODs:
         bpy.context.view_layer.objects.active = LOD
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_all(action = 'DESELECT')
         
         for group in LOD.vertex_groups:
             selection = group.name
-            proxy = re.match(selectionPattern,selection)
-            if not proxy:
+            if not re.match(placeholderPattern,selection):
                 continue
                 
             LOD.vertex_groups.active = group
             
             bpy.ops.object.vertex_group_select()
-            LOD.vertex_groups.remove(group)
             bpy.ops.mesh.separate(type='SELECTED')
+            LOD.vertex_groups.remove(group)
             
         bpy.ops.object.mode_set(mode='OBJECT')
         
@@ -289,11 +288,12 @@ def process_proxies(LODs,operator,materialDict):
                 transform_proxy(obj)
                 structutils.cleanupVertexGroups(obj)
                 
-                for vgroup in obj.vertex_groups:
-                    proxyData = re.match(selectionPattern,vgroup.name)
-                    if not proxyData:
+                for i,vgroup in enumerate(obj.vertex_groups):
+                    if i not in proxySelections:
                         continue
                         
+                    proxyData = re.match(selectionPattern,proxySelections[i])
+                    
                     obj.vertex_groups.remove(vgroup)
                     proxyDataGroups = proxyData.groups()
                     obj.a3ob_properties_object_proxy.proxyPath = proxyDataGroups[0]
@@ -420,14 +420,28 @@ def read_LOD(context,file,materialDict,additionalData,logger):
         logger.step("Applied split normals")
         
     # Add vertex group names to object
-    for name in namedSelections:
+    #
+    # Blender only allows vertex group names to have up to 63 characters.
+    # Since proxy selection names (file paths) are often longer than that,
+    # they have to be replaced by formatted placeholders and later looked up
+    # from a dictionary when needed.
+    selectionPattern = "proxy:(.*)\.(\d{3})"
+    proxySelections = {}
+    for i,name in enumerate(namedSelections):
+        if re.match(selectionPattern,name):
+            proxySelections[i] = name
+            name = "@proxy_%04d" % (i + 1)
+            
         obj.vertex_groups.new(name=name)
+    
+    if len(proxySelections) > 0:
+        logger.step("Added proxy name place holders: %d" % len(proxySelections))
         
     if len(namedSelections) > 0:
         logger.step("Added named selections: %d" % len(namedSelections))
     
     logger.level_down()
-    return obj, LODresolution, materialDict
+    return obj, LODresolution, materialDict, proxySelections
 
 def import_file(operator,context,file):
     logger = ProcessLogger()
@@ -464,12 +478,12 @@ def import_file(operator,context,file):
         timeLODStart = time.time()
         logger.step("LOD %d" % i)
         
-        lodObj, res, materialDict = read_LOD(context,file,materialDict,additionalData,logger)
+        lodObj, res, materialDict, proxySelections = read_LOD(context,file,materialDict,additionalData,logger)
         
         if operator.validateMeshes:
             lodObj.data.validate(clean_customdata=False)
         
-        LODs.append((lodObj,res))
+        LODs.append((lodObj,res,proxySelections))
         logger.log("Done in %f sec" % (time.time()-timeLODStart))
         
     logger.level_down()

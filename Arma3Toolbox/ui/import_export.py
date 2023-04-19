@@ -77,7 +77,7 @@ class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         name = "Proxy Action",
         description = "Post-import handling of proxies",
         items = (
-            ('NOTHING',"Nothing","Leave proxies embedded into the LOD meshes"),
+            ('NOTHING',"Nothing","Leave proxies embedded into the LOD meshes\n(the actual file paths will be lost because of Blender limitations)"),
             ('SEPARATE',"Separate","Separate the proxies into proxy objects parented to the LOD mesh they belong to"),
             ('CLEAR',"Purge","Remove all proxies")
         ),
