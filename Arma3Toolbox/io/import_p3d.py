@@ -44,18 +44,16 @@ def read_pseudo_vertextable(file):
 def read_face(file):
     numSides = binary.readULong(file)
     
-    vertTables = [] # should instead return the individual lists to avoid unecessary data
-    for i in range(numSides):        
-        vertTables.append(read_pseudo_vertextable(file))
+    vertTables = [read_pseudo_vertextable(file) for i in range(numSides)] # should instead return the individual lists to avoid unecessary data
     
     if numSides < 4:
-        read_pseudo_vertextable(file)
+        file.read(16) # dump null bytes
         
     file.read(4) # dump face flags
     texture = binary.readAsciiz(file)
     material = binary.readAsciiz(file)
     
-    return vertTables,None,texture,material
+    return vertTables,texture,material
     
 def decode_selectionWeight(b):
     if b == 0:
@@ -154,8 +152,8 @@ def process_materials(objData,faceDataDict,materialDict):
     for i in range(len(faceDataDict)):
         faceData = faceDataDict[i]
     
-        textureName = faceData[2].strip()
-        materialName = faceData[3].strip()
+        textureName = faceData[1].strip()
+        materialName = faceData[2].strip()
         
         blenderMat = None
         
@@ -329,19 +327,14 @@ def read_LOD(context,file,materialDict,additionalData):
     
     # Read vertex table
     timePOINTstart = time.time()
-    points = []
-    for i in range(numPoints):
-        newPoint = read_vertex(file)
-        points.append(newPoint)
+    points = [read_vertex(file) for i in range(numPoints)]
         
     print(f"Points took {time.time()-timePOINTstart}")
     
     print(f"Points: {numPoints}")
     
     # Read vertex normal table
-    normalsDict = {}
-    for i in range(numNormals):
-        normalsDict[i] = read_normal(file)
+    normalsDict = {i: read_normal(file) for i in range(numNormals)}
     
     print(f"Normals: {numNormals}")
     
