@@ -89,7 +89,7 @@ def process_TAGGs(file,bm,additionalData,numPoints,numFaces):
             break
             
         # Sharps (technically redundant with the split vertex normals, may be scrapped later)
-        elif taggName == "#SharpEdges#":
+        elif taggName == "#SharpEdges#" and 'NORMALS' not in additionalData:
             for i in range(int(taggLength / (4 * 2))):
                 point1ID = binary.readULong(file)
                 point2ID = binary.readULong(file)
