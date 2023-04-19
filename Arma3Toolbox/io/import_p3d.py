@@ -27,7 +27,7 @@ def read_header(file):
     
     return version, LODcount
     
-def read_vertex(file):
+def read_vertex(file): # flags can be dumped
     x,y,z,flag = struct.unpack('<fffI',file.read(16))
     return x,z,y,flag
     
@@ -35,7 +35,7 @@ def read_normal(file):
     x,y,z = struct.unpack('<fff',file.read(12))
     return -x,-z,-y
     
-def read_pseudo_vertextable(file):
+def read_pseudo_vertextable(file): # UV can be dumped because they are read from the TAGGs anyway
     pointID, normalID, U, V = struct.unpack('<IIff',file.read(16))
     
     return pointID,normalID,U,V
@@ -50,7 +50,7 @@ def read_face(file):
     if numSides < 4:
         read_pseudo_vertextable(file)
         
-    flags = binary.readULong(file)
+    flags = binary.readULong(file) # flags can be dumped
     texture = binary.readAsciiz(file)
     material = binary.readAsciiz(file)
     
@@ -67,6 +67,138 @@ def decode_selectionWeight(b):
         return -round(b/2.55555)*0.01
     else:
         return 1.0 # ¯\_(ツ)_/¯
+        
+def process_TAGGs(file,bm,additionalData,numPoints,numFaces):
+
+    namedSelections = []
+    properties = {}
+    while True:
+        # taggActive = binary.readBool(file)
+        file.read(1)
+        taggName = binary.readAsciiz(file)
+        taggLength = binary.readULong(file)
+        
+        # print(taggName,taggLength)
+        
+        # EOF
+        if taggName == "#EndOfFile#":
+            if taggLength != 0:
+                raise IOError("Invalid EOF")
+            break
+            
+        # Sharps (technically redundant with the split vertex normals, may be scrapped later)
+        elif taggName == "#SharpEdges#":
+            for i in range(int(taggLength / (4 * 2))):
+                point1ID = binary.readULong(file)
+                point2ID = binary.readULong(file)
+                
+                if point1ID != point2ID:
+                    edge = bm.edges.get([bm.verts[point1ID],bm.verts[point2ID]])
+                    
+                    if edge is not None:
+                        edge.smooth = False
+        
+        # Property
+        elif taggName == "#Property#" and 'PROPS' in additionalData:
+            if taggLength != 128:
+                raise IOError(f"Invalid named property length: {taggLength}")
+                
+            key = binary.readChar(file,64)
+            value = binary.readChar(file,64)
+            
+            if key not in properties:
+                properties[key] = value
+        
+        # Mass
+        elif taggName == "#Mass#" and 'MASS' in additionalData:
+            massLayer = bm.verts.layers.float.new("a3ob_mass") # create new BMesh layer to store mass data
+            for i in range(numPoints):
+                mass = binary.readFloat(file)
+                bm.verts[i][massLayer] = mass
+            
+        # UV
+        elif taggName == "#UVSet#" and 'UV' in additionalData:
+            UVID = binary.readULong(file)
+            UVlayer = bm.loops.layers.uv.new(f"UVSet {UVID}")
+            
+            for face in bm.faces:
+                for loop in face.loops:
+                    loop[UVlayer].uv = (binary.readFloat(file),1-binary.readFloat(file))
+            
+            
+        # Named selections
+        elif not re.match("#.*#",taggName) and 'SELECTIONS' in additionalData:
+            namedSelections.append(taggName)
+            bm.verts.layers.deform.verify()
+            deform = bm.verts.layers.deform.active
+            
+            for i in range(numPoints):
+                b = binary.readByte(file)
+                weight = decode_selectionWeight(b)
+                if b != 0:
+                    bm.verts[i][deform][len(namedSelections)-1] = weight
+                
+            file.read(numFaces) # dump face selection data
+            
+        else:
+            file.read(taggLength) # dump all other TAGGs
+            
+    return namedSelections, properties
+    
+def process_materials(objData,faceDataDict,materialDict):
+    blenderMatIndices = {} # needed because otherwise materials and textures with same names, but in different folders may cause issues
+    proceduralStringPattern = "#\(.*?\)\w+\(.*?\)"
+    colorStringPattern = "#\(\s*argb\s*,\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)color\(\s*(\d+.?\d*)\s*,\s*(\d+.?\d*)\s*,\s*(\d+.?\d*)\s*,\s*(\d+.?\d*)\s*,([a-zA-Z]+)\)"
+    
+    for i in range(len(faceDataDict)):
+        faceData = faceDataDict[i]
+    
+        textureName = faceData[2].strip()
+        materialName = faceData[3].strip()
+        
+        blenderMat = None
+        
+        if (textureName,materialName) in materialDict:
+            blenderMat = materialDict[(textureName,materialName)]
+            
+        else:
+            blenderMat = bpy.data.materials.new(f"P3D: {os.path.basename(textureName)} :: {os.path.basename(materialName)}")
+            OBprops = blenderMat.a3ob_properties_material
+                
+            if re.match(proceduralStringPattern,textureName):
+                tex = re.match(colorStringPattern,textureName)
+                if tex:
+                    OBprops.textureType = 'COLOR'
+                    groups = tex.groups()
+                    
+                    try:
+                        OBprops.colorType = groups[4].upper()
+                        OBprops.colorValue = (float(groups[0]),float(groups[1]),float(groups[2]),float(groups[3]))
+                    except:
+                        OBprops.textureType = 'CUSTOM'
+                        OBprops.colorString = textureName
+                        
+                else:
+                    OBprops.textureType = 'CUSTOM'
+                    OBprops.colorString = textureName
+            else:
+                OBprops.texturePath = textureName
+            
+            OBprops.materialPath = materialName
+            materialDict[(textureName,materialName)] = blenderMat
+            
+        if blenderMat.name not in objData.materials:
+            objData.materials.append(blenderMat)
+            blenderMatIndices[blenderMat] = len(objData.materials)-1
+
+        matIndex = blenderMatIndices[blenderMat]
+            
+        objData.polygons[i].material_index = matIndex
+        
+    return materialDict
+    
+def process_normals():
+    pass
         
 def group_LODs(LODs,groupBy = 'TYPE'):    
     collections = {}
@@ -154,85 +286,11 @@ def read_LOD(context,file,materialDict,additionalData):
     if taggSignature != "TAGG":
         raise IOError(f"Invalid TAGG section signature: {taggSignature}")
     
-    # taggs = []
-    namedSelections = []
-    properties = {}
-    while True:
-        taggActive = binary.readBool(file)
-        taggName = binary.readAsciiz(file)
-        taggLength = binary.readULong(file)
-        
-        print(taggName,taggLength)
-        
-        # EOF
-        # masses = []
-        if taggName == "#EndOfFile#":
-            if taggLength != 0:
-                raise IOError("Invalid EOF")
-            break
-            
-        # Sharps (technically redundant with the split vertex normals, may be scrapped later)
-        elif taggName == "#SharpEdges#":
-            for i in range(int(taggLength / (4 * 2))):
-                point1ID = binary.readULong(file)
-                point2ID = binary.readULong(file)
-                
-                if point1ID != point2ID:
-                    edge = bm.edges.get([bm.verts[point1ID],bm.verts[point2ID]])
-                    
-                    if edge is not None:
-                        edge.smooth = False
-        
-        # Property
-        elif taggName == "#Property#" and 'PROPS' in additionalData:
-            if taggLength != 128:
-                raise IOError(f"Invalid named property length: {taggLength}")
-            key = binary.readChar(file,64)
-            value = binary.readChar(file,64)
-            properties[key] = value
-            
-            # IMPLEMENT HANDLING!!!
-        
-        # Mass
-        elif taggName == "#Mass#" and 'MASS' in additionalData:
-            massLayer = bm.verts.layers.float.new("a3ob_mass") # create new BMesh layer to store mass data
-            for i in range(numPoints):
-                mass = binary.readFloat(file)
-                # print(mass)
-                # masses.append(mass)
-                bm.verts[i][massLayer] = mass
-                # vertsDict[i][massLayer] = mass
-            
-        # UV
-        elif taggName == "#UVSet#" and 'UV' in additionalData:
-            UVID = binary.readULong(file)
-            UVlayer = bm.loops.layers.uv.new(f"UVSet {UVID}")
-            
-            for face in bm.faces:
-                for loop in face.loops:
-                    loop[UVlayer].uv = (binary.readFloat(file),1-binary.readFloat(file))
-            
-            
-        # Named selections
-        elif not re.match("#.*#",taggName) and 'SELECTIONS' in additionalData:
-            namedSelections.append(taggName)
-            bm.verts.layers.deform.verify()
-            deform = bm.verts.layers.deform.active
-            
-            for i in range(numPoints):
-                b = binary.readByte(file)
-                weight = decode_selectionWeight(b)
-                if b != 0:
-                    bm.verts[i][deform][len(namedSelections)-1] = weight
-                
-            file.read(numFaces)
-            
-        else:
-            file.read(taggLength) # dump all other TAGGs
+    namedSelections, properties = process_TAGGs(file,bm,additionalData,numPoints,numFaces)
             
     LODresolution = binary.readFloat(file)
     
-    print(LODresolution)
+    # print(LODresolution)
     
     lodIndex, lodRes = lodutils.getLODid(LODresolution)
     lodName = lodutils.formatLODname(lodIndex,lodRes)
@@ -250,7 +308,7 @@ def read_LOD(context,file,materialDict,additionalData):
     try:
         OBprops.LOD = str(lodIndex)
     except:
-        OBprops.LOD = 30
+        OBprops.LOD = "30"
         
     OBprops.resolution = lodRes
     
@@ -260,67 +318,13 @@ def read_LOD(context,file,materialDict,additionalData):
         item.name = key
         item.value = properties[key]
         
-        
     bm.normal_update()
     bm.to_mesh(objData)
     bm.free()
     
     # Create materials
     if 'MATERIALS' in additionalData:
-        blenderMatIndices = {} # needed because otherwise materials and textures with same names, but in different folders may cause issues
-        proceduralStringPattern = "#\(.*?\)\w+\(.*?\)"
-        colorStringPattern = "#\(\s*argb\s*,\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)color\(\s*(\d+.?\d*)\s*,\s*(\d+.?\d*)\s*,\s*(\d+.?\d*)\s*,\s*(\d+.?\d*)\s*,([a-zA-Z]+)\)"
-        for i in range(len(faceDataDict)):
-            faceData = faceDataDict[i]
-        
-            textureName = faceData[2]
-            materialName = faceData[3]
-            
-            blenderMat = None
-            
-            try:
-                blenderMat = materialDict[(textureName,materialName)]
-            except:
-                blenderMat = bpy.data.materials.new(f"P3D: {os.path.basename(textureName)} :: {os.path.basename(materialName)}")
-                OBprops = blenderMat.a3ob_properties_material
-                OBprops.texturePath = textureName
-                
-                if textureName.strip != "":
-                    
-                    if re.match(proceduralStringPattern,textureName):
-                        tex = re.match(colorStringPattern,textureName)
-                        if tex:
-                            OBprops.textureType = 'COLOR'
-                            groups = tex.groups()
-                            
-                            try:
-                                OBprops.colorType = groups[4].upper()
-                                OBprops.colorValue = (float(groups[0]),float(groups[1]),float(groups[2]),float(groups[3]))
-                            except:
-                                OBprops.textureType = 'CUSTOM'
-                                OBprops.colorString = textureName
-                                
-                        else:
-                            OBprops.textureType = 'CUSTOM'
-                            OBprops.colorString = textureName
-                    else:
-                        OBprops.texturePath = textureName
-                
-                OBprops.materialPath = materialName
-                materialDict[(textureName,materialName)] = blenderMat
-                
-            if blenderMat is None:
-                continue
-                
-            matIndex = -1
-            if blenderMat.name not in objData.materials:
-                objData.materials.append(blenderMat)
-                matIndex = len(objData.materials)-1
-                blenderMatIndices[blenderMat] = matIndex
-            else:
-                matIndex = blenderMatIndices[blenderMat]
-                
-            objData.polygons[i].material_index = matIndex
+        materialDict = process_materials(objData,faceDataDict,materialDict)
         
     
     # Apply split normals
@@ -347,7 +351,7 @@ def read_LOD(context,file,materialDict,additionalData):
     
     print(f"LOD overall took {time.time()-timeP3Dstart}")
     
-    return obj, LODresolution
+    return obj, LODresolution, materialDict
     
 def import_file(operator,context,file):
     timeFILEstart = time.time()
@@ -377,7 +381,7 @@ def import_file(operator,context,file):
     
     # for i in range(1):
     for i in range(LODcount):
-        lodObj, res = read_LOD(context,file,materialDict,additionalData)
+        lodObj, res, materialDict = read_LOD(context,file,materialDict,additionalData)
         
         if operator.validateMeshes:
             lodObj.data.validate(clean_customdata=False)
