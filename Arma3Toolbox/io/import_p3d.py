@@ -27,18 +27,20 @@ def read_header(file):
     
     return version, LODcount
     
-def read_vertex(file): # flags can be dumped
-    x,y,z,flag = struct.unpack('<fffI',file.read(16))
-    return x,z,y,flag
+def read_vertex(file):
+    x,y,z = struct.unpack('<fff',file.read(12))
+    file.read(4) # dump vertex flags
+    return x,z,y
     
 def read_normal(file):
     x,y,z = struct.unpack('<fff',file.read(12))
     return -x,-z,-y
     
-def read_pseudo_vertextable(file): # UV can be dumped because they are read from the TAGGs anyway
-    pointID, normalID, U, V = struct.unpack('<IIff',file.read(16))
+def read_pseudo_vertextable(file):
+    pointID, normalID = struct.unpack('<II',file.read(8))
+    file.read(8) # dump embedded UV coordinates
     
-    return pointID,normalID,U,V
+    return pointID,normalID
     
 def read_face(file):
     numSides = binary.readULong(file)
@@ -50,11 +52,11 @@ def read_face(file):
     if numSides < 4:
         read_pseudo_vertextable(file)
         
-    flags = binary.readULong(file) # flags can be dumped
+    file.read(4) # dump face flags
     texture = binary.readAsciiz(file)
     material = binary.readAsciiz(file)
     
-    return vertTables,flags,texture,material
+    return vertTables,None,texture,material
     
 def decode_selectionWeight(b):
     if b == 0:
@@ -255,7 +257,7 @@ def read_LOD(context,file,materialDict,additionalData):
     points = []
     for i in range(numPoints):
         newPoint = read_vertex(file)
-        points.append(newPoint[:-1])
+        points.append(newPoint)
         
     print(f"Points took {time.time()-timePOINTstart}")
     
