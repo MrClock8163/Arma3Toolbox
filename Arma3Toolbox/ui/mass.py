@@ -44,7 +44,6 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
     
     @classmethod
     def poll(cls,context):
-        activeObj = context.active_object
         return proputils.canEditMass(context)
         
     def draw_header(self,context):

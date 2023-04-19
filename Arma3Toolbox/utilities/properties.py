@@ -2,7 +2,8 @@ import bpy
 import bmesh
 
 def canEditMass(context):
-    return len(bpy.context.selected_objects) == 1 and bpy.context.selected_objects[0].type == 'MESH' and context.active_object.mode == 'EDIT' 
+    obj = context.active_object
+    return len(context.selected_objects) == 1 and obj and obj.type == 'MESH' and obj.mode == 'EDIT' 
     
 def selectionMassGet(self):
     mesh = self.data

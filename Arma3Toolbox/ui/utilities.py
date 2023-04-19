@@ -49,7 +49,8 @@ class A3OB_OT_CheckConvexity(bpy.types.Operator):
     
     @classmethod
     def poll(cls,context):
-        return len(bpy.context.selected_objects) == 1 and bpy.context.selected_objects[0].type == 'MESH'
+        obj = context.active_object
+        return len(context.selected_objects) == 1 and obj and obj.type == 'MESH'
     
     def execute(self,context):
         name, concaves = structutils.checkConvexity()
@@ -71,7 +72,8 @@ class A3OB_OT_CheckClosed(bpy.types.Operator):
     
     @classmethod
     def poll(cls,context):
-        return len(bpy.context.selected_objects) == 1 and bpy.context.selected_objects[0].type == 'MESH'
+        obj = context.active_object
+        return len(context.selected_objects) == 1 and obj and obj.type == 'MESH'
     
     def execute(self,context):
         
@@ -87,7 +89,8 @@ class A3OB_OT_ConvexHull(bpy.types.Operator):
     
     @classmethod
     def poll(cls,context):
-        return len(bpy.context.selected_objects) == 1 and bpy.context.selected_objects[0].type == 'MESH'
+        obj = context.active_object
+        return len(context.selected_objects) == 1 and obj and obj.type == 'MESH'
     
     def execute(self,context):
         mode = bpy.context.object.mode
@@ -104,7 +107,8 @@ class A3OB_OT_ComponentConvexHull(bpy.types.Operator):
     
     @classmethod
     def poll(cls,context):
-        return len(bpy.context.selected_objects) == 1 and bpy.context.selected_objects[0].type == 'MESH'
+        obj = context.active_object
+        return len(context.selected_objects) == 1 and obj and obj.type == 'MESH'
     
     def execute(self,context):
         mode = bpy.context.object.mode
@@ -121,7 +125,8 @@ class A3OB_OT_FindComponents(bpy.types.Operator):
     
     @classmethod
     def poll(cls,context):
-        return len(bpy.context.selected_objects) == 1 and bpy.context.selected_objects[0].type == 'MESH'
+        obj = context.active_object
+        return len(context.selected_objects) == 1 and obj and obj.type == 'MESH'
     
     def execute(self,context):
         mode = bpy.context.object.mode
@@ -145,7 +150,6 @@ class A3OB_OT_CleanupVertexGroups(bpy.types.Operator):
         obj = context.active_object
         currentMode = obj.mode
         
-        
         bpy.ops.object.mode_set(mode='OBJECT')
         
         removed = structutils.cleanupVertexGroups(obj)
@@ -157,7 +161,7 @@ class A3OB_OT_CleanupVertexGroups(bpy.types.Operator):
         return {'FINISHED'}
 
 class A3OB_OT_RedefineVertexGroup(bpy.types.Operator):
-    '''Remove selected vertex group and recreate it with the selected verticies assigned'''
+    '''Remove vertex group and recreate it with the selected verticies assigned'''
 
     bl_label = "Redefine Vertex Group"
     bl_idname = 'a3ob.vertex_group_redefine'
@@ -165,7 +169,7 @@ class A3OB_OT_RedefineVertexGroup(bpy.types.Operator):
     @classmethod
     def poll(cls,context):
         obj = context.active_object
-        return obj and obj.type == 'MESH' and obj.vertex_groups.active and obj.mode == 'EDIT'
+        return len(context.selected_objects) == 1 and obj and obj.type == 'MESH' and obj.vertex_groups.active and obj.mode == 'EDIT'
         
     def execute(self,context):
         obj = context.active_object

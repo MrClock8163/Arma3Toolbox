@@ -148,5 +148,5 @@ def redefineVertexGroup(obj):
     
     obj.vertex_groups.remove(group)
     obj.vertex_groups.new(name=groupName)
-    bpy.ops.object.vertex_group_assign()   
+    bpy.ops.object.vertex_group_assign()
     
