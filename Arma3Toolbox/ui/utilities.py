@@ -142,13 +142,36 @@ class A3OB_OT_CleanupVertexGroups(bpy.types.Operator):
         return obj and obj.type == 'MESH' and len(obj.vertex_groups) > 0
         
     def execute(self,context):
-        removed = structutils.cleanupVertexGroups(context.active_object)
+        obj = context.active_object
+        currentMode = obj.mode
         
-        self.report({'INFO'},f"Removed {removed} unused vertex group(s) from {context.active_object.name}")
-        utils.show_infoBox(f"Removed {removed} unused vertex group(s) from {context.active_object.name}","Info",'INFO')
+        
+        bpy.ops.object.mode_set(mode='OBJECT')
+        
+        removed = structutils.cleanupVertexGroups(obj)
+        bpy.ops.object.mode_set(mode=currentMode)
+        
+        self.report({'INFO'},f"Removed {removed} unused vertex group(s) from {obj.name}")
+        utils.show_infoBox(f"Removed {removed} unused vertex group(s) from {obj.name}","Info",'INFO')
         
         return {'FINISHED'}
+
+class A3OB_OT_RedefineVertexGroup(bpy.types.Operator):
+    '''Remove selected vertex group and recreate it with the selected verticies assigned'''
+
+    bl_label = "Redefine Vertex Group"
+    bl_idname = 'a3ob.vertex_group_redefine'
+    
+    @classmethod
+    def poll(cls,context):
+        obj = context.active_object
+        return obj and obj.type == 'MESH' and obj.vertex_groups.active and obj.mode == 'EDIT'
         
+    def execute(self,context):
+        obj = context.active_object
+        structutils.redefineVertexGroup(obj)
+        
+        return {'FINISHED'}
 
 classes = (
     A3OB_OT_CheckConvexity,
@@ -157,6 +180,7 @@ classes = (
     A3OB_OT_ComponentConvexHull,
     A3OB_OT_FindComponents,
     A3OB_OT_CleanupVertexGroups,
+    A3OB_OT_RedefineVertexGroup,
     A3OB_MT_ObjectBuilder,
     A3OB_MT_ObjectBuilder_Topo,
     A3OB_MT_ObjectBuilder_Convexity,
@@ -170,8 +194,10 @@ def menu_func(self,context):
 def vertex_groups_func(self,context):
     layout = self.layout
     row = layout.row(align=True)
-    row.operator(A3OB_OT_FindComponents.bl_idname,icon='STICKY_UVS_DISABLE')
-    row.operator(A3OB_OT_CleanupVertexGroups.bl_idname,icon='TRASH')
+    row.alignment = 'RIGHT'
+    row.operator(A3OB_OT_FindComponents.bl_idname,icon='STICKY_UVS_DISABLE',text="")
+    row.operator(A3OB_OT_RedefineVertexGroup.bl_idname,icon='PASTEDOWN',text="")
+    row.operator(A3OB_OT_CleanupVertexGroups.bl_idname,icon='TRASH',text="")
 
 def register():
     from bpy.utils import register_class

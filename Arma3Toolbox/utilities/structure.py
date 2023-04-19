@@ -135,3 +135,18 @@ def cleanupVertexGroups(obj):
             removed += 1
         
     return removed
+    
+def redefineVertexGroup(obj):
+    mesh = obj.data
+    
+    group = obj.vertex_groups.active
+    
+    if group is None:
+        return
+    
+    groupName = group.name
+    
+    obj.vertex_groups.remove(group)
+    obj.vertex_groups.new(name=groupName)
+    bpy.ops.object.vertex_group_assign()   
+    
