@@ -3,7 +3,6 @@ import bpy_extras
 import os
 
 from ..io import import_p3d
-from .. import utility as utils
 
 class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
     '''Import Arma 3 MLOD P3D'''

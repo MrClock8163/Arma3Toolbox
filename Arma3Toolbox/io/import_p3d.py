@@ -11,7 +11,7 @@ from . import binary_handler as binary
 from ..utilities import lod as lodutils
 from ..utilities import proxy as proxyutils
 from ..utilities import structure as structutils
-from .. import data
+from ..utilities import data
 
 def read_signature(file):
     return binary.readChar(file,4)
