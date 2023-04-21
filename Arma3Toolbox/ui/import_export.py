@@ -2,11 +2,11 @@ import bpy
 import bpy_extras
 import os
 
-from ..io import import_p3d
+from ..io import import_p3d, export_p3d
 
 class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
     '''Import Arma 3 MLOD P3D'''
-    bl_idname = "a3ob.importp3d"
+    bl_idname = "a3ob.import_p3d"
     bl_label = "Import P3D"
     bl_options = {'UNDO', 'PRESET'}
     
@@ -88,7 +88,7 @@ class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         pass
     
     def execute(self,context):
-        print(self.filepath)
+        # print(self.filepath)
         
         file = open(self.filepath,'rb')
         filename = os.path.basename(self.filepath)
@@ -126,7 +126,7 @@ class A3OB_PT_import_P3D_main(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
         
-        return operator.bl_idname == "A3OB_OT_importp3d"
+        return operator.bl_idname == "A3OB_OT_import_p3d"
     
     def draw(self,context):
         layout = self.layout
@@ -149,7 +149,7 @@ class A3OB_PT_import_P3D_collections(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
         
-        return operator.bl_idname == "A3OB_OT_importp3d"
+        return operator.bl_idname == "A3OB_OT_import_p3d"
     
     def draw(self,context):
         layout = self.layout
@@ -173,7 +173,7 @@ class A3OB_PT_import_P3D_data(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
         
-        return operator.bl_idname == "A3OB_OT_importp3d"
+        return operator.bl_idname == "A3OB_OT_import_p3d"
     
     def draw(self,context):
         layout = self.layout
@@ -200,7 +200,7 @@ class A3OB_PT_import_P3D_proxies(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
         
-        return operator.bl_idname == "A3OB_OT_importp3d"
+        return operator.bl_idname == "A3OB_OT_import_p3d"
         
     def draw(self,context):
         layout = self.layout
@@ -223,7 +223,7 @@ class A3OB_PT_import_P3D_proxies(bpy.types.Panel):
         
 class A3OB_OP_export_P3D(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
     '''Export to Arma 3 MLOD P3D'''
-    bl_idname = "a3ob.exportp3d"
+    bl_idname = "a3ob.export_p3d"
     bl_label = "Export P3D"
     
     filename_ext = ".p3d"
@@ -245,8 +245,21 @@ class A3OB_OP_export_P3D(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
         default = True
     )
     
+    apply_modifiers: bpy.props.BoolProperty (
+        name = "Apply Modifiers",
+        description = "Apply the assigned modifiers to the LOD objects during export",
+        default = True
+    )
+    
     def execute(self,context):
-        pass
+        file = open(self.filepath,'wb')
+        filename = os.path.basename(self.filepath)
+        
+        export_p3d.export_file(self,context,file)
+        # export_p3d.export_file(self,context,None)
+        
+        file.close()
+        
         return {'FINISHED'}
         
 classes = (

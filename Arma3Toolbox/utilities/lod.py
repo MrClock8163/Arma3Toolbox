@@ -22,6 +22,21 @@ def getLODid(value):
 
     return index,resolution
     
+def getLODvalue(LODindex,resolution):    
+    if LODindex == 0:
+        return resolution
+    
+    index = list(data.LODtypeIndex.values()).index(LODindex,0)
+    fraction, exponent = list(data.LODtypeIndex.keys())[LODindex]
+    
+    resPosition = data.LODtypeResolutionPosition.get(index,None)
+    res = 0
+    
+    if resPosition is not None:
+        res = resolution*10**(exponent-resPosition)
+    
+    return fraction*10**exponent + res
+    
 def getLODname(index):
     return data.LODdata.get(index,data.LODdata[30])[0]
     

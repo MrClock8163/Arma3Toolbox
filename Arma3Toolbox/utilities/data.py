@@ -1,4 +1,4 @@
-LODtypeResolutionPosition = {
+LODtypeResolutionPosition = { # decimal places in normalized format
     0: -1,
     3: 3,
     4: 4,
