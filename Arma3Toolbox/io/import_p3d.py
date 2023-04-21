@@ -55,17 +55,19 @@ def read_face(file):
     
     return vertTables,texture,material
     
-def decode_selectionWeight(b):
-    if b == 0:
+def decode_selectionWeight(weight):
+    if weight == 0:
         return 0.0
-    elif b == 2:
+        
+    elif weight == 1:
         return 1.0
-    elif b > 2:
-        return 1.0 - round((b-2)/2.55555)*0.01
-    elif b < 0:
-        return -round(b/2.55555)*0.01
-    else:
-        return 1.0 # ¯\_(ツ)_/¯
+        
+    value = (256 - weight) / 255
+    
+    if value > 1:
+        return 0
+        
+    return value
         
 def process_TAGGs(file,bm,additionalData,numPoints,numFaces,logger):
     count = 0
