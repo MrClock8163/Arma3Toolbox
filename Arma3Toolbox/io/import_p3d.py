@@ -290,11 +290,13 @@ def process_proxies(LODs,operator,materialDict):
                 transform_proxy(obj)
                 structutils.cleanupVertexGroups(obj)
                 
-                for i,vgroup in enumerate(obj.vertex_groups):
-                    if i not in proxySelections:
+                for vgroup in obj.vertex_groups:
+                    name = vgroup.name
+                    
+                    if name not in proxySelections:
                         continue
                         
-                    proxyData = re.match(selectionPattern,proxySelections[i])
+                    proxyData = re.match(selectionPattern,proxySelections[name])
                     
                     obj.vertex_groups.remove(vgroup)
                     proxyDataGroups = proxyData.groups()
@@ -431,8 +433,9 @@ def read_LOD(context,file,materialDict,additionalData,logger):
     proxySelections = {}
     for i,name in enumerate(namedSelections):
         if re.match(selectionPattern,name):
-            proxySelections[i] = name
-            name = "@proxy_%04d" % (i + 1)
+            groupName = "@proxy_%04d" % i
+            proxySelections[groupName] = name
+            name = groupName
             
         obj.vertex_groups.new(name=name)
     
