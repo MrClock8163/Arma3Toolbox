@@ -51,6 +51,52 @@ class A3OB_OT_namedprops_remove(bpy.types.Operator):
                 OBprops.propertyIndex = len(OBprops.properties)-1            
         
         return {'FINISHED'}
+        
+class A3OB_OT_namedprops_common(bpy.types.Operator):
+    '''Add a common named property'''
+    
+    bl_label = "Common named property"
+    bl_idname = "a3ob.namedprops_common"
+    
+    @classmethod
+    def poll(cls,context):
+        return context.object is not None
+    
+    def invoke(self,context,event):
+        obj = context.object
+        wm = context.window_manager
+        
+        wm.a3ob_namedprops_common.clear()
+        
+        for prop in data.common_namedprops:
+            item = wm.a3ob_namedprops_common.add()
+            item.name = prop
+            item.value = data.common_namedprops[prop]
+        
+        wm.a3ob_namedprops_common_index = 0
+        
+        return context.window_manager.invoke_props_dialog(self)
+    
+    def draw(self,context):
+        layout = self.layout
+        layout.template_list('A3OB_UL_namedprops',"A3OB_namedprops_common",context.window_manager,'a3ob_namedprops_common',context.window_manager,'a3ob_namedprops_common_index')
+
+    def execute(self,context):
+        obj = context.object
+        wm = context.window_manager
+        
+        if len(wm.a3ob_namedprops_common) > 0 and wm.a3ob_namedprops_common_index in range(len(wm.a3ob_namedprops_common)):
+            newItem = wm.a3ob_namedprops_common[wm.a3ob_namedprops_common_index]
+            
+            OBprops = obj.a3ob_properties_object
+            item = OBprops.properties.add()
+            item.name = newItem.name
+            item.value = newItem.value
+            
+            
+            OBprops.propertyIndex = len(OBprops.properties)-1
+        
+        return {'FINISHED'}
 
 class A3OB_UL_namedprops(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
@@ -120,6 +166,8 @@ class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
         col2 = row.column(align=True)
         col2.operator("a3ob.namedprops_add",text="",icon='ADD')
         col2.operator("a3ob.namedprops_remove",text="",icon='REMOVE')
+        col2.separator()
+        col2.operator("a3ob.namedprops_common",icon='PASTEDOWN',text="")
         
 class A3OB_PT_object_proxy(bpy.types.Panel):
     bl_region_type = 'WINDOW'
@@ -158,6 +206,7 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
 classes = (
     A3OB_OT_namedprops_add,
     A3OB_OT_namedprops_remove,
+    A3OB_OT_namedprops_common,
     A3OB_UL_namedprops,
     A3OB_PT_object_mesh,
     A3OB_PT_object_mesh_namedprops,

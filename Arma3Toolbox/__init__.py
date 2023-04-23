@@ -85,10 +85,10 @@ def register():
     utilities.register()
     object_mesh.register()
     mass.register()
-    windowmanager.register()
     object.register()
     rvmat.register()
     material.register()
+    windowmanager.register()
     
     print("Register done")
 
@@ -98,10 +98,10 @@ def unregister():
     for cls in reversed(classes):
         unregister_class(cls)
 
+    windowmanager.unregister()
     material.unregister()
     rvmat.unregister()
     object.unregister()
-    windowmanager.unregister()
     mass.unregister()
     object_mesh.unregister()
     utilities.unregister()

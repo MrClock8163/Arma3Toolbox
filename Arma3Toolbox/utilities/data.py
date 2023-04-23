@@ -159,3 +159,16 @@ LODTypes = (
     ('29','Wreckage',"Vehicle wreckage"),
     ('30','Unknown',"Unknown model layer")
 )
+
+common_namedprops = {
+    "autocenter": "0",
+    "buoyancy": "1",
+    "class": "building",
+    "class": "house",
+    "forcenotalpha": "1",
+    "lodnoshadow": "1",
+    "map": "building",
+    "map": "hide",
+    "map": "house",
+    "prefershadowvolume": "1"
+}
