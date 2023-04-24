@@ -1,6 +1,28 @@
 import bpy
 from ..utilities import data
+from ..utilities import proxy as proxyutils
 
+class A3OB_OT_proxy_add(bpy.types.Operator):
+    '''Add Arma 3 proxy object and parent to the active object'''
+    
+    bl_idname = "a3ob.proxy_add"
+    bl_label = "Arma 3 proxy"
+    bl_options = {'UNDO'}
+    
+    @classmethod
+    def poll(cls,context):
+        return context.active_object and context.active_object.mode == 'OBJECT'
+        
+    def execute(self,context):
+        activeObj = context.active_object
+        
+        obj = proxyutils.createProxy()
+        obj.location = context.scene.cursor.location
+        activeObj.users_collection[0].objects.link(obj)
+        obj.parent = activeObj
+        
+        return {'FINISHED'}
+    
 class A3OB_OT_namedprops_add(bpy.types.Operator):
     '''Add named property to the active object'''
     
@@ -203,7 +225,12 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
         layout.prop(OBprops,"proxyPath",icon='MESH_CUBE',text="")
         layout.prop(OBprops,"proxyIndex",text="")
         
+def menu_func(self,context):
+    self.layout.separator()
+    self.layout.operator(A3OB_OT_proxy_add.bl_idname,icon='EMPTY_ARROWS')
+        
 classes = (
+    A3OB_OT_proxy_add,
     A3OB_OT_namedprops_add,
     A3OB_OT_namedprops_remove,
     A3OB_OT_namedprops_common,
@@ -216,7 +243,11 @@ classes = (
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
+        
+    bpy.types.VIEW3D_MT_add.append(menu_func)
     
 def unregister():
+    bpy.types.VIEW3D_MT_add.remove(menu_func)
+    
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

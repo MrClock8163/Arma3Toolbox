@@ -43,3 +43,15 @@ def getTransformRot(obj):
     
     m = mathutils.Matrix(((*x,0),(*y,0),(*z,0),(0,0,0,1)))
     return m
+    
+def createProxy():
+    objData = bpy.data.meshes.new("Proxy")
+    objData.from_pydata([(0,0,0),(0,0,2),(0,1,0)],[],[(0,1,2)])
+    objData.update(calc_edges=True)
+    
+    objData.polygons[0].use_smooth = True
+    
+    obj = bpy.data.objects.new("Proxy",objData)
+    obj.a3ob_properties_object_proxy.isArma3Proxy = True
+    
+    return obj
