@@ -19,6 +19,7 @@ if "bpy" in locals():
     importlib.reload(ui.mass)
     importlib.reload(ui.material)
     importlib.reload(ui.object_mesh)
+    importlib.reload(ui.hitpoint)
     importlib.reload(props.windowmanager)
     importlib.reload(props.object)
     importlib.reload(props.rvmat)
@@ -29,6 +30,7 @@ else:
     from .ui import mass
     from .ui import material
     from .ui import object_mesh
+    from .ui import hitpoint
     from .props import windowmanager
     from .props import object
     from .props import rvmat
@@ -89,6 +91,7 @@ def register():
     rvmat.register()
     material.register()
     windowmanager.register()
+    hitpoint.register()
     
     print("Register done")
 
@@ -98,6 +101,7 @@ def unregister():
     for cls in reversed(classes):
         unregister_class(cls)
 
+    hitpoint.unregister()
     windowmanager.unregister()
     material.unregister()
     rvmat.unregister()
