@@ -65,7 +65,10 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
         return proputils.canEditMass(context)
         
     def draw_header(self,context):
-        self.layout.prop(context.window_manager,"a3ob_enableVertexMass",text="")
+        row = self.layout.row(align=True)
+        row.operator("wm.url_open", text="", icon='HELP').url = "https://github.com/MrClock8163/Arma3Toolbox/wiki/Tool:-Vertex-mass-editing"
+        row.separator()
+        row.prop(context.window_manager,"a3ob_enableVertexMass",text="")
         
     def draw(self,context):
         layout = self.layout
