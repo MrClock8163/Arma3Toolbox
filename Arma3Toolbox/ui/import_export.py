@@ -252,13 +252,17 @@ class A3OB_OP_export_P3D(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
     )
     
     def execute(self,context):
-        file = open(self.filepath,'wb')
-        filename = os.path.basename(self.filepath)
-        
-        export_p3d.export_file(self,context,file)
-        # export_p3d.export_file(self,context,None)
-        
-        file.close()
+        if len(export_p3d.get_LOD_objects(self,context)) > 0:
+            
+            file = open(self.filepath,'wb')
+            filename = os.path.basename(self.filepath)
+            
+            export_p3d.export_file(self,context,file)
+            
+            file.close()
+        else:
+            # self.report()
+            pass
         
         return {'FINISHED'}
         
