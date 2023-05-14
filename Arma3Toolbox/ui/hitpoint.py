@@ -27,10 +27,10 @@ class A3OB_PT_hitpoints(bpy.types.Panel):
     def poll(cls,context):
         return True
         
-    # def draw_header(self,context):
-        # layout = self.layout
-        # row = layout.row(align=True)
-        # row.operator("wm.url_open", text="", icon='HELP').url = ""
+    def draw_header(self,context):
+        layout = self.layout
+        row = layout.row(align=True)
+        row.operator("wm.url_open", text="", icon='HELP').url = "https://github.com/MrClock8163/Arma3Toolbox/wiki/Tool:-Hit-point-cloud-generator"
         
     def draw(self,context):
         OBprops = context.window_manager.a3ob_hitpoint_generator
