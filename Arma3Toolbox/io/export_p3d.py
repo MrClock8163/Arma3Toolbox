@@ -102,6 +102,15 @@ def get_LOD_data(operator,context):
         if operator.apply_transforms:
             bpy.ops.object.transform_apply({"active_object": mainObj, "selected_editable_objects": [mainObj]},location = True, scale = True, rotation = True)
         
+        if operator.validate_meshes:
+            mainObj.data.validate(clean_customdata=False)
+            
+        if not operator.preserve_normals:
+            ctx = context.copy()
+            ctx["active_object"] = mainObj
+            ctx["object"] = mainObj
+            bpy.ops.mesh.customdata_custom_splitnormals_clear(ctx)
+        
         LODs.append(mainObj)
         proxies.append(objProxies)
         
@@ -293,6 +302,12 @@ def write_header(file,LODcount):
     
 def write_LOD(file,obj,materials,proxies):
 
+    for face in obj.data.polygons:
+        if len(face.vertices) > 4:
+            OBprops = obj.a3ob_properties_object
+            print(f"N-gons in {lodutils.formatLODname(int(OBprops.LOD),OBprops.resolution)} -> skipping")
+            return
+    
     binary.writeChars(file,'P3DM')
     binary.writeULong(file,0x1c)
     binary.writeULong(file,0x100)

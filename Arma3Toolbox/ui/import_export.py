@@ -225,12 +225,26 @@ class A3OB_OP_export_P3D(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
     '''Export to Arma 3 MLOD P3D'''
     bl_idname = "a3ob.export_p3d"
     bl_label = "Export P3D"
+    bl_options = {'UNDO', 'PRESET'}
     
     filename_ext = ".p3d"
     
     filter_glob: bpy.props.StringProperty (
         default = "*.p3d",
         options = {'HIDDEN'}
+    )
+    
+    # add option to prune custom split normals
+    preserve_normals: bpy.props.BoolProperty (
+        name = "Custom normals",
+        description = "Export the custom split edge normals",
+        default = True
+    )
+    
+    validate_meshes: bpy.props.BoolProperty (
+        name = "Validate meshes",
+        description = "Clean up invalid geometry before export (eg.: duplicate faces, edges, vertices)",
+        default = True
     )
     
     use_selection: bpy.props.BoolProperty (
