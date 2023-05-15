@@ -115,16 +115,34 @@ def get_LOD_data(operator,context):
         proxies.append(objProxies)
         
         objMaterials = {0: ("","")}
+        translucency = {}
         
         for i,slot in enumerate(mainObj.material_slots):
             mat = slot.material
             if mat:
                 objMaterials[i] = (get_texture_string(mat.a3ob_properties_material),mat.a3ob_properties_material.materialPath)
+                translucency[i] = mat.a3ob_properties_material.translucent
             else:
                 objMaterials[i] = ("","")
+                translucency[i] = False
                 
         materials.append(objMaterials)
+                
+        bm = bmesh.new()
+        bm.from_mesh(mainObj.data)
+        bm.faces.ensure_lookup_table()
         
+        indexOffset = len(bm.faces)-1
+        translucentCount = 0
+        for face in bm.faces:
+            if translucency[face.material_index]:
+                face.index = indexOffset + translucentCount
+                translucentCount += 1
+                
+        bm.faces.sort()
+        bm.to_mesh(mainObj.data)
+        bm.free()
+                
     return LODs,materials,proxies
     
 def can_export(operator,context):

@@ -44,6 +44,11 @@ class A3OB_PG_properties_material(bpy.types.PropertyGroup):
         subtype = 'FILE_PATH',
         default = ""
     )
+    translucent: bpy.props.BoolProperty (
+        name = "Translucent",
+        description = "The material is translucent",
+        default = False
+    )
     # hiddenSelection: bpy.props.StringProperty (
         # name = "Create Selection",
         # description = "Name of the selection to create for the material (leave empty to not create selection)",
