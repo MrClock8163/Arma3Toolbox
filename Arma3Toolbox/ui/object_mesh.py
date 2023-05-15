@@ -11,7 +11,8 @@ class A3OB_OT_proxy_add(bpy.types.Operator):
     
     @classmethod
     def poll(cls,context):
-        return context.active_object and context.active_object.mode == 'OBJECT'
+        obj = context.active_object
+        return obj and obj.type == 'MESH' and obj.mode == 'OBJECT' and obj.parent == None and not obj.a3ob_properties_object_proxy.isArma3Proxy
         
     def execute(self,context):
         activeObj = context.active_object
