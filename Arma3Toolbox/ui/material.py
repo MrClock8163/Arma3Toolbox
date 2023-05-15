@@ -31,8 +31,9 @@ class A3OB_PT_material(bpy.types.Panel):
         if texType == 'TEX':
             layout.prop(OBprops,"texturePath",icon='TEXTURE',text="")
         elif texType == 'COLOR':
-            layout.prop(OBprops, "colorValue",icon='COLOR')
-            layout.prop(OBprops, "colorType")
+            colorRow = layout.row(align=True)
+            colorRow.prop(OBprops, "colorValue",icon='COLOR')
+            colorRow.prop(OBprops, "colorType",text="")
         elif texType == 'CUSTOM':
             layout.prop(OBprops, "colorString",icon='TEXT',text="")
         

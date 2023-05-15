@@ -234,15 +234,14 @@ class A3OB_OP_export_P3D(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
         options = {'HIDDEN'}
     )
     
-    # add option to prune custom split normals
     preserve_normals: bpy.props.BoolProperty (
-        name = "Custom normals",
+        name = "Custom Normals",
         description = "Export the custom split edge normals",
         default = True
     )
     
     validate_meshes: bpy.props.BoolProperty (
-        name = "Validate meshes",
+        name = "Validate Meshes",
         description = "Clean up invalid geometry before export (eg.: duplicate faces, edges, vertices)",
         default = True
     )
@@ -265,6 +264,9 @@ class A3OB_OP_export_P3D(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
         default = True
     )
     
+    def draw(self,context):
+        pass
+    
     def execute(self,context):
         if export_p3d.can_export(self,context):
             
@@ -279,13 +281,66 @@ class A3OB_OP_export_P3D(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
         
         return {'FINISHED'}
         
+class A3OB_PT_export_P3D_include(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Include"
+    bl_parent_id = "FILE_PT_operator"
+    
+    @classmethod
+    def poll(cls,context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        return operator.bl_idname == "A3OB_OT_export_p3d"
+    
+    def draw(self,context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        col = layout.column(heading="Limit To",align=True)
+        col.prop(operator,"use_selection")
+        
+class A3OB_PT_export_P3D_meshes(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Mesh Data"
+    bl_parent_id = "FILE_PT_operator"
+    
+    @classmethod
+    def poll(cls,context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        return operator.bl_idname == "A3OB_OT_export_p3d"
+    
+    def draw(self,context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        col = layout.column(align=True)
+        col.prop(operator,"validate_meshes")
+        col.prop(operator,"apply_modifiers")
+        col.prop(operator,"apply_transforms")
+        col.prop(operator,"preserve_normals")
+        
 classes = (
     A3OB_OP_import_P3D,
     A3OB_PT_import_P3D_main,
     A3OB_PT_import_P3D_collections,
     A3OB_PT_import_P3D_data,
     A3OB_PT_import_P3D_proxies,
-    A3OB_OP_export_P3D
+    A3OB_OP_export_P3D,
+    A3OB_PT_export_P3D_include,
+    A3OB_PT_export_P3D_meshes
 )
         
 def menu_func_import(self,context):
