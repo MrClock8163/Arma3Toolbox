@@ -252,7 +252,7 @@ class A3OB_OP_export_P3D(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
     )
     
     def execute(self,context):
-        if len(export_p3d.get_LOD_objects(self,context)) > 0:
+        if export_p3d.can_export(self,context):
             
             file = open(self.filepath,'wb')
             filename = os.path.basename(self.filepath)
@@ -261,8 +261,7 @@ class A3OB_OP_export_P3D(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
             
             file.close()
         else:
-            # self.report()
-            pass
+            self.report({'INFO'},"There are no LODs to export")
         
         return {'FINISHED'}
         

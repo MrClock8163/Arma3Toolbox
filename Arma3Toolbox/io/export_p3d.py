@@ -2,17 +2,58 @@ import bpy
 import bmesh
 import os
 import struct
-import math
 import mathutils
 from . import binary_handler as binary
+from ..utilities import generic as utils
 from ..utilities import lod as lodutils
 from ..utilities import proxy as proxyutils
 from ..utilities import structure as structutils
 from ..utilities import data
 from ..utilities.logger import ProcessLogger
-
-def get_LOD_objects(operator,context):
-
+    
+# may be worth looking into bpy.ops.object.convert(target='MESH') instead to reduce operator calls
+def apply_modifiers(obj,context):
+    ctx = context.copy()
+    ctx["object"] = obj
+    
+    for m in obj.modifiers:
+        try:
+            ctx["modifier"] = m
+            bpy.ops.object.modifier_apply(ctx,modifier=m.name)
+        except:
+            newObj.modifiers.remove(m)
+            
+def merge_objects(mainObj,subObjs,context):
+    ctx = context.copy()
+    ctx["active_object"] = mainObj
+    ctx["selected_objects"] = (subObjs + [mainObj])
+    ctx["selected_editable_objects"] = (subObjs + [mainObj])
+    
+    bpy.ops.object.join(ctx)
+    
+    for obj in subObjs:
+        bpy.data.objects.remove(obj,do_unlink=True)
+        
+def duplicate_object(obj):
+    newObj = obj.copy()
+    newObj.data = obj.data.copy()
+    
+    return newObj
+    
+def get_texture_string(materialProps):
+    textureType = materialProps.textureType
+    
+    if textureType == 'TEX':
+        return materialProps.texturePath
+    elif textureType == 'COLOR':
+        color = materialProps.colorValue
+        return f"#(argb,8,8,3)color({round(color[0],3)},{round(color[1],3)},{round(color[2],3)},{round(color[3],3)},{materialProps.colorType})"
+    elif textureType == 'CUSTOM':
+        return materialProps.colorString
+    else:
+        return ""
+            
+def get_LOD_data(operator,context):
     scene = context.scene
     exportObjects = scene.objects
     
@@ -20,20 +61,78 @@ def get_LOD_objects(operator,context):
         exportObjects = context.selected_objects
     
     LODs = []
+    materials = []
+    proxies = []
+    
     for obj in exportObjects:
-        if obj.type =='MESH' and obj.a3ob_properties_object.isArma3LOD and obj.a3ob_properties_object.LOD != '30':
+        if obj.type != 'MESH' or not obj.a3ob_properties_object.isArma3LOD or obj.parent != None or obj.a3ob_properties_object.LOD == '30':
+            continue
+            
+        mainObj = duplicate_object(obj)
+        
+        if operator.apply_modifiers:
+            apply_modifiers(mainObj,context)
+        
+        children = obj.children
+        
+        subObjects = []
+        objProxies = {}
+        for i,child in enumerate(children):
+            if obj.type != 'MESH':
+                continue
+                
+            subObj = duplicate_object(child)
+            OBprops = subObj.a3ob_properties_object_proxy
+            if OBprops.isArma3Proxy:
+                placeholder = "@proxy_%04d" % i
+                utils.createSelection(subObj,placeholder)
+                objProxies[placeholder] = f"proxy:{OBprops.proxyPath}.{'%03d' % OBprops.proxyIndex}"
             
             if operator.apply_modifiers:
-                LODs.append(obj.evaluated_get(context.evaluated_depsgraph_get()))
+                apply_modifiers(subObj,context)
+            
+            subObjects.append(subObj)
+            
+        subObjectsData = [obj.data for obj in subObjects]
+        merge_objects(mainObj,subObjects,context)
+        
+        for data in subObjectsData:
+            bpy.data.meshes.remove(data)
+        
+        if operator.apply_transforms:
+            bpy.ops.object.transform_apply({"active_object": mainObj, "selected_editable_objects": [mainObj]},location = True, scale = True, rotation = True)
+        
+        LODs.append(mainObj)
+        proxies.append(objProxies)
+        
+        objMaterials = {0: ("","")}
+        
+        for i,slot in enumerate(mainObj.material_slots):
+            mat = slot.material
+            if mat:
+                objMaterials[i] = (get_texture_string(mat.a3ob_properties_material),mat.a3ob_properties_material.materialPath)
             else:
-                LODs.append(obj)
+                objMaterials[i] = ("","")
+                
+        materials.append(objMaterials)
+        
+    return LODs,materials,proxies
     
-    return LODs
+def can_export(operator,context):
+    scene = context.scene
+    exportObjects = scene.objects
+    
+    if operator.use_selection:
+        exportObjects = context.selected_objects
+        
+    for obj in exportObjects:
+        if obj.type == 'MESH' and obj.a3ob_properties_object.isArma3LOD and obj.parent == None and obj.a3ob_properties_object.LOD != '30':
+            return True
+            
+    return False
     
 def get_resolution(obj):
     OBprops = obj.a3ob_properties_object
-    
-    # index,res = data.LODtypeIndex.values().index(int(OBprops.LOD))
     
     return lodutils.getLODvalue(int(OBprops.LOD),OBprops.resolution)
 
@@ -63,7 +162,7 @@ def write_pseudo_vertextable(file,loop):
     binary.writeULong(file,loop.index)
     file.write(struct.pack('<ff',0,0))
 
-def write_face(file,bm,face):
+def write_face(file,bm,face,materials):
     numSides = len(face.loops)
     binary.writeULong(file,numSides)
     
@@ -73,9 +172,11 @@ def write_face(file,bm,face):
     if numSides < 4:
         file.write(struct.pack('<IIff',0,0,0,0))
     
+    matData = materials[face.material_index]
+    
     binary.writeULong(file,0) # face flags
-    binary.writeAsciiz(file,"") # texture
-    binary.writeAsciiz(file,"") # material
+    binary.writeAsciiz(file,matData[0]) # texture
+    binary.writeAsciiz(file,matData[1]) # material
     
 def write_sharps(file,bm):
     binary.writeByte(file,1)
@@ -140,7 +241,6 @@ def write_vertex_group(file,bm,layer,name,index):
     
     for vert in bm.verts:
         value = vert[layer].get(index,0)
-        print(encode_selectionWeight(value))
         binary.writeByte(file,encode_selectionWeight(value))
         
     for face in bm.faces:
@@ -155,13 +255,19 @@ def write_vertex_group(file,bm,layer,name,index):
     binary.writeULong(file,dataEndPos-dataSizePos-4) # fill in length data
     file.seek(dataEndPos,0)
 
-def write_selections(file,bm,names):
+def write_selections(file,bm,names,proxies):
     if len(names) == 0:
         return
     
     layer = bm.verts.layers.deform.active
     
     for i,name in enumerate(names):
+        if name.strip().startswith("@proxy"):
+            try:
+                name = proxies[name]
+            except:
+                pass
+        
         write_vertex_group(file,bm,layer,name,i)
     
 def write_property(file,key,value):
@@ -185,7 +291,8 @@ def write_header(file,LODcount):
     binary.writeULong(file,257)
     binary.writeULong(file,LODcount)
     
-def write_LOD(file,obj):
+def write_LOD(file,obj,materials,proxies):
+
     binary.writeChars(file,'P3DM')
     binary.writeULong(file,0x1c)
     binary.writeULong(file,0x100)
@@ -220,7 +327,7 @@ def write_LOD(file,obj):
         write_normal(file,loop.normal)
         
     for face in bm.faces:
-        write_face(file,bm,face)
+        write_face(file,bm,face,materials)
         
     binary.writeChars(file,'TAGG') # TAGG section start
         
@@ -232,7 +339,7 @@ def write_LOD(file,obj):
         
     
     write_named_properties(file,obj)
-    write_selections(file,bm,[group.name for group in obj.vertex_groups])
+    write_selections(file,bm,[group.name for group in obj.vertex_groups],proxies)
     
     binary.writeByte(file,1)
     binary.writeAsciiz(file,"#EndOfFile#") # EOF signature
@@ -245,7 +352,7 @@ def write_LOD(file,obj):
 def export_file(operator,context,file):
     logger = ProcessLogger()
     
-    LODobjects = get_LOD_objects(operator,context)
+    LODobjects, materials, proxies = get_LOD_data(operator,context)
     
     print(LODobjects)
     
@@ -253,5 +360,6 @@ def export_file(operator,context,file):
     
     write_header(file,LODcount)
     
-    for obj in LODobjects:
-        write_LOD(file,obj)
+    for i,obj in enumerate(LODobjects):
+        write_LOD(file,obj,materials[i],proxies[i])
+        bpy.data.meshes.remove(obj.data,do_unlink=True)

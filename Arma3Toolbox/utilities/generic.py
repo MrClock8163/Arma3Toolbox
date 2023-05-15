@@ -34,3 +34,11 @@ def forceObjectMode():
 def forceEditMode():
     forceObjectMode()
     bpy.ops.object.mode_set(mode='EDIT')
+    
+def createSelection(obj,selection):
+    group = obj.vertex_groups.get(selection,None)
+    
+    if not group:
+        group = obj.vertex_groups.new(name=selection.strip())
+
+    group.add([vert.index for vert in obj.data.vertices],1,'REPLACE')
