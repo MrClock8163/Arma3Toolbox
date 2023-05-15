@@ -21,6 +21,7 @@ class A3OB_PT_material(bpy.types.Panel):
         
         layout = self.layout
         layout.use_property_split = True
+        layout.use_property_decorate = False
         
         row = layout.row()
         row.prop(OBprops,"textureType",expand=True)
@@ -37,9 +38,9 @@ class A3OB_PT_material(bpy.types.Panel):
         
         layout.prop(OBprops,"materialPath",icon='MATERIAL',text="")
         
-        layout.separator()
+        # layout.separator()
         
-        layout.prop(OBprops,"hiddenSelection",icon='MESH_DATA')
+        # layout.prop(OBprops,"hiddenSelection",icon='MESH_DATA')
         
 classes = (
     A3OB_PT_material,
