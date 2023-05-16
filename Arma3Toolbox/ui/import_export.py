@@ -249,7 +249,7 @@ class A3OB_OP_export_P3D(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
     use_selection: bpy.props.BoolProperty (
         name = "Selected Only",
         description = "Export only selected objects",
-        default = True
+        default = False
     )
     
     apply_transforms: bpy.props.BoolProperty (

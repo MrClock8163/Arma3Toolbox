@@ -7,6 +7,7 @@ import time
 import os
 import mathutils
 from . import binary_handler as binary
+from ..utilities import generic as utils
 from ..utilities import lod as lodutils
 from ..utilities import proxy as proxyutils
 from ..utilities import structure as structutils
@@ -68,6 +69,28 @@ def decode_selectionWeight(weight):
         return 0
         
     return value
+    
+def get_file_path(path,prefs,extension = ""):
+    path = utils.replace_slashes(path.strip().lower())
+    
+    if not prefs.reconstructPaths:
+        return path
+    
+    if path == "":
+        return ""
+    
+    if os.path.splitext(path)[1].lower() != extension:
+        path += extension
+    
+    if prefs.reconstructPaths:
+        root = prefs.projectRoot.strip().lower()
+        if not path.startswith(root):
+            absPath = os.path.join(root,path)
+            
+            if os.path.exists(absPath):
+                return absPath
+    
+    return path
         
 def process_TAGGs(file,bm,additionalData,numPoints,numFaces,logger):
     count = 0
@@ -146,7 +169,7 @@ def process_TAGGs(file,bm,additionalData,numPoints,numFaces,logger):
             
     return namedSelections, properties
     
-def process_materials(objData,faceDataDict,materialDict):
+def process_materials(objData,faceDataDict,materialDict,prefs):
     blenderMatIndices = {} # needed because otherwise materials and textures with same names, but in different folders may cause issues
     proceduralStringPattern = "#\(.*?\)\w+\(.*?\)"
     colorStringPattern = "#\(\s*argb\s*,\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)color\(\s*(\d+.?\d*)\s*,\s*(\d+.?\d*)\s*,\s*(\d+.?\d*)\s*,\s*(\d+.?\d*)\s*,([a-zA-Z]+)\)"
@@ -183,9 +206,9 @@ def process_materials(objData,faceDataDict,materialDict):
                     OBprops.textureType = 'CUSTOM'
                     OBprops.colorString = textureName
             else:
-                OBprops.texturePath = textureName
+                OBprops.texturePath = get_file_path(textureName,prefs)
             
-            OBprops.materialPath = materialName
+            OBprops.materialPath = get_file_path(materialName,prefs)
             materialDict[(textureName,materialName)] = blenderMat
             
         if blenderMat.name not in objData.materials:
@@ -257,7 +280,7 @@ def transform_proxy(obj): # Align the object coordinate system with the proxy di
     
     obj.matrix_world @= translate.inverted()
 
-def process_proxies(LODs,operator,materialDict):
+def process_proxies(LODs,operator,materialDict,prefs):
     selectionPattern = "proxy:(.*)\.(\d{3})"
     placeholderPattern = "@proxy_(\d{4})"
     
@@ -300,7 +323,7 @@ def process_proxies(LODs,operator,materialDict):
                     
                     obj.vertex_groups.remove(vgroup)
                     proxyDataGroups = proxyData.groups()
-                    obj.a3ob_properties_object_proxy.proxyPath = proxyDataGroups[0]
+                    obj.a3ob_properties_object_proxy.proxyPath = get_file_path(proxyDataGroups[0],prefs,".p3d")
                     obj.a3ob_properties_object_proxy.proxyIndex = int(proxyDataGroups[1])
                 
                 obj.data.materials.clear()
@@ -310,7 +333,7 @@ def process_proxies(LODs,operator,materialDict):
                 
         bpy.ops.object.select_all(action='DESELECT')
 
-def read_LOD(context,file,materialDict,additionalData,logger):
+def read_LOD(context,file,materialDict,additionalData,logger,prefs):
     logger.level_up()
 
     # Read LOD header
@@ -415,7 +438,7 @@ def read_LOD(context,file,materialDict,additionalData,logger):
     
     # Create materials
     if 'MATERIALS' in additionalData:
-        materialDict = process_materials(objData,faceDataDict,materialDict)
+        materialDict = process_materials(objData,faceDataDict,materialDict,prefs)
         logger.step("Assigned materials")
         
     # Apply split normals
@@ -449,6 +472,7 @@ def read_LOD(context,file,materialDict,additionalData,logger):
     return obj, LODresolution, materialDict, proxySelections
 
 def import_file(operator,context,file):
+    addonPreferences = utils.get_addon_preferences(context)
     logger = ProcessLogger()
     logger.step("P3D Import from %s" % operator.filepath)
     
@@ -483,7 +507,7 @@ def import_file(operator,context,file):
         timeLODStart = time.time()
         logger.step("LOD %d" % i)
         
-        lodObj, res, materialDict, proxySelections = read_LOD(context,file,materialDict,additionalData,logger)
+        lodObj, res, materialDict, proxySelections = read_LOD(context,file,materialDict,additionalData,logger,addonPreferences)
         
         if operator.validateMeshes:
             lodObj.data.validate(clean_customdata=False)
@@ -500,7 +524,7 @@ def import_file(operator,context,file):
     
     # Set up proxies
     if operator.proxyHandling != 'NOTHING' and 'SELECTIONS' in additionalData:
-        process_proxies(LODs,operator,materialDict)
+        process_proxies(LODs,operator,materialDict,addonPreferences)
                
     logger.step("")
     logger.step("P3D Import finished in %f sec" % (time.time()-timeFILEstart))

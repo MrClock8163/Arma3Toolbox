@@ -40,11 +40,11 @@ def duplicate_object(obj):
     
     return newObj
     
-def get_texture_string(materialProps):
+def get_texture_string(materialProps,prefs):
     textureType = materialProps.textureType
     
     if textureType == 'TEX':
-        return materialProps.texturePath
+        return format_path(materialProps.texturePath,prefs.projectRoot,prefs.exportRelative)
     elif textureType == 'COLOR':
         color = materialProps.colorValue
         return f"#(argb,8,8,3)color({round(color[0],3)},{round(color[1],3)},{round(color[2],3)},{round(color[3],3)},{materialProps.colorType})"
@@ -52,8 +52,27 @@ def get_texture_string(materialProps):
         return materialProps.colorString
     else:
         return ""
-            
+        
+def get_material_string(materialProps,prefs):
+    return format_path(materialProps.materialPath,prefs.projectRoot,prefs.exportRelative)
+    
+def get_proxy_string(OBprops,prefs):
+    return f"proxy:{format_path(OBprops.proxyPath,prefs.projectRoot,prefs.exportRelative,True)}.{'%03d' % OBprops.proxyIndex}"
+
+def format_path(path,root = "",makeRelative = True,stripExtension = False):
+    path = utils.replace_slashes(path.strip())
+    
+    if makeRelative:
+        root = utils.replace_slashes(root.strip())
+        path = utils.make_relative(path,root)
+        
+    if stripExtension:
+        path = utils.strip_extension(path)
+        
+    return path
+
 def get_LOD_data(operator,context):
+    addonPreferences = utils.get_addon_preferences(context)
     scene = context.scene
     exportObjects = scene.objects
     
@@ -86,7 +105,7 @@ def get_LOD_data(operator,context):
             if OBprops.isArma3Proxy:
                 placeholder = "@proxy_%04d" % i
                 utils.createSelection(subObj,placeholder)
-                objProxies[placeholder] = f"proxy:{OBprops.proxyPath}.{'%03d' % OBprops.proxyIndex}"
+                objProxies[placeholder] = get_proxy_string(OBprops,addonPreferences)
             
             if operator.apply_modifiers:
                 apply_modifiers(subObj,context)
@@ -115,12 +134,12 @@ def get_LOD_data(operator,context):
         proxies.append(objProxies)
         
         objMaterials = {0: ("","")}
-        translucency = {}
+        translucency = {0: False}
         
         for i,slot in enumerate(mainObj.material_slots):
             mat = slot.material
             if mat:
-                objMaterials[i] = (get_texture_string(mat.a3ob_properties_material),mat.a3ob_properties_material.materialPath)
+                objMaterials[i] = (get_texture_string(mat.a3ob_properties_material,addonPreferences),get_material_string(mat.a3ob_properties_material,addonPreferences))
                 translucency[i] = mat.a3ob_properties_material.translucent
             else:
                 objMaterials[i] = ("","")

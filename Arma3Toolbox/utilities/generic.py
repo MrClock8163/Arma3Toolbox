@@ -1,5 +1,6 @@
 import bpy
 import math
+import os
 
 def show_infoBox(message,title = "",icon = 'INFO'):
     def draw(self,context):
@@ -42,3 +43,26 @@ def createSelection(obj,selection):
         group = obj.vertex_groups.new(name=selection.strip())
 
     group.add([vert.index for vert in obj.data.vertices],1,'REPLACE')
+
+def replace_slashes(path):
+    return path.replace("/","\\")
+
+def make_relative(path,root):
+    path = path.lower()
+    root = root.lower()
+    
+    if root != "" and path.startswith(root):
+        return os.path.relpath(path,root)
+    
+    drive = os.path.splitdrive(path)[0]
+    if drive:
+       path = os.path.relpath(path,drive)
+    
+    return path
+
+def strip_extension(path):
+    return os.path.splitext(path)[0]
+    
+def get_addon_preferences(context):
+    name = __name__.split(".")[0]
+    return context.preferences.addons[name].preferences
