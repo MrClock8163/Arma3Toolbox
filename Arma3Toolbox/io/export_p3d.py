@@ -3,6 +3,7 @@ import bmesh
 import os
 import struct
 import mathutils
+import time
 from . import binary_handler as binary
 from ..utilities import generic as utils
 from ..utilities import lod as lodutils
@@ -54,9 +55,11 @@ def get_material_string(materialProps,prefs):
     return format_path(materialProps.materialPath,prefs.projectRoot,prefs.exportRelative)
     
 def get_proxy_string(OBprops,prefs):
-    string = f"proxy:{format_path(OBprops.proxyPath,prefs.projectRoot,prefs.exportRelative,True)}.{'%03d' % OBprops.proxyIndex}"
-    if string[0] != "\\":
-        string = "\\" + string
+    path = format_path(OBprops.proxyPath,prefs.projectRoot,prefs.exportRelative,True)
+    if path[0] != "\\":
+        path = "\\" + path
+        
+    string = f"proxy:{path}.{'%03d' % OBprops.proxyIndex}"
         
     return string
 
@@ -113,7 +116,8 @@ def get_LOD_data(operator,context):
             
             subObjects.append(subObj)
             
-        merge_objects(mainObj,subObjects,context)
+        if len(subObjects) > 0:
+            merge_objects(mainObj,subObjects,context)
         
         for obj in subObjects:
             bpy.data.meshes.remove(obj.data,do_unlink=True)
@@ -264,11 +268,13 @@ def write_uv_set(file,bm,layer,index):
     binary.writeULong(file,dataEndPos-dataSizePos-4) # fill in length data
     file.seek(dataEndPos,0)
 
-def write_uv(file,bm):
+def write_uv(file,bm,logger):
     index = 0
     for layer in bm.loops.layers.uv.values():
         write_uv_set(file,bm,layer,index)
         index += 1
+        
+    logger.step("Wrote UV sets: %d" % index)
 
 def write_mass(file,bm,numVerts):
     layer = bm.verts.layers.float.get('a3ob_mass')
@@ -282,43 +288,72 @@ def write_mass(file,bm,numVerts):
     
     for vertex in bm.verts:
         binary.writeFloat(file,vertex[layer])
-        
-def write_vertex_group(file,bm,layer,name,index):
+    
+def write_named_selection(file,name,count_vert,count_face,vertices,faces,proxies):
+    real_name = name
+    if name.strip().startswith("@proxy"):
+        try:
+            real_name = proxies[name]
+        except:
+            pass
+            
     binary.writeByte(file,1)
-    binary.writeAsciiz(file,name)
+    binary.writeAsciiz(file,real_name)
     dataSizePos = file.tell()
     binary.writeULong(file,0) # temporary placeholder value
-    
-    for vert in bm.verts:
-        value = vert[layer].get(index,0)
-        binary.writeByte(file,encode_selectionWeight(value))
+
+    bytes_vert = bytearray(count_vert) # array of 0x0 bytes (effective because this way not every vertex has to be iterated)
+
+    for vertex in vertices:
+        bytes_vert[vertex[0]] = encode_selectionWeight(vertex[1])
         
-    for face in bm.faces:
-        weight = sum([vert[layer].get(index,0) for vert in face.verts])
-        if round(weight,2) == len(face.verts):
-            binary.writeByte(file,1)
-        else:
-            binary.writeByte(file,0) # need to figure out how to detect selected faces
-    
+    file.write(bytes_vert)
+
+    bytes_face = bytearray(count_face)
+    for face in faces:
+        bytes_face[face] = 1
+        
+    file.write(bytes_face)
+
     dataEndPos = file.tell()
     file.seek(dataSizePos,0)
     binary.writeULong(file,dataEndPos-dataSizePos-4) # fill in length data
     file.seek(dataEndPos,0)
-
-def write_selections(file,bm,names,proxies):
-    if len(names) == 0:
-        return
     
-    layer = bm.verts.layers.deform.active
+def write_selections(file,obj,proxies,logger):
+    mesh = obj.data
     
-    for i,name in enumerate(names):
-        if name.strip().startswith("@proxy"):
-            try:
-                name = proxies[name]
-            except:
-                pass
+    # Build selection database for faster lookup
+    selections_vert = {}
+    selections_face = {}
+    
+    for group in obj.vertex_groups:
+        selections_vert[group.name] = set()
+        selections_face[group.name] = set()
+    
+    for vertex in mesh.vertices:
+        for group in vertex.groups:
+            name = obj.vertex_groups[group.group].name
+            weight = group.weight
+            selections_vert[name].add((vertex.index,weight))
+            
+    for face in mesh.polygons:
+        groups = set([group.group for vertex in face.vertices for group in mesh.vertices[vertex].groups])
         
-        write_vertex_group(file,bm,layer,name,i)
+        for group_id in groups:
+            weight = sum([group.weight for vertex in face.vertices for group in mesh.vertices[vertex].groups if group.group == group_id])
+            if weight > 0:
+                name = obj.vertex_groups[group_id].name
+                selections_face[name].add(face.index)
+    
+    count_vert = len(mesh.vertices)
+    count_face = len(mesh.polygons)
+    
+    for i,group in enumerate(obj.vertex_groups):
+        name = group.name
+        write_named_selection(file,name,count_vert,count_face,selections_vert[name],selections_face[name],proxies)
+        
+    logger.step("Wrote named selections: %d" % (i + 1))
     
 def write_property(file,key,value):
     binary.writeByte(file,1)
@@ -341,13 +376,13 @@ def write_header(file,LODcount):
     binary.writeULong(file,257)
     binary.writeULong(file,LODcount)
     
-def write_LOD(file,obj,materials,proxies):
-
+def write_LOD(file,obj,materials,proxies,logger):
+    logger.level_up()
     for face in obj.data.polygons:
         if len(face.vertices) > 4:
             OBprops = obj.a3ob_properties_object
-            print(f"N-gons in {lodutils.formatLODname(int(OBprops.LOD),OBprops.resolution)} -> skipping")
-            return
+            logger.log(f"N-gons in {lodutils.formatLODname(int(OBprops.LOD),OBprops.resolution)} -> skipping LOD")
+            return False
     
     binary.writeChars(file,'P3DM')
     binary.writeULong(file,0x1c)
@@ -379,8 +414,12 @@ def write_LOD(file,obj,materials,proxies):
     for vert in bm.verts:
         write_vertex(file,vert.co)
         
+    logger.step("Wrote veritces: %d" % numVerts)
+        
     for loop in mesh.loops:
         write_normal(file,loop.normal)
+        
+    logger.step("Wrote vertex normals: %d" % numLoops)
         
     first_uv_layer = None
     if len(bm.loops.layers.uv.values()) > 0: # 1st UV set needs to be written into the face data section too
@@ -389,37 +428,60 @@ def write_LOD(file,obj,materials,proxies):
     for face in bm.faces:
         write_face(file,bm,face,materials,first_uv_layer)
         
-    binary.writeChars(file,'TAGG') # TAGG section start
+    logger.step("Wrote faces: %d" % numFaces)
         
+    binary.writeChars(file,'TAGG') # TAGG section start
+    
     write_sharps(file,bm)
-    write_uv(file,bm)
+    write_uv(file,bm,logger)
     
     if obj.a3ob_properties_object.LOD == '6':
         write_mass(file,bm,numVerts) # need to make sure to only export for Geo LODs
+        logger.step("Wrote vertex mass")
         
-    
     write_named_properties(file,obj)
-    write_selections(file,bm,[group.name for group in obj.vertex_groups],proxies)
+    if len(obj.vertex_groups) > 0:
+        write_selections(file,obj,proxies,logger)
     
     binary.writeByte(file,1)
     binary.writeAsciiz(file,"#EndOfFile#") # EOF signature
     binary.writeULong(file,0)
     
     binary.writeFloat(file,get_resolution(obj)) # LOD resolution index
-    
+    logger.step("Resolution signature: %d" % float(get_resolution(obj)))
+    logger.step("Name: %s" % f"{data.LODdata[int(obj.a3ob_properties_object.LOD)][0]} {obj.a3ob_properties_object.resolution}")
     bm.free()
+    
+    logger.level_down()
+    return True
 
 def export_file(operator,context,file):
     logger = ProcessLogger()
+    logger.step("P3D export to %s" % operator.filepath)
+    
+    time_file_start = time.time()
     
     LODobjects, materials, proxies = get_LOD_data(operator,context)
     
-    print(LODobjects)
-    
     LODcount = len(LODobjects)
+    logger.log("Detected %d LOD objects" % LODcount)
     
     write_header(file,LODcount)
     
+    logger.level_up()
+    exported_count = 0
     for i,obj in enumerate(LODobjects):
-        write_LOD(file,obj,materials[i],proxies[i])
+        time_lod_start = time.time()
+        logger.step("LOD %d" % i)
+        
+        success = write_LOD(file,obj,materials[i],proxies[i],logger)
+        if success:
+            exported_count += 1
+            
         bpy.data.meshes.remove(obj.data,do_unlink=True)
+        
+        logger.log("Done in %f sec" % (time.time()-time_lod_start))
+    logger.level_down()
+    
+    logger.step("")
+    logger.step("P3D export finished in %f sec" % (time.time() - time_file_start))

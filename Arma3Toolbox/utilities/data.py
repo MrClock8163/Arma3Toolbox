@@ -45,7 +45,7 @@ LODtypeIndex = {
 }
 
 LODdata = {
-    0:  ('Resolution',"Visual resolutiion"),
+    0:  ('Resolution',"Visual resolution"),
     1:  ('View - Gunner',"Gunner first person view"),
     2:  ('View - Pilot',"First person view"),
     3:  ('View - Cargo',"Passenger first person view"),

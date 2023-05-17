@@ -474,7 +474,7 @@ def read_LOD(context,file,materialDict,additionalData,logger,prefs):
 def import_file(operator,context,file):
     addonPreferences = utils.get_addon_preferences(context)
     logger = ProcessLogger()
-    logger.step("P3D Import from %s" % operator.filepath)
+    logger.step("P3D import from %s" % operator.filepath)
     
     timeFILEstart = time.time()
 
