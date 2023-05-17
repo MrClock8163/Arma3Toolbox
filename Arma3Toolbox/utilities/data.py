@@ -1,4 +1,4 @@
-LODtypeResolutionPosition = {
+LODtypeResolutionPosition = { # decimal places in normalized format
     0: -1,
     3: 3,
     4: 4,
@@ -45,7 +45,7 @@ LODtypeIndex = {
 }
 
 LODdata = {
-    0:  ('Resolution',"Visual resolutiion"),
+    0:  ('Resolution',"Visual resolution"),
     1:  ('View - Gunner',"Gunner first person view"),
     2:  ('View - Pilot',"First person view"),
     3:  ('View - Cargo',"Passenger first person view"),
@@ -159,3 +159,24 @@ LODTypes = (
     ('29','Wreckage',"Vehicle wreckage"),
     ('30','Unknown',"Unknown model layer")
 )
+
+common_namedprops = {
+    "autocenter": "0",
+    "buoyancy": "1",
+    "class": "building",
+    "class": "house",
+    "forcenotalpha": "1",
+    "lodnoshadow": "1",
+    "map": "building",
+    "map": "hide",
+    "map": "house",
+    "prefershadowvolume": "1"
+}
+
+common_proxies = {
+    "Weapon optic": r"P:\a3\data_f\proxies\weapon_slots\top.p3d",
+    "Weapon pointer": r"P:\a3\data_f\proxies\weapon_slots\side.p3d",
+    "Weapon suppressor": r"P:\a3\data_f\proxies\weapon_slots\muzzle.p3d",
+    "Weapon magazine": r"P:\a3\data_f\proxies\weapon_slots\magazine.p3d",
+    "Weapon bipod": r"P:\a3\data_f_mark\proxies\weapon_slots\underbarrel.p3d"
+}

@@ -59,7 +59,8 @@ class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
         name = "Index",
         description = "Index of proxy",
         default = 1,
-        min = 0
+        min = 0,
+        max = 999
     )
     
 classes = (

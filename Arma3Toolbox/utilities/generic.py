@@ -1,5 +1,8 @@
 import bpy
 import math
+import os
+import json
+from . import data
 
 def show_infoBox(message,title = "",icon = 'INFO'):
     def draw(self,context):
@@ -34,3 +37,78 @@ def forceObjectMode():
 def forceEditMode():
     forceObjectMode()
     bpy.ops.object.mode_set(mode='EDIT')
+    
+def createSelection(obj,selection):
+    group = obj.vertex_groups.get(selection,None)
+    
+    if not group:
+        group = obj.vertex_groups.new(name=selection.strip())
+
+    group.add([vert.index for vert in obj.data.vertices],1,'REPLACE')
+
+def replace_slashes(path):
+    return path.replace("/","\\")
+
+def make_relative(path,root):
+    path = path.lower()
+    root = root.lower()
+    
+    if root != "" and path.startswith(root):
+        return os.path.relpath(path,root)
+    
+    drive = os.path.splitdrive(path)[0]
+    if drive:
+       path = os.path.relpath(path,drive)
+    
+    return path
+
+def strip_extension(path):
+    return os.path.splitext(path)[0]
+    
+def get_addon_preferences(context):
+    name = __name__.split(".")[0]
+    return context.preferences.addons[name].preferences
+    
+def get_common_proxies(context):
+    prefs = get_addon_preferences(context)
+    customPath = prefs.customDataPath
+    
+    proxies = data.common_proxies
+    
+    if not os.path.exists(customPath):
+        return proxies
+    
+    customProxies = {}
+    
+    try:
+        jsonfile = open(customPath)
+        customs = json.loads(jsonfile.read().replace("\\","/"))
+        jsonfile.close()
+
+        customProxies = customs["proxies"]
+    except:
+        pass
+        
+    return {**proxies,**customProxies}
+    
+def get_common_namedprops(context):
+    prefs = get_addon_preferences(context)
+    customPath = prefs.customDataPath
+    
+    namedprops = data.common_namedprops
+    
+    if not os.path.exists(customPath):
+        return namedprops
+    
+    customNamedprops = {}
+    
+    try:
+        jsonfile = open(customPath)
+        customs = json.loads(jsonfile.read().replace("\\","/"))
+        jsonfile.close()
+        
+        customNamedprops = customs["namedprops"]
+    except:
+        pass
+        
+    return {**namedprops,**customNamedprops}

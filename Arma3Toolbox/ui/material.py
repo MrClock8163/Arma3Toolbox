@@ -21,6 +21,7 @@ class A3OB_PT_material(bpy.types.Panel):
         
         layout = self.layout
         layout.use_property_split = True
+        layout.use_property_decorate = False
         
         row = layout.row()
         row.prop(OBprops,"textureType",expand=True)
@@ -30,8 +31,9 @@ class A3OB_PT_material(bpy.types.Panel):
         if texType == 'TEX':
             layout.prop(OBprops,"texturePath",icon='TEXTURE',text="")
         elif texType == 'COLOR':
-            layout.prop(OBprops, "colorValue",icon='COLOR')
-            layout.prop(OBprops, "colorType")
+            colorRow = layout.row(align=True)
+            colorRow.prop(OBprops, "colorValue",icon='COLOR')
+            colorRow.prop(OBprops, "colorType",text="")
         elif texType == 'CUSTOM':
             layout.prop(OBprops, "colorString",icon='TEXT',text="")
         
@@ -39,7 +41,7 @@ class A3OB_PT_material(bpy.types.Panel):
         
         layout.separator()
         
-        layout.prop(OBprops,"hiddenSelection",icon='MESH_DATA')
+        layout.prop(OBprops,"translucent")
         
 classes = (
     A3OB_PT_material,

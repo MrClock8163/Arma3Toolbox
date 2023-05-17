@@ -42,3 +42,36 @@ def readAsciiz(file):
         res += a
     
     return res.decode("utf-8")
+    
+def writeByte(file,value):
+    file.write(struct.pack('B',value))
+    
+def writeBytes(file,values):
+    file.write(struct.pack('%dB' % len(values),*values))
+    
+def writeBool(file,value):
+    writeByte(file,value)
+    
+def writeShort(file,value):
+    file.write(struct.pack('<h',value))
+    
+def writeShort(file,value):
+    file.write(struct.pack('<H',value))
+    
+def writeLong(file,value):
+    file.write(struct.pack('<i',value))
+    
+def writeULong(file,value):
+    file.write(struct.pack('<I',value))
+    
+def writeFloat(file,value):
+    file.write(struct.pack('<f',value))
+    
+def writeDouble(file,value):
+    file.write(struct.pack('<d',value))
+    
+def writeChars(file,values):
+    file.write(struct.pack('<%ds' % len(values),values.encode('ASCII')))
+    
+def writeAsciiz(file,value):
+    file.write(struct.pack('<%ds' % (len(value)+1),value.encode('ASCII')))

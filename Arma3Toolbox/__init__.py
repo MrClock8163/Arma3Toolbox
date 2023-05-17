@@ -19,6 +19,7 @@ if "bpy" in locals():
     importlib.reload(ui.mass)
     importlib.reload(ui.material)
     importlib.reload(ui.object_mesh)
+    importlib.reload(ui.hitpoint)
     importlib.reload(props.windowmanager)
     importlib.reload(props.object)
     importlib.reload(props.rvmat)
@@ -29,6 +30,7 @@ else:
     from .ui import mass
     from .ui import material
     from .ui import object_mesh
+    from .ui import hitpoint
     from .props import windowmanager
     from .props import object
     from .props import rvmat
@@ -46,6 +48,7 @@ class A3OB_AT_Preferences(bpy.types.AddonPreferences):
         default = 'GENERAL',
         items = (
             ('GENERAL',"General","General and misc settings",'PREFERENCES',0),
+            ('PATHS',"Paths","File path related settings",'FILE_TICK',1)
         )
     )
     
@@ -57,17 +60,52 @@ class A3OB_AT_Preferences(bpy.types.AddonPreferences):
         subtype = 'DIR_PATH'
     )
     
+    projectRoot: bpy.props.StringProperty (
+        name = "Project Root",
+        description = "Root directory of the project (should be P:\ for most cases)",
+        default = "P:\\",
+        subtype = 'DIR_PATH'
+    )
+    
+    exportRelative: bpy.props.BoolProperty (
+        name = "Export Relative",
+        description = "Export file paths as relative to the project root",
+        default = True
+    )
+    
+    reconstructPaths: bpy.props.BoolProperty (
+        name = "Reconstruct Absolute Paths",
+        description = "Attempt to reconstruct absolute file paths during import (based on the project root)",
+        default = True
+    )
+    
+    customDataPath: bpy.props.StringProperty (
+        name = "Custom Data",
+        description = "Path to JSON file containing data for custom preset list items (common named properties and proxies)",
+        default = "",
+        subtype = 'FILE_PATH'
+    )
+    
     def draw(self,context):
         layout = self.layout
         
-        row = layout.row(align=True)
+        col = layout.column(align=True)
+        row = col.row(align=True)
         row.prop(self,"tabs",expand=True)
-        box = layout.box()
+        box = col.box()
         
+        box.use_property_split = True
+        box.use_property_decorate = False
         if self.tabs == 'GENERAL':
-            grid = box.grid_flow(align=True,columns=2,row_major=True,even_columns=True,even_rows=True)
-            grid.label(text="Arma 3 Tools")
-            grid.prop(self,"armaToolsFolder",text="")
+            # grid = box.grid_flow(align=True,columns=2,row_major=True,even_columns=True,even_rows=True)
+            # layout = self.layout
+            # box.label(text="Arma 3 Tools")
+            box.prop(self,"armaToolsFolder",text="Arma 3 Tools",icon='TOOL_SETTINGS')
+        elif self.tabs == 'PATHS':
+            box.prop(self,"projectRoot",icon='DISK_DRIVE')
+            box.prop(self,"exportRelative")
+            box.prop(self,"reconstructPaths")
+            box.prop(self,"customDataPath",icon='PRESET')
 
 classes = (
     A3OB_AT_Preferences,
@@ -85,10 +123,11 @@ def register():
     utilities.register()
     object_mesh.register()
     mass.register()
-    windowmanager.register()
     object.register()
     rvmat.register()
     material.register()
+    windowmanager.register()
+    hitpoint.register()
     
     print("Register done")
 
@@ -98,10 +137,11 @@ def unregister():
     for cls in reversed(classes):
         unregister_class(cls)
 
+    hitpoint.unregister()
+    windowmanager.unregister()
     material.unregister()
     rvmat.unregister()
     object.unregister()
-    windowmanager.unregister()
     mass.unregister()
     object_mesh.unregister()
     utilities.unregister()

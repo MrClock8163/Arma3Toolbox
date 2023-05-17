@@ -91,3 +91,12 @@ def clearMasses(obj):
     bm.verts.layers.float.remove(layer)
     
     bmesh.update_edit_mesh(mesh)
+    
+def addNamedProperty(obj,key,value):
+    OBprops = obj.a3ob_properties_object
+    
+    item = OBprops.properties.add()
+    item.name = key
+    item.value = value
+    
+    OBprops.propertyIndex = len(OBprops.properties)-1    
