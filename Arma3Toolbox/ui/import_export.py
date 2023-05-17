@@ -273,9 +273,11 @@ class A3OB_OP_export_P3D(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
             file = open(self.filepath,'wb')
             filename = os.path.basename(self.filepath)
             
-            export_p3d.export_file(self,context,file)
+            lod_count,exported_count = export_p3d.export_file(self,context,file)
             
             file.close()
+            
+            self.report({'INFO'},f"Succesfully exported {exported_count}/{lod_count} LODs")
         else:
             self.report({'INFO'},"There are no LODs to export")
         

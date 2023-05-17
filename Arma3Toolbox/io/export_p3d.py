@@ -381,7 +381,7 @@ def write_LOD(file,obj,materials,proxies,logger):
     for face in obj.data.polygons:
         if len(face.vertices) > 4:
             OBprops = obj.a3ob_properties_object
-            logger.log(f"N-gons in {lodutils.formatLODname(int(OBprops.LOD),OBprops.resolution)} -> skipping LOD")
+            logger.step("N-gons detected -> skipping LOD")
             return False
     
     binary.writeChars(file,'P3DM')
@@ -485,3 +485,5 @@ def export_file(operator,context,file):
     
     logger.step("")
     logger.step("P3D export finished in %f sec" % (time.time() - time_file_start))
+    
+    return LODcount,exported_count
