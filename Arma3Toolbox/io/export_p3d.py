@@ -203,17 +203,21 @@ def write_vertex(file,co):
 def write_normal(file,normal):
     file.write(struct.pack('<fff',-normal[0],-normal[2],-normal[1]))
 
-def write_pseudo_vertextable(file,loop):
+def write_pseudo_vertextable(file,loop,uv_layer):
     binary.writeULong(file,loop.vert.index)
     binary.writeULong(file,loop.index)
-    file.write(struct.pack('<ff',0,0)) # UV coordinates would be redundant with the 1st #UVSet# TAGG section, needs testing if omitting has any negative effects
+    
+    if not uv_layer:
+        file.write(struct.pack('<ff',0,0))
+    
+    file.write(struct.pack('<ff',loop[uv_layer].uv[0],1-loop[uv_layer].uv[1]))
 
-def write_face(file,bm,face,materials):
+def write_face(file,bm,face,materials,uv_layer):
     numSides = len(face.loops)
     binary.writeULong(file,numSides)
     
     for i in range(numSides):
-        write_pseudo_vertextable(file,face.loops[i])
+        write_pseudo_vertextable(file,face.loops[i],uv_layer)
         
     if numSides < 4:
         file.write(struct.pack('<4I',0,0,0,0)) # empty filler for triangles
@@ -378,8 +382,12 @@ def write_LOD(file,obj,materials,proxies):
     for loop in mesh.loops:
         write_normal(file,loop.normal)
         
+    first_uv_layer = None
+    if len(bm.loops.layers.uv.values()) > 0: # 1st UV set needs to be written into the face data section too
+        first_uv_layer = bm.loops.layers.uv.values()[0]
+        
     for face in bm.faces:
-        write_face(file,bm,face,materials)
+        write_face(file,bm,face,materials,first_uv_layer)
         
     binary.writeChars(file,'TAGG') # TAGG section start
         
