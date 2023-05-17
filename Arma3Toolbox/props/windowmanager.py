@@ -4,6 +4,18 @@ from . import object as objectprops
 
 def meshObjectPoll(self,object):
     return object.type == 'MESH'
+    
+class A3OB_PG_common_proxy(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty (
+        name = "Name",
+        description = "Descriptive name of the common proxy",
+        default = ""
+    )
+    path: bpy.props.StringProperty (
+        name = "Path",
+        description = "File path of the proxy model",
+        default = ""
+    )
 
 class A3OB_PG_hitpoint_generator(bpy.types.PropertyGroup):
     source: bpy.props.PointerProperty (
@@ -56,6 +68,7 @@ class A3OB_PG_hitpoint_generator(bpy.types.PropertyGroup):
     )
     
 classes = (
+    A3OB_PG_common_proxy,
     A3OB_PG_hitpoint_generator,
 )
 
@@ -63,8 +76,10 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
         
+    bpy.types.WindowManager.a3ob_proxy_common = bpy.props.CollectionProperty(type=A3OB_PG_common_proxy)
+    bpy.types.WindowManager.a3ob_proxy_common_index = bpy.props.IntProperty(name="Selection Index",default = -1)
     bpy.types.WindowManager.a3ob_namedprops_common = bpy.props.CollectionProperty(type=objectprops.A3OB_PG_properties_named_property)
-    bpy.types.WindowManager.a3ob_namedprops_common_index = bpy.props.IntProperty(name="Selection index",default = -1)
+    bpy.types.WindowManager.a3ob_namedprops_common_index = bpy.props.IntProperty(name="Selection Index",default = -1)
     bpy.types.WindowManager.a3ob_enableVertexMass = bpy.props.BoolProperty (
         name = "Enable Vertex Mass Tools",
         description = "Dynamic calculation of the vertex masses can be performace heavy on large meshes",
@@ -78,6 +93,8 @@ def unregister():
     del bpy.types.WindowManager.a3ob_enableVertexMass
     del bpy.types.WindowManager.a3ob_namedprops_common_index
     del bpy.types.WindowManager.a3ob_namedprops_common
+    del bpy.types.WindowManager.a3ob_proxy_common_index
+    del bpy.types.WindowManager.a3ob_proxy_common
     
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

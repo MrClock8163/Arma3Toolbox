@@ -79,6 +79,13 @@ class A3OB_AT_Preferences(bpy.types.AddonPreferences):
         default = True
     )
     
+    customDataPath: bpy.props.StringProperty (
+        name = "Custom Data",
+        description = "Path to JSON file containing data for custom preset list items (common named properties and proxies)",
+        default = "",
+        subtype = 'FILE_PATH'
+    )
+    
     def draw(self,context):
         layout = self.layout
         
@@ -98,6 +105,7 @@ class A3OB_AT_Preferences(bpy.types.AddonPreferences):
             box.prop(self,"projectRoot",icon='DISK_DRIVE')
             box.prop(self,"exportRelative")
             box.prop(self,"reconstructPaths")
+            box.prop(self,"customDataPath",icon='PRESET')
 
 classes = (
     A3OB_AT_Preferences,

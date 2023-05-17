@@ -54,7 +54,11 @@ def get_material_string(materialProps,prefs):
     return format_path(materialProps.materialPath,prefs.projectRoot,prefs.exportRelative)
     
 def get_proxy_string(OBprops,prefs):
-    return f"proxy:{format_path(OBprops.proxyPath,prefs.projectRoot,prefs.exportRelative,True)}.{'%03d' % OBprops.proxyIndex}"
+    string = f"proxy:{format_path(OBprops.proxyPath,prefs.projectRoot,prefs.exportRelative,True)}.{'%03d' % OBprops.proxyIndex}"
+    if string[0] != "\\":
+        string = "\\" + string
+        
+    return string
 
 def format_path(path,root = "",makeRelative = True,stripExtension = False):
     path = utils.replace_slashes(path.strip())
@@ -112,7 +116,7 @@ def get_LOD_data(operator,context):
         merge_objects(mainObj,subObjects,context)
         
         for obj in subObjects:
-            bpy.data.meshes.remove(obj.data)
+            bpy.data.meshes.remove(obj.data,do_unlink=True)
         
         if operator.apply_transforms:
             bpy.ops.object.transform_apply({"active_object": mainObj, "selected_editable_objects": [mainObj]},location = True, scale = True, rotation = True)
@@ -202,7 +206,7 @@ def write_normal(file,normal):
 def write_pseudo_vertextable(file,loop):
     binary.writeULong(file,loop.vert.index)
     binary.writeULong(file,loop.index)
-    file.write(struct.pack('<ff',0,0))
+    file.write(struct.pack('<ff',0,0)) # UV coordinates would be redundant with the 1st #UVSet# TAGG section, needs testing if omitting has any negative effects
 
 def write_face(file,bm,face,materials):
     numSides = len(face.loops)
@@ -212,7 +216,7 @@ def write_face(file,bm,face,materials):
         write_pseudo_vertextable(file,face.loops[i])
         
     if numSides < 4:
-        file.write(struct.pack('<IIff',0,0,0,0))
+        file.write(struct.pack('<4I',0,0,0,0)) # empty filler for triangles
     
     matData = materials[face.material_index]
     

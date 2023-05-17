@@ -1,6 +1,8 @@
 import bpy
 import math
 import os
+import json
+from . import data
 
 def show_infoBox(message,title = "",icon = 'INFO'):
     def draw(self,context):
@@ -66,3 +68,47 @@ def strip_extension(path):
 def get_addon_preferences(context):
     name = __name__.split(".")[0]
     return context.preferences.addons[name].preferences
+    
+def get_common_proxies(context):
+    prefs = get_addon_preferences(context)
+    customPath = prefs.customDataPath
+    
+    proxies = data.common_proxies
+    
+    if not os.path.exists(customPath):
+        return proxies
+    
+    customProxies = {}
+    
+    try:
+        jsonfile = open(customPath)
+        customs = json.loads(jsonfile.read().replace("\\","/"))
+        jsonfile.close()
+
+        customProxies = customs["proxies"]
+    except:
+        pass
+        
+    return {**proxies,**customProxies}
+    
+def get_common_namedprops(context):
+    prefs = get_addon_preferences(context)
+    customPath = prefs.customDataPath
+    
+    namedprops = data.common_namedprops
+    
+    if not os.path.exists(customPath):
+        return namedprops
+    
+    customNamedprops = {}
+    
+    try:
+        jsonfile = open(customPath)
+        customs = json.loads(jsonfile.read().replace("\\","/"))
+        jsonfile.close()
+        
+        customNamedprops = customs["namedprops"]
+    except:
+        pass
+        
+    return {**namedprops,**customNamedprops}

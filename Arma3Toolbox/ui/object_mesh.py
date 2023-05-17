@@ -1,4 +1,5 @@
 import bpy
+from ..utilities import generic as utils
 from ..utilities import data
 from ..utilities import proxy as proxyutils
 
@@ -22,6 +23,58 @@ class A3OB_OT_proxy_add(bpy.types.Operator):
         activeObj.users_collection[0].objects.link(obj)
         obj.parent = activeObj
         
+        return {'FINISHED'}
+        
+class A3OB_OT_proxy_common(bpy.types.Operator):
+    '''Paste a common proxy model path'''
+    
+    bl_idname = "a3ob.proxy_common"
+    bl_label = "Common Proxy"
+    bl_options = {'UNDO'}
+    
+    @classmethod
+    def poll(cls,context):
+        activeObj = context.active_object
+        
+        return activeObj.type == 'MESH' and activeObj.a3ob_properties_object_proxy.isArma3Proxy
+    
+    def invoke(self,context,event):
+        obj = context.object
+        wm = context.window_manager
+        
+        wm.a3ob_proxy_common.clear()
+        
+        commonProxies = utils.get_common_proxies(context)
+        for proxy in commonProxies:
+            item = wm.a3ob_proxy_common.add()
+            item.name = proxy
+            item.path = utils.replace_slashes(commonProxies[proxy])
+        
+        wm.a3ob_proxy_common_index = 0
+        
+        return context.window_manager.invoke_props_dialog(self)
+    
+    def draw(self,context):
+        wm = context.window_manager
+        layout = self.layout
+        layout.template_list('A3OB_UL_common_proxies',"A3OB_proxies_common",context.window_manager,'a3ob_proxy_common',context.window_manager,'a3ob_proxy_common_index')
+        
+        selectionIndex = wm.a3ob_proxy_common_index
+        if selectionIndex in range(len(wm.a3ob_proxy_common)):
+            row = layout.row()
+            item = wm.a3ob_proxy_common[selectionIndex]
+            row.prop(item,"path",text="")
+            row.enabled = False
+    
+    def execute(self,context):
+        obj = context.object
+        wm = context.window_manager
+        
+        if len(wm.a3ob_proxy_common) > 0 and wm.a3ob_proxy_common_index in range(len(wm.a3ob_proxy_common)):
+            newItem = wm.a3ob_proxy_common[wm.a3ob_proxy_common_index]
+            
+            obj.a3ob_properties_object_proxy.proxyPath = newItem.path
+            
         return {'FINISHED'}
     
 class A3OB_OT_namedprops_add(bpy.types.Operator):
@@ -78,7 +131,7 @@ class A3OB_OT_namedprops_remove(bpy.types.Operator):
 class A3OB_OT_namedprops_common(bpy.types.Operator):
     '''Add a common named property'''
     
-    bl_label = "Common named property"
+    bl_label = "Common Named Property"
     bl_idname = "a3ob.namedprops_common"
     
     @classmethod
@@ -91,10 +144,11 @@ class A3OB_OT_namedprops_common(bpy.types.Operator):
         
         wm.a3ob_namedprops_common.clear()
         
-        for prop in data.common_namedprops:
+        customNamedprops = utils.get_common_namedprops(context)
+        for prop in customNamedprops:
             item = wm.a3ob_namedprops_common.add()
             item.name = prop
-            item.value = data.common_namedprops[prop]
+            item.value = customNamedprops[prop]
         
         wm.a3ob_namedprops_common_index = 0
         
@@ -116,7 +170,6 @@ class A3OB_OT_namedprops_common(bpy.types.Operator):
             item.name = newItem.name
             item.value = newItem.value
             
-            
             OBprops.propertyIndex = len(OBprops.properties)-1
         
         return {'FINISHED'}
@@ -124,6 +177,10 @@ class A3OB_OT_namedprops_common(bpy.types.Operator):
 class A3OB_UL_namedprops(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         layout.label(text=f"{item.name} = {item.value}")
+        
+class A3OB_UL_common_proxies(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        layout.label(text=item.name)
 
 class A3OB_PT_object_mesh(bpy.types.Panel):
     bl_region_type = 'WINDOW'
@@ -223,7 +280,9 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
         layout.use_property_decorate = False
         
         layout.separator()
-        layout.prop(OBprops,"proxyPath",icon='MESH_CUBE',text="")
+        path_row = layout.row(align=True)
+        path_row.operator('a3ob.proxy_common',text="",icon='PASTEDOWN')
+        path_row.prop(OBprops,"proxyPath",icon='MESH_CUBE',text="")
         layout.prop(OBprops,"proxyIndex",text="")
         
 def menu_func(self,context):
@@ -232,10 +291,12 @@ def menu_func(self,context):
         
 classes = (
     A3OB_OT_proxy_add,
+    A3OB_OT_proxy_common,
     A3OB_OT_namedprops_add,
     A3OB_OT_namedprops_remove,
     A3OB_OT_namedprops_common,
     A3OB_UL_namedprops,
+    A3OB_UL_common_proxies,
     A3OB_PT_object_mesh,
     A3OB_PT_object_mesh_namedprops,
     A3OB_PT_object_proxy
