@@ -30,9 +30,6 @@ def merge_objects(mainObj,subObjs,context):
     ctx["selected_editable_objects"] = (subObjs + [mainObj])
     
     bpy.ops.object.join(ctx)
-    
-    for obj in subObjs:
-        bpy.data.objects.remove(obj,do_unlink=True)
         
 def duplicate_object(obj):
     newObj = obj.copy()
@@ -112,11 +109,10 @@ def get_LOD_data(operator,context):
             
             subObjects.append(subObj)
             
-        subObjectsData = [obj.data for obj in subObjects]
         merge_objects(mainObj,subObjects,context)
         
-        for data in subObjectsData:
-            bpy.data.meshes.remove(data)
+        for obj in subObjects:
+            bpy.data.meshes.remove(obj.data)
         
         if operator.apply_transforms:
             bpy.ops.object.transform_apply({"active_object": mainObj, "selected_editable_objects": [mainObj]},location = True, scale = True, rotation = True)
@@ -352,7 +348,7 @@ def write_LOD(file,obj,materials,proxies):
     if obj.mode == 'EDIT':
         obj.update_from_editmode()
         
-    mesh = obj.data.copy()
+    mesh = obj.data
     mesh.calc_normals_split()
     
     bm = bmesh.new()
