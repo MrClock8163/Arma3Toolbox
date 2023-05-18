@@ -184,7 +184,7 @@ def can_export(operator,context):
 def get_resolution(obj):
     OBprops = obj.a3ob_properties_object
     
-    return lodutils.getLODvalue(int(OBprops.LOD),OBprops.resolution)
+    return lodutils.get_lod_value(int(OBprops.LOD),OBprops.resolution)
 
 def encode_selection_weight(weight):
     if weight == 0:

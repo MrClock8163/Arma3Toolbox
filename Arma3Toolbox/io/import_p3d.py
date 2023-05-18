@@ -243,7 +243,7 @@ def group_lods(LODs,groupBy = 'TYPE'):
     groupDict = data.LODgroups[groupBy]
     
     for lodObj,res,_ in LODs:
-        lodIndex, lodRes = lodutils.getLODid(res)
+        lodIndex, lodRes = lodutils.get_lod_id(res)
         groupName = groupDict[lodIndex]
         
         if groupName not in collections:
@@ -402,8 +402,8 @@ def read_lod(context,file,materialDict,additionalData,logger,prefs):
     logger.step("Resolution signature: %d" % LODresolution)
     
     # Create object
-    lodIndex, lodRes = lodutils.getLODid(LODresolution)
-    lodName = lodutils.formatLODname(lodIndex,lodRes)
+    lodIndex, lodRes = lodutils.get_lod_id(LODresolution)
+    lodName = lodutils.format_lod_name(lodIndex,lodRes)
     logger.step("Name: %s" % lodName)
         
     objData.use_auto_smooth = True
