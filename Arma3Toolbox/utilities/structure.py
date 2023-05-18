@@ -4,7 +4,7 @@ import re
 from . import generic as utils
 
 def findComponents(doConvexHull=False):
-    utils.forceObjectMode()
+    utils.force_mode_object()
     activeObj = bpy.context.active_object
     
     # Remove pre-existing component selections
@@ -46,7 +46,7 @@ def findComponents(doConvexHull=False):
     bpy.ops.object.join()
 
 def convexHull():
-    utils.forceEditMode()
+    utils.force_mode_edit()
     
     bpy.ops.mesh.select_mode(type="EDGE")
     bpy.ops.mesh.select_all(action = 'SELECT')
@@ -57,7 +57,7 @@ def convexHull():
     bpy.ops.object.mode_set(mode='OBJECT')    
 
 def componentConvexHull(): # DEPRECATED
-    utils.forceEditMode()
+    utils.force_mode_edit()
     
     bpy.ops.mesh.select_mode(type="VERT")
     bpy.ops.mesh.select_all(action = 'DESELECT')
@@ -78,14 +78,14 @@ def componentConvexHull(): # DEPRECATED
     bpy.ops.mesh.select_all(action = 'DESELECT')
 
 def checkClosed():
-    utils.forceEditMode()
+    utils.force_mode_edit()
     
     bpy.ops.mesh.select_mode(type="EDGE")
     
     bpy.ops.mesh.select_non_manifold()
 
 def checkConvexity():
-    utils.forceObjectMode()
+    utils.force_mode_object()
     
     activeObj = bpy.context.selected_objects[0]
     bm = bmesh.new(use_operators=True)

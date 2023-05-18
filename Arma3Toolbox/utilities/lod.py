@@ -2,7 +2,7 @@ from . import generic as utils
 from . import data
 
 def getLODid(value):
-    fraction, exponent = utils.floatNormalize(value)
+    fraction, exponent = utils.normalize_float(value)
 
     if exponent < 3: # Escape at resolutions
         return 0, round(value)

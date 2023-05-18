@@ -4,12 +4,12 @@ import os
 import json
 from . import data
 
-def show_infoBox(message,title = "",icon = 'INFO'):
+def show_info_box(message,title = "",icon = 'INFO'):
     def draw(self,context):
         self.layout.label(text = message)
     bpy.context.window_manager.popup_menu(draw,title = title,icon = icon)
     
-def floatNormalize(number,precision = 4):
+def normalize_float(number,precision = 4):
     if number == 0:
         return 0.0,1
     
@@ -21,24 +21,24 @@ def floatNormalize(number,precision = 4):
     exponentCorrection = 0
     
     if fraction >= 10.0: # Rounding after normalization may break the normalization (eg: 9.99999 -> 10.0000)
-        fraction, exponentCorrection = floatNormalize(fraction,precision)
+        fraction, exponentCorrection = normalize_float(fraction,precision)
 
     return round(fraction,precision), exponent + exponentCorrection
 
 def floor(number,precision = 0):
     return round(math.floor(number*10**precision)/10**precision,precision)
 
-def forceObjectMode():
+def force_mode_object():
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.reveal()
     bpy.ops.mesh.select_all(action = 'DESELECT')
     bpy.ops.object.mode_set(mode='OBJECT')
 
-def forceEditMode():
-    forceObjectMode()
+def force_mode_edit():
+    force_mode_object()
     bpy.ops.object.mode_set(mode='EDIT')
     
-def createSelection(obj,selection):
+def create_selection(obj,selection):
     group = obj.vertex_groups.get(selection,None)
     
     if not group:

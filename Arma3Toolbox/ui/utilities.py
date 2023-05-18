@@ -57,10 +57,10 @@ class A3OB_OT_check_convexity(bpy.types.Operator):
         
         if concaves > 0:
             self.report({'WARNING'},f'{name} has {concaves} concave edges')
-            utils.show_infoBox(f'{name} has {concaves} concave edges','Warning','ERROR')
+            utils.show_info_box(f'{name} has {concaves} concave edges','Warning','ERROR')
         else:
             self.report({'INFO'},f'{name} is convex')
-            utils.show_infoBox(f'{name} is convex','Info','INFO')
+            utils.show_info_box(f'{name} is convex','Info','INFO')
         
         return {'FINISHED'}
 
@@ -156,7 +156,7 @@ class A3OB_OT_cleanup_vertex_groups(bpy.types.Operator):
         bpy.ops.object.mode_set(mode=currentMode)
         
         self.report({'INFO'},f"Removed {removed} unused vertex group(s) from {obj.name}")
-        utils.show_infoBox(f"Removed {removed} unused vertex group(s) from {obj.name}","Info",'INFO')
+        utils.show_info_box(f"Removed {removed} unused vertex group(s) from {obj.name}","Info",'INFO')
         
         return {'FINISHED'}
 

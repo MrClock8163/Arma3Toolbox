@@ -108,7 +108,7 @@ def get_lod_data(operator,context):
             OBprops = subObj.a3ob_properties_object_proxy
             if OBprops.isArma3Proxy:
                 placeholder = "@proxy_%04d" % i
-                utils.createSelection(subObj,placeholder)
+                utils.create_selection(subObj,placeholder)
                 objProxies[placeholder] = get_proxy_string(OBprops,addonPreferences)
             
             if operator.apply_modifiers:
