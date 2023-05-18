@@ -15,15 +15,15 @@ from ..utilities import data
 from ..utilities.logger import ProcessLogger
 
 def read_signature(file):
-    return binary.readChar(file,4)
+    return binary.read_char(file,4)
 
 def read_header(file):
     signature = read_signature(file)
     if signature != "MLOD":
         raise IOError(f"Invalid MLOD signature: {signature}")
         
-    version = binary.readULong(file)
-    LODcount = binary.readULong(file)
+    version = binary.read_ulong(file)
+    LODcount = binary.read_ulong(file)
     
     return version, LODcount
     
@@ -43,7 +43,7 @@ def read_pseudo_vertextable(file):
     return pointID,normalID
     
 def read_face(file):
-    numSides = binary.readULong(file)
+    numSides = binary.read_ulong(file)
     
     vertTables = [read_pseudo_vertextable(file) for i in range(numSides)] # should instead return the individual lists to avoid unecessary data
     
@@ -51,8 +51,8 @@ def read_face(file):
         file.read(16) # dump null bytes
         
     file.read(4) # dump face flags
-    texture = binary.readAsciiz(file)
-    material = binary.readAsciiz(file)
+    texture = binary.read_asciiz(file)
+    material = binary.read_asciiz(file)
     
     return vertTables,texture,material
     
@@ -99,8 +99,8 @@ def process_TAGGs(file,bm,additionalData,numPoints,numFaces,logger):
     while True:
         count += 1
         file.read(1)
-        taggName = binary.readAsciiz(file)
-        taggLength = binary.readULong(file)
+        taggName = binary.read_asciiz(file)
+        taggLength = binary.read_ulong(file)
         
         # EOF
         if taggName == "#EndOfFile#":
@@ -111,8 +111,8 @@ def process_TAGGs(file,bm,additionalData,numPoints,numFaces,logger):
         # Sharps (technically redundant with the split vertex normals, may be scrapped later)
         elif taggName == "#SharpEdges#" and 'NORMALS' not in additionalData:
             for i in range(int(taggLength / (4 * 2))):
-                point1ID = binary.readULong(file)
-                point2ID = binary.readULong(file)
+                point1ID = binary.read_ulong(file)
+                point2ID = binary.read_ulong(file)
                 
                 if point1ID != point2ID:
                     edge = bm.edges.get([bm.verts[point1ID],bm.verts[point2ID]])
@@ -125,8 +125,8 @@ def process_TAGGs(file,bm,additionalData,numPoints,numFaces,logger):
             if taggLength != 128:
                 raise IOError(f"Invalid named property length: {taggLength}")
                 
-            key = binary.readChar(file,64)
-            value = binary.readChar(file,64)
+            key = binary.read_char(file,64)
+            value = binary.read_char(file,64)
             
             if key not in properties:
                 properties[key] = value
@@ -135,17 +135,17 @@ def process_TAGGs(file,bm,additionalData,numPoints,numFaces,logger):
         elif taggName == "#Mass#" and 'MASS' in additionalData:
             massLayer = bm.verts.layers.float.new("a3ob_mass") # create new BMesh layer to store mass data
             for i in range(numPoints):
-                mass = binary.readFloat(file)
+                mass = binary.read_float(file)
                 bm.verts[i][massLayer] = mass
             
         # UV
         elif taggName == "#UVSet#" and 'UV' in additionalData:
-            UVID = binary.readULong(file)
+            UVID = binary.read_ulong(file)
             UVlayer = bm.loops.layers.uv.new(f"UVSet {UVID}")
             
             for face in bm.faces:
                 for loop in face.loops:
-                    loop[UVlayer].uv = (binary.readFloat(file),1-binary.readFloat(file))
+                    loop[UVlayer].uv = (binary.read_float(file),1-binary.read_float(file))
             
             
         # Named selections
@@ -155,7 +155,7 @@ def process_TAGGs(file,bm,additionalData,numPoints,numFaces,logger):
             deform = bm.verts.layers.deform.active
             
             for i in range(numPoints):
-                b = binary.readByte(file)
+                b = binary.read_byte(file)
                 weight = decode_selectionWeight(b)
                 if b != 0:
                     bm.verts[i][deform][len(namedSelections)-1] = weight
@@ -341,8 +341,8 @@ def read_LOD(context,file,materialDict,additionalData,logger,prefs):
     if signature != "P3DM":
         raise IOError(f"Unsupported LOD signature: {signature}")
         
-    versionMajor = binary.readULong(file)
-    versionMinor = binary.readULong(file)
+    versionMajor = binary.read_ulong(file)
+    versionMinor = binary.read_ulong(file)
     
     if versionMajor != 0x1c or versionMinor != 0x100:
         raise IOError(f"Unsupported LOD version: {versionMajor}.{versionMinor}")
@@ -350,9 +350,9 @@ def read_LOD(context,file,materialDict,additionalData,logger,prefs):
     logger.step("Type: P3DM")
     logger.step(f"Version: {versionMajor}.{versionMinor}")
                 
-    numPoints = binary.readULong(file)
-    numNormals = binary.readULong(file)
-    numFaces = binary.readULong(file)
+    numPoints = binary.read_ulong(file)
+    numNormals = binary.read_ulong(file)
+    numFaces = binary.read_ulong(file)
     
     file.read(4) # dump unknown flag byte
     
@@ -398,7 +398,7 @@ def read_LOD(context,file,materialDict,additionalData,logger,prefs):
     namedSelections, properties = process_TAGGs(file,bm,additionalData,numPoints,numFaces,logger)
     
     # EOF
-    LODresolution = binary.readFloat(file)
+    LODresolution = binary.read_float(file)
     logger.step("Resolution signature: %d" % LODresolution)
     
     # Create object

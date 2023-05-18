@@ -202,14 +202,14 @@ def encode_selectionWeight(weight):
 
 def write_vertex(file,co):
     file.write(struct.pack('<fff',co[0],co[2],co[1]))
-    binary.writeULong(file,0)
+    binary.write_ulong(file,0)
     
 def write_normal(file,normal):
     file.write(struct.pack('<fff',-normal[0],-normal[2],-normal[1]))
 
 def write_pseudo_vertextable(file,loop,uv_layer):
-    binary.writeULong(file,loop.vert.index)
-    binary.writeULong(file,loop.index)
+    binary.write_ulong(file,loop.vert.index)
+    binary.write_ulong(file,loop.index)
     
     if not uv_layer:
         file.write(struct.pack('<ff',0,0))
@@ -218,7 +218,7 @@ def write_pseudo_vertextable(file,loop,uv_layer):
 
 def write_face(file,bm,face,materials,uv_layer):
     numSides = len(face.loops)
-    binary.writeULong(file,numSides)
+    binary.write_ulong(file,numSides)
     
     for i in range(numSides):
         write_pseudo_vertextable(file,face.loops[i],uv_layer)
@@ -228,15 +228,15 @@ def write_face(file,bm,face,materials,uv_layer):
     
     matData = materials[face.material_index]
     
-    binary.writeULong(file,0) # face flags
-    binary.writeAsciiz(file,matData[0]) # texture
-    binary.writeAsciiz(file,matData[1]) # material
+    binary.write_ulong(file,0) # face flags
+    binary.write_asciiz(file,matData[0]) # texture
+    binary.write_asciiz(file,matData[1]) # material
     
 def write_sharps(file,bm):
-    binary.writeByte(file,1)
-    binary.writeAsciiz(file,"#SharpEdges#")
+    binary.write_byte(file,1)
+    binary.write_asciiz(file,"#SharpEdges#")
     dataSizePos = file.tell()
-    binary.writeULong(file,0) # temporary placeholder value
+    binary.write_ulong(file,0) # temporary placeholder value
     
     flatFaceEdges = set()
     for face in bm.faces:
@@ -249,15 +249,15 @@ def write_sharps(file,bm):
 
     dataEndPos = file.tell()
     file.seek(dataSizePos,0)
-    binary.writeULong(file,dataEndPos-dataSizePos-4) # fill in length data
+    binary.write_ulong(file,dataEndPos-dataSizePos-4) # fill in length data
     file.seek(dataEndPos,0)
 
 def write_uv_set(file,bm,layer,index):
-    binary.writeByte(file,1)
-    binary.writeAsciiz(file,"#UVSet#")
+    binary.write_byte(file,1)
+    binary.write_asciiz(file,"#UVSet#")
     dataSizePos = file.tell()
-    binary.writeULong(file,0) # temporary placeholder value
-    binary.writeULong(file,index)
+    binary.write_ulong(file,0) # temporary placeholder value
+    binary.write_ulong(file,index)
     
     for face in bm.faces:
         for loop in face.loops:
@@ -265,7 +265,7 @@ def write_uv_set(file,bm,layer,index):
         
     dataEndPos = file.tell()
     file.seek(dataSizePos,0)
-    binary.writeULong(file,dataEndPos-dataSizePos-4) # fill in length data
+    binary.write_ulong(file,dataEndPos-dataSizePos-4) # fill in length data
     file.seek(dataEndPos,0)
 
 def write_uv(file,bm,logger):
@@ -281,13 +281,13 @@ def write_mass(file,bm,numVerts):
     if not layer:
         return
         
-    binary.writeByte(file,1)
-    binary.writeAsciiz(file,"#Mass#")
+    binary.write_byte(file,1)
+    binary.write_asciiz(file,"#Mass#")
         
-    binary.writeULong(file,numVerts*4)
+    binary.write_ulong(file,numVerts*4)
     
     for vertex in bm.verts:
-        binary.writeFloat(file,vertex[layer])
+        binary.write_float(file,vertex[layer])
     
 def write_named_selection(file,name,count_vert,count_face,vertices,faces,proxies):
     real_name = name
@@ -297,10 +297,10 @@ def write_named_selection(file,name,count_vert,count_face,vertices,faces,proxies
         except:
             pass
             
-    binary.writeByte(file,1)
-    binary.writeAsciiz(file,real_name)
+    binary.write_byte(file,1)
+    binary.write_asciiz(file,real_name)
     dataSizePos = file.tell()
-    binary.writeULong(file,0) # temporary placeholder value
+    binary.write_ulong(file,0) # temporary placeholder value
 
     bytes_vert = bytearray(count_vert) # array of 0x0 bytes (effective because this way not every vertex has to be iterated)
 
@@ -317,7 +317,7 @@ def write_named_selection(file,name,count_vert,count_face,vertices,faces,proxies
 
     dataEndPos = file.tell()
     file.seek(dataSizePos,0)
-    binary.writeULong(file,dataEndPos-dataSizePos-4) # fill in length data
+    binary.write_ulong(file,dataEndPos-dataSizePos-4) # fill in length data
     file.seek(dataEndPos,0)
     
 def write_selections(file,obj,proxies,logger):
@@ -356,9 +356,9 @@ def write_selections(file,obj,proxies,logger):
     logger.step("Wrote named selections: %d" % (i + 1))
     
 def write_property(file,key,value):
-    binary.writeByte(file,1)
-    binary.writeAsciiz(file,"#Property#")
-    binary.writeULong(file,128)
+    binary.write_byte(file,1)
+    binary.write_asciiz(file,"#Property#")
+    binary.write_ulong(file,128)
     file.write(struct.pack('<64s',key.encode('ASCII')))
     file.write(struct.pack('<64s',value.encode('ASCII')))
     
@@ -372,9 +372,9 @@ def write_named_properties(file,obj):
             write_property(file,prop.name,prop.value)
 
 def write_header(file,LODcount):
-    binary.writeChars(file,'MLOD')
-    binary.writeULong(file,257)
-    binary.writeULong(file,LODcount)
+    binary.write_chars(file,'MLOD')
+    binary.write_ulong(file,257)
+    binary.write_ulong(file,LODcount)
     
 def write_LOD(file,obj,materials,proxies,logger):
     logger.level_up()
@@ -384,9 +384,9 @@ def write_LOD(file,obj,materials,proxies,logger):
             logger.step("N-gons detected -> skipping LOD")
             return False
     
-    binary.writeChars(file,'P3DM')
-    binary.writeULong(file,0x1c)
-    binary.writeULong(file,0x100)
+    binary.write_chars(file,'P3DM')
+    binary.write_ulong(file,0x1c)
+    binary.write_ulong(file,0x100)
     
     if obj.mode == 'EDIT':
         obj.update_from_editmode()
@@ -405,11 +405,11 @@ def write_LOD(file,obj,materials,proxies,logger):
     numLoops = len(mesh.loops)
     numFaces = len(mesh.polygons)
     
-    binary.writeULong(file,numVerts)
-    binary.writeULong(file,numLoops) # number of normals
-    binary.writeULong(file,numFaces)
+    binary.write_ulong(file,numVerts)
+    binary.write_ulong(file,numLoops) # number of normals
+    binary.write_ulong(file,numFaces)
     
-    binary.writeULong(file,0) # unknown flags/padding
+    binary.write_ulong(file,0) # unknown flags/padding
     
     for vert in bm.verts:
         write_vertex(file,vert.co)
@@ -430,7 +430,7 @@ def write_LOD(file,obj,materials,proxies,logger):
         
     logger.step("Wrote faces: %d" % numFaces)
         
-    binary.writeChars(file,'TAGG') # TAGG section start
+    binary.write_chars(file,'TAGG') # TAGG section start
     
     write_sharps(file,bm)
     write_uv(file,bm,logger)
@@ -443,11 +443,11 @@ def write_LOD(file,obj,materials,proxies,logger):
     if len(obj.vertex_groups) > 0:
         write_selections(file,obj,proxies,logger)
     
-    binary.writeByte(file,1)
-    binary.writeAsciiz(file,"#EndOfFile#") # EOF signature
-    binary.writeULong(file,0)
+    binary.write_byte(file,1)
+    binary.write_asciiz(file,"#EndOfFile#") # EOF signature
+    binary.write_ulong(file,0)
     
-    binary.writeFloat(file,get_resolution(obj)) # LOD resolution index
+    binary.write_float(file,get_resolution(obj)) # LOD resolution index
     logger.step("Resolution signature: %d" % float(get_resolution(obj)))
     logger.step("Name: %s" % f"{data.LODdata[int(obj.a3ob_properties_object.LOD)][0]} {obj.a3ob_properties_object.resolution}")
     bm.free()
