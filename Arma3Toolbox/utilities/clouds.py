@@ -2,7 +2,7 @@ import bpy
 import bmesh
 from mathutils import Vector
 
-def validateRefs(source,target):
+def validate_references(source,target):
     if source or target:
         if source == target and source.users == 2:
             bpy.data.objects.remove(source)
@@ -17,7 +17,7 @@ def validateRefs(source,target):
     
     return source,target
 
-def isInside(obj,point):
+def is_inside(obj,point):
     result,closest,normal,_ = obj.closest_point_on_mesh(point)
     
     if not result:
@@ -25,7 +25,7 @@ def isInside(obj,point):
     
     return (closest-point).dot(normal) > 0
     
-def createSelection(obj,selection):
+def create_selection(obj,selection):
     group = obj.vertex_groups.get(selection,None)
     
     if not group:
@@ -33,7 +33,7 @@ def createSelection(obj,selection):
 
     group.add([vert.index for vert in obj.data.vertices],1,'REPLACE')
     
-def getGrid(bbox,minCoord,maxCoord,spacing):
+def calculate_grid(bbox,minCoord,maxCoord,spacing):
     dim = maxCoord-minCoord
     
     if dim < spacing:
@@ -45,11 +45,11 @@ def getGrid(bbox,minCoord,maxCoord,spacing):
     
     return points
 
-def generateHitpoints(operator,context):
+def generate_hitpoints(operator,context):
     wm = context.window_manager
     OBprops = wm.a3ob_hitpoint_generator
     
-    source,target = validateRefs(OBprops.source,OBprops.target)
+    source,target = validate_references(OBprops.source,OBprops.target)
     
     if not source or len(source.data.polygons) == 0:
         return
@@ -82,9 +82,9 @@ def generateHitpoints(operator,context):
     spacingY = OBprops.spacing[1]
     spacingZ = OBprops.spacing[2]
     
-    pointsX = getGrid(bbox,minX,maxX,spacingX)
-    pointsY = getGrid(bbox,minY,maxY,spacingY)
-    pointsZ = getGrid(bbox,minZ,maxZ,spacingZ)
+    pointsX = calculate_grid(bbox,minX,maxX,spacingX)
+    pointsY = calculate_grid(bbox,minY,maxY,spacingY)
+    pointsZ = calculate_grid(bbox,minZ,maxZ,spacingZ)
 
     points = []
     bm = bmesh.new()
@@ -92,7 +92,7 @@ def generateHitpoints(operator,context):
     for X in pointsX:
         for Y in pointsY:
             for Z in pointsZ:
-                if isInside(sourceObjEval,Vector((X,Y,Z))):
+                if is_inside(sourceObjEval,Vector((X,Y,Z))):
                     bm.verts.new((X,Y,Z))
                 
     mesh = bpy.data.meshes.new("Point cloud")
@@ -121,4 +121,4 @@ def generateHitpoints(operator,context):
     sourceObj.modifiers.remove(modifBevel)
     
     if OBprops.selection.strip() != "" and len(targetObj.data.vertices) > 0:
-        createSelection(targetObj,OBprops.selection)
+        create_selection(targetObj,OBprops.selection)

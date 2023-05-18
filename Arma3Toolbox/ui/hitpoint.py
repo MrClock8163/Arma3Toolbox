@@ -14,7 +14,7 @@ class A3OB_OT_hitpoints_generate(bpy.types.Operator):
         return OBprops.source and (OBprops.source != OBprops.target) and OBprops.source.type == 'MESH' and (not OBprops.target or OBprops.target.type == 'MESH')
         
     def execute(self,context):        
-        cloudutils.generateHitpoints(self,context)
+        cloudutils.generate_hitpoints(self,context)
         return {'FINISHED'}
         
 class A3OB_PT_hitpoints(bpy.types.Panel):   
@@ -38,7 +38,7 @@ class A3OB_PT_hitpoints(bpy.types.Panel):
         
         # SUPER hacky way to get rid of the object if it's only retained in memory because of this property
         if OBprops.source or OBprops.target:
-            cloudutils.validateRefs(OBprops.source,OBprops.target)
+            cloudutils.validate_references(OBprops.source,OBprops.target)
         
         layout = self.layout
         layout.prop_search(OBprops,"source",bpy.context.scene,"objects")
