@@ -1,7 +1,9 @@
-import bpy
 import math
 import os
 import json
+
+import bpy
+
 from . import data
 
 def show_info_box(message, title = "", icon = 'INFO'):

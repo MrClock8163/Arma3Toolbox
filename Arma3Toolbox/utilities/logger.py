@@ -1,5 +1,3 @@
-import time
-
 class ProcessLogger():
     
     def __init__(self, startIndent = 0):

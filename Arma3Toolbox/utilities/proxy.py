@@ -1,6 +1,7 @@
+import math
+
 import bpy
 import mathutils
-import math
 
 def find_center_index(mesh):
     # 1st vert

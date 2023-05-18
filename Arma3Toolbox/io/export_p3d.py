@@ -1,14 +1,12 @@
+import time
+import struct
+
 import bpy
 import bmesh
-import os
-import struct
-import mathutils
-import time
+
 from . import binary_handler as binary
 from ..utilities import generic as utils
 from ..utilities import lod as lodutils
-from ..utilities import proxy as proxyutils
-from ..utilities import structure as structutils
 from ..utilities import data
 from ..utilities.logger import ProcessLogger
     

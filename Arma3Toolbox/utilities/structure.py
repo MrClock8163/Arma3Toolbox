@@ -1,6 +1,8 @@
+import re
+
 import bpy
 import bmesh
-import re
+
 from . import generic as utils
 
 def find_components(do_convex_hull=False):

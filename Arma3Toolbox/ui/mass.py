@@ -1,4 +1,5 @@
 import bpy
+
 from ..utilities import properties as proputils
 
 class A3OB_OT_vertex_mass_set(bpy.types.Operator):

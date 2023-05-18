@@ -1,5 +1,5 @@
 import bpy
-from ..utilities import properties as proputils
+
 from . import object as objectprops
 
 def mesh_object_poll(self,object):

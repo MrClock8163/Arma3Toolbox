@@ -1,4 +1,5 @@
 import bpy
+
 from ..utilities import data
 
 class A3OB_PG_properties_material(bpy.types.PropertyGroup):

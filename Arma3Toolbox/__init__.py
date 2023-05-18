@@ -36,7 +36,6 @@ else:
     from .props import rvmat
 
 import bpy
-import os
 
 class A3OB_AT_preferences(bpy.types.AddonPreferences):
     bl_idname = __name__

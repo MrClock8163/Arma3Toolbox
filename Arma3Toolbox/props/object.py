@@ -1,4 +1,5 @@
 import bpy
+
 from ..utilities import properties as proputils
 from ..utilities import data
 

@@ -1,4 +1,5 @@
 import bpy
+
 from ..utilities import structure as structutils
 from ..utilities import generic as utils
 

@@ -1,6 +1,5 @@
 import bpy
 import bpy_extras
-import os
 
 from ..io import import_p3d, export_p3d
 

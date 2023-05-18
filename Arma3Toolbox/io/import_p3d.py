@@ -1,11 +1,13 @@
-import bpy
-import bmesh
 import struct
 import math
 import re
 import time
 import os
+
+import bpy
+import bmesh
 import mathutils
+
 from . import binary_handler as binary
 from ..utilities import generic as utils
 from ..utilities import lod as lodutils

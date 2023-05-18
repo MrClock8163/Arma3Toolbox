@@ -1,4 +1,3 @@
-import bpy
 import bmesh
 
 def can_edit_mass(context):
