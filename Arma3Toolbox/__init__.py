@@ -38,7 +38,7 @@ else:
 import bpy
 import os
 
-class A3OB_AT_Preferences(bpy.types.AddonPreferences):
+class A3OB_AT_preferences(bpy.types.AddonPreferences):
     bl_idname = __name__
     
     # Tab selection
@@ -108,7 +108,7 @@ class A3OB_AT_Preferences(bpy.types.AddonPreferences):
             box.prop(self,"customDataPath",icon='PRESET')
 
 classes = (
-    A3OB_AT_Preferences,
+    A3OB_AT_preferences,
 )
 
 def register():
