@@ -4,7 +4,7 @@ import os
 
 from ..io import import_p3d, export_p3d
 
-class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
+class A3OB_OP_import_p3d(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
     '''Import Arma 3 MLOD P3D'''
     bl_idname = "a3ob.import_p3d"
     bl_label = "Import P3D"
@@ -114,7 +114,7 @@ class A3OB_OP_import_P3D(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         
         return {'FINISHED'}
         
-class A3OB_PT_import_P3D_main(bpy.types.Panel):
+class A3OB_PT_import_p3d_main(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Main"
@@ -138,7 +138,7 @@ class A3OB_PT_import_P3D_main(bpy.types.Panel):
         
         layout.prop(operator,"validateMeshes")
         
-class A3OB_PT_import_P3D_collections(bpy.types.Panel):
+class A3OB_PT_import_p3d_collections(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Collections"
@@ -162,7 +162,7 @@ class A3OB_PT_import_P3D_collections(bpy.types.Panel):
         layout.prop(operator,"enclose")
         layout.prop(operator,"groupby")
         
-class A3OB_PT_import_P3D_data(bpy.types.Panel):
+class A3OB_PT_import_p3d_data(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Data"
@@ -189,7 +189,7 @@ class A3OB_PT_import_P3D_data(bpy.types.Panel):
         col2.enabled = operator.allowAdditionalData
         prop = col2.prop(operator,"additionalData",text=" ")
         
-class A3OB_PT_import_P3D_proxies(bpy.types.Panel):
+class A3OB_PT_import_p3d_proxies(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Proxies"
@@ -221,7 +221,7 @@ class A3OB_PT_import_P3D_proxies(bpy.types.Panel):
             col = layout.column(align=True)
             col.prop(operator,"proxyHandling",expand=True)
         
-class A3OB_OP_export_P3D(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
+class A3OB_OP_export_p3d(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
     '''Export to Arma 3 MLOD P3D'''
     bl_idname = "a3ob.export_p3d"
     bl_label = "Export P3D"
@@ -283,7 +283,7 @@ class A3OB_OP_export_P3D(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
         
         return {'FINISHED'}
         
-class A3OB_PT_export_P3D_include(bpy.types.Panel):
+class A3OB_PT_export_p3d_include(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Include"
@@ -307,7 +307,7 @@ class A3OB_PT_export_P3D_include(bpy.types.Panel):
         col = layout.column(heading="Limit To",align=True)
         col.prop(operator,"use_selection")
         
-class A3OB_PT_export_P3D_meshes(bpy.types.Panel):
+class A3OB_PT_export_p3d_meshes(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Mesh Data"
@@ -335,21 +335,21 @@ class A3OB_PT_export_P3D_meshes(bpy.types.Panel):
         col.prop(operator,"preserve_normals")
         
 classes = (
-    A3OB_OP_import_P3D,
-    A3OB_PT_import_P3D_main,
-    A3OB_PT_import_P3D_collections,
-    A3OB_PT_import_P3D_data,
-    A3OB_PT_import_P3D_proxies,
-    A3OB_OP_export_P3D,
-    A3OB_PT_export_P3D_include,
-    A3OB_PT_export_P3D_meshes
+    A3OB_OP_import_p3d,
+    A3OB_PT_import_p3d_main,
+    A3OB_PT_import_p3d_collections,
+    A3OB_PT_import_p3d_data,
+    A3OB_PT_import_p3d_proxies,
+    A3OB_OP_export_p3d,
+    A3OB_PT_export_p3d_include,
+    A3OB_PT_export_p3d_meshes
 )
         
 def menu_func_import(self,context):
-    self.layout.operator(A3OB_OP_import_P3D.bl_idname,text="Arma 3 model (.p3d)")
+    self.layout.operator(A3OB_OP_import_p3d.bl_idname,text="Arma 3 model (.p3d)")
         
 def menu_func_export(self,context):
-    self.layout.operator(A3OB_OP_export_P3D.bl_idname,text="Arma 3 model (.p3d)")
+    self.layout.operator(A3OB_OP_export_p3d.bl_idname,text="Arma 3 model (.p3d)")
     
 def register():
     for cls in classes:
