@@ -273,7 +273,7 @@ class A3OB_OP_export_p3d(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
             file = open(self.filepath,'wb')
             filename = os.path.basename(self.filepath)
             
-            lod_count,exported_count = export_p3d.export_file(self,context,file)
+            lod_count,exported_count = export_p3d.write_file(self,context,file)
             
             file.close()
             

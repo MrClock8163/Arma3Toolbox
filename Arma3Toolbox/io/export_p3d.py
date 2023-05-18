@@ -75,7 +75,7 @@ def format_path(path,root = "",makeRelative = True,stripExtension = False):
         
     return path
 
-def get_LOD_data(operator,context):
+def get_lod_data(operator,context):
     addonPreferences = utils.get_addon_preferences(context)
     scene = context.scene
     exportObjects = scene.objects
@@ -186,7 +186,7 @@ def get_resolution(obj):
     
     return lodutils.getLODvalue(int(OBprops.LOD),OBprops.resolution)
 
-def encode_selectionWeight(weight):
+def encode_selection_weight(weight):
     if weight == 0:
         return 0
         
@@ -207,7 +207,7 @@ def write_vertex(file,co):
 def write_normal(file,normal):
     file.write(struct.pack('<fff',-normal[0],-normal[2],-normal[1]))
 
-def write_pseudo_vertextable(file,loop,uv_layer):
+def write_face_pseudo_vertextable(file,loop,uv_layer):
     binary.write_ulong(file,loop.vert.index)
     binary.write_ulong(file,loop.index)
     
@@ -221,7 +221,7 @@ def write_face(file,bm,face,materials,uv_layer):
     binary.write_ulong(file,numSides)
     
     for i in range(numSides):
-        write_pseudo_vertextable(file,face.loops[i],uv_layer)
+        write_face_pseudo_vertextable(file,face.loops[i],uv_layer)
         
     if numSides < 4:
         file.write(struct.pack('<4I',0,0,0,0)) # empty filler for triangles
@@ -232,7 +232,7 @@ def write_face(file,bm,face,materials,uv_layer):
     binary.write_asciiz(file,matData[0]) # texture
     binary.write_asciiz(file,matData[1]) # material
     
-def write_sharps(file,bm):
+def write_tagg_sharps_edges(file,bm):
     binary.write_byte(file,1)
     binary.write_asciiz(file,"#SharpEdges#")
     dataSizePos = file.tell()
@@ -252,7 +252,7 @@ def write_sharps(file,bm):
     binary.write_ulong(file,dataEndPos-dataSizePos-4) # fill in length data
     file.seek(dataEndPos,0)
 
-def write_uv_set(file,bm,layer,index):
+def write_tagg_uv_sets_item(file,bm,layer,index):
     binary.write_byte(file,1)
     binary.write_asciiz(file,"#UVSet#")
     dataSizePos = file.tell()
@@ -268,15 +268,15 @@ def write_uv_set(file,bm,layer,index):
     binary.write_ulong(file,dataEndPos-dataSizePos-4) # fill in length data
     file.seek(dataEndPos,0)
 
-def write_uv(file,bm,logger):
+def write_tagg_uv_sets(file,bm,logger):
     index = 0
     for layer in bm.loops.layers.uv.values():
-        write_uv_set(file,bm,layer,index)
+        write_tagg_uv_sets_item(file,bm,layer,index)
         index += 1
         
     logger.step("Wrote UV sets: %d" % index)
 
-def write_mass(file,bm,numVerts):
+def write_tagg_mass(file,bm,numVerts):
     layer = bm.verts.layers.float.get('a3ob_mass')
     if not layer:
         return
@@ -289,7 +289,7 @@ def write_mass(file,bm,numVerts):
     for vertex in bm.verts:
         binary.write_float(file,vertex[layer])
     
-def write_named_selection(file,name,count_vert,count_face,vertices,faces,proxies):
+def write_tagg_selections_item(file,name,count_vert,count_face,vertices,faces,proxies):
     real_name = name
     if name.strip().startswith("@proxy"):
         try:
@@ -305,7 +305,7 @@ def write_named_selection(file,name,count_vert,count_face,vertices,faces,proxies
     bytes_vert = bytearray(count_vert) # array of 0x0 bytes (effective because this way not every vertex has to be iterated)
 
     for vertex in vertices:
-        bytes_vert[vertex[0]] = encode_selectionWeight(vertex[1])
+        bytes_vert[vertex[0]] = encode_selection_weight(vertex[1])
         
     file.write(bytes_vert)
 
@@ -320,7 +320,7 @@ def write_named_selection(file,name,count_vert,count_face,vertices,faces,proxies
     binary.write_ulong(file,dataEndPos-dataSizePos-4) # fill in length data
     file.seek(dataEndPos,0)
     
-def write_selections(file,obj,proxies,logger):
+def write_tagg_selections(file,obj,proxies,logger):
     mesh = obj.data
     
     # Build selection database for faster lookup
@@ -351,32 +351,32 @@ def write_selections(file,obj,proxies,logger):
     
     for i,group in enumerate(obj.vertex_groups):
         name = group.name
-        write_named_selection(file,name,count_vert,count_face,selections_vert[name],selections_face[name],proxies)
+        write_tagg_selections_item(file,name,count_vert,count_face,selections_vert[name],selections_face[name],proxies)
         
     logger.step("Wrote named selections: %d" % (i + 1))
     
-def write_property(file,key,value):
+def write_tagg_named_properties_item(file,key,value):
     binary.write_byte(file,1)
     binary.write_asciiz(file,"#Property#")
     binary.write_ulong(file,128)
     file.write(struct.pack('<64s',key.encode('ASCII')))
     file.write(struct.pack('<64s',value.encode('ASCII')))
     
-def write_named_properties(file,obj):
+def write_tagg_named_properties(file,obj):
     OBprops = obj.a3ob_properties_object
     
     writtenProps = set()
     for prop in OBprops.properties:
         if prop.name not in writtenProps:
             writtenProps.add(prop.name)
-            write_property(file,prop.name,prop.value)
+            write_tagg_named_properties_item(file,prop.name,prop.value)
 
-def write_header(file,LODcount):
+def write_file_header(file,LODcount):
     binary.write_chars(file,'MLOD')
     binary.write_ulong(file,257)
     binary.write_ulong(file,LODcount)
     
-def write_LOD(file,obj,materials,proxies,logger):
+def write_lod(file,obj,materials,proxies,logger):
     logger.level_up()
     for face in obj.data.polygons:
         if len(face.vertices) > 4:
@@ -432,16 +432,16 @@ def write_LOD(file,obj,materials,proxies,logger):
         
     binary.write_chars(file,'TAGG') # TAGG section start
     
-    write_sharps(file,bm)
-    write_uv(file,bm,logger)
+    write_tagg_sharps_edges(file,bm)
+    write_tagg_uv_sets(file,bm,logger)
     
     if obj.a3ob_properties_object.LOD == '6':
-        write_mass(file,bm,numVerts) # need to make sure to only export for Geo LODs
+        write_tagg_mass(file,bm,numVerts) # need to make sure to only export for Geo LODs
         logger.step("Wrote vertex mass")
         
-    write_named_properties(file,obj)
+    write_tagg_named_properties(file,obj)
     if len(obj.vertex_groups) > 0:
-        write_selections(file,obj,proxies,logger)
+        write_tagg_selections(file,obj,proxies,logger)
     
     binary.write_byte(file,1)
     binary.write_asciiz(file,"#EndOfFile#") # EOF signature
@@ -455,18 +455,18 @@ def write_LOD(file,obj,materials,proxies,logger):
     logger.level_down()
     return True
 
-def export_file(operator,context,file):
+def write_file(operator,context,file):
     logger = ProcessLogger()
     logger.step("P3D export to %s" % operator.filepath)
     
     time_file_start = time.time()
     
-    LODobjects, materials, proxies = get_LOD_data(operator,context)
+    LODobjects, materials, proxies = get_lod_data(operator,context)
     
     LODcount = len(LODobjects)
     logger.log("Detected %d LOD objects" % LODcount)
     
-    write_header(file,LODcount)
+    write_file_header(file,LODcount)
     
     logger.level_up()
     exported_count = 0
@@ -474,7 +474,7 @@ def export_file(operator,context,file):
         time_lod_start = time.time()
         logger.step("LOD %d" % i)
         
-        success = write_LOD(file,obj,materials[i],proxies[i],logger)
+        success = write_lod(file,obj,materials[i],proxies[i],logger)
         if success:
             exported_count += 1
             
