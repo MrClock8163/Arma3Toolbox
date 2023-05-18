@@ -3,7 +3,7 @@ import bmesh
 import re
 from . import generic as utils
 
-def findComponents(doConvexHull=False):
+def find_components(doConvexHull=False):
     utils.force_mode_object()
     activeObj = bpy.context.active_object
     
@@ -32,7 +32,7 @@ def findComponents(doConvexHull=False):
             continue
         
         if doConvexHull:
-            convexHull()
+            convex_hull()
             
         group = obj.vertex_groups.new(name=('Component%02d' % (componentID)))
         group.add([vert.index for vert in obj.data.vertices],1,'REPLACE')
@@ -45,7 +45,7 @@ def findComponents(doConvexHull=False):
     bpy.context.view_layer.objects.active = activeObj
     bpy.ops.object.join()
 
-def convexHull():
+def convex_hull():
     utils.force_mode_edit()
     
     bpy.ops.mesh.select_mode(type="EDGE")
@@ -56,7 +56,7 @@ def convexHull():
     bpy.ops.mesh.reveal()
     bpy.ops.object.mode_set(mode='OBJECT')    
 
-def componentConvexHull(): # DEPRECATED
+def component_convex_hull(): # DEPRECATED
     utils.force_mode_edit()
     
     bpy.ops.mesh.select_mode(type="VERT")
@@ -77,14 +77,14 @@ def componentConvexHull(): # DEPRECATED
         
     bpy.ops.mesh.select_all(action = 'DESELECT')
 
-def checkClosed():
+def check_closed():
     utils.force_mode_edit()
     
     bpy.ops.mesh.select_mode(type="EDGE")
     
     bpy.ops.mesh.select_non_manifold()
 
-def checkConvexity():
+def check_convexity():
     utils.force_mode_object()
     
     activeObj = bpy.context.selected_objects[0]
@@ -111,7 +111,7 @@ def checkConvexity():
     
     return activeObj.name, concaveCount
 
-def cleanupVertexGroups(obj):
+def cleanup_vertex_groups(obj):
     mesh = obj.data
     
     removed = 0
@@ -130,7 +130,7 @@ def cleanupVertexGroups(obj):
         
     return removed
     
-def redefineVertexGroup(obj):
+def redefine_vertex_group(obj):
     mesh = obj.data
     
     group = obj.vertex_groups.active

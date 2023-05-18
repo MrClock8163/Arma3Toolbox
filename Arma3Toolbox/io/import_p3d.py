@@ -311,7 +311,7 @@ def process_proxies(LODs,operator,materialDict,prefs):
             for obj in proxyObjects:
                 
                 transform_proxy(obj)
-                structutils.cleanupVertexGroups(obj)
+                structutils.cleanup_vertex_groups(obj)
                 
                 for vgroup in obj.vertex_groups:
                     name = vgroup.name

@@ -53,7 +53,7 @@ class A3OB_OT_check_convexity(bpy.types.Operator):
         return len(context.selected_objects) == 1 and obj and obj.type == 'MESH'
     
     def execute(self,context):
-        name, concaves = structutils.checkConvexity()
+        name, concaves = structutils.check_convexity()
         
         if concaves > 0:
             self.report({'WARNING'},f'{name} has {concaves} concave edges')
@@ -77,7 +77,7 @@ class A3OB_OT_check_closed(bpy.types.Operator):
     
     def execute(self,context):
         
-        structutils.checkClosed()
+        structutils.check_closed()
         
         return {'FINISHED'}
 
@@ -94,7 +94,7 @@ class A3OB_OT_convex_hull(bpy.types.Operator):
     
     def execute(self,context):
         mode = bpy.context.object.mode
-        structutils.convexHull()
+        structutils.convex_hull()
         bpy.ops.object.mode_set(mode=mode)
         
         return {'FINISHED'}
@@ -112,7 +112,7 @@ class A3OB_OT_component_convex_hull(bpy.types.Operator):
     
     def execute(self,context):
         mode = bpy.context.object.mode
-        structutils.findComponents(True)
+        structutils.find_components(True)
         bpy.ops.object.mode_set(mode=mode)
         
         return {'FINISHED'}
@@ -130,7 +130,7 @@ class A3OB_OT_find_components(bpy.types.Operator):
     
     def execute(self,context):
         mode = bpy.context.object.mode
-        structutils.findComponents()
+        structutils.find_components()
         bpy.ops.object.mode_set(mode=mode)
         
         return {'FINISHED'}
@@ -152,7 +152,7 @@ class A3OB_OT_cleanup_vertex_groups(bpy.types.Operator):
         
         bpy.ops.object.mode_set(mode='OBJECT')
         
-        removed = structutils.cleanupVertexGroups(obj)
+        removed = structutils.cleanup_vertex_groups(obj)
         bpy.ops.object.mode_set(mode=currentMode)
         
         self.report({'INFO'},f"Removed {removed} unused vertex group(s) from {obj.name}")
@@ -173,7 +173,7 @@ class A3OB_OT_redefine_vertex_group(bpy.types.Operator):
         
     def execute(self,context):
         obj = context.active_object
-        structutils.redefineVertexGroup(obj)
+        structutils.redefine_vertex_group(obj)
         
         return {'FINISHED'}
 
