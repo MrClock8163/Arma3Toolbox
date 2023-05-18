@@ -60,8 +60,8 @@ def generate_hitpoints(operator,context):
         modifTri = sourceObj.modifiers.new("A3OB_HitPointTris",'TRIANGULATE')
         
     modifBevel = sourceObj.modifiers.new("A3OB_HitPointBevel",'BEVEL')
-    modifBevel.segments = OBprops.bevelSegments
-    modifBevel.width = OBprops.bevelOffset
+    modifBevel.segments = OBprops.bevel_segments
+    modifBevel.width = OBprops.bevel_offset
     
     if OBprops.triangulate == 'AFTER':
         modifTri = sourceObj.modifiers.new("A3OB_HitPointTris",'TRIANGULATE')

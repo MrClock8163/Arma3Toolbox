@@ -12,9 +12,9 @@ def get_lod_id(value):
     if exponent in [3,16]: # LODs in these ranges have identifier values in the X.X positions not just X.0
         baseValue = utils.floor(fraction,1)
 
-    index = data.LODtypeIndex.get((baseValue,exponent),30)
+    index = data.lod_type_index.get((baseValue,exponent),30)
 
-    resPosition = data.LODtypeResolutionPosition.get(index,None)
+    resPosition = data.lod_resolution_position.get(index,None)
     resolution = 0
 
     if resPosition is not None:
@@ -26,10 +26,10 @@ def get_lod_value(LODindex,resolution):
     if LODindex == 0:
         return resolution
     
-    index = list(data.LODtypeIndex.values()).index(LODindex,0)
-    fraction, exponent = list(data.LODtypeIndex.keys())[LODindex]
+    index = list(data.lod_type_index.values()).index(LODindex,0)
+    fraction, exponent = list(data.lod_type_index.keys())[LODindex]
     
-    resPosition = data.LODtypeResolutionPosition.get(index,None)
+    resPosition = data.lod_resolution_position.get(index,None)
     res = 0
     
     if resPosition is not None:
@@ -38,10 +38,10 @@ def get_lod_value(LODindex,resolution):
     return fraction*10**exponent + res
     
 def get_lod_name(index):
-    return data.LODdata.get(index,data.LODdata[30])[0]
+    return data.lod_type_names.get(index,data.lod_type_names[30])[0]
     
 def format_lod_name(index,res):
-    if data.LODtypeResolutionPosition.get(index,None) is not None:
+    if data.lod_resolution_position.get(index,None) is not None:
         return f"{get_lod_name(index)} {res}"
         
     return get_lod_name(index)

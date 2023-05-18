@@ -13,7 +13,7 @@ class A3OB_OT_proxy_add(bpy.types.Operator):
     @classmethod
     def poll(cls,context):
         obj = context.active_object
-        return obj and obj.type == 'MESH' and obj.mode == 'OBJECT' and obj.parent == None and not obj.a3ob_properties_object_proxy.isArma3Proxy
+        return obj and obj.type == 'MESH' and obj.mode == 'OBJECT' and obj.parent == None and not obj.a3ob_properties_object_proxy.is_a3_proxy
         
     def execute(self,context):
         activeObj = context.active_object
@@ -36,7 +36,7 @@ class A3OB_OT_proxy_common(bpy.types.Operator):
     def poll(cls,context):
         activeObj = context.active_object
         
-        return activeObj.type == 'MESH' and activeObj.a3ob_properties_object_proxy.isArma3Proxy
+        return activeObj.type == 'MESH' and activeObj.a3ob_properties_object_proxy.is_a3_proxy
     
     def invoke(self,context,event):
         obj = context.object
@@ -73,7 +73,7 @@ class A3OB_OT_proxy_common(bpy.types.Operator):
         if len(wm.a3ob_proxy_common) > 0 and wm.a3ob_proxy_common_index in range(len(wm.a3ob_proxy_common)):
             newItem = wm.a3ob_proxy_common[wm.a3ob_proxy_common_index]
             
-            obj.a3ob_properties_object_proxy.proxyPath = newItem.path
+            obj.a3ob_properties_object_proxy.proxy_path = newItem.path
             
         return {'FINISHED'}
     
@@ -96,7 +96,7 @@ class A3OB_OT_namedprops_add(bpy.types.Operator):
         item.name = "New property"
         item.value = "no value"
         
-        OBprops.propertyIndex = len(OBprops.properties)-1
+        OBprops.property_index = len(OBprops.properties)-1
         
         return {'FINISHED'}
 
@@ -111,20 +111,20 @@ class A3OB_OT_namedprops_remove(bpy.types.Operator):
     def poll(cls,context):
         activeObj = context.active_object
         
-        return activeObj.a3ob_properties_object.propertyIndex != -1
+        return activeObj.a3ob_properties_object.property_index != -1
         
     def execute(self,context):
         activeObj = context.active_object
         OBprops = activeObj.a3ob_properties_object
         
-        index = OBprops.propertyIndex
+        index = OBprops.property_index
         
         if index != -1:
             OBprops.properties.remove(index)
             if len(OBprops.properties) == 0:
-                OBprops.propertyIndex = -1
+                OBprops.property_index = -1
             elif index > len(OBprops.properties)-1:
-                OBprops.propertyIndex = len(OBprops.properties)-1            
+                OBprops.property_index = len(OBprops.properties)-1            
         
         return {'FINISHED'}
         
@@ -170,7 +170,7 @@ class A3OB_OT_namedprops_common(bpy.types.Operator):
             item.name = newItem.name
             item.value = newItem.value
             
-            OBprops.propertyIndex = len(OBprops.properties)-1
+            OBprops.property_index = len(OBprops.properties)-1
         
         return {'FINISHED'}
 
@@ -194,7 +194,7 @@ class A3OB_PT_object_mesh(bpy.types.Panel):
         return (context.active_object
             and context.active_object.select_get() == True
             and context.active_object.type == 'MESH'
-            and not context.active_object.a3ob_properties_object_proxy.isArma3Proxy
+            and not context.active_object.a3ob_properties_object_proxy.is_a3_proxy
             
         )
         
@@ -205,14 +205,14 @@ class A3OB_PT_object_mesh(bpy.types.Panel):
         layout = self.layout
         
         
-        layout.prop(OBprops,"isArma3LOD",text="Is P3D LOD",toggle=1)
+        layout.prop(OBprops,"is_a3_lod",text="Is P3D LOD",toggle=1)
         layout.use_property_split = True
         layout.use_property_decorate = False
         
-        if OBprops.isArma3LOD:
-            layout.prop(OBprops,"LOD",text="Type")
+        if OBprops.is_a3_lod:
+            layout.prop(OBprops,"lod",text="Type")
             
-            if int(OBprops.LOD) in data.LODtypeResolutionPosition.keys():
+            if int(OBprops.lod) in data.lod_resolution_position.keys():
                 layout.prop(OBprops,"resolution")
         
 class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
@@ -226,7 +226,7 @@ class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
     def poll(cls,context):
         activeObj = context.active_object
         
-        return activeObj.a3ob_properties_object.isArma3LOD and not activeObj.a3ob_properties_object_proxy.isArma3Proxy
+        return activeObj.a3ob_properties_object.is_a3_lod and not activeObj.a3ob_properties_object_proxy.is_a3_proxy
     
     def draw(self,context):
         activeObj = context.active_object
@@ -235,11 +235,11 @@ class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
         
         row = layout.row()
         col1 = row.column()
-        col1.template_list('A3OB_UL_namedprops',"A3OB_namedprops",OBprops,"properties",OBprops,"propertyIndex")
+        col1.template_list('A3OB_UL_namedprops',"A3OB_namedprops",OBprops,"properties",OBprops,"property_index")
         
-        if OBprops.propertyIndex in range(len(OBprops.properties)):
+        if OBprops.property_index in range(len(OBprops.properties)):
             rowEdit = col1.row(align=True)
-            prop = OBprops.properties[OBprops.propertyIndex]
+            prop = OBprops.properties[OBprops.property_index]
             rowEdit.prop(prop,"name",text="")
             rowEdit.prop(prop,"value",text="")
             
@@ -260,7 +260,7 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
     def poll(cls,context):
         activeObj = context.active_object
         
-        return activeObj.type == 'MESH' and activeObj.a3ob_properties_object_proxy.isArma3Proxy
+        return activeObj.type == 'MESH' and activeObj.a3ob_properties_object_proxy.is_a3_proxy
         
         # return (context.active_object
             # and context.active_object.select_get() == True
@@ -273,7 +273,7 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
         layout = self.layout
         
         row = layout.row()
-        row.prop(OBprops,"isArma3Proxy",text="Is Arma 3 Proxy",toggle=1)
+        row.prop(OBprops,"is_a3_proxy",text="Is Arma 3 Proxy",toggle=1)
         row.enabled = False
         
         layout.use_property_split = True
@@ -282,8 +282,8 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
         layout.separator()
         path_row = layout.row(align=True)
         path_row.operator('a3ob.proxy_common',text="",icon='PASTEDOWN')
-        path_row.prop(OBprops,"proxyPath",icon='MESH_CUBE',text="")
-        layout.prop(OBprops,"proxyIndex",text="")
+        path_row.prop(OBprops,"proxy_path",icon='MESH_CUBE',text="")
+        layout.prop(OBprops,"proxy_index",text="")
         
 def menu_func(self,context):
     self.layout.separator()

@@ -15,7 +15,7 @@ class A3OB_OT_vertex_mass_set(bpy.types.Operator):
     def execute(self,context):
         activeObj = context.active_object
         
-        proputils.set_selection_mass_each(activeObj,activeObj.a3ob_selectionMassTarget)
+        proputils.set_selection_mass_each(activeObj,activeObj.a3ob_selection_mass_target)
         
         return {'FINISHED'}
 
@@ -33,7 +33,7 @@ class A3OB_OT_vertex_mass_distribute(bpy.types.Operator):
     def execute(self,context):
         activeObj = context.active_object
         
-        proputils.set_selection_mass_distribute(activeObj,activeObj.a3ob_selectionMassTarget)
+        proputils.set_selection_mass_distribute(activeObj,activeObj.a3ob_selection_mass_target)
         return {'FINISHED'}
         
 class A3OB_OT_vertex_mass_clear(bpy.types.Operator):
@@ -68,23 +68,23 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
         row = self.layout.row(align=True)
         row.operator("wm.url_open", text="", icon='HELP').url = "https://github.com/MrClock8163/Arma3Toolbox/wiki/Tool:-Vertex-mass-editing"
         row.separator()
-        row.prop(context.window_manager,"a3ob_enableVertexMass",text="")
+        row.prop(context.window_manager,"a3ob_vertex_mass_enabled",text="")
         
     def draw(self,context):
         layout = self.layout
         
-        if not context.window_manager.a3ob_enableVertexMass:
+        if not context.window_manager.a3ob_vertex_mass_enabled:
             layout.label(text="The tools are currently disabled")
             layout.enabled = False
             return 
         
         activeObj = context.active_object
         
-        layout.prop(activeObj,"a3ob_selectionMass")
+        layout.prop(activeObj,"a3ob_selection_mass")
         layout.separator()
         layout.label(text="Overwrite Mass:")
         col = layout.column(align=True)
-        col.prop(activeObj,"a3ob_selectionMassTarget")
+        col.prop(activeObj,"a3ob_selection_mass_target")
         col.operator("a3ob.vertex_mass_set")
         col.operator("a3ob.vertex_mass_distribute")
         col.separator()

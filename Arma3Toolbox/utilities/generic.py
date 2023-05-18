@@ -71,7 +71,7 @@ def get_addon_preferences(context):
     
 def get_common_proxies(context):
     prefs = get_addon_preferences(context)
-    customPath = prefs.customDataPath
+    customPath = prefs.custom_data
     
     proxies = data.common_proxies
     
@@ -93,7 +93,7 @@ def get_common_proxies(context):
     
 def get_common_namedprops(context):
     prefs = get_addon_preferences(context)
-    customPath = prefs.customDataPath
+    customPath = prefs.custom_data
     
     namedprops = data.common_namedprops
     

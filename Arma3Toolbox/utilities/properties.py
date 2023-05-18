@@ -99,4 +99,4 @@ def add_namedprop(obj,key,value):
     item.name = key
     item.value = value
     
-    OBprops.propertyIndex = len(OBprops.properties)-1    
+    OBprops.property_index = len(OBprops.properties)-1    

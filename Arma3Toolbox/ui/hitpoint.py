@@ -46,8 +46,8 @@ class A3OB_PT_hitpoints(bpy.types.Panel):
         col = layout.column(align=True)
         col.prop(OBprops,"spacing")
         colBevel = layout.column(align=True,heading="Bevel:")
-        colBevel.prop(OBprops,"bevelOffset",text="Offset")
-        colBevel.prop(OBprops,"bevelSegments",text="Segments")
+        colBevel.prop(OBprops,"bevel_offset",text="Offset")
+        colBevel.prop(OBprops,"bevel_segments",text="Segments")
         colBevel.separator()
         row = colBevel.row(align=True)
         row.use_property_split = True

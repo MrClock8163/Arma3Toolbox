@@ -39,27 +39,27 @@ def duplicate_object(obj):
     return newObj
     
 def get_texture_string(materialProps,prefs):
-    textureType = materialProps.textureType
+    texture_type = materialProps.texture_type
     
-    if textureType == 'TEX':
-        return format_path(materialProps.texturePath,prefs.projectRoot,prefs.exportRelative)
-    elif textureType == 'COLOR':
-        color = materialProps.colorValue
-        return f"#(argb,8,8,3)color({round(color[0],3)},{round(color[1],3)},{round(color[2],3)},{round(color[3],3)},{materialProps.colorType})"
-    elif textureType == 'CUSTOM':
-        return materialProps.colorString
+    if texture_type == 'TEX':
+        return format_path(materialProps.texture_path,prefs.project_root,prefs.export_relative)
+    elif texture_type == 'COLOR':
+        color = materialProps.color_value
+        return f"#(argb,8,8,3)color({round(color[0],3)},{round(color[1],3)},{round(color[2],3)},{round(color[3],3)},{materialProps.color_type})"
+    elif texture_type == 'CUSTOM':
+        return materialProps.color_raw
     else:
         return ""
         
 def get_material_string(materialProps,prefs):
-    return format_path(materialProps.materialPath,prefs.projectRoot,prefs.exportRelative)
+    return format_path(materialProps.material_path,prefs.project_root,prefs.export_relative)
     
 def get_proxy_string(OBprops,prefs):
-    path = format_path(OBprops.proxyPath,prefs.projectRoot,prefs.exportRelative,True)
+    path = format_path(OBprops.proxy_path,prefs.project_root,prefs.export_relative,True)
     if path[0] != "\\":
         path = "\\" + path
         
-    string = f"proxy:{path}.{'%03d' % OBprops.proxyIndex}"
+    string = f"proxy:{path}.{'%03d' % OBprops.proxy_index}"
         
     return string
 
@@ -88,7 +88,7 @@ def get_lod_data(operator,context):
     proxies = []
     
     for obj in exportObjects:
-        if obj.type != 'MESH' or not obj.a3ob_properties_object.isArma3LOD or obj.parent != None or obj.a3ob_properties_object.LOD == '30':
+        if obj.type != 'MESH' or not obj.a3ob_properties_object.is_a3_lod or obj.parent != None or obj.a3ob_properties_object.lod == '30':
             continue
             
         mainObj = duplicate_object(obj)
@@ -106,7 +106,7 @@ def get_lod_data(operator,context):
                 
             subObj = duplicate_object(child)
             OBprops = subObj.a3ob_properties_object_proxy
-            if OBprops.isArma3Proxy:
+            if OBprops.is_a3_proxy:
                 placeholder = "@proxy_%04d" % i
                 utils.create_selection(subObj,placeholder)
                 objProxies[placeholder] = get_proxy_string(OBprops,addonPreferences)
@@ -176,7 +176,7 @@ def can_export(operator,context):
         exportObjects = context.selected_objects
         
     for obj in exportObjects:
-        if obj.type == 'MESH' and obj.a3ob_properties_object.isArma3LOD and obj.parent == None and obj.a3ob_properties_object.LOD != '30':
+        if obj.type == 'MESH' and obj.a3ob_properties_object.is_a3_lod and obj.parent == None and obj.a3ob_properties_object.lod != '30':
             return True
             
     return False
@@ -184,7 +184,7 @@ def can_export(operator,context):
 def get_resolution(obj):
     OBprops = obj.a3ob_properties_object
     
-    return lodutils.get_lod_value(int(OBprops.LOD),OBprops.resolution)
+    return lodutils.get_lod_value(int(OBprops.lod),OBprops.resolution)
 
 def encode_selection_weight(weight):
     if weight == 0:
@@ -381,7 +381,7 @@ def write_lod(file,obj,materials,proxies,logger):
     for face in obj.data.polygons:
         if len(face.vertices) > 4:
             OBprops = obj.a3ob_properties_object
-            logger.step("N-gons detected -> skipping LOD")
+            logger.step("N-gons detected -> skipping lod")
             return False
     
     binary.write_chars(file,'P3DM')
@@ -435,7 +435,7 @@ def write_lod(file,obj,materials,proxies,logger):
     write_tagg_sharps_edges(file,bm)
     write_tagg_uv_sets(file,bm,logger)
     
-    if obj.a3ob_properties_object.LOD == '6':
+    if obj.a3ob_properties_object.lod == '6':
         write_tagg_mass(file,bm,numVerts) # need to make sure to only export for Geo LODs
         logger.step("Wrote vertex mass")
         
@@ -449,7 +449,7 @@ def write_lod(file,obj,materials,proxies,logger):
     
     binary.write_float(file,get_resolution(obj)) # LOD resolution index
     logger.step("Resolution signature: %d" % float(get_resolution(obj)))
-    logger.step("Name: %s" % f"{data.LODdata[int(obj.a3ob_properties_object.LOD)][0]} {obj.a3ob_properties_object.resolution}")
+    logger.step("Name: %s" % f"{data.lod_type_names[int(obj.a3ob_properties_object.lod)][0]} {obj.a3ob_properties_object.resolution}")
     bm.free()
     
     logger.level_down()

@@ -73,7 +73,7 @@ def decode_selection_weight(weight):
 def get_file_path(path,prefs,extension = ""):
     path = utils.replace_slashes(path.strip().lower())
     
-    if not prefs.reconstructPaths:
+    if not prefs.import_absolute:
         return path
     
     if path == "":
@@ -82,8 +82,8 @@ def get_file_path(path,prefs,extension = ""):
     if os.path.splitext(path)[1].lower() != extension:
         path += extension
     
-    if prefs.reconstructPaths:
-        root = prefs.projectRoot.strip().lower()
+    if prefs.import_absolute:
+        root = prefs.project_root.strip().lower()
         if not path.startswith(root):
             absPath = os.path.join(root,path)
             
@@ -92,7 +92,7 @@ def get_file_path(path,prefs,extension = ""):
     
     return path
         
-def process_taggs(file,bm,additionalData,numPoints,numFaces,logger):
+def process_taggs(file,bm,additional_data,numPoints,numFaces,logger):
     count = 0
     namedSelections = []
     properties = {}
@@ -109,7 +109,7 @@ def process_taggs(file,bm,additionalData,numPoints,numFaces,logger):
             break
             
         # Sharps (technically redundant with the split vertex normals, may be scrapped later)
-        elif taggName == "#SharpEdges#" and 'NORMALS' not in additionalData:
+        elif taggName == "#SharpEdges#" and 'NORMALS' not in additional_data:
             for i in range(int(taggLength / (4 * 2))):
                 point1ID = binary.read_ulong(file)
                 point2ID = binary.read_ulong(file)
@@ -121,7 +121,7 @@ def process_taggs(file,bm,additionalData,numPoints,numFaces,logger):
                         edge.smooth = False
         
         # Property
-        elif taggName == "#Property#" and 'PROPS' in additionalData:
+        elif taggName == "#Property#" and 'PROPS' in additional_data:
             if taggLength != 128:
                 raise IOError(f"Invalid named property length: {taggLength}")
                 
@@ -132,14 +132,14 @@ def process_taggs(file,bm,additionalData,numPoints,numFaces,logger):
                 properties[key] = value
         
         # Mass
-        elif taggName == "#Mass#" and 'MASS' in additionalData:
+        elif taggName == "#Mass#" and 'MASS' in additional_data:
             massLayer = bm.verts.layers.float.new("a3ob_mass") # create new BMesh layer to store mass data
             for i in range(numPoints):
                 mass = binary.read_float(file)
                 bm.verts[i][massLayer] = mass
             
         # UV
-        elif taggName == "#UVSet#" and 'UV' in additionalData:
+        elif taggName == "#UVSet#" and 'UV' in additional_data:
             UVID = binary.read_ulong(file)
             UVlayer = bm.loops.layers.uv.new(f"UVSet {UVID}")
             
@@ -149,7 +149,7 @@ def process_taggs(file,bm,additionalData,numPoints,numFaces,logger):
             
             
         # Named selections
-        elif not re.match("#.*#",taggName) and 'SELECTIONS' in additionalData:
+        elif not re.match("#.*#",taggName) and 'SELECTIONS' in additional_data:
             namedSelections.append(taggName)
             bm.verts.layers.deform.verify()
             deform = bm.verts.layers.deform.active
@@ -192,23 +192,23 @@ def process_materials(objData,faceDataDict,materialDict,prefs):
             if re.match(proceduralStringPattern,textureName):
                 tex = re.match(colorStringPattern,textureName)
                 if tex:
-                    OBprops.textureType = 'COLOR'
+                    OBprops.texture_type = 'COLOR'
                     groups = tex.groups()
                     
                     try:
-                        OBprops.colorType = groups[4].upper()
-                        OBprops.colorValue = (float(groups[0]),float(groups[1]),float(groups[2]),float(groups[3]))
+                        OBprops.color_type = groups[4].upper()
+                        OBprops.color_value = (float(groups[0]),float(groups[1]),float(groups[2]),float(groups[3]))
                     except:
-                        OBprops.textureType = 'CUSTOM'
-                        OBprops.colorString = textureName
+                        OBprops.texture_type = 'CUSTOM'
+                        OBprops.color_raw = textureName
                         
                 else:
-                    OBprops.textureType = 'CUSTOM'
-                    OBprops.colorString = textureName
+                    OBprops.texture_type = 'CUSTOM'
+                    OBprops.color_raw = textureName
             else:
-                OBprops.texturePath = get_file_path(textureName,prefs)
+                OBprops.texture_path = get_file_path(textureName,prefs)
             
-            OBprops.materialPath = get_file_path(materialName,prefs)
+            OBprops.material_path = get_file_path(materialName,prefs)
             materialDict[(textureName,materialName)] = blenderMat
             
         if blenderMat.name not in objData.materials:
@@ -240,7 +240,7 @@ def process_normals(objData,faceDataDict,normalsDict):
 def group_lods(LODs,groupBy = 'TYPE'):    
     collections = {}
     
-    groupDict = data.LODgroups[groupBy]
+    groupDict = data.lod_groups[groupBy]
     
     for lodObj,res,_ in LODs:
         lodIndex, lodRes = lodutils.get_lod_id(res)
@@ -272,7 +272,7 @@ def transform_proxy(obj): # Align the object coordinate system with the proxy di
     rotate = proxyutils.get_transform_rotation(obj)
     obj.data.transform(rotate)
     obj.matrix_world = rotate.inverted()
-    obj.a3ob_properties_object_proxy.isArma3Proxy = True
+    obj.a3ob_properties_object_proxy.is_a3_proxy = True
     
     translate = mathutils.Matrix.Translation(-obj.data.vertices[proxyutils.find_center_index(obj.data)].co)
     
@@ -304,10 +304,10 @@ def process_proxies(LODs,operator,materialDict,prefs):
         
         proxyObjects = [proxy for proxy in bpy.context.selected_objects if proxy != LOD]
         
-        if operator.proxyHandling == 'CLEAR':
+        if operator.proxy_action == 'CLEAR':
             bpy.ops.object.delete({"selected_objects": proxyObjects})
             
-        elif operator.proxyHandling == 'SEPARATE':
+        elif operator.proxy_action == 'SEPARATE':
             for obj in proxyObjects:
                 
                 transform_proxy(obj)
@@ -323,8 +323,8 @@ def process_proxies(LODs,operator,materialDict,prefs):
                     
                     obj.vertex_groups.remove(vgroup)
                     proxyDataGroups = proxyData.groups()
-                    obj.a3ob_properties_object_proxy.proxyPath = get_file_path(proxyDataGroups[0],prefs,".p3d")
-                    obj.a3ob_properties_object_proxy.proxyIndex = int(proxyDataGroups[1])
+                    obj.a3ob_properties_object_proxy.proxy_path = get_file_path(proxyDataGroups[0],prefs,".p3d")
+                    obj.a3ob_properties_object_proxy.proxy_index = int(proxyDataGroups[1])
                 
                 obj.data.materials.clear()
                 obj.data.materials.append(materialDict[("","")])
@@ -333,7 +333,7 @@ def process_proxies(LODs,operator,materialDict,prefs):
                 
         bpy.ops.object.select_all(action='DESELECT')
 
-def read_lod(context,file,materialDict,additionalData,logger,prefs):
+def read_lod(context,file,materialDict,additional_data,logger,prefs):
     logger.level_up()
 
     # Read LOD header
@@ -395,7 +395,7 @@ def read_lod(context,file,materialDict,additionalData,logger,prefs):
     if taggSignature != "TAGG":
         raise IOError(f"Invalid TAGG section signature: {taggSignature}")
     
-    namedSelections, properties = process_taggs(file,bm,additionalData,numPoints,numFaces,logger)
+    namedSelections, properties = process_taggs(file,bm,additional_data,numPoints,numFaces,logger)
     
     # EOF
     LODresolution = binary.read_float(file)
@@ -414,11 +414,11 @@ def read_lod(context,file,materialDict,additionalData,logger,prefs):
     # Setup LOD property
     OBprops = obj.a3ob_properties_object
     
-    OBprops.isArma3LOD = True
+    OBprops.is_a3_lod = True
     try:
-        OBprops.LOD = str(lodIndex)
+        OBprops.lod = str(lodIndex)
     except:
-        OBprops.LOD = "30"
+        OBprops.lod = "30"
         
     OBprops.resolution = lodRes
     
@@ -437,12 +437,12 @@ def read_lod(context,file,materialDict,additionalData,logger,prefs):
     bm.free()
     
     # Create materials
-    if 'MATERIALS' in additionalData:
+    if 'MATERIALS' in additional_data:
         materialDict = process_materials(objData,faceDataDict,materialDict,prefs)
         logger.step("Assigned materials")
         
     # Apply split normals
-    if 'NORMALS' in additionalData and lodIndex in data.LODvisuals: 
+    if 'NORMALS' in additional_data and lodIndex in data.lod_visuals: 
         process_normals(objData,faceDataDict,normalsDict)
         logger.step("Applied split normals")
         
@@ -478,10 +478,10 @@ def read_file(operator,context,file):
     
     timeFILEstart = time.time()
 
-    additionalData = set()
+    additional_data = set()
     
-    if operator.allowAdditionalData:
-        additionalData = operator.additionalData
+    if operator.additional_data_allowed:
+        additional_data = operator.additional_data
     
     version, LODcount = read_file_header(file)
     
@@ -496,7 +496,7 @@ def read_file(operator,context,file):
     groups = []
     
     materialDict = None
-    if 'MATERIALS' in additionalData:
+    if 'MATERIALS' in additional_data:
         materialDict = {
             ("",""): bpy.data.materials.get("P3D: no material",bpy.data.materials.new("P3D: no material"))
         }
@@ -507,9 +507,9 @@ def read_file(operator,context,file):
         timeLODStart = time.time()
         logger.step("LOD %d" % i)
         
-        lodObj, res, materialDict, proxySelections = read_lod(context,file,materialDict,additionalData,logger,addonPreferences)
+        lodObj, res, materialDict, proxySelections = read_lod(context,file,materialDict,additional_data,logger,addonPreferences)
         
-        if operator.validateMeshes:
+        if operator.validate_meshes:
             lodObj.data.validate(clean_customdata=False)
         
         LODs.append((lodObj,res,proxySelections))
@@ -523,7 +523,7 @@ def read_file(operator,context,file):
     build_collections(LODs,operator,rootCollection)
     
     # Set up proxies
-    if operator.proxyHandling != 'NOTHING' and 'SELECTIONS' in additionalData:
+    if operator.proxy_action != 'NOTHING' and 'SELECTIONS' in additional_data:
         process_proxies(LODs,operator,materialDict,addonPreferences)
                
     logger.step("")

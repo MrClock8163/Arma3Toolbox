@@ -1,4 +1,4 @@
-LODtypeResolutionPosition = { # decimal places in normalized format
+lod_resolution_position = { # decimal places in normalized format
     0: -1,
     3: 3,
     4: 4,
@@ -8,9 +8,9 @@ LODtypeResolutionPosition = { # decimal places in normalized format
     30: -1
 }
 
-LODvisuals = (0,1,2,3,18,30)
+lod_visuals = (0,1,2,3,18,30)
 
-LODtypeIndex = {
+lod_type_index = {
     (0.0,0):   0, # Visual
     (1.0,3):   1, # View Gunner
     (1.1,3):   2, # View Pilot
@@ -44,7 +44,7 @@ LODtypeIndex = {
     (-1.0,0):  30 # Unknown
 }
 
-LODdata = {
+lod_type_names = {
     0:  ('Resolution',"Visual resolution"),
     1:  ('View - Gunner',"Gunner first person view"),
     2:  ('View - Pilot',"First person view"),
@@ -78,7 +78,7 @@ LODdata = {
     30: ('Unknown',"Unknown model layer")
 }
 
-LODgroupsType = {
+lod_groups_type = {
     **dict.fromkeys([0,1,2,3,18],"Visuals"),
     **dict.fromkeys([4,26,27,28],"Shadows"),
     **dict.fromkeys([6,7,8,14,15,16,17,19,20,21,22,23,24],"Geometries"),
@@ -86,21 +86,21 @@ LODgroupsType = {
     **dict.fromkeys([5,11,12,25,29,30],"Misc")
 }
 
-LODgroupsContext = {
+lod_groups_context = {
     **dict.fromkeys([0],"3rd person"),
     **dict.fromkeys([1,2,3,16,17,18,19,20,21,22,23,24,26,27,28],"1st person"),
     **dict.fromkeys([4,6],"General"),
     **dict.fromkeys([5,7,8,9,10,11,12,13,14,15,25,29,30],"Misc")
 }
 
-LODgroups = {
-    'TYPE': LODgroupsType,
-    'CONTEXT': LODgroupsContext,
+lod_groups = {
+    'TYPE': lod_groups_type,
+    'CONTEXT': lod_groups_context,
     'NONE': {}
 }
 
 # Enum property lists
-textureTypes = (
+enum_texture_types = (
     ('CO', "CO", "Color Value"),
     ('CA', "CA", "Texture with Alpha"),
     ('LCO', "LCO", "Terrain Texture Layer Color"),
@@ -126,7 +126,7 @@ textureTypes = (
     ('TI', "TI", "Thermal imaging map")
 )
 
-LODTypes = (
+enum_lod_types = (
     ('0','Resolution',"Visual resolutiion"),
     ('1','View - Gunner',"Gunner first person view"),
     ('2','View - Pilot',"First person view"),

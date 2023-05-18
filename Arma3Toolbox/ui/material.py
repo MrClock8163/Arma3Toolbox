@@ -24,20 +24,20 @@ class A3OB_PT_material(bpy.types.Panel):
         layout.use_property_decorate = False
         
         row = layout.row()
-        row.prop(OBprops,"textureType",expand=True)
+        row.prop(OBprops,"texture_type",expand=True)
         layout.separator()
         
-        texType = OBprops.textureType
+        texType = OBprops.texture_type
         if texType == 'TEX':
-            layout.prop(OBprops,"texturePath",icon='TEXTURE',text="")
+            layout.prop(OBprops,"texture_path",icon='TEXTURE',text="")
         elif texType == 'COLOR':
             colorRow = layout.row(align=True)
-            colorRow.prop(OBprops, "colorValue",icon='COLOR')
-            colorRow.prop(OBprops, "colorType",text="")
+            colorRow.prop(OBprops, "color_value",icon='COLOR')
+            colorRow.prop(OBprops, "color_type",text="")
         elif texType == 'CUSTOM':
-            layout.prop(OBprops, "colorString",icon='TEXT',text="")
+            layout.prop(OBprops, "color_raw",icon='TEXT',text="")
         
-        layout.prop(OBprops,"materialPath",icon='MATERIAL',text="")
+        layout.prop(OBprops,"material_path",icon='MATERIAL',text="")
         
         layout.separator()
         

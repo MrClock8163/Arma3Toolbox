@@ -34,25 +34,25 @@ class A3OB_OP_import_p3d(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         )
     )
     
-    preserveNormals: bpy.props.BoolProperty (
-        name = "Custom Normals",
-        description = "Attempt to import the split vertex normals of visual LODs (may not work with certain files)",
-        default = True
-    )
+    # preserve_normals: bpy.props.BoolProperty (
+    #     name = "Custom Normals",
+    #     description = "Attempt to import the split vertex normals of visual LODs (may not work with certain files)",
+    #     default = True
+    # )
     
-    setupMaterials: bpy.props.BoolProperty (
-        name = "Setup Materials",
-        description = "Create materials for every texture - RVMAT combination in the P3D",
-        default = True
-    )
+    # setup_materials: bpy.props.BoolProperty (
+    #     name = "Setup Materials",
+    #     description = "Create materials for every texture - RVMAT combination in the P3D",
+    #     default = True
+    # )
     
-    allowAdditionalData: bpy.props.BoolProperty (
+    additional_data_allowed: bpy.props.BoolProperty (
         name = "Allow Additinal Data",
         description = "Import data in addition to the LOD geometries themselves",
         default = True
     )
     
-    additionalData: bpy.props.EnumProperty (
+    additional_data: bpy.props.EnumProperty (
         name = "Data",
         options = {'ENUM_FLAG'},
         items = (
@@ -67,13 +67,13 @@ class A3OB_OP_import_p3d(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         default = {'NORMALS','PROPS','MASS','SELECTIONS','UV','MATERIALS'}
     )
     
-    validateMeshes: bpy.props.BoolProperty (
+    validate_meshes: bpy.props.BoolProperty (
         name = "Validate Meshes",
         description = "Validate LOD meshes after creation, and clean up duplicate faces and other problematic geometry",
         default = True
     )
     
-    proxyHandling: bpy.props.EnumProperty (
+    proxy_action: bpy.props.EnumProperty (
         name = "Proxy Action",
         description = "Post-import handling of proxies",
         items = (
@@ -96,7 +96,7 @@ class A3OB_OP_import_p3d(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         if not self.enclose:
             filename = ""
             
-        # print(type(self.additionalData))
+        # print(type(self.additional_data))
         
         # try:
             # import_p3d.import_file(context,file,self.groupby,filename.strip())
@@ -107,7 +107,7 @@ class A3OB_OP_import_p3d(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         # except Exception as e:
             # utils.show_infoBox(str(e),"Unexpected I/O error",'ERROR')
             
-        # import_p3d.import_file(context,file,self.groupby,self.preserveNormals,self.validateMeshes,self.setupMaterials,filename.strip()) # Allow exceptions for testing
+        # import_p3d.import_file(context,file,self.groupby,self.preserve_normals,self.validate_meshes,self.setup_materials,filename.strip()) # Allow exceptions for testing
         import_p3d.read_file(self,context,file) # Allow exceptions for testing
         
         file.close()
@@ -136,7 +136,7 @@ class A3OB_PT_import_p3d_main(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
         
-        layout.prop(operator,"validateMeshes")
+        layout.prop(operator,"validate_meshes")
         
 class A3OB_PT_import_p3d_collections(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -184,10 +184,10 @@ class A3OB_PT_import_p3d_data(bpy.types.Panel):
         operator = sfile.active_operator
         
         col = layout.column(heading="Additional data")
-        col.prop(operator,"allowAdditionalData",text="")
+        col.prop(operator,"additional_data_allowed",text="")
         col2 = col.column()
-        col2.enabled = operator.allowAdditionalData
-        prop = col2.prop(operator,"additionalData",text=" ")
+        col2.enabled = operator.additional_data_allowed
+        prop = col2.prop(operator,"additional_data",text=" ")
         
 class A3OB_PT_import_p3d_proxies(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -210,16 +210,16 @@ class A3OB_PT_import_p3d_proxies(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
         
-        if 'SELECTIONS' not in operator.additionalData or not operator.allowAdditionalData:
+        if 'SELECTIONS' not in operator.additional_data or not operator.additional_data_allowed:
             layout.alert = True
             layout.label(text="Enable selection data")
         
             col = layout.column(align=True)
-            col.prop(operator,"proxyHandling",expand=True)
+            col.prop(operator,"proxy_action",expand=True)
             col.enabled = False
         else:
             col = layout.column(align=True)
-            col.prop(operator,"proxyHandling",expand=True)
+            col.prop(operator,"proxy_action",expand=True)
         
 class A3OB_OP_export_p3d(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
     '''Export to Arma 3 MLOD P3D'''

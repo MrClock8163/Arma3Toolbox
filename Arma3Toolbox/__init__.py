@@ -53,33 +53,33 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
     )
     
     # Arma 3 Tools settings
-    armaToolsFolder: bpy.props.StringProperty(
+    a3_tools: bpy.props.StringProperty(
         description = "Install directory of the official Arma 3 Tools",
         name = "Path",
         default = "",
         subtype = 'DIR_PATH'
     )
     
-    projectRoot: bpy.props.StringProperty (
+    project_root: bpy.props.StringProperty (
         name = "Project Root",
         description = "Root directory of the project (should be P:\ for most cases)",
         default = "P:\\",
         subtype = 'DIR_PATH'
     )
     
-    exportRelative: bpy.props.BoolProperty (
+    export_relative: bpy.props.BoolProperty (
         name = "Export Relative",
         description = "Export file paths as relative to the project root",
         default = True
     )
     
-    reconstructPaths: bpy.props.BoolProperty (
+    import_absolute: bpy.props.BoolProperty (
         name = "Reconstruct Absolute Paths",
         description = "Attempt to reconstruct absolute file paths during import (based on the project root)",
         default = True
     )
     
-    customDataPath: bpy.props.StringProperty (
+    custom_data: bpy.props.StringProperty (
         name = "Custom Data",
         description = "Path to JSON file containing data for custom preset list items (common named properties and proxies)",
         default = "",
@@ -100,12 +100,12 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
             # grid = box.grid_flow(align=True,columns=2,row_major=True,even_columns=True,even_rows=True)
             # layout = self.layout
             # box.label(text="Arma 3 Tools")
-            box.prop(self,"armaToolsFolder",text="Arma 3 Tools",icon='TOOL_SETTINGS')
+            box.prop(self,"a3_tools",text="Arma 3 Tools",icon='TOOL_SETTINGS')
         elif self.tabs == 'PATHS':
-            box.prop(self,"projectRoot",icon='DISK_DRIVE')
-            box.prop(self,"exportRelative")
-            box.prop(self,"reconstructPaths")
-            box.prop(self,"customDataPath",icon='PRESET')
+            box.prop(self,"project_root",icon='DISK_DRIVE')
+            box.prop(self,"export_relative")
+            box.prop(self,"import_absolute")
+            box.prop(self,"custom_data",icon='PRESET')
 
 classes = (
     A3OB_AT_preferences,

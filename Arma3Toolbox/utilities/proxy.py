@@ -52,6 +52,6 @@ def create_proxy():
     objData.polygons[0].use_smooth = True
     
     obj = bpy.data.objects.new("Proxy",objData)
-    obj.a3ob_properties_object_proxy.isArma3Proxy = True
+    obj.a3ob_properties_object_proxy.is_a3_proxy = True
     
     return obj

@@ -39,13 +39,13 @@ class A3OB_PG_hitpoint_generator(bpy.types.PropertyGroup):
         default = (0.2,0.2,0.2),
         size = 3
     )
-    bevelOffset: bpy.props.FloatProperty (
+    bevel_offset: bpy.props.FloatProperty (
         name = "Bevel Offset",
         description = "Offset value of bevel to apply to every edge of the source object",
         min = 0,
         default = 0.1
     )
-    bevelSegments: bpy.props.IntProperty (
+    bevel_segments: bpy.props.IntProperty (
         name = "Bevel Segments",
         description = "Number of segments of bevel to apply to every edge of the source object",
         min = 1,
@@ -80,7 +80,7 @@ def register():
     bpy.types.WindowManager.a3ob_proxy_common_index = bpy.props.IntProperty(name="Selection Index",default = -1)
     bpy.types.WindowManager.a3ob_namedprops_common = bpy.props.CollectionProperty(type=objectprops.A3OB_PG_properties_named_property)
     bpy.types.WindowManager.a3ob_namedprops_common_index = bpy.props.IntProperty(name="Selection Index",default = -1)
-    bpy.types.WindowManager.a3ob_enableVertexMass = bpy.props.BoolProperty (
+    bpy.types.WindowManager.a3ob_vertex_mass_enabled = bpy.props.BoolProperty (
         name = "Enable Vertex Mass Tools",
         description = "Dynamic calculation of the vertex masses can be performace heavy on large meshes",
         default = False
@@ -90,7 +90,7 @@ def register():
     
 def unregister():
     del bpy.types.WindowManager.a3ob_hitpoint_generator
-    del bpy.types.WindowManager.a3ob_enableVertexMass
+    del bpy.types.WindowManager.a3ob_vertex_mass_enabled
     del bpy.types.WindowManager.a3ob_namedprops_common_index
     del bpy.types.WindowManager.a3ob_namedprops_common
     del bpy.types.WindowManager.a3ob_proxy_common_index
