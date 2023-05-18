@@ -4,12 +4,12 @@ import os
 import json
 from . import data
 
-def show_info_box(message,title = "",icon = 'INFO'):
-    def draw(self,context):
-        self.layout.label(text = message)
-    bpy.context.window_manager.popup_menu(draw,title = title,icon = icon)
+def show_info_box(message, title = "", icon = 'INFO'):
+    def draw(self, context):
+        self.layout.label(text=message)
+    bpy.context.window_manager.popup_menu(draw, title=title, icon=icon)
     
-def normalize_float(number,precision = 4):
+def normalize_float(number, precision = 4):
     if number == 0:
         return 0.0,1
     
@@ -17,48 +17,48 @@ def normalize_float(number,precision = 4):
     exponent = abs(math.floor(base10))
     fraction = number / 10**exponent
 
-    fraction = round(fraction,precision)
-    exponentCorrection = 0
+    fraction = round(fraction, precision)
+    correction = 0
     
     if fraction >= 10.0: # Rounding after normalization may break the normalization (eg: 9.99999 -> 10.0000)
-        fraction, exponentCorrection = normalize_float(fraction,precision)
+        fraction, correction = normalize_float(fraction, precision)
 
-    return round(fraction,precision), exponent + exponentCorrection
+    return round(fraction, precision), exponent + correction
 
-def floor(number,precision = 0):
-    return round(math.floor(number*10**precision)/10**precision,precision)
+def floor(number, precision = 0):
+    return round(math.floor(number * 10**precision) / 10**precision, precision)
 
 def force_mode_object():
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.reveal()
-    bpy.ops.mesh.select_all(action = 'DESELECT')
+    bpy.ops.mesh.select_all(action='DESELECT')
     bpy.ops.object.mode_set(mode='OBJECT')
 
 def force_mode_edit():
     force_mode_object()
     bpy.ops.object.mode_set(mode='EDIT')
     
-def create_selection(obj,selection):
-    group = obj.vertex_groups.get(selection,None)
+def create_selection(obj, selection):
+    group = obj.vertex_groups.get(selection, None)
     
     if not group:
         group = obj.vertex_groups.new(name=selection.strip())
 
-    group.add([vert.index for vert in obj.data.vertices],1,'REPLACE')
+    group.add([vert.index for vert in obj.data.vertices], 1, 'REPLACE')
 
 def replace_slashes(path):
-    return path.replace("/","\\")
+    return path.replace("/", "\\")
 
-def make_relative(path,root):
+def make_relative(path, root):
     path = path.lower()
     root = root.lower()
     
     if root != "" and path.startswith(root):
-        return os.path.relpath(path,root)
+        return os.path.relpath(path, root)
     
     drive = os.path.splitdrive(path)[0]
     if drive:
-       path = os.path.relpath(path,drive)
+       path = os.path.relpath(path, drive)
     
     return path
 
@@ -71,44 +71,44 @@ def get_addon_preferences(context):
     
 def get_common_proxies(context):
     prefs = get_addon_preferences(context)
-    customPath = prefs.custom_data
+    custom_path = prefs.custom_data
     
     proxies = data.common_proxies
     
-    if not os.path.exists(customPath):
+    if not os.path.exists(custom_path):
         return proxies
     
-    customProxies = {}
+    custom_proxies = {}
     
     try:
-        jsonfile = open(customPath)
-        customs = json.loads(jsonfile.read().replace("\\","/"))
+        jsonfile = open(custom_path)
+        customs = json.loads(jsonfile.read().replace("\\", "/"))
         jsonfile.close()
 
-        customProxies = customs["proxies"]
+        custom_proxies = customs["proxies"]
     except:
         pass
         
-    return {**proxies,**customProxies}
+    return {**proxies, **custom_proxies}
     
 def get_common_namedprops(context):
     prefs = get_addon_preferences(context)
-    customPath = prefs.custom_data
+    custom_path = prefs.custom_data
     
     namedprops = data.common_namedprops
     
-    if not os.path.exists(customPath):
+    if not os.path.exists(custom_path):
         return namedprops
     
-    customNamedprops = {}
+    custom_namedprops = {}
     
     try:
-        jsonfile = open(customPath)
-        customs = json.loads(jsonfile.read().replace("\\","/"))
+        jsonfile = open(custom_path)
+        customs = json.loads(jsonfile.read().replace("\\", "/"))
         jsonfile.close()
         
-        customNamedprops = customs["namedprops"]
+        custom_namedprops = customs["namedprops"]
     except:
         pass
         
-    return {**namedprops,**customNamedprops}
+    return {**namedprops, **custom_namedprops}

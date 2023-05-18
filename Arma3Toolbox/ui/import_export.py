@@ -28,8 +28,8 @@ class A3OB_OP_import_p3d(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         description = "Include LODs in collections according to the selection",
         default = 'TYPE',
         items = (
-            ('NONE',"None","Import LODs without collections"),
-            ('TYPE',"Type","Group LODs by logical type (eg.: visuals, geometries, etc.)")
+            ('NONE', "None", "Import LODs without collections"),
+            ('TYPE', "Type", "Group LODs by logical type (eg.: visuals, geometries, etc.)")
             # ('CONTEXT',"Context","Group LODs by context")
         )
     )
@@ -56,15 +56,15 @@ class A3OB_OP_import_p3d(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         name = "Data",
         options = {'ENUM_FLAG'},
         items = (
-            ('NORMALS',"Custom Normals","WARNING: may not work properly on certain files"),
-            ('PROPS',"Named Properties",""),
-            ('MASS',"Vertex Mass","Mass of individual vertices (in Geometry LODs)"),
-            ('SELECTIONS',"Selections",""),
-            ('UV',"UV Sets",""),
-            ('MATERIALS',"Materials","")
+            ('NORMALS', "Custom Normals", "WARNING: may not work properly on certain files"),
+            ('PROPS', "Named Properties", ""),
+            ('MASS', "Vertex Mass", "Mass of individual vertices (in Geometry LODs)"),
+            ('SELECTIONS', "Selections", ""),
+            ('UV', "UV Sets", ""),
+            ('MATERIALS', "Materials", "")
         ),
         description = "Data to import in addition to the LOD meshes themselves",
-        default = {'NORMALS','PROPS','MASS','SELECTIONS','UV','MATERIALS'}
+        default = {'NORMALS', 'PROPS', 'MASS', 'SELECTIONS', 'UV', 'MATERIALS'}
     )
     
     validate_meshes: bpy.props.BoolProperty (
@@ -77,24 +77,23 @@ class A3OB_OP_import_p3d(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         name = "Proxy Action",
         description = "Post-import handling of proxies",
         items = (
-            ('NOTHING',"Nothing","Leave proxies embedded into the LOD meshes\n(the actual file paths will be lost because of Blender limitations)"),
-            ('SEPARATE',"Separate","Separate the proxies into proxy objects parented to the LOD mesh they belong to"),
-            ('CLEAR',"Purge","Remove all proxies")
+            ('NOTHING', "Nothing", "Leave proxies embedded into the LOD meshes\n(the actual file paths will be lost because of Blender limitations)"),
+            ('SEPARATE', "Separate", "Separate the proxies into proxy objects parented to the LOD mesh they belong to"),
+            ('CLEAR', "Purge", "Remove all proxies")
         ),
         default = 'SEPARATE'
     )
     
-    def draw(self,context):
+    def draw(self, context):
         pass
     
-    def execute(self,context):
-        # print(self.filepath)
+    def execute(self, context):
         
-        file = open(self.filepath,'rb')
-        filename = os.path.basename(self.filepath)
+        file = open(self.filepath, 'rb')
+        # filename = os.path.basename(self.filepath)
         
-        if not self.enclose:
-            filename = ""
+        # if not self.enclose:
+        #     filename = ""
             
         # print(type(self.additional_data))
         
@@ -108,7 +107,7 @@ class A3OB_OP_import_p3d(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
             # utils.show_infoBox(str(e),"Unexpected I/O error",'ERROR')
             
         # import_p3d.import_file(context,file,self.groupby,self.preserve_normals,self.validate_meshes,self.setup_materials,filename.strip()) # Allow exceptions for testing
-        import_p3d.read_file(self,context,file) # Allow exceptions for testing
+        import_p3d.read_file(self, context, file) # Allow exceptions for testing
         
         file.close()
         
@@ -122,13 +121,13 @@ class A3OB_PT_import_p3d_main(bpy.types.Panel):
     bl_options = {'HIDE_HEADER'}
     
     @classmethod
-    def poll(cls,context):
+    def poll(cls, context):
         sfile = context.space_data
         operator = sfile.active_operator
         
         return operator.bl_idname == "A3OB_OT_import_p3d"
     
-    def draw(self,context):
+    def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False
@@ -145,13 +144,13 @@ class A3OB_PT_import_p3d_collections(bpy.types.Panel):
     bl_parent_id = "FILE_PT_operator"
     
     @classmethod
-    def poll(cls,context):
+    def poll(cls, context):
         sfile = context.space_data
         operator = sfile.active_operator
         
         return operator.bl_idname == "A3OB_OT_import_p3d"
     
-    def draw(self,context):
+    def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False
@@ -159,8 +158,8 @@ class A3OB_PT_import_p3d_collections(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
         
-        layout.prop(operator,"enclose")
-        layout.prop(operator,"groupby")
+        layout.prop(operator, "enclose")
+        layout.prop(operator, "groupby")
         
 class A3OB_PT_import_p3d_data(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -169,13 +168,13 @@ class A3OB_PT_import_p3d_data(bpy.types.Panel):
     bl_parent_id = "FILE_PT_operator"
     
     @classmethod
-    def poll(cls,context):
+    def poll(cls, context):
         sfile = context.space_data
         operator = sfile.active_operator
         
         return operator.bl_idname == "A3OB_OT_import_p3d"
     
-    def draw(self,context):
+    def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False
@@ -184,10 +183,10 @@ class A3OB_PT_import_p3d_data(bpy.types.Panel):
         operator = sfile.active_operator
         
         col = layout.column(heading="Additional data")
-        col.prop(operator,"additional_data_allowed",text="")
-        col2 = col.column()
-        col2.enabled = operator.additional_data_allowed
-        prop = col2.prop(operator,"additional_data",text=" ")
+        col.prop(operator, "additional_data_allowed", text="")
+        col_enum = col.column()
+        col_enum.enabled = operator.additional_data_allowed
+        col_enum.prop(operator, "additional_data", text=" ") # text=" " otherwise the enum is stretched accross the panel
         
 class A3OB_PT_import_p3d_proxies(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -196,13 +195,13 @@ class A3OB_PT_import_p3d_proxies(bpy.types.Panel):
     bl_parent_id = "FILE_PT_operator"
     
     @classmethod
-    def poll(cls,context):
+    def poll(cls, context):
         sfile = context.space_data
         operator = sfile.active_operator
         
         return operator.bl_idname == "A3OB_OT_import_p3d"
         
-    def draw(self,context):
+    def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False
@@ -215,11 +214,11 @@ class A3OB_PT_import_p3d_proxies(bpy.types.Panel):
             layout.label(text="Enable selection data")
         
             col = layout.column(align=True)
-            col.prop(operator,"proxy_action",expand=True)
+            col.prop(operator, "proxy_action", expand=True)
             col.enabled = False
         else:
             col = layout.column(align=True)
-            col.prop(operator,"proxy_action",expand=True)
+            col.prop(operator, "proxy_action", expand=True)
         
 class A3OB_OP_export_p3d(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
     '''Export to Arma 3 MLOD P3D'''
@@ -264,22 +263,21 @@ class A3OB_OP_export_p3d(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
         default = True
     )
     
-    def draw(self,context):
+    def draw(self, context):
         pass
     
-    def execute(self,context):
-        if export_p3d.can_export(self,context):
+    def execute(self, context):
+        if export_p3d.can_export(self, context):
             
-            file = open(self.filepath,'wb')
-            filename = os.path.basename(self.filepath)
+            file = open(self.filepath, 'wb')
             
-            lod_count,exported_count = export_p3d.write_file(self,context,file)
+            lod_count, exported_count = export_p3d.write_file(self, context, file)
             
             file.close()
             
-            self.report({'INFO'},f"Succesfully exported {exported_count}/{lod_count} LODs")
+            self.report({'INFO'}, f"Succesfully exported {exported_count}/{lod_count} LODs")
         else:
-            self.report({'INFO'},"There are no LODs to export")
+            self.report({'INFO'}, "There are no LODs to export")
         
         return {'FINISHED'}
         
@@ -290,13 +288,13 @@ class A3OB_PT_export_p3d_include(bpy.types.Panel):
     bl_parent_id = "FILE_PT_operator"
     
     @classmethod
-    def poll(cls,context):
+    def poll(cls, context):
         sfile = context.space_data
         operator = sfile.active_operator
         
         return operator.bl_idname == "A3OB_OT_export_p3d"
     
-    def draw(self,context):
+    def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False
@@ -304,8 +302,8 @@ class A3OB_PT_export_p3d_include(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
         
-        col = layout.column(heading="Limit To",align=True)
-        col.prop(operator,"use_selection")
+        col = layout.column(heading="Limit To", align=True)
+        col.prop(operator, "use_selection")
         
 class A3OB_PT_export_p3d_meshes(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -314,13 +312,13 @@ class A3OB_PT_export_p3d_meshes(bpy.types.Panel):
     bl_parent_id = "FILE_PT_operator"
     
     @classmethod
-    def poll(cls,context):
+    def poll(cls, context):
         sfile = context.space_data
         operator = sfile.active_operator
         
         return operator.bl_idname == "A3OB_OT_export_p3d"
     
-    def draw(self,context):
+    def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False
@@ -329,10 +327,10 @@ class A3OB_PT_export_p3d_meshes(bpy.types.Panel):
         operator = sfile.active_operator
         
         col = layout.column(align=True)
-        col.prop(operator,"validate_meshes")
-        col.prop(operator,"apply_modifiers")
-        col.prop(operator,"apply_transforms")
-        col.prop(operator,"preserve_normals")
+        col.prop(operator, "validate_meshes")
+        col.prop(operator, "apply_modifiers")
+        col.prop(operator, "apply_transforms")
+        col.prop(operator, "preserve_normals")
         
 classes = (
     A3OB_OP_import_p3d,
@@ -345,11 +343,11 @@ classes = (
     A3OB_PT_export_p3d_meshes
 )
         
-def menu_func_import(self,context):
-    self.layout.operator(A3OB_OP_import_p3d.bl_idname,text="Arma 3 model (.p3d)")
+def menu_func_import(self, context):
+    self.layout.operator(A3OB_OP_import_p3d.bl_idname, text="Arma 3 model (.p3d)")
         
-def menu_func_export(self,context):
-    self.layout.operator(A3OB_OP_export_p3d.bl_idname,text="Arma 3 model (.p3d)")
+def menu_func_export(self, context):
+    self.layout.operator(A3OB_OP_export_p3d.bl_idname, text="Arma 3 model (.p3d)")
     
 def register():
     for cls in classes:

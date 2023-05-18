@@ -2,11 +2,11 @@ import bpy
 import bmesh
 from mathutils import Vector
 
-def validate_references(source,target):
+def validate_references(source, target):
     if source or target:
         if source == target and source.users == 2:
             bpy.data.objects.remove(source)
-            source,target = None,None
+            source, target = None, None
         else:
             if source and source.users == 1:
                 bpy.data.objects.remove(source)
@@ -15,110 +15,109 @@ def validate_references(source,target):
                 bpy.data.objects.remove(target)
                 target = None
     
-    return source,target
+    return source, target
 
-def is_inside(obj,point):
-    result,closest,normal,_ = obj.closest_point_on_mesh(point)
+def is_inside(obj, point):
+    result, closest, normal, _ = obj.closest_point_on_mesh(point)
     
     if not result:
         return False
     
-    return (closest-point).dot(normal) > 0
+    return (closest - point).dot(normal) > 0
     
-def create_selection(obj,selection):
-    group = obj.vertex_groups.get(selection,None)
+def create_selection(obj, selection):
+    group = obj.vertex_groups.get(selection, None)
     
     if not group:
         group = obj.vertex_groups.new(name=selection.strip())
 
-    group.add([vert.index for vert in obj.data.vertices],1,'REPLACE')
+    group.add([vert.index for vert in obj.data.vertices], 1, 'REPLACE')
     
-def calculate_grid(bbox,minCoord,maxCoord,spacing):
-    dim = maxCoord-minCoord
+def calculate_grid(bbox, coord_min, coord_max, spacing):
+    dim = coord_max - coord_min
     
     if dim < spacing:
-        return (minCoord + dim/2,)
+        return (coord_min + dim/2, )
         
     count = int(dim // spacing)
-    padding = (dim - (spacing * count)) / 2
-    points = Vector.Linspace(minCoord+padding,maxCoord-padding,count+1)
+    padding = (dim - spacing*count) / 2
+    points = Vector.Linspace(coord_min + padding, coord_max - padding, count + 1)
     
     return points
 
-def generate_hitpoints(operator,context):
+def generate_hitpoints(operator, context):
     wm = context.window_manager
-    OBprops = wm.a3ob_hitpoint_generator
+    wm_props = wm.a3ob_hitpoint_generator
     
-    source,target = validate_references(OBprops.source,OBprops.target)
+    source, target = validate_references(wm_props.source, wm_props.target)
     
     if not source or len(source.data.polygons) == 0:
         return
     
-    sourceObj = source
+    source_object = source
 
-    if OBprops.triangulate == 'BEFORE':
-        modifTri = sourceObj.modifiers.new("A3OB_HitPointTris",'TRIANGULATE')
+    if wm_props.triangulate == 'BEFORE':
+        modifier_triangulate = source_object.modifiers.new("A3OB_HitPointTris", 'TRIANGULATE')
         
-    modifBevel = sourceObj.modifiers.new("A3OB_HitPointBevel",'BEVEL')
-    modifBevel.segments = OBprops.bevel_segments
-    modifBevel.width = OBprops.bevel_offset
+    modifier_bevel = source_object.modifiers.new("A3OB_HitPointBevel", 'BEVEL')
+    modifier_bevel.segments = wm_props.bevel_segments
+    modifier_bevel.width = wm_props.bevel_offset
     
-    if OBprops.triangulate == 'AFTER':
-        modifTri = sourceObj.modifiers.new("A3OB_HitPointTris",'TRIANGULATE')
+    if wm_props.triangulate == 'AFTER':
+        modifier_triangulate = source_object.modifiers.new("A3OB_HitPointTris", 'TRIANGULATE')
 
-    sourceObjEval = sourceObj.evaluated_get(bpy.context.evaluated_depsgraph_get())
+    source_object_eval = source_object.evaluated_get(bpy.context.evaluated_depsgraph_get())
 
-    bbox = sourceObjEval.bound_box
+    bbox = source_object_eval.bound_box
 
-    minX = min(bbox, key=lambda pos: pos[0])[0]
-    minY = min(bbox, key=lambda pos: pos[1])[1]
-    minZ = min(bbox, key=lambda pos: pos[2])[2]
+    min_x = min(bbox, key=lambda pos: pos[0])[0]
+    min_y = min(bbox, key=lambda pos: pos[1])[1]
+    min_z = min(bbox, key=lambda pos: pos[2])[2]
 
-    maxX = max(bbox, key=lambda pos: pos[0])[0]
-    maxY = max(bbox, key=lambda pos: pos[1])[1]
-    maxZ = max(bbox, key=lambda pos: pos[2])[2]
+    max_x = max(bbox, key=lambda pos: pos[0])[0]
+    max_y = max(bbox, key=lambda pos: pos[1])[1]
+    max_z = max(bbox, key=lambda pos: pos[2])[2]
     
-    spacingX = OBprops.spacing[0]
-    spacingY = OBprops.spacing[1]
-    spacingZ = OBprops.spacing[2]
+    spacing_x = wm_props.spacing[0]
+    spacing_y = wm_props.spacing[1]
+    spacing_z = wm_props.spacing[2]
     
-    pointsX = calculate_grid(bbox,minX,maxX,spacingX)
-    pointsY = calculate_grid(bbox,minY,maxY,spacingY)
-    pointsZ = calculate_grid(bbox,minZ,maxZ,spacingZ)
+    points_x = calculate_grid(bbox, min_x, max_x, spacing_x)
+    points_y = calculate_grid(bbox, min_y, max_y, spacing_y)
+    points_z = calculate_grid(bbox, min_z, max_z, spacing_z)
 
-    points = []
     bm = bmesh.new()
 
-    for X in pointsX:
-        for Y in pointsY:
-            for Z in pointsZ:
-                if is_inside(sourceObjEval,Vector((X,Y,Z))):
-                    bm.verts.new((X,Y,Z))
+    for X in points_x:
+        for Y in points_y:
+            for Z in points_z:
+                if is_inside(source_object_eval, Vector((X ,Y, Z))):
+                    bm.verts.new((X, Y, Z))
                 
     mesh = bpy.data.meshes.new("Point cloud")
     bm.to_mesh(mesh)
     bm.free()
     
-    collection = sourceObj.users_collection
+    collection = source_object.users_collection
     
     if not target:
-        targetObj = bpy.data.objects.new("Point cloud",mesh)
+        target_object = bpy.data.objects.new("Point cloud", mesh)
         if len(collection) > 0:
             collection = collection[0]
         else:
             collection = context.scene.collection
         
-        collection.objects.link(targetObj)
+        collection.objects.link(target_object)
     else:
-        targetObj = target
-        targetObj.data = mesh
+        target_object = target
+        target_object.data = mesh
         
-    targetObj.matrix_world = sourceObj.matrix_world
+    target_object.matrix_world = source_object.matrix_world
     
-    targetObj.modifiers.clear()
+    target_object.modifiers.clear()
 
-    sourceObj.modifiers.remove(modifTri)
-    sourceObj.modifiers.remove(modifBevel)
+    source_object.modifiers.remove(modifier_triangulate)
+    source_object.modifiers.remove(modifier_bevel)
     
-    if OBprops.selection.strip() != "" and len(targetObj.data.vertices) > 0:
-        create_selection(targetObj,OBprops.selection)
+    if wm_props.selection.strip() != "" and len(target_object.data.vertices) > 0:
+        create_selection(target_object, wm_props.selection)

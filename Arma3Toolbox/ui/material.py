@@ -7,41 +7,42 @@ class A3OB_PT_material(bpy.types.Panel):
     bl_context = "material"
     
     @classmethod
-    def poll(cls,context):
-        return (context.active_object
-            and context.active_object.select_get() == True
-            and context.active_object.type == 'MESH'
-            and context.active_object.active_material
+    def poll(cls, context):
+        obj = context.active_object
+        return (obj
+            and obj.select_get() == True
+            and obj.type == 'MESH'
+            and obj.active_material
         )
         
-    def draw(self,context):
-        activeObj = context.active_object
-        activeMat = activeObj.active_material
-        OBprops = activeMat.a3ob_properties_material
+    def draw(self, context):
+        obj = context.active_object
+        material = obj.active_material
+        material_props = material.a3ob_properties_material
         
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False
         
         row = layout.row()
-        row.prop(OBprops,"texture_type",expand=True)
+        row.prop(material_props, "texture_type", expand=True)
         layout.separator()
         
-        texType = OBprops.texture_type
+        texType = material_props.texture_type
         if texType == 'TEX':
-            layout.prop(OBprops,"texture_path",icon='TEXTURE',text="")
+            layout.prop(material_props, "texture_path", text="", icon='TEXTURE')
         elif texType == 'COLOR':
-            colorRow = layout.row(align=True)
-            colorRow.prop(OBprops, "color_value",icon='COLOR')
-            colorRow.prop(OBprops, "color_type",text="")
+            row_color = layout.row(align=True)
+            row_color.prop(material_props, "color_value", icon='COLOR')
+            row_color.prop(material_props, "color_type", text="")
         elif texType == 'CUSTOM':
-            layout.prop(OBprops, "color_raw",icon='TEXT',text="")
+            layout.prop(material_props, "color_raw", text="", icon='TEXT')
         
-        layout.prop(OBprops,"material_path",icon='MATERIAL',text="")
+        layout.prop(material_props, "material_path", text="", icon='MATERIAL')
         
         layout.separator()
         
-        layout.prop(OBprops,"translucent")
+        layout.prop(material_props, "translucent")
         
 classes = (
     A3OB_PT_material,

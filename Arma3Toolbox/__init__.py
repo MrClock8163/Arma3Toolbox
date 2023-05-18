@@ -92,14 +92,11 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         col = layout.column(align=True)
         row = col.row(align=True)
         row.prop(self,"tabs",expand=True)
+
         box = col.box()
-        
         box.use_property_split = True
         box.use_property_decorate = False
         if self.tabs == 'GENERAL':
-            # grid = box.grid_flow(align=True,columns=2,row_major=True,even_columns=True,even_rows=True)
-            # layout = self.layout
-            # box.label(text="Arma 3 Tools")
             box.prop(self,"a3_tools",text="Arma 3 Tools",icon='TOOL_SETTINGS')
         elif self.tabs == 'PATHS':
             box.prop(self,"project_root",icon='DISK_DRIVE')

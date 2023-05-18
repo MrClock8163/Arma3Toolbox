@@ -9,12 +9,12 @@ class A3OB_OT_hitpoints_generate(bpy.types.Operator):
     bl_options = {'UNDO'}
     
     @classmethod
-    def poll(cls,context):
-        OBprops = context.window_manager.a3ob_hitpoint_generator
-        return OBprops.source and (OBprops.source != OBprops.target) and OBprops.source.type == 'MESH' and (not OBprops.target or OBprops.target.type == 'MESH')
+    def poll(cls, context):
+        wm_props = context.window_manager.a3ob_hitpoint_generator
+        return wm_props.source and (wm_props.source != wm_props.target) and wm_props.source.type == 'MESH' and (not wm_props.target or wm_props.target.type == 'MESH')
         
-    def execute(self,context):        
-        cloudutils.generate_hitpoints(self,context)
+    def execute(self, context):        
+        cloudutils.generate_hitpoints(self, context)
         return {'FINISHED'}
         
 class A3OB_PT_hitpoints(bpy.types.Panel):   
@@ -24,40 +24,40 @@ class A3OB_PT_hitpoints(bpy.types.Panel):
     bl_label = "Hit Point Cloud"
     
     @classmethod
-    def poll(cls,context):
+    def poll(cls, context):
         return True
         
-    def draw_header(self,context):
+    def draw_header(self, context):
         layout = self.layout
         row = layout.row(align=True)
         row.operator("wm.url_open", text="", icon='HELP').url = "https://github.com/MrClock8163/Arma3Toolbox/wiki/Tool:-Hit-point-cloud-generator"
         
-    def draw(self,context):
-        OBprops = context.window_manager.a3ob_hitpoint_generator
+    def draw(self, context):
+        wm_props = context.window_manager.a3ob_hitpoint_generator
         scene = context.scene
         
         # SUPER hacky way to get rid of the object if it's only retained in memory because of this property
-        if OBprops.source or OBprops.target:
-            cloudutils.validate_references(OBprops.source,OBprops.target)
+        if wm_props.source or wm_props.target:
+            cloudutils.validate_references(wm_props.source, wm_props.target)
         
         layout = self.layout
-        layout.prop_search(OBprops,"source",bpy.context.scene,"objects")
-        layout.prop_search(OBprops,"target",bpy.context.scene,"objects")
+        layout.prop_search(wm_props, "source", scene, "objects")
+        layout.prop_search(wm_props, "target", scene, "objects")
         col = layout.column(align=True)
-        col.prop(OBprops,"spacing")
-        colBevel = layout.column(align=True,heading="Bevel:")
-        colBevel.prop(OBprops,"bevel_offset",text="Offset")
-        colBevel.prop(OBprops,"bevel_segments",text="Segments")
-        colBevel.separator()
-        row = colBevel.row(align=True)
+        col.prop(wm_props,"spacing")
+        col_bevel = layout.column(align=True, heading="Bevel:")
+        col_bevel.prop(wm_props, "bevel_offset", text="Offset")
+        col_bevel.prop(wm_props, "bevel_segments", text="Segments")
+        col_bevel.separator()
+        row = col_bevel.row(align=True)
         row.use_property_split = True
         row.use_property_decorate = False
-        row.prop(OBprops,"triangulate",text="Triangulate",expand=True)
+        row.prop(wm_props, "triangulate", text="Triangulate", expand=True)
         
-        colSelection = layout.column(align=True,heading="Selection:")
-        colSelection.prop(OBprops,"selection",icon='MESH_DATA',text="")
+        col_selection = layout.column(align=True, heading="Selection:")
+        col_selection.prop(wm_props, "selection", text="", icon='MESH_DATA')
         
-        layout.operator('a3ob.hitpoints_generate',text="Generate",icon='LIGHTPROBE_GRID')
+        layout.operator('a3ob.hitpoints_generate', text="Generate", icon='LIGHTPROBE_GRID')
         
 classes = (
     A3OB_OT_hitpoints_generate,

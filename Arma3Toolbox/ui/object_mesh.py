@@ -11,17 +11,17 @@ class A3OB_OT_proxy_add(bpy.types.Operator):
     bl_options = {'UNDO'}
     
     @classmethod
-    def poll(cls,context):
+    def poll(cls, context):
         obj = context.active_object
         return obj and obj.type == 'MESH' and obj.mode == 'OBJECT' and obj.parent == None and not obj.a3ob_properties_object_proxy.is_a3_proxy
         
-    def execute(self,context):
-        activeObj = context.active_object
+    def execute(self, context):
+        obj = context.active_object
         
-        obj = proxyutils.create_proxy()
-        obj.location = context.scene.cursor.location
-        activeObj.users_collection[0].objects.link(obj)
-        obj.parent = activeObj
+        proxy_object = proxyutils.create_proxy()
+        proxy_object.location = context.scene.cursor.location
+        obj.users_collection[0].objects.link(proxy_object)
+        proxy_object.parent = obj
         
         return {'FINISHED'}
         
@@ -33,47 +33,45 @@ class A3OB_OT_proxy_common(bpy.types.Operator):
     bl_options = {'UNDO'}
     
     @classmethod
-    def poll(cls,context):
-        activeObj = context.active_object
+    def poll(cls, context):
+        obj = context.active_object
         
-        return activeObj.type == 'MESH' and activeObj.a3ob_properties_object_proxy.is_a3_proxy
+        return obj.type == 'MESH' and obj.a3ob_properties_object_proxy.is_a3_proxy
     
-    def invoke(self,context,event):
-        obj = context.object
+    def invoke(self, context, event):
         wm = context.window_manager
-        
         wm.a3ob_proxy_common.clear()
         
-        commonProxies = utils.get_common_proxies(context)
-        for proxy in commonProxies:
+        common_proxies = utils.get_common_proxies(context)
+        for proxy in common_proxies:
             item = wm.a3ob_proxy_common.add()
             item.name = proxy
-            item.path = utils.replace_slashes(commonProxies[proxy])
+            item.path = utils.replace_slashes(common_proxies[proxy])
         
         wm.a3ob_proxy_common_index = 0
         
         return context.window_manager.invoke_props_dialog(self)
     
-    def draw(self,context):
+    def draw(self, context):
         wm = context.window_manager
         layout = self.layout
-        layout.template_list('A3OB_UL_common_proxies',"A3OB_proxies_common",context.window_manager,'a3ob_proxy_common',context.window_manager,'a3ob_proxy_common_index')
+        layout.template_list('A3OB_UL_common_proxies', "A3OB_proxies_common", context.window_manager, 'a3ob_proxy_common', context.window_manager, 'a3ob_proxy_common_index')
         
         selectionIndex = wm.a3ob_proxy_common_index
         if selectionIndex in range(len(wm.a3ob_proxy_common)):
             row = layout.row()
             item = wm.a3ob_proxy_common[selectionIndex]
-            row.prop(item,"path",text="")
+            row.prop(item, "path", text="")
             row.enabled = False
     
-    def execute(self,context):
+    def execute(self, context):
         obj = context.object
         wm = context.window_manager
         
         if len(wm.a3ob_proxy_common) > 0 and wm.a3ob_proxy_common_index in range(len(wm.a3ob_proxy_common)):
-            newItem = wm.a3ob_proxy_common[wm.a3ob_proxy_common_index]
+            new_item = wm.a3ob_proxy_common[wm.a3ob_proxy_common_index]
             
-            obj.a3ob_properties_object_proxy.proxy_path = newItem.path
+            obj.a3ob_properties_object_proxy.proxy_path = new_item.path
             
         return {'FINISHED'}
     
@@ -85,18 +83,18 @@ class A3OB_OT_namedprops_add(bpy.types.Operator):
     bl_options = {'UNDO'}
     
     @classmethod
-    def poll(cls,context):
+    def poll(cls, context):
         return True
         
-    def execute(self,context):
-        activeObj = context.active_object
-        OBprops = activeObj.a3ob_properties_object
+    def execute(self, context):
+        obj = context.active_object
+        object_props = obj.a3ob_properties_object
         
-        item = OBprops.properties.add()
+        item = object_props.properties.add()
         item.name = "New property"
         item.value = "no value"
         
-        OBprops.property_index = len(OBprops.properties)-1
+        object_props.property_index = len(object_props.properties) - 1
         
         return {'FINISHED'}
 
@@ -108,23 +106,23 @@ class A3OB_OT_namedprops_remove(bpy.types.Operator):
     bl_options = {'UNDO'}
     
     @classmethod
-    def poll(cls,context):
-        activeObj = context.active_object
+    def poll(cls, context):
+        obj = context.active_object
         
-        return activeObj.a3ob_properties_object.property_index != -1
+        return obj.a3ob_properties_object.property_index != -1
         
-    def execute(self,context):
-        activeObj = context.active_object
-        OBprops = activeObj.a3ob_properties_object
+    def execute(self, context):
+        obj = context.active_object
+        object_props = obj.a3ob_properties_object
         
-        index = OBprops.property_index
+        index = object_props.property_index
         
         if index != -1:
-            OBprops.properties.remove(index)
-            if len(OBprops.properties) == 0:
-                OBprops.property_index = -1
-            elif index > len(OBprops.properties)-1:
-                OBprops.property_index = len(OBprops.properties)-1            
+            object_props.properties.remove(index)
+            if len(object_props.properties) == 0:
+                object_props.property_index = -1
+            elif index > len(object_props.properties) - 1:
+                object_props.property_index = len(object_props.properties) - 1            
         
         return {'FINISHED'}
         
@@ -135,42 +133,40 @@ class A3OB_OT_namedprops_common(bpy.types.Operator):
     bl_idname = "a3ob.namedprops_common"
     
     @classmethod
-    def poll(cls,context):
+    def poll(cls, context):
         return context.object is not None
     
-    def invoke(self,context,event):
-        obj = context.object
+    def invoke(self, context, event):
         wm = context.window_manager
-        
         wm.a3ob_namedprops_common.clear()
         
-        customNamedprops = utils.get_common_namedprops(context)
-        for prop in customNamedprops:
+        common_namedprops = utils.get_common_namedprops(context)
+        for prop in common_namedprops:
             item = wm.a3ob_namedprops_common.add()
             item.name = prop
-            item.value = customNamedprops[prop]
+            item.value = common_namedprops[prop]
         
         wm.a3ob_namedprops_common_index = 0
         
         return context.window_manager.invoke_props_dialog(self)
     
-    def draw(self,context):
+    def draw(self, context):
         layout = self.layout
-        layout.template_list('A3OB_UL_namedprops',"A3OB_namedprops_common",context.window_manager,'a3ob_namedprops_common',context.window_manager,'a3ob_namedprops_common_index')
+        layout.template_list('A3OB_UL_namedprops', "A3OB_namedprops_common", context.window_manager, 'a3ob_namedprops_common', context.window_manager, 'a3ob_namedprops_common_index')
 
-    def execute(self,context):
+    def execute(self, context):
         obj = context.object
         wm = context.window_manager
         
         if len(wm.a3ob_namedprops_common) > 0 and wm.a3ob_namedprops_common_index in range(len(wm.a3ob_namedprops_common)):
             newItem = wm.a3ob_namedprops_common[wm.a3ob_namedprops_common_index]
             
-            OBprops = obj.a3ob_properties_object
-            item = OBprops.properties.add()
+            object_props = obj.a3ob_properties_object
+            item = object_props.properties.add()
             item.name = newItem.name
             item.value = newItem.value
             
-            OBprops.property_index = len(OBprops.properties)-1
+            object_props.property_index = len(object_props.properties) - 1
         
         return {'FINISHED'}
 
@@ -190,30 +186,30 @@ class A3OB_PT_object_mesh(bpy.types.Panel):
     bl_options = {'DEFAULT_CLOSED'}
     
     @classmethod
-    def poll(cls,context):
-        return (context.active_object
-            and context.active_object.select_get() == True
-            and context.active_object.type == 'MESH'
-            and not context.active_object.a3ob_properties_object_proxy.is_a3_proxy
+    def poll(cls, context):
+        obj = context.active_object
+        return (obj
+            and obj.select_get() == True
+            and obj.type == 'MESH'
+            and not obj.a3ob_properties_object_proxy.is_a3_proxy
             
         )
         
-    def draw(self,context):
-        activeObj = context.active_object
-        OBprops = activeObj.a3ob_properties_object
+    def draw(self, context):
+        obj = context.active_object
+        object_props = obj.a3ob_properties_object
         
         layout = self.layout
         
-        
-        layout.prop(OBprops,"is_a3_lod",text="Is P3D LOD",toggle=1)
+        layout.prop(object_props, "is_a3_lod", text="Is P3D LOD", toggle=1)
         layout.use_property_split = True
         layout.use_property_decorate = False
         
-        if OBprops.is_a3_lod:
-            layout.prop(OBprops,"lod",text="Type")
+        if object_props.is_a3_lod:
+            layout.prop(object_props, "lod", text="Type")
             
-            if int(OBprops.lod) in data.lod_resolution_position.keys():
-                layout.prop(OBprops,"resolution")
+            if int(object_props.lod) in data.lod_resolution_position.keys():
+                layout.prop(object_props, "resolution")
         
 class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
     bl_region_type = 'WINDOW'
@@ -223,31 +219,31 @@ class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
     bl_parent_id = 'A3OB_PT_object_mesh'
     
     @classmethod
-    def poll(cls,context):
-        activeObj = context.active_object
+    def poll(cls, context):
+        obj = context.active_object
         
-        return activeObj.a3ob_properties_object.is_a3_lod and not activeObj.a3ob_properties_object_proxy.is_a3_proxy
+        return obj.a3ob_properties_object.is_a3_lod and not obj.a3ob_properties_object_proxy.is_a3_proxy
     
-    def draw(self,context):
-        activeObj = context.active_object
-        OBprops = activeObj.a3ob_properties_object
+    def draw(self, context):
+        obj = context.active_object
+        object_props = obj.a3ob_properties_object
         layout = self.layout
         
         row = layout.row()
-        col1 = row.column()
-        col1.template_list('A3OB_UL_namedprops',"A3OB_namedprops",OBprops,"properties",OBprops,"property_index")
+        col_list = row.column()
+        col_list.template_list('A3OB_UL_namedprops', "A3OB_namedprops", object_props, "properties", object_props, "property_index")
         
-        if OBprops.property_index in range(len(OBprops.properties)):
-            rowEdit = col1.row(align=True)
-            prop = OBprops.properties[OBprops.property_index]
-            rowEdit.prop(prop,"name",text="")
-            rowEdit.prop(prop,"value",text="")
+        if object_props.property_index in range(len(object_props.properties)):
+            row_edit = col_list.row(align=True)
+            prop = object_props.properties[object_props.property_index]
+            row_edit.prop(prop, "name", text="")
+            row_edit.prop(prop, "value", text="")
             
-        col2 = row.column(align=True)
-        col2.operator("a3ob.namedprops_add",text="",icon='ADD')
-        col2.operator("a3ob.namedprops_remove",text="",icon='REMOVE')
-        col2.separator()
-        col2.operator("a3ob.namedprops_common",icon='PASTEDOWN',text="")
+        col_operators = row.column(align=True)
+        col_operators.operator("a3ob.namedprops_add", text="", icon='ADD')
+        col_operators.operator("a3ob.namedprops_remove", text="", icon='REMOVE')
+        col_operators.separator()
+        col_operators.operator("a3ob.namedprops_common", icon='PASTEDOWN', text="")
         
 class A3OB_PT_object_proxy(bpy.types.Panel):
     bl_region_type = 'WINDOW'
@@ -257,23 +253,23 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
     bl_options = {'DEFAULT_CLOSED'}
     
     @classmethod
-    def poll(cls,context):
-        activeObj = context.active_object
+    def poll(cls, context):
+        obj = context.active_object
         
-        return activeObj.type == 'MESH' and activeObj.a3ob_properties_object_proxy.is_a3_proxy
+        return obj.type == 'MESH' and obj.a3ob_properties_object_proxy.is_a3_proxy
         
         # return (context.active_object
             # and context.active_object.select_get() == True
             # and context.active_object.type == 'MESH'
         # )
         
-    def draw(self,context):
-        activeObj = context.active_object
-        OBprops = activeObj.a3ob_properties_object_proxy
+    def draw(self, context):
+        obj = context.active_object
+        object_props = obj.a3ob_properties_object_proxy
         layout = self.layout
         
         row = layout.row()
-        row.prop(OBprops,"is_a3_proxy",text="Is Arma 3 Proxy",toggle=1)
+        row.prop(object_props, "is_a3_proxy", text="Is Arma 3 Proxy", toggle=1)
         row.enabled = False
         
         layout.use_property_split = True
@@ -281,13 +277,13 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
         
         layout.separator()
         path_row = layout.row(align=True)
-        path_row.operator('a3ob.proxy_common',text="",icon='PASTEDOWN')
-        path_row.prop(OBprops,"proxy_path",icon='MESH_CUBE',text="")
-        layout.prop(OBprops,"proxy_index",text="")
+        path_row.operator('a3ob.proxy_common', text="", icon='PASTEDOWN')
+        path_row.prop(object_props, "proxy_path", text="", icon='MESH_CUBE')
+        layout.prop(object_props, "proxy_index", text="")
         
-def menu_func(self,context):
+def menu_func(self, context):
     self.layout.separator()
-    self.layout.operator(A3OB_OT_proxy_add.bl_idname,icon='EMPTY_ARROWS')
+    self.layout.operator(A3OB_OT_proxy_add.bl_idname, icon='EMPTY_ARROWS')
         
 classes = (
     A3OB_OT_proxy_add,
