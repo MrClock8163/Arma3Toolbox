@@ -86,8 +86,8 @@ def register():
         soft_max = 100000,
         precision = 3,
         unit = 'MASS',
-        get = proputils.selectionMassGet,
-        set = proputils.selectionMassSet
+        get = proputils.get_selection_mass,
+        set = proputils.set_selection_mass
     )
     
     bpy.types.Object.a3ob_selectionMassTarget = bpy.props.FloatProperty (

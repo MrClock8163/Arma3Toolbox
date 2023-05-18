@@ -1,11 +1,11 @@
 import bpy
 import bmesh
 
-def canEditMass(context):
+def can_edit_mass(context):
     obj = context.active_object
     return len(context.selected_objects) == 1 and obj and obj.type == 'MESH' and obj.mode == 'EDIT' 
     
-def selectionMassGet(self):
+def get_selection_mass(self):
     mesh = self.data
     
     if mesh.vertex_layers_float.get("a3ob_mass") is None:
@@ -22,7 +22,7 @@ def selectionMassGet(self):
         
     return round(mass,3) 
     
-def selectionMassSet(self,value):
+def set_selection_mass(self,value):
     mesh = self.data
     
     bm = bmesh.from_edit_mesh(mesh)
@@ -36,7 +36,7 @@ def selectionMassSet(self,value):
     if len(verts) == 0:
         return
     
-    currentMass = selectionMassGet(self)
+    currentMass = get_selection_mass(self)
     diff = value - currentMass
     
     correction = diff/len(verts)
@@ -46,7 +46,7 @@ def selectionMassSet(self,value):
         
     bmesh.update_edit_mesh(mesh,False,False)
     
-def selectionMassSetEach(obj,value):
+def set_selection_mass_each(obj,value):
     mesh = obj.data
     
     bm = bmesh.from_edit_mesh(mesh)
@@ -59,7 +59,7 @@ def selectionMassSetEach(obj,value):
         if vert.select:
             vert[layer] = round(value,3)
             
-def selectionMassDistribute(obj,value):
+def set_selection_mass_distribute(obj,value):
     mesh = obj.data
     
     bm = bmesh.from_edit_mesh(mesh)
@@ -78,7 +78,7 @@ def selectionMassDistribute(obj,value):
     for v in verts:
         v[layer] = vertValue
         
-def clearMasses(obj):
+def clear_selection_masses(obj):
     mesh = obj.data
     
     layer = mesh.vertex_layers_float.get("a3ob_mass")
@@ -92,7 +92,7 @@ def clearMasses(obj):
     
     bmesh.update_edit_mesh(mesh)
     
-def addNamedProperty(obj,key,value):
+def add_namedprop(obj,key,value):
     OBprops = obj.a3ob_properties_object
     
     item = OBprops.properties.add()

@@ -10,12 +10,12 @@ class A3OB_OT_vertex_mass_set(bpy.types.Operator):
     
     @classmethod
     def poll(cls,context):
-        return proputils.canEditMass(context)
+        return proputils.can_edit_mass(context)
         
     def execute(self,context):
         activeObj = context.active_object
         
-        proputils.selectionMassSetEach(activeObj,activeObj.a3ob_selectionMassTarget)
+        proputils.set_selection_mass_each(activeObj,activeObj.a3ob_selectionMassTarget)
         
         return {'FINISHED'}
 
@@ -28,12 +28,12 @@ class A3OB_OT_vertex_mass_distribute(bpy.types.Operator):
     
     @classmethod
     def poll(cls,context):
-        return proputils.canEditMass(context)
+        return proputils.can_edit_mass(context)
         
     def execute(self,context):
         activeObj = context.active_object
         
-        proputils.selectionMassDistribute(activeObj,activeObj.a3ob_selectionMassTarget)
+        proputils.set_selection_mass_distribute(activeObj,activeObj.a3ob_selectionMassTarget)
         return {'FINISHED'}
         
 class A3OB_OT_vertex_mass_clear(bpy.types.Operator):
@@ -45,12 +45,12 @@ class A3OB_OT_vertex_mass_clear(bpy.types.Operator):
     
     @classmethod
     def poll(cls,context):
-        return proputils.canEditMass(context)
+        return proputils.can_edit_mass(context)
         
     def execute(self,context):
         obj = context.active_object
         
-        proputils.clearMasses(obj)
+        proputils.clear_selection_masses(obj)
         
         return {'FINISHED'}
 
@@ -62,7 +62,7 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
     
     @classmethod
     def poll(cls,context):
-        return proputils.canEditMass(context)
+        return proputils.can_edit_mass(context)
         
     def draw_header(self,context):
         row = self.layout.row(align=True)
