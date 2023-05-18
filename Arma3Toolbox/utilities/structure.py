@@ -12,7 +12,7 @@ def find_components(do_convex_hull=False):
     # Remove pre-existing component selections
     existing_component_groups = []
     for group in obj.vertex_groups:
-        if re.match('component\d+', group.name, re.IGNORECASE):
+        if re.match("component\d+", group.name, re.IGNORECASE):
             existing_component_groups.append(group.name)
     
     for group in existing_component_groups:
@@ -36,7 +36,7 @@ def find_components(do_convex_hull=False):
         if do_convex_hull:
             convex_hull()
             
-        group = obj.vertex_groups.new(name=('Component%02d' % (component_id)))
+        group = obj.vertex_groups.new(name=("Component%02d" % (component_id)))
         group.add([vert.index for vert in obj.data.vertices], 1, 'REPLACE')
         
         component_id += 1
@@ -68,7 +68,7 @@ def component_convex_hull(): # DEPRECATED
     obj.vertex_groups.active_index = 0
     
     for i,group in enumerate(obj.vertex_groups):
-        if not re.match('component\d+', group.name, re.IGNORECASE):
+        if not re.match("component\d+", group.name, re.IGNORECASE):
             continue
                 
         bpy.ops.mesh.select_all(action='DESELECT')

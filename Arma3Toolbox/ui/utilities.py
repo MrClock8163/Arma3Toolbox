@@ -5,7 +5,7 @@ from ..utilities import generic as utils
 
 # Menus
 class A3OB_MT_object_builder_topo(bpy.types.Menu):
-    '''Object Builder topology functions'''
+    """Object Builder topology functions"""
     
     bl_label = "Topology"
     
@@ -14,7 +14,7 @@ class A3OB_MT_object_builder_topo(bpy.types.Menu):
         self.layout.operator(A3OB_OT_find_components.bl_idname)
 
 class A3OB_MT_object_builder_convexity(bpy.types.Menu):
-    '''Object Builder convexity functions'''
+    """Object Builder convexity functions"""
     
     bl_label = "Convexity"
     
@@ -24,7 +24,7 @@ class A3OB_MT_object_builder_convexity(bpy.types.Menu):
         self.layout.operator(A3OB_OT_component_convex_hull.bl_idname)
         
 class A3OB_MT_object_builder_misc(bpy.types.Menu):
-    '''Object Builder miscellaneous functions'''
+    """Object Builder miscellaneous functions"""
     
     bl_label = "Misc"
     
@@ -32,21 +32,21 @@ class A3OB_MT_object_builder_misc(bpy.types.Menu):
         self.layout.operator(A3OB_OT_cleanup_vertex_groups.bl_idname)
 
 class A3OB_MT_object_builder(bpy.types.Menu):
-    '''Arma 3 Object Builder utility functions'''
+    """Arma 3 Object Builder utility functions"""
     
     bl_label = "Object Builder"
     
     def draw(self, context):
-        self.layout.menu('A3OB_MT_object_builder_topo')
-        self.layout.menu('A3OB_MT_object_builder_convexity')
-        self.layout.menu('A3OB_MT_object_builder_misc')
+        self.layout.menu("A3OB_MT_object_builder_topo")
+        self.layout.menu("A3OB_MT_object_builder_convexity")
+        self.layout.menu("A3OB_MT_object_builder_misc")
 
 # Operators
 class A3OB_OT_check_convexity(bpy.types.Operator):
-    '''Find concave edges'''
+    """Find concave edges"""
     
     bl_label = "Find Non-Convexities"
-    bl_idname = 'a3ob.find_non_convexities'
+    bl_idname = "a3ob.find_non_convexities"
     
     @classmethod
     def poll(cls, context):
@@ -58,18 +58,18 @@ class A3OB_OT_check_convexity(bpy.types.Operator):
         
         if concaves > 0:
             self.report({'WARNING'}, f'{name} has {concaves} concave edges')
-            utils.show_info_box(f'{name} has {concaves} concave edges', 'Warning', 'ERROR')
+            utils.show_info_box(f'{name} has {concaves} concave edges', "Warning", 'ERROR')
         else:
             self.report({'INFO'}, f'{name} is convex')
-            utils.show_info_box(f'{name} is convex', 'Info', 'INFO')
+            utils.show_info_box(f'{name} is convex', "Info", 'INFO')
         
         return {'FINISHED'}
 
 class A3OB_OT_check_closed(bpy.types.Operator):
-    '''Find non-closed parts of model'''
+    """Find non-closed parts of model"""
     
     bl_label = "Find Non-Closed"
-    bl_idname = 'a3ob.find_non_closed'
+    bl_idname = "a3ob.find_non_closed"
     
     @classmethod
     def poll(cls, context):
@@ -83,10 +83,10 @@ class A3OB_OT_check_closed(bpy.types.Operator):
         return {'FINISHED'}
 
 class A3OB_OT_convex_hull(bpy.types.Operator):
-    '''Calculate convex hull for entire object'''
+    """Calculate convex hull for entire object"""
     
     bl_label = "Convex Hull"
-    bl_idname = 'a3ob.convex_hull'
+    bl_idname = "a3ob.convex_hull"
     
     @classmethod
     def poll(cls, context):
@@ -101,10 +101,10 @@ class A3OB_OT_convex_hull(bpy.types.Operator):
         return {'FINISHED'}
     
 class A3OB_OT_component_convex_hull(bpy.types.Operator):
-    '''Create convex named component selections'''
+    """Create convex named component selections"""
     
     bl_label = "Component Convex Hull"
-    bl_idname = 'a3ob.component_convex_hull'
+    bl_idname = "a3ob.component_convex_hull"
     
     @classmethod
     def poll(cls, context):
@@ -119,10 +119,10 @@ class A3OB_OT_component_convex_hull(bpy.types.Operator):
         return {'FINISHED'}
 
 class A3OB_OT_find_components(bpy.types.Operator):
-    '''Create named component selections'''
+    """Create named component selections"""
     
     bl_label = "Find Components"
-    bl_idname = 'a3ob.find_components'
+    bl_idname = "a3ob.find_components"
     
     @classmethod
     def poll(cls, context):
@@ -137,10 +137,10 @@ class A3OB_OT_find_components(bpy.types.Operator):
         return {'FINISHED'}
         
 class A3OB_OT_cleanup_vertex_groups(bpy.types.Operator):
-    '''Cleanup vertex groups with no vertices assigned'''
+    """Cleanup vertex groups with no vertices assigned"""
     
     bl_label = "Delete Unused Groups"
-    bl_idname = 'a3ob.vertex_groups_cleanup'
+    bl_idname = "a3ob.vertex_groups_cleanup"
     
     @classmethod
     def poll(cls, context):
@@ -162,10 +162,10 @@ class A3OB_OT_cleanup_vertex_groups(bpy.types.Operator):
         return {'FINISHED'}
 
 class A3OB_OT_redefine_vertex_group(bpy.types.Operator):
-    '''Remove vertex group and recreate it with the selected verticies assigned'''
+    """Remove vertex group and recreate it with the selected verticies assigned"""
 
     bl_label = "Redefine Vertex Group"
-    bl_idname = 'a3ob.vertex_group_redefine'
+    bl_idname = "a3ob.vertex_group_redefine"
     
     @classmethod
     def poll(cls, context):
@@ -194,7 +194,7 @@ classes = (
 
 def menu_func(self, context):
     self.layout.separator()
-    self.layout.menu('A3OB_MT_object_builder')
+    self.layout.menu("A3OB_MT_object_builder")
     
 def vertex_groups_func(self, context):
     layout = self.layout

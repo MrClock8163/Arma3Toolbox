@@ -275,7 +275,7 @@ def write_tagg_uv_sets(file, bm, logger):
     logger.step("Wrote UV sets: %d" % index)
 
 def write_tagg_mass(file, bm, count_verts):
-    layer = bm.verts.layers.float.get('a3ob_mass')
+    layer = bm.verts.layers.float.get("a3ob_mass")
     if not layer:
         return
         
@@ -370,7 +370,7 @@ def write_tagg_named_properties(file, obj):
             write_tagg_named_properties_item(file, prop.name, prop.value)
 
 def write_file_header(file, count_lod):
-    binary.write_chars(file, 'MLOD')
+    binary.write_chars(file, "MLOD")
     binary.write_ulong(file, 257)
     binary.write_ulong(file, count_lod)
     
@@ -382,7 +382,7 @@ def write_lod(file, obj, materials, proxies, logger):
             logger.step("N-gons detected -> skipping lod")
             return False
     
-    binary.write_chars(file, 'P3DM')
+    binary.write_chars(file, "P3DM")
     binary.write_ulong(file, 0x1c)
     binary.write_ulong(file, 0x100)
     
@@ -428,7 +428,7 @@ def write_lod(file, obj, materials, proxies, logger):
         
     logger.step("Wrote faces: %d" % count_faces)
         
-    binary.write_chars(file, 'TAGG') # TAGG section start
+    binary.write_chars(file, "TAGG") # TAGG section start
     
     write_tagg_sharps_edges(file, bm)
     write_tagg_uv_sets(file, bm, logger)

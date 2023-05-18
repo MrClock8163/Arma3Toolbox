@@ -3,7 +3,7 @@ import bpy
 from ..utilities import properties as proputils
 
 class A3OB_OT_vertex_mass_set(bpy.types.Operator):
-    '''Set same mass on all selected vertices'''
+    """Set same mass on all selected vertices"""
     
     bl_idname = "a3ob.vertex_mass_set"
     bl_label = "Set Mass On Each"
@@ -21,7 +21,7 @@ class A3OB_OT_vertex_mass_set(bpy.types.Operator):
         return {'FINISHED'}
 
 class A3OB_OT_vertex_mass_distribute(bpy.types.Operator):
-    '''Distribute mass equally to selected vertices'''
+    """Distribute mass equally to selected vertices"""
     
     bl_idname = "a3ob.vertex_mass_distribute"
     bl_label = "Distribute Mass"
@@ -38,7 +38,7 @@ class A3OB_OT_vertex_mass_distribute(bpy.types.Operator):
         return {'FINISHED'}
         
 class A3OB_OT_vertex_mass_clear(bpy.types.Operator):
-    '''Remove vertex mass data layer'''
+    """Remove vertex mass data layer"""
     
     bl_idname = "a3ob.vertex_mass_clear"
     bl_label = "Clear Masses"

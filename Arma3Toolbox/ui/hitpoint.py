@@ -3,7 +3,7 @@ import bpy
 from ..utilities import clouds as cloudutils
 
 class A3OB_OT_hitpoints_generate(bpy.types.Operator):
-    '''Create hit points cloud from shape'''
+    """Create hit points cloud from shape"""
     
     bl_idname = "a3ob.hitpoints_generate"
     bl_label = "Generate Hit Point Cloud"
@@ -58,7 +58,7 @@ class A3OB_PT_hitpoints(bpy.types.Panel):
         col_selection = layout.column(align=True, heading="Selection:")
         col_selection.prop(wm_props, "selection", text="", icon='MESH_DATA')
         
-        layout.operator('a3ob.hitpoints_generate', text="Generate", icon='LIGHTPROBE_GRID')
+        layout.operator("a3ob.hitpoints_generate", text="Generate", icon='LIGHTPROBE_GRID')
         
 classes = (
     A3OB_OT_hitpoints_generate,

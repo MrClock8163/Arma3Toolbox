@@ -4,7 +4,7 @@ import bpy_extras
 from ..io import import_p3d, export_p3d
 
 class A3OB_OP_import_p3d(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
-    '''Import Arma 3 MLOD P3D'''
+    """Import Arma 3 MLOD P3D"""
     bl_idname = "a3ob.import_p3d"
     bl_label = "Import P3D"
     bl_options = {'UNDO', 'PRESET'}
@@ -88,7 +88,7 @@ class A3OB_OP_import_p3d(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
     
     def execute(self, context):
         
-        file = open(self.filepath, 'rb')
+        file = open(self.filepath, "rb")
         # filename = os.path.basename(self.filepath)
         
         # if not self.enclose:
@@ -220,7 +220,7 @@ class A3OB_PT_import_p3d_proxies(bpy.types.Panel):
             col.prop(operator, "proxy_action", expand=True)
         
 class A3OB_OP_export_p3d(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
-    '''Export to Arma 3 MLOD P3D'''
+    """Export to Arma 3 MLOD P3D"""
     bl_idname = "a3ob.export_p3d"
     bl_label = "Export P3D"
     bl_options = {'UNDO', 'PRESET'}
@@ -268,7 +268,7 @@ class A3OB_OP_export_p3d(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
     def execute(self, context):
         if export_p3d.can_export(self, context):
             
-            file = open(self.filepath, 'wb')
+            file = open(self.filepath, "wb")
             
             lod_count, exported_count = export_p3d.write_file(self, context, file)
             

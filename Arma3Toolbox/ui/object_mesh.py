@@ -5,7 +5,7 @@ from ..utilities import data
 from ..utilities import proxy as proxyutils
 
 class A3OB_OT_proxy_add(bpy.types.Operator):
-    '''Add Arma 3 proxy object and parent to the active object'''
+    """Add Arma 3 proxy object and parent to the active object"""
     
     bl_idname = "a3ob.proxy_add"
     bl_label = "Arma 3 proxy"
@@ -27,7 +27,7 @@ class A3OB_OT_proxy_add(bpy.types.Operator):
         return {'FINISHED'}
         
 class A3OB_OT_proxy_common(bpy.types.Operator):
-    '''Paste a common proxy model path'''
+    """Paste a common proxy model path"""
     
     bl_idname = "a3ob.proxy_common"
     bl_label = "Common Proxy"
@@ -56,7 +56,7 @@ class A3OB_OT_proxy_common(bpy.types.Operator):
     def draw(self, context):
         wm = context.window_manager
         layout = self.layout
-        layout.template_list('A3OB_UL_common_proxies', "A3OB_proxies_common", context.window_manager, 'a3ob_proxy_common', context.window_manager, 'a3ob_proxy_common_index')
+        layout.template_list("A3OB_UL_common_proxies", "A3OB_proxies_common", context.window_manager, "a3ob_proxy_common", context.window_manager, "a3ob_proxy_common_index")
         
         selectionIndex = wm.a3ob_proxy_common_index
         if selectionIndex in range(len(wm.a3ob_proxy_common)):
@@ -77,7 +77,7 @@ class A3OB_OT_proxy_common(bpy.types.Operator):
         return {'FINISHED'}
     
 class A3OB_OT_namedprops_add(bpy.types.Operator):
-    '''Add named property to the active object'''
+    """Add named property to the active object"""
     
     bl_idname = "a3ob.namedprops_add"
     bl_label = "Add Named Property"
@@ -100,7 +100,7 @@ class A3OB_OT_namedprops_add(bpy.types.Operator):
         return {'FINISHED'}
 
 class A3OB_OT_namedprops_remove(bpy.types.Operator):
-    '''Remove named property from the active object'''
+    """Remove named property from the active object"""
     
     bl_idname = "a3ob.namedprops_remove"
     bl_label = "Remove Named Property"
@@ -128,7 +128,7 @@ class A3OB_OT_namedprops_remove(bpy.types.Operator):
         return {'FINISHED'}
         
 class A3OB_OT_namedprops_common(bpy.types.Operator):
-    '''Add a common named property'''
+    """Add a common named property"""
     
     bl_label = "Common Named Property"
     bl_idname = "a3ob.namedprops_common"
@@ -153,7 +153,7 @@ class A3OB_OT_namedprops_common(bpy.types.Operator):
     
     def draw(self, context):
         layout = self.layout
-        layout.template_list('A3OB_UL_namedprops', "A3OB_namedprops_common", context.window_manager, 'a3ob_namedprops_common', context.window_manager, 'a3ob_namedprops_common_index')
+        layout.template_list("A3OB_UL_namedprops", "A3OB_namedprops_common", context.window_manager, "a3ob_namedprops_common", context.window_manager, "a3ob_namedprops_common_index")
 
     def execute(self, context):
         obj = context.object
@@ -217,7 +217,7 @@ class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_label = "Named Properties"
     bl_context = "data"
-    bl_parent_id = 'A3OB_PT_object_mesh'
+    bl_parent_id = "A3OB_PT_object_mesh"
     
     @classmethod
     def poll(cls, context):
@@ -232,7 +232,7 @@ class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
         
         row = layout.row()
         col_list = row.column()
-        col_list.template_list('A3OB_UL_namedprops', "A3OB_namedprops", object_props, "properties", object_props, "property_index")
+        col_list.template_list("A3OB_UL_namedprops", "A3OB_namedprops", object_props, "properties", object_props, "property_index")
         
         if object_props.property_index in range(len(object_props.properties)):
             row_edit = col_list.row(align=True)
