@@ -2,7 +2,7 @@ import bpy
 from ..utilities import properties as proputils
 from . import object as objectprops
 
-def meshObjectPoll(self,object):
+def mesh_object_poll(self,object):
     return object.type == 'MESH'
     
 class A3OB_PG_common_proxy(bpy.types.PropertyGroup):
@@ -22,13 +22,13 @@ class A3OB_PG_hitpoint_generator(bpy.types.PropertyGroup):
         type=bpy.types.Object,
         name = "Source",
         description = "Mesh object to use as source for point cloud generation",
-        poll = meshObjectPoll
+        poll = mesh_object_poll
     )
     target: bpy.props.PointerProperty (
         type=bpy.types.Object,
         name = "Target",
         description = "Mesh object to write generate point cloud to\n(leave empty to create new object)",
-        poll = meshObjectPoll
+        poll = mesh_object_poll
     )
     spacing: bpy.props.FloatVectorProperty (
         name = "Spacing",
