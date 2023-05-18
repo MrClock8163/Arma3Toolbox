@@ -2,7 +2,7 @@ import bpy
 import mathutils
 import math
 
-def findCenterIndex(mesh):
+def find_center_index(mesh):
     # 1st vert
     angle = (mesh.vertices[1].co - mesh.vertices[0].co).angle(mesh.vertices[2].co - mesh.vertices[0].co)
     if round(math.degrees(angle),-1) == 90:
@@ -20,8 +20,8 @@ def findCenterIndex(mesh):
         
     return 0
 
-def findAxisIndices(mesh):
-    centerID = findCenterIndex(mesh)
+def find_axis_indices(mesh):
+    centerID = find_center_index(mesh)
     verts = [0,1,2]
     verts.remove(centerID)
     
@@ -34,8 +34,8 @@ def findAxisIndices(mesh):
     elif dist1 < dist2:
         return centerID, verts[0], verts[1]
 
-def getTransformRot(obj):
-    centerID,yID,zID = findAxisIndices(obj.data)
+def get_transform_rotation(obj):
+    centerID,yID,zID = find_axis_indices(obj.data)
     
     x = -obj.data.polygons[0].normal.normalized()
     y = (obj.data.vertices[yID].co - obj.data.vertices[centerID].co).normalized()
@@ -44,7 +44,7 @@ def getTransformRot(obj):
     m = mathutils.Matrix(((*x,0),(*y,0),(*z,0),(0,0,0,1)))
     return m
     
-def createProxy():
+def create_proxy():
     objData = bpy.data.meshes.new("Proxy")
     objData.from_pydata([(0,0,0),(0,0,2),(0,1,0)],[],[(0,1,2)])
     objData.update(calc_edges=True)

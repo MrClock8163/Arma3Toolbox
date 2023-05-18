@@ -269,12 +269,12 @@ def build_collections(LODs,operator,rootCollection):
             rootCollection.children.link(group)
 
 def transform_proxy(obj): # Align the object coordinate system with the proxy directions
-    rotate = proxyutils.getTransformRot(obj)
+    rotate = proxyutils.get_transform_rotation(obj)
     obj.data.transform(rotate)
     obj.matrix_world = rotate.inverted()
     obj.a3ob_properties_object_proxy.isArma3Proxy = True
     
-    translate = mathutils.Matrix.Translation(-obj.data.vertices[proxyutils.findCenterIndex(obj.data)].co)
+    translate = mathutils.Matrix.Translation(-obj.data.vertices[proxyutils.find_center_index(obj.data)].co)
     
     obj.data.transform(translate)
     

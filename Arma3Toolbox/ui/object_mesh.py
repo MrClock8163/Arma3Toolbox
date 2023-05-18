@@ -18,7 +18,7 @@ class A3OB_OT_proxy_add(bpy.types.Operator):
     def execute(self,context):
         activeObj = context.active_object
         
-        obj = proxyutils.createProxy()
+        obj = proxyutils.create_proxy()
         obj.location = context.scene.cursor.location
         activeObj.users_collection[0].objects.link(obj)
         obj.parent = activeObj
