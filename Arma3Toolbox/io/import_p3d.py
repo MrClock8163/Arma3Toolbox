@@ -17,7 +17,7 @@ from ..utilities.logger import ProcessLogger
 def read_signature(file):
     return binary.read_char(file,4)
 
-def read_header(file):
+def read_file_header(file):
     signature = read_signature(file)
     if signature != "MLOD":
         raise IOError(f"Invalid MLOD signature: {signature}")
@@ -36,7 +36,7 @@ def read_normal(file):
     x,y,z = struct.unpack('<fff',file.read(12))
     return -x,-z,-y
     
-def read_pseudo_vertextable(file):
+def read_face_pseudo_vertextable(file):
     pointID, normalID = struct.unpack('<II',file.read(8))
     file.read(8) # dump embedded UV coordinates
     
@@ -45,7 +45,7 @@ def read_pseudo_vertextable(file):
 def read_face(file):
     numSides = binary.read_ulong(file)
     
-    vertTables = [read_pseudo_vertextable(file) for i in range(numSides)] # should instead return the individual lists to avoid unecessary data
+    vertTables = [read_face_pseudo_vertextable(file) for i in range(numSides)] # should instead return the individual lists to avoid unecessary data
     
     if numSides < 4:
         file.read(16) # dump null bytes
@@ -56,7 +56,7 @@ def read_face(file):
     
     return vertTables,texture,material
     
-def decode_selectionWeight(weight):
+def decode_selection_weight(weight):
     if weight == 0:
         return 0.0
         
@@ -92,7 +92,7 @@ def get_file_path(path,prefs,extension = ""):
     
     return path
         
-def process_TAGGs(file,bm,additionalData,numPoints,numFaces,logger):
+def process_taggs(file,bm,additionalData,numPoints,numFaces,logger):
     count = 0
     namedSelections = []
     properties = {}
@@ -156,7 +156,7 @@ def process_TAGGs(file,bm,additionalData,numPoints,numFaces,logger):
             
             for i in range(numPoints):
                 b = binary.read_byte(file)
-                weight = decode_selectionWeight(b)
+                weight = decode_selection_weight(b)
                 if b != 0:
                     bm.verts[i][deform][len(namedSelections)-1] = weight
                 
@@ -237,7 +237,7 @@ def process_normals(objData,faceDataDict,normalsDict):
     objData.normals_split_custom_set(loopNormals)
     objData.free_normals_split()
         
-def group_LODs(LODs,groupBy = 'TYPE'):    
+def group_lods(LODs,groupBy = 'TYPE'):    
     collections = {}
     
     groupDict = data.LODgroups[groupBy]
@@ -263,7 +263,7 @@ def build_collections(LODs,operator,rootCollection):
         for item in LODs:
             rootCollection.objects.link(item[0])
     else:
-        colls = group_LODs(LODs,operator.groupby)
+        colls = group_lods(LODs,operator.groupby)
             
         for group in colls.values():
             rootCollection.children.link(group)
@@ -333,7 +333,7 @@ def process_proxies(LODs,operator,materialDict,prefs):
                 
         bpy.ops.object.select_all(action='DESELECT')
 
-def read_LOD(context,file,materialDict,additionalData,logger,prefs):
+def read_lod(context,file,materialDict,additionalData,logger,prefs):
     logger.level_up()
 
     # Read LOD header
@@ -395,7 +395,7 @@ def read_LOD(context,file,materialDict,additionalData,logger,prefs):
     if taggSignature != "TAGG":
         raise IOError(f"Invalid TAGG section signature: {taggSignature}")
     
-    namedSelections, properties = process_TAGGs(file,bm,additionalData,numPoints,numFaces,logger)
+    namedSelections, properties = process_taggs(file,bm,additionalData,numPoints,numFaces,logger)
     
     # EOF
     LODresolution = binary.read_float(file)
@@ -471,7 +471,7 @@ def read_LOD(context,file,materialDict,additionalData,logger,prefs):
     logger.level_down()
     return obj, LODresolution, materialDict, proxySelections
 
-def import_file(operator,context,file):
+def read_file(operator,context,file):
     addonPreferences = utils.get_addon_preferences(context)
     logger = ProcessLogger()
     logger.step("P3D import from %s" % operator.filepath)
@@ -483,7 +483,7 @@ def import_file(operator,context,file):
     if operator.allowAdditionalData:
         additionalData = operator.additionalData
     
-    version, LODcount = read_header(file)
+    version, LODcount = read_file_header(file)
     
     logger.log(f"File version: {version}")
     logger.log(f"Number of LODs: {LODcount}")
@@ -507,7 +507,7 @@ def import_file(operator,context,file):
         timeLODStart = time.time()
         logger.step("LOD %d" % i)
         
-        lodObj, res, materialDict, proxySelections = read_LOD(context,file,materialDict,additionalData,logger,addonPreferences)
+        lodObj, res, materialDict, proxySelections = read_lod(context,file,materialDict,additionalData,logger,addonPreferences)
         
         if operator.validateMeshes:
             lodObj.data.validate(clean_customdata=False)

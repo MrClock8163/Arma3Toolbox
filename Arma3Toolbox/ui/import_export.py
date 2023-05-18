@@ -108,7 +108,7 @@ class A3OB_OP_import_p3d(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
             # utils.show_infoBox(str(e),"Unexpected I/O error",'ERROR')
             
         # import_p3d.import_file(context,file,self.groupby,self.preserveNormals,self.validateMeshes,self.setupMaterials,filename.strip()) # Allow exceptions for testing
-        import_p3d.import_file(self,context,file) # Allow exceptions for testing
+        import_p3d.read_file(self,context,file) # Allow exceptions for testing
         
         file.close()
         
