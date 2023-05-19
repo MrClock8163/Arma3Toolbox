@@ -2,6 +2,7 @@ import bpy
 import bmesh
 from mathutils import Vector
 
+
 def validate_references(source, target):
     if source or target:
         if source == target and source.users == 2:
@@ -17,6 +18,7 @@ def validate_references(source, target):
     
     return source, target
 
+
 def is_inside(obj, point):
     result, closest, normal, _ = obj.closest_point_on_mesh(point)
     
@@ -24,18 +26,18 @@ def is_inside(obj, point):
         return False
     
     return (closest - point).dot(normal) > 0
-    
+
+
 def create_selection(obj, selection):
     group = obj.vertex_groups.get(selection, None)
-    
     if not group:
         group = obj.vertex_groups.new(name=selection.strip())
 
     group.add([vert.index for vert in obj.data.vertices], 1, 'REPLACE')
-    
-def calculate_grid(bbox, coord_min, coord_max, spacing):
+
+
+def calculate_grid(coord_min, coord_max, spacing):
     dim = coord_max - coord_min
-    
     if dim < spacing:
         return (coord_min + dim/2, )
         
@@ -44,6 +46,7 @@ def calculate_grid(bbox, coord_min, coord_max, spacing):
     points = Vector.Linspace(coord_min + padding, coord_max - padding, count + 1)
     
     return points
+
 
 def generate_hitpoints(operator, context):
     wm = context.window_manager
@@ -82,9 +85,9 @@ def generate_hitpoints(operator, context):
     spacing_y = wm_props.spacing[1]
     spacing_z = wm_props.spacing[2]
     
-    points_x = calculate_grid(bbox, min_x, max_x, spacing_x)
-    points_y = calculate_grid(bbox, min_y, max_y, spacing_y)
-    points_z = calculate_grid(bbox, min_z, max_z, spacing_z)
+    points_x = calculate_grid(min_x, max_x, spacing_x)
+    points_y = calculate_grid(min_y, max_y, spacing_y)
+    points_z = calculate_grid(min_z, max_z, spacing_z)
 
     bm = bmesh.new()
 
@@ -113,7 +116,6 @@ def generate_hitpoints(operator, context):
         target_object.data = mesh
         
     target_object.matrix_world = source_object.matrix_world
-    
     target_object.modifiers.clear()
 
     source_object.modifiers.remove(modifier_triangulate)

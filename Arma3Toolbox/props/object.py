@@ -3,6 +3,7 @@ import bpy
 from ..utilities import properties as proputils
 from ..utilities import data
 
+
 class A3OB_PG_properties_named_property(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty (
         name = "Name",
@@ -12,7 +13,8 @@ class A3OB_PG_properties_named_property(bpy.types.PropertyGroup):
         name = "Value",
         description = "Property value"
     )
-    
+
+
 class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
     is_a3_lod: bpy.props.BoolProperty (
         name = "Arma 3 LOD",
@@ -43,7 +45,8 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
         description = "Index of the currently selected named property",
         default = -1
     )
-    
+
+
 class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
     is_a3_proxy: bpy.props.BoolProperty (
         name = "Arma 3 Model Proxy",
@@ -63,12 +66,14 @@ class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
         min = 0,
         max = 999
     )
-    
+
+
 classes = (
     A3OB_PG_properties_named_property,
     A3OB_PG_properties_object_mesh,
     A3OB_PG_properties_object_proxy
 )
+
 
 def register():
     for cls in classes:
@@ -76,7 +81,6 @@ def register():
         
     bpy.types.Object.a3ob_properties_object = bpy.props.PointerProperty(type=A3OB_PG_properties_object_mesh)
     bpy.types.Object.a3ob_properties_object_proxy = bpy.props.PointerProperty(type=A3OB_PG_properties_object_proxy)
-        
     bpy.types.Object.a3ob_selection_mass = bpy.props.FloatProperty (
         name = "Current Mass",
         description = "Total mass of current selection",
@@ -90,7 +94,6 @@ def register():
         get = proputils.get_selection_mass,
         set = proputils.set_selection_mass
     )
-    
     bpy.types.Object.a3ob_selection_mass_target = bpy.props.FloatProperty (
         name = "Mass",
         description = "Mass to set equally or distribute",
@@ -102,11 +105,11 @@ def register():
         step = 10,
         precision = 3
     )
-    
+
+
 def unregister():
     del bpy.types.Object.a3ob_selection_mass_target
     del bpy.types.Object.a3ob_selection_mass
-    
     del bpy.types.Object.a3ob_properties_object_proxy
     del bpy.types.Object.a3ob_properties_object
     

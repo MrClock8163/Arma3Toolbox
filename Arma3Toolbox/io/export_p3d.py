@@ -9,7 +9,8 @@ from ..utilities import generic as utils
 from ..utilities import lod as lodutils
 from ..utilities import data
 from ..utilities.logger import ProcessLogger
-    
+
+
 # may be worth looking into bpy.ops.object.convert(target='MESH') instead to reduce operator calls
 def apply_modifiers(obj, context):
     ctx = context.copy()
@@ -21,7 +22,8 @@ def apply_modifiers(obj, context):
             bpy.ops.object.modifier_apply(ctx, modifier=m.name)
         except:
             obj.modifiers.remove(m)
-            
+
+
 def merge_objects(main_object, sub_objects, context):
     ctx = context.copy()
     ctx["active_object"] = main_object
@@ -29,13 +31,14 @@ def merge_objects(main_object, sub_objects, context):
     ctx["selected_editable_objects"] = (sub_objects + [main_object])
     
     bpy.ops.object.join(ctx)
-        
+
+
 def duplicate_object(obj):
     new_object = obj.copy()
     new_object.data = obj.data.copy()
-    
     return new_object
-    
+
+
 def get_texture_string(material_properties, addon_prefs):
     texture_type = material_properties.texture_type
     
@@ -48,18 +51,19 @@ def get_texture_string(material_properties, addon_prefs):
         return material_properties.color_raw
     else:
         return ""
-        
+
+
 def get_material_string(material_properties, addon_prefs):
     return format_path(material_properties.material_path, addon_prefs.project_root, addon_prefs.export_relative)
-    
+
+
 def get_proxy_string(proxy_props, addon_prefs):
     path = format_path(proxy_props.proxy_path, addon_prefs.project_root, addon_prefs.export_relative, True)
     if len(path) > 0 and path[0] != "\\":
         path = "\\" + path
         
-    string = f"proxy:{path}.{'%03d' % proxy_props.proxy_index}"
-        
-    return string
+    return f"proxy:{path}.{'%03d' % proxy_props.proxy_index}"
+
 
 def format_path(path, root = "", make_relative = True, strip_extension = False):
     path = utils.replace_slashes(path.strip())
@@ -73,6 +77,7 @@ def format_path(path, root = "", make_relative = True, strip_extension = False):
         
     return path
 
+
 def get_lod_data(operator, context):
     addon_prefs = utils.get_addon_preferences(context)
     scene = context.scene
@@ -81,7 +86,7 @@ def get_lod_data(operator, context):
     if operator.use_selection:
         export_objects = context.selected_objects
     
-    LODs = []
+    lod_objects = []
     materials = []
     proxies = []
     
@@ -130,9 +135,10 @@ def get_lod_data(operator, context):
             ctx = context.copy()
             ctx["active_object"] = main_object
             ctx["object"] = main_object
+            
             bpy.ops.mesh.customdata_custom_splitnormals_clear(ctx)
         
-        LODs.append(main_object)
+        lod_objects.append(main_object)
         proxies.append(object_proxies)
         
         object_materials = {0: ("", "")}
@@ -153,19 +159,20 @@ def get_lod_data(operator, context):
         bm.from_mesh(main_object.data)
         bm.faces.ensure_lookup_table()
         
-        indexOffset = len(bm.faces) - 1
-        translucentCount = 0
+        index_offset = len(bm.faces) - 1
+        count_translucent = 0
         for face in bm.faces:
             if translucency[face.material_index]:
-                face.index = indexOffset + translucentCount
-                translucentCount += 1
+                face.index = index_offset + count_translucent
+                count_translucent += 1
                 
         bm.faces.sort()
         bm.to_mesh(main_object.data)
         bm.free()
                 
-    return LODs, materials, proxies
-    
+    return lod_objects, materials, proxies
+
+
 def can_export(operator, context):
     scene = context.scene
     export_objects = scene.objects
@@ -178,19 +185,19 @@ def can_export(operator, context):
             return True
             
     return False
-    
+
+
 def get_resolution(obj):
     object_props = obj.a3ob_properties_object
-    
     return lodutils.get_lod_signature(int(object_props.lod), object_props.resolution)
+
 
 def encode_selection_weight(weight):
     if weight == 0:
         return 0
-        
     elif weight  == 1:
         return 1
-    
+        
     value = round(256 - 255 * weight)
     
     if value == 256:
@@ -198,12 +205,15 @@ def encode_selection_weight(weight):
         
     return value
 
+
 def write_vertex(file, co):
     file.write(struct.pack('<fff', co[0], co[2], co[1]))
     binary.write_ulong(file, 0)
-    
+
+
 def write_normal(file, normal):
     file.write(struct.pack('<fff', -normal[0], -normal[2], -normal[1]))
+
 
 def write_face_pseudo_vertextable(file, loop, uv_layer):
     binary.write_ulong(file,loop.vert.index)
@@ -214,22 +224,23 @@ def write_face_pseudo_vertextable(file, loop, uv_layer):
     
     file.write(struct.pack('<ff', loop[uv_layer].uv[0], 1-loop[uv_layer].uv[1]))
 
+
 def write_face(file, bm, face, materials, uv_layer):
-    numSides = len(face.loops)
-    binary.write_ulong(file, numSides)
+    count_sides = len(face.loops)
+    binary.write_ulong(file, count_sides)
     
-    for i in range(numSides):
+    for i in range(count_sides):
         write_face_pseudo_vertextable(file, face.loops[i], uv_layer)
         
-    if numSides < 4:
+    if count_sides < 4:
         file.write(struct.pack('<4I', 0, 0, 0, 0)) # empty filler for triangles
     
-    matData = materials[face.material_index]
-    
+    material_data = materials[face.material_index]
     binary.write_ulong(file, 0) # face flags
-    binary.write_asciiz(file, matData[0]) # texture
-    binary.write_asciiz(file, matData[1]) # material
-    
+    binary.write_asciiz(file, material_data[0]) # texture
+    binary.write_asciiz(file, material_data[1]) # material
+
+
 def write_tagg_sharps_edges(file, bm):
     binary.write_byte(file, 1)
     binary.write_asciiz(file, "#SharpEdges#")
@@ -237,6 +248,7 @@ def write_tagg_sharps_edges(file, bm):
     binary.write_ulong(file, 0) # temporary placeholder value for field length
     
     flat_face_edges = set()
+    
     for face in bm.faces:
         if not face.smooth:
             flat_face_edges.update({edge for edge in face.edges})
@@ -249,6 +261,7 @@ def write_tagg_sharps_edges(file, bm):
     file.seek(data_start_pos, 0)
     binary.write_ulong(file, data_end_pos-data_start_pos-4) # fill in length data
     file.seek(data_end_pos, 0)
+
 
 def write_tagg_uv_sets_item(file, bm, layer, index):
     binary.write_byte(file, 1)
@@ -266,6 +279,7 @@ def write_tagg_uv_sets_item(file, bm, layer, index):
     binary.write_ulong(file, data_end_pos-data_start_pos-4) # fill in length data
     file.seek(data_end_pos, 0)
 
+
 def write_tagg_uv_sets(file, bm, logger):
     index = 0
     for layer in bm.loops.layers.uv.values():
@@ -274,21 +288,24 @@ def write_tagg_uv_sets(file, bm, logger):
         
     logger.step("Wrote UV sets: %d" % index)
 
+
 def write_tagg_mass(file, bm, count_verts):
     layer = bm.verts.layers.float.get("a3ob_mass")
+    
     if not layer:
         return
         
     binary.write_byte(file, 1)
     binary.write_asciiz(file, "#Mass#")
-        
     binary.write_ulong(file, count_verts*4)
     
     for vertex in bm.verts:
         binary.write_float(file, vertex[layer])
-    
+
+
 def write_tagg_selections_item(file, name, count_vert, count_face, vertices, faces, proxies):
     real_name = name
+    
     if name.strip().startswith("@proxy"):
         try:
             real_name = proxies[name]
@@ -301,7 +318,6 @@ def write_tagg_selections_item(file, name, count_vert, count_face, vertices, fac
     binary.write_ulong(file, 0) # temporary placeholder value for field length
 
     bytes_vert = bytearray(count_vert) # array of 0x0 bytes (effective because this way not every vertex has to be iterated)
-
     for vertex in vertices:
         bytes_vert[vertex[0]] = encode_selection_weight(vertex[1])
         
@@ -317,7 +333,8 @@ def write_tagg_selections_item(file, name, count_vert, count_face, vertices, fac
     file.seek(data_start_pos, 0)
     binary.write_ulong(file, data_end_pos-data_start_pos-4) # fill in length data
     file.seek(data_end_pos, 0)
-    
+
+
 def write_tagg_selections(file, obj, proxies, logger):
     mesh = obj.data
     
@@ -337,7 +354,6 @@ def write_tagg_selections(file, obj, proxies, logger):
             
     for face in mesh.polygons:
         groups = set([group.group for vertex in face.vertices for group in mesh.vertices[vertex].groups])
-        
         for group_id in groups:
             weight = sum([group.weight for vertex in face.vertices for group in mesh.vertices[vertex].groups if group.group == group_id])
             if weight > 0:
@@ -347,35 +363,39 @@ def write_tagg_selections(file, obj, proxies, logger):
     count_vert = len(mesh.vertices)
     count_face = len(mesh.polygons)
     
-    for i,group in enumerate(obj.vertex_groups):
+    for i, group in enumerate(obj.vertex_groups):
         name = group.name
         write_tagg_selections_item(file, name, count_vert, count_face, selections_vert[name], selections_face[name], proxies)
         
     logger.step("Wrote named selections: %d" % (i + 1))
-    
+
+
 def write_tagg_named_properties_item(file, key, value):
     binary.write_byte(file, 1)
     binary.write_asciiz(file, "#Property#")
     binary.write_ulong(file, 128)
     file.write(struct.pack('<64s', key.encode('ASCII')))
     file.write(struct.pack('<64s', value.encode('ASCII')))
-    
+
+
 def write_tagg_named_properties(file, obj):
     object_props = obj.a3ob_properties_object
-    
     written_props = set()
     for prop in object_props.properties:
         if prop.name not in written_props:
             written_props.add(prop.name)
             write_tagg_named_properties_item(file, prop.name, prop.value)
 
+
 def write_file_header(file, count_lod):
     binary.write_chars(file, "MLOD")
     binary.write_ulong(file, 257)
     binary.write_ulong(file, count_lod)
-    
+
+
 def write_lod(file, obj, materials, proxies, logger):
     logger.level_up()
+    
     for face in obj.data.polygons:
         if len(face.vertices) > 4:
             OBprops = obj.a3ob_properties_object
@@ -406,7 +426,6 @@ def write_lod(file, obj, materials, proxies, logger):
     binary.write_ulong(file, count_verts)
     binary.write_ulong(file, count_loops) # number of normals
     binary.write_ulong(file, count_faces)
-    
     binary.write_ulong(file, 0) # unknown flags/padding
     
     for vert in bm.verts:
@@ -437,21 +456,25 @@ def write_lod(file, obj, materials, proxies, logger):
         write_tagg_mass(file, bm, count_verts) # need to make sure to only export for Geo LODs
         logger.step("Wrote vertex mass")
         
+    bm.free()
+        
     write_tagg_named_properties(file, obj)
+    
     if len(obj.vertex_groups) > 0:
         write_tagg_selections(file, obj, proxies, logger)
     
     binary.write_byte(file, 1)
     binary.write_asciiz(file, "#EndOfFile#") # EOF signature
     binary.write_ulong(file, 0)
-    
     binary.write_float(file,get_resolution(obj)) # LOD resolution index
+    
     logger.step("Resolution signature: %d" % float(get_resolution(obj)))
     logger.step("Name: %s" % f"{data.lod_type_names[int(obj.a3ob_properties_object.lod)][0]} {obj.a3ob_properties_object.resolution}")
-    bm.free()
     
     logger.level_down()
+    
     return True
+
 
 def write_file(operator, context, file):
     logger = ProcessLogger()
@@ -462,11 +485,13 @@ def write_file(operator, context, file):
     lod_objects, materials, proxies = get_lod_data(operator, context)
     
     count_lod = len(lod_objects)
+    
     logger.log("Detected %d LOD objects" % count_lod)
     
     write_file_header(file,count_lod)
     
     logger.level_up()
+    
     exported_count = 0
     for i, obj in enumerate(lod_objects):
         time_lod_start = time.time()
@@ -479,8 +504,8 @@ def write_file(operator, context, file):
         bpy.data.meshes.remove(obj.data, do_unlink=True)
         
         logger.log("Done in %f sec" % (time.time() - time_lod_start))
+        
     logger.level_down()
-    
     logger.step("")
     logger.step("P3D export finished in %f sec" % (time.time() - time_file_start))
     

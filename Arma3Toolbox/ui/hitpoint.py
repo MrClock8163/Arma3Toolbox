@@ -2,6 +2,7 @@ import bpy
 
 from ..utilities import clouds as cloudutils
 
+
 class A3OB_OT_hitpoints_generate(bpy.types.Operator):
     """Create hit points cloud from shape"""
     
@@ -17,7 +18,8 @@ class A3OB_OT_hitpoints_generate(bpy.types.Operator):
     def execute(self, context):        
         cloudutils.generate_hitpoints(self, context)
         return {'FINISHED'}
-        
+
+
 class A3OB_PT_hitpoints(bpy.types.Panel):   
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
@@ -42,33 +44,39 @@ class A3OB_PT_hitpoints(bpy.types.Panel):
             cloudutils.validate_references(wm_props.source, wm_props.target)
         
         layout = self.layout
+        
         layout.prop_search(wm_props, "source", scene, "objects")
         layout.prop_search(wm_props, "target", scene, "objects")
+        
         col = layout.column(align=True)
         col.prop(wm_props,"spacing")
+        
         col_bevel = layout.column(align=True, heading="Bevel:")
         col_bevel.prop(wm_props, "bevel_offset", text="Offset")
         col_bevel.prop(wm_props, "bevel_segments", text="Segments")
         col_bevel.separator()
-        row = col_bevel.row(align=True)
-        row.use_property_split = True
-        row.use_property_decorate = False
-        row.prop(wm_props, "triangulate", text="Triangulate", expand=True)
+        row_triangulate = col_bevel.row(align=True)
+        row_triangulate.use_property_split = True
+        row_triangulate.use_property_decorate = False
+        row_triangulate.prop(wm_props, "triangulate", text="Triangulate", expand=True)
         
         col_selection = layout.column(align=True, heading="Selection:")
         col_selection.prop(wm_props, "selection", text="", icon='MESH_DATA')
         
         layout.operator("a3ob.hitpoints_generate", text="Generate", icon='LIGHTPROBE_GRID')
-        
+
+
 classes = (
     A3OB_OT_hitpoints_generate,
     A3OB_PT_hitpoints
 )
-    
+
+
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-    
+
+
 def unregister():
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

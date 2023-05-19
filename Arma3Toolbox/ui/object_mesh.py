@@ -4,6 +4,7 @@ from ..utilities import generic as utils
 from ..utilities import data
 from ..utilities import proxy as proxyutils
 
+
 class A3OB_OT_proxy_add(bpy.types.Operator):
     """Add Arma 3 proxy object and parent to the active object"""
     
@@ -18,14 +19,13 @@ class A3OB_OT_proxy_add(bpy.types.Operator):
         
     def execute(self, context):
         obj = context.active_object
-        
         proxy_object = proxyutils.create_proxy()
         proxy_object.location = context.scene.cursor.location
         obj.users_collection[0].objects.link(proxy_object)
         proxy_object.parent = obj
-        
         return {'FINISHED'}
-        
+
+
 class A3OB_OT_proxy_common(bpy.types.Operator):
     """Paste a common proxy model path"""
     
@@ -71,11 +71,11 @@ class A3OB_OT_proxy_common(bpy.types.Operator):
         
         if len(wm.a3ob_proxy_common) > 0 and wm.a3ob_proxy_common_index in range(len(wm.a3ob_proxy_common)):
             new_item = wm.a3ob_proxy_common[wm.a3ob_proxy_common_index]
-            
             obj.a3ob_properties_object_proxy.proxy_path = new_item.path
             
         return {'FINISHED'}
-    
+
+
 class A3OB_OT_namedprops_add(bpy.types.Operator):
     """Add named property to the active object"""
     
@@ -90,14 +90,13 @@ class A3OB_OT_namedprops_add(bpy.types.Operator):
     def execute(self, context):
         obj = context.active_object
         object_props = obj.a3ob_properties_object
-        
         item = object_props.properties.add()
         item.name = "New property"
         item.value = "no value"
-        
         object_props.property_index = len(object_props.properties) - 1
         
         return {'FINISHED'}
+
 
 class A3OB_OT_namedprops_remove(bpy.types.Operator):
     """Remove named property from the active object"""
@@ -109,15 +108,12 @@ class A3OB_OT_namedprops_remove(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.active_object
-        
         return obj.a3ob_properties_object.property_index != -1
         
     def execute(self, context):
         obj = context.active_object
         object_props = obj.a3ob_properties_object
-        
         index = object_props.property_index
-        
         if index != -1:
             object_props.properties.remove(index)
             if len(object_props.properties) == 0:
@@ -126,7 +122,8 @@ class A3OB_OT_namedprops_remove(bpy.types.Operator):
                 object_props.property_index = len(object_props.properties) - 1            
         
         return {'FINISHED'}
-        
+
+
 class A3OB_OT_namedprops_common(bpy.types.Operator):
     """Add a common named property"""
     
@@ -160,24 +157,25 @@ class A3OB_OT_namedprops_common(bpy.types.Operator):
         wm = context.window_manager
         
         if len(wm.a3ob_namedprops_common) > 0 and wm.a3ob_namedprops_common_index in range(len(wm.a3ob_namedprops_common)):
-            newItem = wm.a3ob_namedprops_common[wm.a3ob_namedprops_common_index]
-            
+            new_item = wm.a3ob_namedprops_common[wm.a3ob_namedprops_common_index]
             object_props = obj.a3ob_properties_object
             item = object_props.properties.add()
-            item.name = newItem.name
-            item.value = newItem.value
-            
+            item.name = new_item.name
+            item.value = new_item.value
             object_props.property_index = len(object_props.properties) - 1
         
         return {'FINISHED'}
 
+
 class A3OB_UL_namedprops(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         layout.label(text=f"{item.name} = {item.value}")
-        
+
+
 class A3OB_UL_common_proxies(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         layout.label(text=item.name)
+
 
 class A3OB_PT_object_mesh(bpy.types.Panel):
     bl_region_type = 'WINDOW'
@@ -201,17 +199,17 @@ class A3OB_PT_object_mesh(bpy.types.Panel):
         object_props = obj.a3ob_properties_object
         
         layout = self.layout
-        
         layout.prop(object_props, "is_a3_lod", text="Is P3D LOD", toggle=1)
+        
         layout.use_property_split = True
         layout.use_property_decorate = False
         
         if object_props.is_a3_lod:
             layout.prop(object_props, "lod", text="Type")
-            
             if int(object_props.lod) in data.lod_resolution_position.keys():
                 layout.prop(object_props, "resolution")
-        
+
+
 class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
     bl_region_type = 'WINDOW'
     bl_space_type = 'PROPERTIES'
@@ -222,14 +220,13 @@ class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
     @classmethod
     def poll(cls, context):
         obj = context.active_object
-        
         return obj.a3ob_properties_object.is_a3_lod and not obj.a3ob_properties_object_proxy.is_a3_proxy
     
     def draw(self, context):
         obj = context.active_object
         object_props = obj.a3ob_properties_object
-        layout = self.layout
         
+        layout = self.layout
         row = layout.row()
         col_list = row.column()
         col_list.template_list("A3OB_UL_namedprops", "A3OB_namedprops", object_props, "properties", object_props, "property_index")
@@ -245,7 +242,8 @@ class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
         col_operators.operator("a3ob.namedprops_remove", text="", icon='REMOVE')
         col_operators.separator()
         col_operators.operator("a3ob.namedprops_common", icon='PASTEDOWN', text="")
-        
+
+
 class A3OB_PT_object_proxy(bpy.types.Panel):
     bl_region_type = 'WINDOW'
     bl_space_type = 'PROPERTIES'
@@ -256,7 +254,6 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
     @classmethod
     def poll(cls, context):
         obj = context.active_object
-        
         return obj.type == 'MESH' and obj.a3ob_properties_object_proxy.is_a3_proxy
         
         # return (context.active_object
@@ -267,8 +264,8 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
     def draw(self, context):
         obj = context.active_object
         object_props = obj.a3ob_properties_object_proxy
-        layout = self.layout
         
+        layout = self.layout
         row = layout.row()
         row.prop(object_props, "is_a3_proxy", text="Is Arma 3 Proxy", toggle=1)
         row.enabled = False
@@ -277,15 +274,17 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
         layout.use_property_decorate = False
         
         layout.separator()
-        path_row = layout.row(align=True)
-        path_row.operator('a3ob.proxy_common', text="", icon='PASTEDOWN')
-        path_row.prop(object_props, "proxy_path", text="", icon='MESH_CUBE')
+        row_path = layout.row(align=True)
+        row_path.operator('a3ob.proxy_common', text="", icon='PASTEDOWN')
+        row_path.prop(object_props, "proxy_path", text="", icon='MESH_CUBE')
         layout.prop(object_props, "proxy_index", text="")
-        
+
+
 def menu_func(self, context):
     self.layout.separator()
     self.layout.operator(A3OB_OT_proxy_add.bl_idname, icon='EMPTY_ARROWS')
-        
+
+
 classes = (
     A3OB_OT_proxy_add,
     A3OB_OT_proxy_common,
@@ -298,13 +297,15 @@ classes = (
     A3OB_PT_object_mesh_namedprops,
     A3OB_PT_object_proxy
 )
-    
+
+
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
         
     bpy.types.VIEW3D_MT_add.append(menu_func)
-    
+
+
 def unregister():
     bpy.types.VIEW3D_MT_add.remove(menu_func)
     

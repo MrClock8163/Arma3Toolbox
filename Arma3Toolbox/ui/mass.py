@@ -2,6 +2,7 @@ import bpy
 
 from ..utilities import properties as proputils
 
+
 class A3OB_OT_vertex_mass_set(bpy.types.Operator):
     """Set same mass on all selected vertices"""
     
@@ -15,10 +16,9 @@ class A3OB_OT_vertex_mass_set(bpy.types.Operator):
         
     def execute(self, context):
         obj = context.active_object
-        
         proputils.set_selection_mass_each(obj, obj.a3ob_selection_mass_target)
-        
         return {'FINISHED'}
+
 
 class A3OB_OT_vertex_mass_distribute(bpy.types.Operator):
     """Distribute mass equally to selected vertices"""
@@ -33,10 +33,10 @@ class A3OB_OT_vertex_mass_distribute(bpy.types.Operator):
         
     def execute(self, context):
         obj = context.active_object
-        
         proputils.set_selection_mass_distribute(obj, obj.a3ob_selection_mass_target)
         return {'FINISHED'}
-        
+
+
 class A3OB_OT_vertex_mass_clear(bpy.types.Operator):
     """Remove vertex mass data layer"""
     
@@ -50,10 +50,9 @@ class A3OB_OT_vertex_mass_clear(bpy.types.Operator):
         
     def execute(self, context):
         obj = context.active_object
-        
         proputils.clear_selection_masses(obj)
-        
         return {'FINISHED'}
+
 
 class A3OB_PT_vertex_mass(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
@@ -91,17 +90,20 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
         col.separator()
         col.operator("a3ob.vertex_mass_clear")
 
+
 classes = (
     A3OB_PT_vertex_mass,
     A3OB_OT_vertex_mass_set,
     A3OB_OT_vertex_mass_distribute,
     A3OB_OT_vertex_mass_clear
 )
-    
+
+
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-    
+
+
 def unregister():
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

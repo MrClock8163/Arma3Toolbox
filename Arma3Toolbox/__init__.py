@@ -11,6 +11,7 @@ bl_info = {
     "category": "3D View"
 }
 
+
 if "bpy" in locals():
     import importlib
 
@@ -35,12 +36,13 @@ else:
     from .props import object
     from .props import rvmat
 
+
 import bpy
+
 
 class A3OB_AT_preferences(bpy.types.AddonPreferences):
     bl_idname = __name__
     
-    # Tab selection
     tabs: bpy.props.EnumProperty(
         name = "Tabs",
         description = "",
@@ -50,34 +52,28 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
             ('PATHS',"Paths","File path related settings",'FILE_TICK',1)
         )
     )
-    
-    # Arma 3 Tools settings
     a3_tools: bpy.props.StringProperty(
         description = "Install directory of the official Arma 3 Tools",
         name = "Path",
         default = "",
         subtype = 'DIR_PATH'
     )
-    
     project_root: bpy.props.StringProperty (
         name = "Project Root",
         description = "Root directory of the project (should be P:\ for most cases)",
         default = "P:\\",
         subtype = 'DIR_PATH'
     )
-    
     export_relative: bpy.props.BoolProperty (
         name = "Export Relative",
         description = "Export file paths as relative to the project root",
         default = True
     )
-    
     import_absolute: bpy.props.BoolProperty (
         name = "Reconstruct Absolute Paths",
         description = "Attempt to reconstruct absolute file paths during import (based on the project root)",
         default = True
     )
-    
     custom_data: bpy.props.StringProperty (
         name = "Custom Data",
         description = "Path to JSON file containing data for custom preset list items (common named properties and proxies)",
@@ -91,21 +87,24 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         col = layout.column(align=True)
         row = col.row(align=True)
         row.prop(self,"tabs",expand=True)
-
         box = col.box()
         box.use_property_split = True
         box.use_property_decorate = False
+        
         if self.tabs == 'GENERAL':
             box.prop(self,"a3_tools",text="Arma 3 Tools",icon='TOOL_SETTINGS')
+            
         elif self.tabs == 'PATHS':
             box.prop(self,"project_root",icon='DISK_DRIVE')
             box.prop(self,"export_relative")
             box.prop(self,"import_absolute")
             box.prop(self,"custom_data",icon='PRESET')
 
+
 classes = (
     A3OB_AT_preferences,
 )
+
 
 def register():
     from bpy.utils import register_class
@@ -127,6 +126,7 @@ def register():
     
     print("Register done")
 
+
 def unregister():
     from bpy.utils import unregister_class
 
@@ -142,6 +142,7 @@ def unregister():
     object_mesh.unregister()
     utilities.unregister()
     import_export.unregister()
+    
     
 if __name__ == "__main__":
     register()

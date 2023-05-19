@@ -3,7 +3,7 @@ import bpy
 from ..utilities import structure as structutils
 from ..utilities import generic as utils
 
-# Menus
+
 class A3OB_MT_object_builder_topo(bpy.types.Menu):
     """Object Builder topology functions"""
     
@@ -12,6 +12,7 @@ class A3OB_MT_object_builder_topo(bpy.types.Menu):
     def draw(self, context):
         self.layout.operator(A3OB_OT_check_closed.bl_idname)
         self.layout.operator(A3OB_OT_find_components.bl_idname)
+
 
 class A3OB_MT_object_builder_convexity(bpy.types.Menu):
     """Object Builder convexity functions"""
@@ -22,7 +23,8 @@ class A3OB_MT_object_builder_convexity(bpy.types.Menu):
         self.layout.operator(A3OB_OT_check_convexity.bl_idname)
         self.layout.operator(A3OB_OT_convex_hull.bl_idname)
         self.layout.operator(A3OB_OT_component_convex_hull.bl_idname)
-        
+
+
 class A3OB_MT_object_builder_misc(bpy.types.Menu):
     """Object Builder miscellaneous functions"""
     
@@ -30,6 +32,7 @@ class A3OB_MT_object_builder_misc(bpy.types.Menu):
     
     def draw(self, context):
         self.layout.operator(A3OB_OT_cleanup_vertex_groups.bl_idname)
+
 
 class A3OB_MT_object_builder(bpy.types.Menu):
     """Arma 3 Object Builder utility functions"""
@@ -41,7 +44,7 @@ class A3OB_MT_object_builder(bpy.types.Menu):
         self.layout.menu("A3OB_MT_object_builder_convexity")
         self.layout.menu("A3OB_MT_object_builder_misc")
 
-# Operators
+
 class A3OB_OT_check_convexity(bpy.types.Operator):
     """Find concave edges"""
     
@@ -65,6 +68,7 @@ class A3OB_OT_check_convexity(bpy.types.Operator):
         
         return {'FINISHED'}
 
+
 class A3OB_OT_check_closed(bpy.types.Operator):
     """Find non-closed parts of model"""
     
@@ -77,10 +81,9 @@ class A3OB_OT_check_closed(bpy.types.Operator):
         return len(context.selected_objects) == 1 and obj and obj.type == 'MESH'
     
     def execute(self,context):
-        
         structutils.check_closed()
-        
         return {'FINISHED'}
+
 
 class A3OB_OT_convex_hull(bpy.types.Operator):
     """Calculate convex hull for entire object"""
@@ -97,9 +100,9 @@ class A3OB_OT_convex_hull(bpy.types.Operator):
         mode = bpy.context.object.mode
         structutils.convex_hull()
         bpy.ops.object.mode_set(mode=mode)
-        
         return {'FINISHED'}
-    
+
+
 class A3OB_OT_component_convex_hull(bpy.types.Operator):
     """Create convex named component selections"""
     
@@ -115,8 +118,8 @@ class A3OB_OT_component_convex_hull(bpy.types.Operator):
         mode = bpy.context.object.mode
         structutils.find_components(True)
         bpy.ops.object.mode_set(mode=mode)
-        
         return {'FINISHED'}
+
 
 class A3OB_OT_find_components(bpy.types.Operator):
     """Create named component selections"""
@@ -133,9 +136,9 @@ class A3OB_OT_find_components(bpy.types.Operator):
         mode = bpy.context.object.mode
         structutils.find_components()
         bpy.ops.object.mode_set(mode=mode)
-        
         return {'FINISHED'}
-        
+
+
 class A3OB_OT_cleanup_vertex_groups(bpy.types.Operator):
     """Cleanup vertex groups with no vertices assigned"""
     
@@ -154,12 +157,14 @@ class A3OB_OT_cleanup_vertex_groups(bpy.types.Operator):
         bpy.ops.object.mode_set(mode='OBJECT')
         
         removed = structutils.cleanup_vertex_groups(obj)
+        
         bpy.ops.object.mode_set(mode=mode)
         
         self.report({'INFO'} ,f"Removed {removed} unused vertex group(s) from {obj.name}")
         utils.show_info_box(f"Removed {removed} unused vertex group(s) from {obj.name}", "Info", 'INFO')
         
         return {'FINISHED'}
+
 
 class A3OB_OT_redefine_vertex_group(bpy.types.Operator):
     """Remove vertex group and recreate it with the selected verticies assigned"""
@@ -175,8 +180,8 @@ class A3OB_OT_redefine_vertex_group(bpy.types.Operator):
     def execute(self, context):
         obj = context.active_object
         structutils.redefine_vertex_group(obj)
-        
         return {'FINISHED'}
+
 
 classes = (
     A3OB_OT_check_convexity,
@@ -192,10 +197,12 @@ classes = (
     A3OB_MT_object_builder_misc
 )
 
+
 def menu_func(self, context):
     self.layout.separator()
     self.layout.menu("A3OB_MT_object_builder")
-    
+
+
 def vertex_groups_func(self, context):
     layout = self.layout
     row = layout.row(align=True)
@@ -203,6 +210,7 @@ def vertex_groups_func(self, context):
     row.operator(A3OB_OT_find_components.bl_idname, text="", icon='STICKY_UVS_DISABLE')
     row.operator(A3OB_OT_redefine_vertex_group.bl_idname, text="", icon='PASTEDOWN')
     row.operator(A3OB_OT_cleanup_vertex_groups.bl_idname, text="", icon='TRASH')
+
 
 def register():
     from bpy.utils import register_class
@@ -212,6 +220,7 @@ def register():
     
     bpy.types.VIEW3D_MT_editor_menus.append(menu_func)
     bpy.types.DATA_PT_vertex_groups.append(vertex_groups_func)
+
 
 def unregister():
     from bpy.utils import unregister_class

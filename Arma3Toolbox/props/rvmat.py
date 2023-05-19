@@ -2,6 +2,7 @@ import bpy
 
 from ..utilities import data
 
+
 class A3OB_PG_properties_material(bpy.types.PropertyGroup):
     texture_type: bpy.props.EnumProperty ( 
         name = "Texture Source",
@@ -55,17 +56,20 @@ class A3OB_PG_properties_material(bpy.types.PropertyGroup):
         # description = "Name of the selection to create for the material (leave empty to not create selection)",
         # default = ""
     # )
-    
+
+
 classes = (
     A3OB_PG_properties_material,
 )
+
 
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     
     bpy.types.Material.a3ob_properties_material = bpy.props.PointerProperty (type=A3OB_PG_properties_material)
-    
+
+
 def unregister():
     del bpy.types.Material.a3ob_properties_material
     

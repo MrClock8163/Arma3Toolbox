@@ -3,25 +3,24 @@ import bpy_extras
 
 from ..io import import_p3d, export_p3d
 
+
 class A3OB_OP_import_p3d(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
     """Import Arma 3 MLOD P3D"""
+    
     bl_idname = "a3ob.import_p3d"
     bl_label = "Import P3D"
     bl_options = {'UNDO', 'PRESET'}
-    
     filename_ext = ".p3d"
     
     filter_glob: bpy.props.StringProperty (
         default = "*.p3d",
         options = {'HIDDEN'}
     )
-    
     enclose: bpy.props.BoolProperty (
         name = "Enclose In Collection",
         description = "Enclose LODs in collection named after the original file",
         default = True
     )
-    
     groupby: bpy.props.EnumProperty (
         name = "Group By",
         description = "Include LODs in collections according to the selection",
@@ -32,7 +31,6 @@ class A3OB_OP_import_p3d(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
             # ('CONTEXT',"Context","Group LODs by context")
         )
     )
-    
     # preserve_normals: bpy.props.BoolProperty (
     #     name = "Custom Normals",
     #     description = "Attempt to import the split vertex normals of visual LODs (may not work with certain files)",
@@ -44,13 +42,11 @@ class A3OB_OP_import_p3d(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
     #     description = "Create materials for every texture - RVMAT combination in the P3D",
     #     default = True
     # )
-    
     additional_data_allowed: bpy.props.BoolProperty (
         name = "Allow Additinal Data",
         description = "Import data in addition to the LOD geometries themselves",
         default = True
     )
-    
     additional_data: bpy.props.EnumProperty (
         name = "Data",
         options = {'ENUM_FLAG'},
@@ -65,13 +61,11 @@ class A3OB_OP_import_p3d(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         description = "Data to import in addition to the LOD meshes themselves",
         default = {'NORMALS', 'PROPS', 'MASS', 'SELECTIONS', 'UV', 'MATERIALS'}
     )
-    
     validate_meshes: bpy.props.BoolProperty (
         name = "Validate Meshes",
         description = "Validate LOD meshes after creation, and clean up duplicate faces and other problematic geometry",
         default = True
     )
-    
     proxy_action: bpy.props.EnumProperty (
         name = "Proxy Action",
         description = "Post-import handling of proxies",
@@ -88,7 +82,7 @@ class A3OB_OP_import_p3d(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
     
     def execute(self, context):
         
-        file = open(self.filepath, "rb")
+        with open(self.filepath, "rb") as file:
         # filename = os.path.basename(self.filepath)
         
         # if not self.enclose:
@@ -106,12 +100,13 @@ class A3OB_OP_import_p3d(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
             # utils.show_infoBox(str(e),"Unexpected I/O error",'ERROR')
             
         # import_p3d.import_file(context,file,self.groupby,self.preserve_normals,self.validate_meshes,self.setup_materials,filename.strip()) # Allow exceptions for testing
-        import_p3d.read_file(self, context, file) # Allow exceptions for testing
+            import_p3d.read_file(self, context, file) # Allow exceptions for testing
         
-        file.close()
+        # file.close()
         
         return {'FINISHED'}
-        
+
+
 class A3OB_PT_import_p3d_main(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
@@ -130,12 +125,12 @@ class A3OB_PT_import_p3d_main(bpy.types.Panel):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False
-        
         sfile = context.space_data
         operator = sfile.active_operator
         
         layout.prop(operator,"validate_meshes")
-        
+
+
 class A3OB_PT_import_p3d_collections(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
@@ -153,13 +148,13 @@ class A3OB_PT_import_p3d_collections(bpy.types.Panel):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False
-        
         sfile = context.space_data
         operator = sfile.active_operator
         
         layout.prop(operator, "enclose")
         layout.prop(operator, "groupby")
-        
+
+
 class A3OB_PT_import_p3d_data(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
@@ -177,16 +172,17 @@ class A3OB_PT_import_p3d_data(bpy.types.Panel):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False
-        
         sfile = context.space_data
         operator = sfile.active_operator
         
         col = layout.column(heading="Additional data")
         col.prop(operator, "additional_data_allowed", text="")
+        
         col_enum = col.column()
         col_enum.enabled = operator.additional_data_allowed
         col_enum.prop(operator, "additional_data", text=" ") # text=" " otherwise the enum is stretched accross the panel
-        
+
+
 class A3OB_PT_import_p3d_proxies(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
@@ -204,7 +200,6 @@ class A3OB_PT_import_p3d_proxies(bpy.types.Panel):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False
-        
         sfile = context.space_data
         operator = sfile.active_operator
         
@@ -218,44 +213,39 @@ class A3OB_PT_import_p3d_proxies(bpy.types.Panel):
         else:
             col = layout.column(align=True)
             col.prop(operator, "proxy_action", expand=True)
-        
+
+
 class A3OB_OP_export_p3d(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
     """Export to Arma 3 MLOD P3D"""
     bl_idname = "a3ob.export_p3d"
     bl_label = "Export P3D"
     bl_options = {'UNDO', 'PRESET'}
-    
     filename_ext = ".p3d"
     
     filter_glob: bpy.props.StringProperty (
         default = "*.p3d",
         options = {'HIDDEN'}
     )
-    
     preserve_normals: bpy.props.BoolProperty (
         name = "Custom Normals",
         description = "Export the custom split edge normals",
         default = True
     )
-    
     validate_meshes: bpy.props.BoolProperty (
         name = "Validate Meshes",
         description = "Clean up invalid geometry before export (eg.: duplicate faces, edges, vertices)",
         default = True
     )
-    
     use_selection: bpy.props.BoolProperty (
         name = "Selected Only",
         description = "Export only selected objects",
         default = False
     )
-    
     apply_transforms: bpy.props.BoolProperty (
         name = "Apply Transforms",
         description = "Apply space transformations to the exported model data",
         default = True
     )
-    
     apply_modifiers: bpy.props.BoolProperty (
         name = "Apply Modifiers",
         description = "Apply the assigned modifiers to the LOD objects during export",
@@ -267,19 +257,16 @@ class A3OB_OP_export_p3d(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
     
     def execute(self, context):
         if export_p3d.can_export(self, context):
-            
-            file = open(self.filepath, "wb")
-            
-            lod_count, exported_count = export_p3d.write_file(self, context, file)
-            
-            file.close()
-            
+            with open(self.filepath, "wb") as file:
+                lod_count, exported_count = export_p3d.write_file(self, context, file)
+
             self.report({'INFO'}, f"Succesfully exported {exported_count}/{lod_count} LODs")
         else:
             self.report({'INFO'}, "There are no LODs to export")
         
         return {'FINISHED'}
-        
+
+
 class A3OB_PT_export_p3d_include(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
@@ -297,13 +284,13 @@ class A3OB_PT_export_p3d_include(bpy.types.Panel):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False
-        
         sfile = context.space_data
         operator = sfile.active_operator
         
         col = layout.column(heading="Limit To", align=True)
         col.prop(operator, "use_selection")
-        
+
+
 class A3OB_PT_export_p3d_meshes(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
@@ -321,7 +308,6 @@ class A3OB_PT_export_p3d_meshes(bpy.types.Panel):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False
-        
         sfile = context.space_data
         operator = sfile.active_operator
         
@@ -330,7 +316,8 @@ class A3OB_PT_export_p3d_meshes(bpy.types.Panel):
         col.prop(operator, "apply_modifiers")
         col.prop(operator, "apply_transforms")
         col.prop(operator, "preserve_normals")
-        
+
+
 classes = (
     A3OB_OP_import_p3d,
     A3OB_PT_import_p3d_main,
@@ -341,20 +328,24 @@ classes = (
     A3OB_PT_export_p3d_include,
     A3OB_PT_export_p3d_meshes
 )
-        
+
+
 def menu_func_import(self, context):
     self.layout.operator(A3OB_OP_import_p3d.bl_idname, text="Arma 3 model (.p3d)")
-        
+
+
 def menu_func_export(self, context):
     self.layout.operator(A3OB_OP_export_p3d.bl_idname, text="Arma 3 model (.p3d)")
-    
+
+
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
         
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
-    
+
+
 def unregister():
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

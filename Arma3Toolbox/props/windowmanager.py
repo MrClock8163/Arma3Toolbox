@@ -2,9 +2,11 @@ import bpy
 
 from . import object as objectprops
 
+
 def mesh_object_poll(self,object):
     return object.type == 'MESH'
-    
+
+
 class A3OB_PG_common_proxy(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty (
         name = "Name",
@@ -16,6 +18,7 @@ class A3OB_PG_common_proxy(bpy.types.PropertyGroup):
         description = "File path of the proxy model",
         default = ""
     )
+
 
 class A3OB_PG_hitpoint_generator(bpy.types.PropertyGroup):
     source: bpy.props.PointerProperty (
@@ -66,11 +69,13 @@ class A3OB_PG_hitpoint_generator(bpy.types.PropertyGroup):
         description = "Vertex group to add the generated points to",
         default = ""
     )
-    
+
+
 classes = (
     A3OB_PG_common_proxy,
     A3OB_PG_hitpoint_generator,
 )
+
 
 def register():
     for cls in classes:

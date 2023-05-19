@@ -16,8 +16,10 @@ from ..utilities import structure as structutils
 from ..utilities import data
 from ..utilities.logger import ProcessLogger
 
+
 def read_signature(file):
     return binary.read_char(file, 4)
+
 
 def read_file_header(file):
     signature = read_signature(file)
@@ -28,25 +30,27 @@ def read_file_header(file):
     count_lod = binary.read_ulong(file)
     
     return version, count_lod
-    
+
+
 def read_vertex(file):
     x, y, z = struct.unpack('<fff', file.read(12))
     file.read(4) # dump vertex flags
     return x, z, y
-    
+
+
 def read_normal(file):
     x, y, z = struct.unpack('<fff', file.read(12))
     return -x, -z, -y
-    
+
+
 def read_face_pseudo_vertextable(file):
     point_id, normal_id = struct.unpack('<II', file.read(8))
     file.read(8) # dump embedded UV coordinates
-    
     return point_id, normal_id
-    
+
+
 def read_face(file):
     count_sides = binary.read_ulong(file)
-    
     vertex_tables = [read_face_pseudo_vertextable(file) for i in range(count_sides)] # should instead return the individual lists to avoid unecessary data
     
     if count_sides < 4:
@@ -57,11 +61,11 @@ def read_face(file):
     material = binary.read_asciiz(file)
     
     return vertex_tables, texture, material
-    
+
+
 def decode_selection_weight(weight):
     if weight == 0:
         return 0.0
-        
     elif weight == 1:
         return 1.0
         
@@ -71,7 +75,8 @@ def decode_selection_weight(weight):
         return 0
         
     return value
-    
+
+
 def get_file_path(path, addon_prefs, extension = ""):
     path = utils.replace_slashes(path.strip().lower())
     
@@ -88,18 +93,18 @@ def get_file_path(path, addon_prefs, extension = ""):
         root = addon_prefs.project_root.strip().lower()
         if not path.startswith(root):
             absPath = os.path.join(root, path)
-            
             if os.path.exists(absPath):
                 return absPath
     
     return path
-        
+
+
 def process_taggs(file, bm, additional_data, count_verts, count_faces, logger):
     count = 0
     named_selections = []
     named_properties = {}
+    
     while True:
-        count += 1
         file.read(1)
         tagg_name = binary.read_asciiz(file)
         tagg_length = binary.read_ulong(file)
@@ -113,12 +118,11 @@ def process_taggs(file, bm, additional_data, count_verts, count_faces, logger):
         # Sharps (technically redundant with the split vertex normals, may be scrapped later)
         elif tagg_name == "#SharpEdges#" and 'NORMALS' not in additional_data:
             for i in range(int(tagg_length / (4 * 2))):
-                point1ID = binary.read_ulong(file)
-                point2ID = binary.read_ulong(file)
+                point1_id = binary.read_ulong(file)
+                point2_id = binary.read_ulong(file)
                 
-                if point1ID != point2ID:
-                    edge = bm.edges.get([bm.verts[point1ID], bm.verts[point2ID]])
-                    
+                if point1_id != point2_id:
+                    edge = bm.edges.get([bm.verts[point1_id], bm.verts[point2_id]])
                     if edge is not None:
                         edge.smooth = False
         
@@ -152,8 +156,8 @@ def process_taggs(file, bm, additional_data, count_verts, count_faces, logger):
             
         # Named selections
         elif not re.match("#.*#",tagg_name) and 'SELECTIONS' in additional_data:
-            named_selections.append(tagg_name)
             bm.verts.layers.deform.verify()
+            named_selections.append(tagg_name)
             deform = bm.verts.layers.deform.active
             
             for i in range(count_verts):
@@ -167,10 +171,13 @@ def process_taggs(file, bm, additional_data, count_verts, count_faces, logger):
         else:
             file.read(tagg_length) # dump all other TAGGs
             
+        count += 1
+            
     logger.step("Read TAGGs: %d" % count)
             
     return named_selections, named_properties
-    
+
+
 def process_materials(mesh, face_data_dict, material_dict, addon_prefs):
     blender_material_indices = {} # needed because otherwise materials and textures with same names, but in different folders may cause issues
     regex_procedural = "#\(.*?\)\w+\(.*?\)"
@@ -178,15 +185,12 @@ def process_materials(mesh, face_data_dict, material_dict, addon_prefs):
     
     for i in range(len(face_data_dict)):
         face_data = face_data_dict[i]
-    
         texture_name = face_data[1].strip()
         material_name = face_data[2].strip()
         
         blender_material = None
-        
         if (texture_name, material_name) in material_dict:
             blender_material = material_dict[(texture_name, material_name)]
-            
         else:
             blender_material = bpy.data.materials.new(f"P3D: {os.path.basename(texture_name)} :: {os.path.basename(material_name)}")
             material_props = blender_material.a3ob_properties_material
@@ -217,12 +221,13 @@ def process_materials(mesh, face_data_dict, material_dict, addon_prefs):
             mesh.materials.append(blender_material)
             blender_material_indices[blender_material] = len(mesh.materials) - 1
 
-        matIndex = blender_material_indices[blender_material]
+        material_index = blender_material_indices[blender_material]
             
-        mesh.polygons[i].material_index = matIndex
+        mesh.polygons[i].material_index = material_index
         
     return material_dict
-    
+
+
 def process_normals(mesh, face_data_dict, normals_dict):
     loop_normals = []
     for face in mesh.polygons:
@@ -230,18 +235,18 @@ def process_normals(mesh, face_data_dict, normals_dict):
         
         for i in face.loop_indices:
             loop = mesh.loops[i]
-            vertID = loop.vertex_index
+            vertex_index = loop.vertex_index
             
             for table in vertex_tables:
-                if table[0] == vertID:
+                if table[0] == vertex_index:
                     loop_normals.insert(i, normals_dict[table[1]])   
     
     mesh.normals_split_custom_set(loop_normals)
     mesh.free_normals_split()
-        
+
+
 def group_lod_data(lod_objects, groupby = 'TYPE'):    
     collections = {}
-    
     group_dict = data.lod_groups[groupby]
     
     for obj, resolution, _ in lod_objects:
@@ -254,7 +259,8 @@ def group_lod_data(lod_objects, groupby = 'TYPE'):
         collections[group_name].objects.link(obj)
             
     return collections
-    
+
+
 def build_collections(lod_objects, operator, root_collection):
 
     if operator.enclose:
@@ -270,6 +276,7 @@ def build_collections(lod_objects, operator, root_collection):
         for group in colls.values():
             root_collection.children.link(group)
 
+
 def transform_proxy(obj): # Align the object coordinate system with the proxy directions
     rotation_matrix = proxyutils.get_transform_rotation(obj)
     obj.data.transform(rotation_matrix)
@@ -277,10 +284,9 @@ def transform_proxy(obj): # Align the object coordinate system with the proxy di
     obj.a3ob_properties_object_proxy.is_a3_proxy = True
     
     translate = mathutils.Matrix.Translation(-obj.data.vertices[proxyutils.find_center_index(obj.data)].co)
-    
     obj.data.transform(translate)
-    
     obj.matrix_world @= translate.inverted()
+
 
 def process_proxies(lod_objects, operator, material_dict, addon_prefs):
     regex_proxy = "proxy:(.*)\.(\d{3})"
@@ -297,7 +303,6 @@ def process_proxies(lod_objects, operator, material_dict, addon_prefs):
                 continue
                 
             obj.vertex_groups.active = group
-            
             bpy.ops.object.vertex_group_select()
             bpy.ops.mesh.separate(type='SELECTED')
             obj.vertex_groups.remove(group)
@@ -311,7 +316,6 @@ def process_proxies(lod_objects, operator, material_dict, addon_prefs):
             
         elif operator.proxy_action == 'SEPARATE':
             for proxy_obj in proxy_objects:
-                
                 transform_proxy(proxy_obj)
                 structutils.cleanup_vertex_groups(proxy_obj)
                 
@@ -319,11 +323,9 @@ def process_proxies(lod_objects, operator, material_dict, addon_prefs):
                     name = group.name
                     
                     if name not in proxy_selections_dict:
-                        # print(name)
                         continue
                     
                     proxy_data = re.match(regex_proxy, proxy_selections_dict[name])
-
                     proxy_obj.vertex_groups.remove(group)
                     proxy_data_groups = proxy_data.groups()
                     proxy_obj.a3ob_properties_object_proxy.proxy_path = get_file_path(proxy_data_groups[0], addon_prefs, ".p3d")
@@ -331,10 +333,10 @@ def process_proxies(lod_objects, operator, material_dict, addon_prefs):
                 
                 proxy_obj.data.materials.clear()
                 proxy_obj.data.materials.append(material_dict[("", "")])
-                
                 proxy_obj.parent = obj
                 
         bpy.ops.object.select_all(action='DESELECT')
+
 
 def read_lod(context, file, material_dict, additional_data, logger, addon_prefs):
     logger.level_up()
@@ -404,17 +406,16 @@ def read_lod(context, file, material_dict, additional_data, logger, addon_prefs)
     
     # Create object
     lod_index, lod_resolution = lodutils.get_lod_id(lod_resolution_signature)
-    lodName = lodutils.format_lod_name(lod_index,lod_resolution)
-    logger.step("Name: %s" % lodName)
-        
+    lod_name = lodutils.format_lod_name(lod_index,lod_resolution)
+    logger.step("Name: %s" % lod_name)
+    
     mesh.use_auto_smooth = True
     mesh.auto_smooth_angle = math.radians(180)
-    mesh.name = lodName
-    obj = bpy.data.objects.new(lodName, mesh)
+    mesh.name = lod_name
+    obj = bpy.data.objects.new(lod_name, mesh)
     
     # Setup LOD property
     object_props = obj.a3ob_properties_object
-    
     object_props.is_a3_lod = True
     try:
         object_props.lod = str(lod_index)
@@ -474,23 +475,21 @@ def read_lod(context, file, material_dict, additional_data, logger, addon_prefs)
     logger.level_down()
     return obj, lod_resolution_signature, material_dict, proxy_selections_dict
 
+
 def read_file(operator, context, file):
-    addon_prefs = utils.get_addon_preferences(context)
     logger = ProcessLogger()
     logger.step("P3D import from %s" % operator.filepath)
     
     time_file_start = time.time()
 
     additional_data = set()
-    
     if operator.additional_data_allowed:
         additional_data = operator.additional_data
     
     version, count_lod = read_file_header(file)
     
     logger.log(f"File version: {version}")
-    logger.log(f"Number of lod_data: {count_lod}")
-    
+    logger.log(f"Number of LODs: {count_lod}")
     
     if version != 257:
         raise IOError(f"Unsupported file version: {version}")
@@ -504,6 +503,8 @@ def read_file(operator, context, file):
         }
     
     logger.level_up()
+    
+    addon_prefs = utils.get_addon_preferences(context)
     for i in range(count_lod):
         time_lod_start = time.time()
         logger.step("LOD %d" % i)
@@ -514,12 +515,12 @@ def read_file(operator, context, file):
             lod_object.data.validate(clean_customdata=False)
         
         lod_data.append((lod_object, lod_resolution, proxy_selections_dict))
+        
         logger.log("Done in %f sec" % (time.time() - time_lod_start))
         
     logger.level_down()
     
     root_collection = context.scene.collection
-    
     build_collections(lod_data, operator, root_collection)
     
     # Set up proxies

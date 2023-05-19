@@ -1,5 +1,6 @@
 import bpy
 
+
 class A3OB_PT_material(bpy.types.Panel):
     bl_region_type = 'WINDOW'
     bl_space_type = 'PROPERTIES'
@@ -28,30 +29,31 @@ class A3OB_PT_material(bpy.types.Panel):
         row.prop(material_props, "texture_type", expand=True)
         layout.separator()
         
-        texType = material_props.texture_type
-        if texType == 'TEX':
+        texture_type = material_props.texture_type
+        if texture_type == 'TEX':
             layout.prop(material_props, "texture_path", text="", icon='TEXTURE')
-        elif texType == 'COLOR':
+        elif texture_type == 'COLOR':
             row_color = layout.row(align=True)
             row_color.prop(material_props, "color_value", icon='COLOR')
             row_color.prop(material_props, "color_type", text="")
-        elif texType == 'CUSTOM':
+        elif texture_type == 'CUSTOM':
             layout.prop(material_props, "color_raw", text="", icon='TEXT')
         
         layout.prop(material_props, "material_path", text="", icon='MATERIAL')
-        
         layout.separator()
-        
         layout.prop(material_props, "translucent")
-        
+
+
 classes = (
     A3OB_PT_material,
 )
-    
+
+
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-    
+
+
 def unregister():
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
