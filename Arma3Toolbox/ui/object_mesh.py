@@ -23,6 +23,7 @@ class A3OB_OT_proxy_add(bpy.types.Operator):
         proxy_object.location = context.scene.cursor.location
         obj.users_collection[0].objects.link(proxy_object)
         proxy_object.parent = obj
+        proxy_object.matrix_parent_inverse = obj.matrix_world.inverted()
         return {'FINISHED'}
 
 
