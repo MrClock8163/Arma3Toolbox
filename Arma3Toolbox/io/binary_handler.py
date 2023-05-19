@@ -1,37 +1,37 @@
 import struct
     
-def readByte(file):
+def read_byte(file):
     return struct.unpack('B',file.read(1))[0]
     
-def readBytes(file,count = 1):
-    return [readByte(file) for i in range(count)]
+def read_bytes(file,count = 1):
+    return [read_byte(file) for i in range(count)]
 
-def readBool(file):
-    return readByte(file) != 0
+def read_bool(file):
+    return read_byte(file) != 0
     
-def readShort(file):
+def read_short(file):
     return struct.unpack('<h',file.read(2))[0]
     
-def readUShort(file):
+def read_ushort(file):
     return struct.unpack('<H',file.read(2))[0]
 
-def readLong(file):
+def read_long(file):
     return struct.unpack('<i',file.read(4))[0]
 
-def readULong(file):
+def read_ulong(file):
     return struct.unpack('<I',file.read(4))[0]
     
-def readFloat(file):
+def read_float(file):
     return struct.unpack('<f',file.read(4))[0]
     
-def readDouble(file):
+def read_double(file):
     return struct.unpack('<d',file.read(8))[0]
     
-def readChar(file,count = 1):
+def read_char(file,count = 1):
     chars = struct.unpack(f'{count}s',file.read(count))[0]
     return chars.decode('utf-8')
     
-def readAsciiz(file):
+def read_asciiz(file):
     res = b''
     
     while True:
@@ -43,35 +43,35 @@ def readAsciiz(file):
     
     return res.decode("utf-8")
     
-def writeByte(file,value):
+def write_byte(file,value):
     file.write(struct.pack('B',value))
     
-def writeBytes(file,values):
+def write_bytes(file,values):
     file.write(struct.pack('%dB' % len(values),*values))
     
-def writeBool(file,value):
-    writeByte(file,value)
+def write_bool(file,value):
+    write_byte(file,value)
     
-def writeShort(file,value):
+def write_short(file,value):
     file.write(struct.pack('<h',value))
     
-def writeShort(file,value):
+def write_ushort(file,value):
     file.write(struct.pack('<H',value))
     
-def writeLong(file,value):
+def write_long(file,value):
     file.write(struct.pack('<i',value))
     
-def writeULong(file,value):
+def write_ulong(file,value):
     file.write(struct.pack('<I',value))
     
-def writeFloat(file,value):
+def write_float(file,value):
     file.write(struct.pack('<f',value))
     
-def writeDouble(file,value):
+def write_double(file,value):
     file.write(struct.pack('<d',value))
     
-def writeChars(file,values):
+def write_chars(file,values):
     file.write(struct.pack('<%ds' % len(values),values.encode('ASCII')))
     
-def writeAsciiz(file,value):
+def write_asciiz(file,value):
     file.write(struct.pack('<%ds' % (len(value)+1),value.encode('ASCII')))

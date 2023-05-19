@@ -1,47 +1,49 @@
 from . import generic as utils
 from . import data
 
-def getLODid(value):
-    fraction, exponent = utils.floatNormalize(value)
+
+def get_lod_id(value):
+    fraction, exponent = utils.normalize_float(value)
 
     if exponent < 3: # Escape at resolutions
         return 0, round(value)
 
-    baseValue = utils.floor(fraction)
+    base_value = utils.floor(fraction)
 
-    if exponent in [3,16]: # LODs in these ranges have identifier values in the X.X positions not just X.0
-        baseValue = utils.floor(fraction,1)
+    if exponent in [3, 16]: # LODs in these ranges have identifier values in the X.X positions not just X.0
+        base_value = utils.floor(fraction, 1)
 
-    index = data.LODtypeIndex.get((baseValue,exponent),30)
-
-    resPosition = data.LODtypeResolutionPosition.get(index,None)
-    resolution = 0
-
-    if resPosition is not None:
-        resolution = int(round((fraction-baseValue)* 10**resPosition,resPosition))
-
-    return index,resolution
+    index = data.lod_type_index.get((base_value, exponent), 30)
+    resolution_position = data.lod_resolution_position.get(index, None)
     
-def getLODvalue(LODindex,resolution):    
-    if LODindex == 0:
+    resolution = 0
+    if resolution_position is not None:
+        resolution = int(round((fraction - base_value) * 10**resolution_position, resolution_position))
+
+    return index, resolution
+
+
+def get_lod_signature(index, resolution):    
+    if index == 0:
         return resolution
     
-    index = list(data.LODtypeIndex.values()).index(LODindex,0)
-    fraction, exponent = list(data.LODtypeIndex.keys())[LODindex]
+    index = list(data.lod_type_index.values()).index(index, 0)
+    fraction, exponent = list(data.lod_type_index.keys())[index]
     
-    resPosition = data.LODtypeResolutionPosition.get(index,None)
-    res = 0
+    resolution_position = data.lod_resolution_position.get(index, None)
+    resolution_signature = 0
+    if resolution_position is not None:
+        resolution_signature = resolution * 10**(exponent - resolution_position)
     
-    if resPosition is not None:
-        res = resolution*10**(exponent-resPosition)
-    
-    return fraction*10**exponent + res
-    
-def getLODname(index):
-    return data.LODdata.get(index,data.LODdata[30])[0]
-    
-def formatLODname(index,res):
-    if data.LODtypeResolutionPosition.get(index,None) is not None:
-        return f"{getLODname(index)} {res}"
+    return fraction * 10**exponent + resolution_signature
+
+
+def get_lod_name(index):
+    return data.lod_type_names.get(index,data.lod_type_names[30])[0]
+
+
+def format_lod_name(index, resolution):
+    if data.lod_resolution_position.get(index, None) is not None:
+        return f"{get_lod_name(index)} {resolution}"
         
-    return getLODname(index)
+    return get_lod_name(index)
