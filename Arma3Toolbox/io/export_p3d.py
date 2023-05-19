@@ -477,6 +477,8 @@ def write_lod(file, obj, materials, proxies, logger):
 
 
 def write_file(operator, context, file):
+    wm = context.window_manager
+    wm.progress_begin(0, 1000)
     logger = ProcessLogger()
     logger.step("P3D export to %s" % operator.filepath)
     
@@ -504,9 +506,11 @@ def write_file(operator, context, file):
         bpy.data.meshes.remove(obj.data, do_unlink=True)
         
         logger.log("Done in %f sec" % (time.time() - time_lod_start))
+        wm.progress_update(i)
         
     logger.level_down()
     logger.step("")
     logger.step("P3D export finished in %f sec" % (time.time() - time_file_start))
+    wm.progress_end()
     
     return count_lod,exported_count
