@@ -6,9 +6,8 @@ import bmesh
 from . import generic as utils
 
 
-def find_components(do_convex_hull=False):
+def find_components(obj, do_convex_hull=False):
     utils.force_mode_object()
-    obj = bpy.context.active_object
     
     # Remove pre-existing component selections
     existing_component_groups = []
@@ -26,26 +25,30 @@ def find_components(do_convex_hull=False):
     # Iterate components
     components = bpy.context.selected_objects
     bpy.ops.object.select_all(action='DESELECT')
-    component_id = 1
-    for obj in components:
+    component_id = 0
+    for component_object in components:
+        component_id += 1
+        
         bpy.context.view_layer.objects.active = obj
             
-        if len(obj.data.vertices) < 4: # Ignore proxies
+        if len(component_object.data.vertices) < 4: # Ignore proxies
             continue
         
         if do_convex_hull:
             convex_hull()
             
-        group = obj.vertex_groups.new(name=("Component%02d" % (component_id)))
-        group.add([vert.index for vert in obj.data.vertices], 1, 'REPLACE')
+        group = component_object.vertex_groups.new(name=("Component%02d" % (component_id)))
+        group.add([vert.index for vert in component_object.data.vertices], 1, 'REPLACE')
         
-        component_id += 1
+    if len(components) > 0:
+        ctx = bpy.context.copy()
+        ctx["selected_objects"] = components
+        ctx["selected_editable_objects"] = components
+        ctx["active_object"] = obj
+        
+        bpy.ops.object.join(ctx)
     
-    for obj in components:
-        obj.select_set(True)
-        
-    bpy.context.view_layer.objects.active = obj
-    bpy.ops.object.join()
+    return component_id
 
 
 def convex_hull():

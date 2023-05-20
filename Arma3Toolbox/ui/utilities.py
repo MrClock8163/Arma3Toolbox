@@ -61,10 +61,8 @@ class A3OB_OT_check_convexity(bpy.types.Operator):
         
         if concaves > 0:
             self.report({'WARNING'}, f'{name} has {concaves} concave edges')
-            utils.show_info_box(f'{name} has {concaves} concave edges', "Warning", 'ERROR')
         else:
             self.report({'INFO'}, f'{name} is convex')
-            utils.show_info_box(f'{name} is convex', "Info", 'INFO')
         
         return {'FINISHED'}
 
@@ -116,8 +114,10 @@ class A3OB_OT_component_convex_hull(bpy.types.Operator):
     
     def execute(self,context):
         mode = bpy.context.object.mode
-        structutils.find_components(True)
+        obj = context.active_object
+        count_components = structutils.find_components(obj, True)
         bpy.ops.object.mode_set(mode=mode)
+        self.report({'INFO'}, f'Created {count_components} component(s) in {obj.name}')
         return {'FINISHED'}
 
 
@@ -134,8 +134,10 @@ class A3OB_OT_find_components(bpy.types.Operator):
     
     def execute(self, context):
         mode = bpy.context.object.mode
-        structutils.find_components()
+        obj = context.active_object
+        count_components = structutils.find_components(obj)
         bpy.ops.object.mode_set(mode=mode)
+        self.report({'INFO'}, f'Created {count_components} component(s) in {obj.name}')
         return {'FINISHED'}
 
 
