@@ -1,6 +1,7 @@
 import bpy
 
 from . import object as objectprops
+from ..utilities import data
 
 
 def mesh_object_poll(self,object):
@@ -71,9 +72,28 @@ class A3OB_PG_hitpoint_generator(bpy.types.PropertyGroup):
     )
 
 
+class A3OB_PG_validation(bpy.types.PropertyGroup):
+    detect: bpy.props.BoolProperty (
+        name = "Detect Type",
+        description = "Detect LOD type when set",
+        default = True
+    )
+    lod: bpy.props.EnumProperty (
+        name = "Type",
+        description = "Type of LOD",
+        items = data.enum_lod_types_validation,
+        default = '4'
+    )
+    warning_errors: bpy.props.BoolProperty (
+        name = "Warnings Are Errors",
+        description = "Treat warnings as errors during validation",
+        default = True
+    )
+
 classes = (
     A3OB_PG_common_proxy,
     A3OB_PG_hitpoint_generator,
+    A3OB_PG_validation
 )
 
 
@@ -91,9 +111,11 @@ def register():
         default = False
     )
     bpy.types.WindowManager.a3ob_hitpoint_generator = bpy.props.PointerProperty(type=A3OB_PG_hitpoint_generator)
+    bpy.types.WindowManager.a3ob_validation = bpy.props.PointerProperty(type=A3OB_PG_validation)
     
     
 def unregister():
+    del bpy.types.WindowManager.a3ob_validation
     del bpy.types.WindowManager.a3ob_hitpoint_generator
     del bpy.types.WindowManager.a3ob_vertex_mass_enabled
     del bpy.types.WindowManager.a3ob_namedprops_common_index

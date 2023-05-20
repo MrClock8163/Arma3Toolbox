@@ -160,6 +160,26 @@ enum_lod_types = (
     ('30', "Unknown", "Unknown model layer")
 )
 
+enum_lod_types_validation = (
+    ('4', "Shadow Volume", "Shadow casting geometry"),
+    ('6', "Geometry", "Object collision geometry and occluders"),
+    ('7', "Geometry Buoyancy", "Buoyant object geometry"),
+    ('8', "Geometry PhysX", "PhysX object collision geometry"),
+    ('14', "View Geometry", "View occlusion for AI"),
+    ('15', "Fire Geometry", "Hitbox geometry"),
+    ('16', "View - Cargo Geometry", "Passenger view collision geometry and occluders"),
+    ('17', "View - Cargo Fire Geometry", "Passenger view hitbox geometry"),
+    ('19', "View - Commander Geometry", "Commander view collision geometry and occluders"),
+    ('20', "View - Commander Fire Geometry", "Commander hitbox geometry"),
+    ('21', "View - Pilot Geometry", "First person collision geometry and occluders"),
+    ('22', "View - Pilot Fire Geometry", "First person hitbox geometry"),
+    ('23', "View - Gunner Geometry", "Gunner collision geometry and occluders"),
+    ('24', "View - Gunner Fire Geometry", "Gunner view hitbox geometry"),
+    ('26', "Shadow Volume - Cargo View", "Passenger view shadow casting geometry"),
+    ('27', "Shadow Volume - Pilot View", "First person view shadow casting geometry"),
+    ('28', "Shadow Volume - Gunner View", "Gunner view shadow casting geometry")
+)
+
 common_namedprops = {
     "autocenter": "0",
     "buoyancy": "1",
