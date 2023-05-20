@@ -163,7 +163,7 @@ def validate_geometry(obj, wm_props, sub_type = False):
         if vertex.co.length > max_distance:
             max_distance = vertex.co.length
             
-    logger.step("INFO: distance of farthest point from center is %.3f meters" % max_distance)
+    logger.step("INFO: distance of farthest point from origin is %.3f meters" % max_distance)
     
     logger.step("RESULT: validation %s" % ("succeeded" if is_valid else "failed"))
         

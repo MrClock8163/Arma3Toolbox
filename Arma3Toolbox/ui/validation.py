@@ -24,7 +24,7 @@ class A3OB_OT_validate_lod(bpy.types.Operator):
             try:
                 wm_props.lod = obj.a3ob_properties_object.lod
             except:
-                self.report({'ERROR'}, "No validation rules for detected LOD type")
+                self.report({'INFO'}, "No validation rules for detected LOD type")
                 return {'FINISHED'}
         
         valid = lodutils.validate_lod(obj, wm_props)
@@ -46,10 +46,10 @@ class A3OB_PT_validation(bpy.types.Panel):
     def poll(cls, context):
         return True
         
-    # def draw_header(self, context):
-        # layout = self.layout
-        # row = layout.row(align=True)
-        # row.operator("wm.url_open", text="", icon='HELP').url = ""
+    def draw_header(self, context):
+        layout = self.layout
+        row = layout.row(align=True)
+        row.operator("wm.url_open", text="", icon='HELP').url = "https://github.com/MrClock8163/Arma3Toolbox/wiki/Tool:-Validation"
         
     def draw(self, context):
         layout = self.layout
