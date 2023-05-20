@@ -1,4 +1,8 @@
+import bpy
 import bmesh
+
+from ..utilities import generic as utils
+from ..utilities import lod as lodutils
 
 
 def can_edit_mass(context):
@@ -86,6 +90,63 @@ def clear_selection_masses(obj):
     layer = bm.verts.layers.float.get("a3ob_mass")
     bm.verts.layers.float.remove(layer)
     bmesh.update_edit_mesh(mesh)
+
+
+def calculate_volume(bm):
+    loops = bm.calc_loop_triangles()
+    
+    volume = 0
+    for face in loops:
+        v1 = face[0].vert.co
+        v2 = face[1].vert.co
+        v3 = face[2].vert.co
+        volume += v1.dot(v2.cross(v3)) / 6.0
+            
+    return volume
+    
+def set_selection_mass_density(obj, density):
+    utils.force_mode_object()
+    
+    bpy.ops.mesh.separate(type='LOOSE')
+    
+    components = bpy.context.selected_objects
+    
+    for component_object in components:
+        if len(component_object.data.polygons) == 0:
+            continue
+            
+        bm = bmesh.new()
+        bm.from_mesh(component_object.data)
+        
+        volume = calculate_volume(bm)
+        vertex_mass = volume * density / len(bm.verts)
+        
+        layer = bm.verts.layers.float.get("a3ob_mass")
+        if not layer:
+            layer = bm.verts.layers.float.new("a3ob_mass")
+            
+        for vertex in bm.verts:
+            vertex[layer] = vertex_mass
+            
+        bm.to_mesh(component_object.data)
+        bm.free()
+    
+    if len(components) > 1:
+        ctx = bpy.context.copy()
+        ctx["selected_objects"] = components
+        ctx["selected_editable_objects"] = components
+        ctx["active_object"] = obj
+        
+        bpy.ops.object.join(ctx)
+        
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    contiguous = lodutils.is_contiguous_mesh(bm)
+    bm.free()
+    
+    utils.force_mode_edit()
+    
+    return contiguous
 
 
 def add_namedprop(obj, key, value):

@@ -12,11 +12,12 @@ class A3OB_OT_vertex_mass_set(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return proputils.can_edit_mass(context)
+        return proputils.can_edit_mass(context) and context.window_manager.a3ob_mass_editor.source == 'MASS'
         
     def execute(self, context):
         obj = context.active_object
-        proputils.set_selection_mass_each(obj, obj.a3ob_selection_mass_target)
+        wm = context.window_manager
+        proputils.set_selection_mass_each(obj, wm.a3ob_mass_editor.mass)
         return {'FINISHED'}
 
 
@@ -29,11 +30,33 @@ class A3OB_OT_vertex_mass_distribute(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return proputils.can_edit_mass(context)
+        return proputils.can_edit_mass(context) and context.window_manager.a3ob_mass_editor.source == 'MASS'
         
     def execute(self, context):
         obj = context.active_object
-        proputils.set_selection_mass_distribute(obj, obj.a3ob_selection_mass_target)
+        wm = context.window_manager
+        proputils.set_selection_mass_distribute(obj, wm.a3ob_mass_editor.mass)
+        return {'FINISHED'}
+
+
+class A3OB_OT_vertex_mass_set_density(bpy.types.Operator):
+    """Calculate mass distribution from volumetric density (operates on the entire mesh)"""
+    
+    bl_idname = "a3ob.vertex_mass_set_density"
+    bl_label = "Mass From Density"
+    bl_options = {'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        return proputils.can_edit_mass(context) and context.window_manager.a3ob_mass_editor.source == 'DENSITY'
+        
+    def execute(self, context):
+        obj = context.active_object
+        wm = context.window_manager
+        contiguous = proputils.set_selection_mass_density(obj, wm.a3ob_mass_editor.density)
+        if not contiguous:
+            self.report({'WARNING'}, "Mesh is not contiguous, volume calculation gives unreliable result")
+        
         return {'FINISHED'}
 
 
@@ -68,12 +91,13 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
         row = self.layout.row(align=True)
         row.operator("wm.url_open", text="", icon='HELP').url = "https://github.com/MrClock8163/Arma3Toolbox/wiki/Tool:-Vertex-mass-editing"
         row.separator()
-        row.prop(context.window_manager, "a3ob_vertex_mass_enabled", text="")
+        row.prop(context.window_manager.a3ob_mass_editor, "enabled", text="")
         
     def draw(self, context):
         layout = self.layout
+        wm_props = context.window_manager.a3ob_mass_editor
         
-        if not context.window_manager.a3ob_vertex_mass_enabled:
+        if not wm_props.enabled:
             layout.label(text="The tools are currently disabled")
             layout.enabled = False
             return 
@@ -83,10 +107,17 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
         layout.prop(obj, "a3ob_selection_mass")
         layout.separator()
         layout.label(text="Overwrite Mass:")
-        col = layout.column(align=True)
-        col.prop(obj, "a3ob_selection_mass_target")
-        col.operator("a3ob.vertex_mass_set")
-        col.operator("a3ob.vertex_mass_distribute")
+        layout.prop(wm_props, "source", expand=True)
+        
+        col = layout.column(align=True)        
+        if wm_props.source == 'MASS':
+            col.prop(wm_props, "mass")
+            col.operator("a3ob.vertex_mass_set")
+            col.operator("a3ob.vertex_mass_distribute")
+        elif wm_props.source == 'DENSITY':
+            col.prop(wm_props, "density")
+            col.operator("a3ob.vertex_mass_set_density")
+        
         col.separator()
         col.operator("a3ob.vertex_mass_clear")
 
@@ -95,6 +126,7 @@ classes = (
     A3OB_PT_vertex_mass,
     A3OB_OT_vertex_mass_set,
     A3OB_OT_vertex_mass_distribute,
+    A3OB_OT_vertex_mass_set_density,
     A3OB_OT_vertex_mass_clear
 )
 

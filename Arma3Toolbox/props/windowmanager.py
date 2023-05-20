@@ -21,6 +21,44 @@ class A3OB_PG_common_proxy(bpy.types.PropertyGroup):
     )
 
 
+class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
+    enabled: bpy.props.BoolProperty (
+        name = "Enable Vertex Mass Tools",
+        description = "Dynamic calculation of the vertex masses can be performace heavy on large meshes",
+        default = False
+    )
+    source: bpy.props.EnumProperty (
+        name = "Source",
+        description = "Type of source for mass calculations",
+        items = (
+            ('MASS', "Mass", "The masses are calculated from discrete mass values"),
+            ('DENSITY', "Density", "The masses are calculated from volumetric density")
+        ),
+        default = 'MASS'
+    )
+    density: bpy.props.FloatProperty (
+        name = "Density",
+        description = "Volumetric density of mesh (kg/m3)",
+        default = 1.0,
+        min = 0.1,
+        max = 1000000,
+        soft_max = 1000,
+        step = 10,
+        precision = 3
+    )
+    mass: bpy.props.FloatProperty (
+        name = "Mass",
+        description = "Mass to set equally or distribute",
+        default = 0.0,
+        unit = 'MASS',
+        min = 0,
+        max = 1000000,
+        soft_max = 100000,
+        step = 10,
+        precision = 3
+    )
+
+
 class A3OB_PG_hitpoint_generator(bpy.types.PropertyGroup):
     source: bpy.props.PointerProperty (
         type=bpy.types.Object,
@@ -92,6 +130,7 @@ class A3OB_PG_validation(bpy.types.PropertyGroup):
 
 classes = (
     A3OB_PG_common_proxy,
+    A3OB_PG_mass_editor,
     A3OB_PG_hitpoint_generator,
     A3OB_PG_validation
 )
@@ -105,11 +144,7 @@ def register():
     bpy.types.WindowManager.a3ob_proxy_common_index = bpy.props.IntProperty(name="Selection Index",default = -1)
     bpy.types.WindowManager.a3ob_namedprops_common = bpy.props.CollectionProperty(type=objectprops.A3OB_PG_properties_named_property)
     bpy.types.WindowManager.a3ob_namedprops_common_index = bpy.props.IntProperty(name="Selection Index",default = -1)
-    bpy.types.WindowManager.a3ob_vertex_mass_enabled = bpy.props.BoolProperty (
-        name = "Enable Vertex Mass Tools",
-        description = "Dynamic calculation of the vertex masses can be performace heavy on large meshes",
-        default = False
-    )
+    bpy.types.WindowManager.a3ob_mass_editor = bpy.props.PointerProperty(type=A3OB_PG_mass_editor)
     bpy.types.WindowManager.a3ob_hitpoint_generator = bpy.props.PointerProperty(type=A3OB_PG_hitpoint_generator)
     bpy.types.WindowManager.a3ob_validation = bpy.props.PointerProperty(type=A3OB_PG_validation)
     
@@ -117,7 +152,7 @@ def register():
 def unregister():
     del bpy.types.WindowManager.a3ob_validation
     del bpy.types.WindowManager.a3ob_hitpoint_generator
-    del bpy.types.WindowManager.a3ob_vertex_mass_enabled
+    del bpy.types.WindowManager.a3ob_mass_editor
     del bpy.types.WindowManager.a3ob_namedprops_common_index
     del bpy.types.WindowManager.a3ob_namedprops_common
     del bpy.types.WindowManager.a3ob_proxy_common_index
