@@ -519,7 +519,7 @@ def read_file(operator, context, file):
         lod_data.append((lod_object, lod_resolution, proxy_selections_dict))
         
         logger.log("Done in %f sec" % (time.time() - time_lod_start))
-        wm.progress_update(i)
+        wm.progress_update(i+1)
         
     logger.level_down()
     

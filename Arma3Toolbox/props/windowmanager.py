@@ -39,7 +39,7 @@ class A3OB_PG_hitpoint_generator(bpy.types.PropertyGroup):
         subtype = 'XYZ',
         unit = 'LENGTH',
         min = 0.01,
-        default = (0.2,0.2,0.2),
+        default = (0.2, 0.2, 0.2),
         size = 3
     )
     bevel_offset: bpy.props.FloatProperty (
@@ -59,8 +59,8 @@ class A3OB_PG_hitpoint_generator(bpy.types.PropertyGroup):
         name = "Triangulation Order",
         description = "Triangulate before, or after bevelling",
         items = (
-            ('BEFORE',"Before","Apply triangulation before the bevel"),
-            ('AFTER',"After","Apply triangulation after the bevel")
+            ('BEFORE', "Before", "Apply triangulation before the bevel"),
+            ('AFTER', "After", "Apply triangulation after the bevel")
         ),
         default = 'AFTER'
     )

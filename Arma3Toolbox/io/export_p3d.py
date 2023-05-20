@@ -398,7 +398,6 @@ def write_lod(file, obj, materials, proxies, logger):
     
     for face in obj.data.polygons:
         if len(face.vertices) > 4:
-            OBprops = obj.a3ob_properties_object
             logger.step("N-gons detected -> skipping lod")
             return False
     
@@ -506,7 +505,7 @@ def write_file(operator, context, file):
         bpy.data.meshes.remove(obj.data, do_unlink=True)
         
         logger.log("Done in %f sec" % (time.time() - time_lod_start))
-        wm.progress_update(i)
+        wm.progress_update(i+1)
         
     logger.level_down()
     logger.step("")
