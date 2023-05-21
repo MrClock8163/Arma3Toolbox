@@ -7,6 +7,13 @@ import bpy
 from . import data
 
 
+def print_context():
+    print("=======================")
+    for attr in dir(bpy.context):
+        print(attr, eval('bpy.context.%s' %  attr))
+    print("=======================")
+
+
 def show_info_box(message, title = "", icon = 'INFO'):
     def draw(self, context):
         self.layout.label(text=message)

@@ -127,12 +127,36 @@ class A3OB_PG_validation(bpy.types.PropertyGroup):
         description = "Treat warnings as errors during validation",
         default = True
     )
+    
+    
+class A3OB_PG_conversion(bpy.types.PropertyGroup):
+    use_selection: bpy.props.BoolProperty (
+        name = "Selected Only",
+        description = "Convert only selected objects",
+        default = False
+    )
+    types: bpy.props.EnumProperty (
+        name = "Object Types",
+        description = "Only convert object of the selected types",
+        items = (
+            ('MESH', "Mesh", ""),
+        ),
+        options = {'ENUM_FLAG'},
+        default = {'MESH'}
+    )
+    cleanup: bpy.props.BoolProperty (
+        name = "Cleanup",
+        description = "Cleanup the ArmaToolbox-style settings and properties",
+        default = True
+    )
+    
 
 classes = (
     A3OB_PG_common_proxy,
     A3OB_PG_mass_editor,
     A3OB_PG_hitpoint_generator,
-    A3OB_PG_validation
+    A3OB_PG_validation,
+    A3OB_PG_conversion
 )
 
 
@@ -147,9 +171,11 @@ def register():
     bpy.types.WindowManager.a3ob_mass_editor = bpy.props.PointerProperty(type=A3OB_PG_mass_editor)
     bpy.types.WindowManager.a3ob_hitpoint_generator = bpy.props.PointerProperty(type=A3OB_PG_hitpoint_generator)
     bpy.types.WindowManager.a3ob_validation = bpy.props.PointerProperty(type=A3OB_PG_validation)
+    bpy.types.WindowManager.a3ob_conversion = bpy.props.PointerProperty(type=A3OB_PG_conversion)
     
     
 def unregister():
+    del bpy.types.WindowManager.a3ob_conversion
     del bpy.types.WindowManager.a3ob_validation
     del bpy.types.WindowManager.a3ob_hitpoint_generator
     del bpy.types.WindowManager.a3ob_mass_editor

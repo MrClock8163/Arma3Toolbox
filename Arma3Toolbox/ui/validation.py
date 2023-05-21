@@ -64,7 +64,7 @@ class A3OB_PT_validation(bpy.types.Panel):
         layout.prop(wm_props, "warning_errors")
             
         layout.separator()
-        layout.operator("a3ob.validate_for_lod", text="Validate")
+        layout.operator("a3ob.validate_for_lod", text="Validate", icon='CHECKMARK')
         
 
 classes = (
