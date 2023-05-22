@@ -187,16 +187,11 @@ class A3OB_PT_object_mesh(bpy.types.Panel):
     
     @classmethod
     def poll(cls, context):
-        obj = context.active_object
-        return (obj
-            and obj.select_get() == True
-            and obj.type == 'MESH'
-            and not obj.a3ob_properties_object_proxy.is_a3_proxy
-            
-        )
+        obj = context.object
+        return obj and obj.type == 'MESH' and obj.a3ob_properties_object.is_a3_lod and not obj.a3ob_properties_object_proxy.is_a3_proxy
         
     def draw(self, context):
-        obj = context.active_object
+        obj = context.object
         object_props = obj.a3ob_properties_object
         
         layout = self.layout
@@ -220,11 +215,11 @@ class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
     
     @classmethod
     def poll(cls, context):
-        obj = context.active_object
-        return obj.a3ob_properties_object.is_a3_lod and not obj.a3ob_properties_object_proxy.is_a3_proxy
+        obj = context.object
+        return obj and obj == 'MESH' and obj.a3ob_properties_object.is_a3_lod and not obj.a3ob_properties_object_proxy.is_a3_proxy
     
     def draw(self, context):
-        obj = context.active_object
+        obj = context.object
         object_props = obj.a3ob_properties_object
         
         layout = self.layout
@@ -254,13 +249,8 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
     
     @classmethod
     def poll(cls, context):
-        obj = context.active_object
-        return obj.type == 'MESH' and obj.a3ob_properties_object_proxy.is_a3_proxy
-        
-        # return (context.active_object
-            # and context.active_object.select_get() == True
-            # and context.active_object.type == 'MESH'
-        # )
+        obj = context.object
+        return obj and obj.type == 'MESH' and obj.a3ob_properties_object_proxy.is_a3_proxy and not obj.a3ob_properties_object.is_a3_lod
         
     def draw(self, context):
         obj = context.active_object

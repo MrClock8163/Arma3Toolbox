@@ -28,20 +28,8 @@ class A3OB_OP_import_p3d(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         items = (
             ('NONE', "None", "Import LODs without collections"),
             ('TYPE', "Type", "Group LODs by logical type (eg.: visuals, geometries, etc.)")
-            # ('CONTEXT',"Context","Group LODs by context")
         )
     )
-    # preserve_normals: bpy.props.BoolProperty (
-    #     name = "Custom Normals",
-    #     description = "Attempt to import the split vertex normals of visual LODs (may not work with certain files)",
-    #     default = True
-    # )
-    
-    # setup_materials: bpy.props.BoolProperty (
-    #     name = "Setup Materials",
-    #     description = "Create materials for every texture - RVMAT combination in the P3D",
-    #     default = True
-    # )
     additional_data_allowed: bpy.props.BoolProperty (
         name = "Allow Additinal Data",
         description = "Import data in addition to the LOD geometries themselves",

@@ -61,7 +61,7 @@ class A3OB_PT_conversion(bpy.types.Panel):
 
 classes = (
     A3OB_OT_convert_to_a3ob,
-    A3OB_PT_conversion,
+    A3OB_PT_conversion
 )
 
 

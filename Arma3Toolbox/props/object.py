@@ -50,7 +50,7 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
 class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
     is_a3_proxy: bpy.props.BoolProperty (
         name = "Arma 3 Model Proxy",
-        description = "This object is a proxy",
+        description = "This object is a proxy (cannot change manually)",
         default = False
     )
     proxy_path: bpy.props.StringProperty (
