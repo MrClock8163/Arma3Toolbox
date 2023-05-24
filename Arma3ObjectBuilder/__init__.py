@@ -1,11 +1,11 @@
 bl_info = {
     "name": "Arma 3 Object Builder",
     "description": "Collection of tools for editing Arma 3 content",
-    "author": "MrClock, Hans-Joerg \"Alwarren\" Frieden (original add-on)",
-    "version": (0, 0, 1),
+    "author": "MrClock (present add-on), Hans-Joerg \"Alwarren\" Frieden (original ArmaToolbox add-on)",
+    "version": (0, 1, 0),
     "blender": (2, 80, 0),
     "location": "Object Builder panels in various views",
-    "warning": "",
+    "warning": "Work In Progress",
     "wiki_url": "https://github.com/MrClock8163/Arma3ObjectBuilder/wiki",
     "tracker_url": "",
     "category": "3D View"
@@ -96,7 +96,10 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         box.use_property_decorate = False
         
         if self.tabs == 'GENERAL':
-            box.prop(self, "a3_tools", text="Arma 3 Tools", icon='TOOL_SETTINGS')
+            # box.prop(self, "a3_tools", text="Arma 3 Tools", icon='TOOL_SETTINGS')
+            row_label = box.row()
+            row_label.label(text="There are no settings in this category at the present time")
+            row_label.enabled = False
             
         elif self.tabs == 'PATHS':
             box.prop(self, "project_root", icon='DISK_DRIVE')
