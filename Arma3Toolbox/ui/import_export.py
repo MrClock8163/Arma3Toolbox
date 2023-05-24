@@ -332,11 +332,15 @@ def register():
         
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
+    
+    print("\t" + "UI: Import / Export")
 
 
 def unregister():
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
         
-    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
+    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
+    
+    print("\t" + "UI: Import / Export")

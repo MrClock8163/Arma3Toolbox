@@ -222,6 +222,8 @@ def register():
     
     bpy.types.VIEW3D_MT_editor_menus.append(menu_func)
     bpy.types.DATA_PT_vertex_groups.append(vertex_groups_func)
+    
+    print("\t" + "UI: Utility functions")
 
 
 def unregister():
@@ -232,3 +234,5 @@ def unregister():
 
     for cls in reversed(classes):
         unregister_class(cls)
+    
+    print("\t" + "UI: Utility functions")

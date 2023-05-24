@@ -173,6 +173,8 @@ def register():
     bpy.types.WindowManager.a3ob_validation = bpy.props.PointerProperty(type=A3OB_PG_validation)
     bpy.types.WindowManager.a3ob_conversion = bpy.props.PointerProperty(type=A3OB_PG_conversion)
     
+    print("\t" + "Properties: window manager")
+    
     
 def unregister():
     del bpy.types.WindowManager.a3ob_conversion
@@ -186,3 +188,5 @@ def unregister():
     
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
+    
+    print("\t" + "Properties: window manager")

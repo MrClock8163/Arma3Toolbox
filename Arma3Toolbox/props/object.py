@@ -94,6 +94,8 @@ def register():
         get = proputils.get_selection_mass,
         set = proputils.set_selection_mass
     )
+    
+    print("\t" + "Properties: object")
 
 
 def unregister():
@@ -103,3 +105,5 @@ def unregister():
     
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
+    
+    print("\t" + "Properties: object")

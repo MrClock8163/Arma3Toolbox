@@ -78,6 +78,8 @@ def register():
     
     for cls in classes:
         register_class(cls)
+    
+    print("\t" + "UI: Validation")
 
 
 def unregister():
@@ -85,3 +87,5 @@ def unregister():
 
     for cls in reversed(classes):
         unregister_class(cls)
+    
+    print("\t" + "UI: Validation")

@@ -295,6 +295,8 @@ def register():
         bpy.utils.register_class(cls)
         
     bpy.types.VIEW3D_MT_add.append(menu_func)
+    
+    print("\t" + "UI: mesh")
 
 
 def unregister():
@@ -302,3 +304,5 @@ def unregister():
     
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
+    
+    print("\t" + "UI: mesh")

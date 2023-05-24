@@ -113,22 +113,22 @@ classes = (
 def register():
     from bpy.utils import register_class
         
-    print("Registering Arma 3 Toolbox ( '" + __name__ + "' )")
+    print("Registering Arma 3 Object Builder ( '" + __name__ + "' )")
     
     for cls in classes:
         register_class(cls)
         
-    import_export.register()
-    utilities.register()
-    object_mesh.register()
-    mass.register()
     object.register()
     rvmat.register()
-    material.register()
     windowmanager.register()
+    import_export.register()
+    object_mesh.register()
+    material.register()
+    mass.register()
     hitpoint.register()
     validation.register()
     conversion.register()
+    utilities.register()
     
     print("Register done")
 
@@ -136,20 +136,24 @@ def register():
 def unregister():
     from bpy.utils import unregister_class
 
+    print("Unregistering Arma 3 Object Builder ( '" + __name__ + "' )")
+    
     for cls in reversed(classes):
         unregister_class(cls)
 
+    utilities.unregister()
     conversion.unregister()
     validation.unregister()
     hitpoint.unregister()
-    windowmanager.unregister()
+    mass.unregister()
     material.unregister()
+    object_mesh.unregister()
+    import_export.unregister()
+    windowmanager.unregister()
     rvmat.unregister()
     object.unregister()
-    mass.unregister()
-    object_mesh.unregister()
-    utilities.unregister()
-    import_export.unregister()
+    
+    print("Unregister done")
     
     
 if __name__ == "__main__":
