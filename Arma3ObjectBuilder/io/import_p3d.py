@@ -477,6 +477,8 @@ def read_lod(context, file, material_dict, additional_data, logger, addon_prefs)
 
 
 def read_file(operator, context, file):
+    wm = context.window_manager
+    wm.progress_begin(0, 1000)
     logger = ProcessLogger()
     logger.step("P3D import from %s" % operator.filepath)
     
@@ -517,6 +519,7 @@ def read_file(operator, context, file):
         lod_data.append((lod_object, lod_resolution, proxy_selections_dict))
         
         logger.log("Done in %f sec" % (time.time() - time_lod_start))
+        wm.progress_update(i+1)
         
     logger.level_down()
     
@@ -529,4 +532,6 @@ def read_file(operator, context, file):
                
     logger.step("")
     logger.step("P3D Import finished in %f sec" % (time.time() - time_file_start))
+    wm.progress_end()
     
+    return len(lod_data)

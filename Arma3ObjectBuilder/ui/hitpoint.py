@@ -33,7 +33,7 @@ class A3OB_PT_hitpoints(bpy.types.Panel):
     def draw_header(self, context):
         layout = self.layout
         row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP').url = "https://github.com/MrClock8163/Arma3Toolbox/wiki/Tool:-Hit-point-cloud-generator"
+        row.operator("wm.url_open", text="", icon='HELP').url = "https://github.com/MrClock8163/Arma3ObjectBuilder/wiki/Tool:-Hit-Point-Cloud"
         
     def draw(self, context):
         wm_props = context.window_manager.a3ob_hitpoint_generator
@@ -75,8 +75,12 @@ classes = (
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
+    
+    print("\t" + "UI: Hit Point Cloud")
 
 
 def unregister():
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
+    
+    print("\t" + "UI: Hit Point Cloud")

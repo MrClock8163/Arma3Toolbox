@@ -28,20 +28,8 @@ class A3OB_OP_import_p3d(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         items = (
             ('NONE', "None", "Import LODs without collections"),
             ('TYPE', "Type", "Group LODs by logical type (eg.: visuals, geometries, etc.)")
-            # ('CONTEXT',"Context","Group LODs by context")
         )
     )
-    # preserve_normals: bpy.props.BoolProperty (
-    #     name = "Custom Normals",
-    #     description = "Attempt to import the split vertex normals of visual LODs (may not work with certain files)",
-    #     default = True
-    # )
-    
-    # setup_materials: bpy.props.BoolProperty (
-    #     name = "Setup Materials",
-    #     description = "Create materials for every texture - RVMAT combination in the P3D",
-    #     default = True
-    # )
     additional_data_allowed: bpy.props.BoolProperty (
         name = "Allow Additinal Data",
         description = "Import data in addition to the LOD geometries themselves",
@@ -100,8 +88,8 @@ class A3OB_OP_import_p3d(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
             # utils.show_infoBox(str(e),"Unexpected I/O error",'ERROR')
             
         # import_p3d.import_file(context,file,self.groupby,self.preserve_normals,self.validate_meshes,self.setup_materials,filename.strip()) # Allow exceptions for testing
-            import_p3d.read_file(self, context, file) # Allow exceptions for testing
-        
+            lod_count = import_p3d.read_file(self, context, file) # Allow exceptions for testing
+            self.report({'INFO'}, f"Succesfully imported {lod_count} LODs")
         # file.close()
         
         return {'FINISHED'}
@@ -344,11 +332,15 @@ def register():
         
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
+    
+    print("\t" + "UI: Import / Export")
 
 
 def unregister():
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
         
-    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
+    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
+    
+    print("\t" + "UI: Import / Export")

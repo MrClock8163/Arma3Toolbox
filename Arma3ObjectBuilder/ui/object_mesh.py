@@ -23,6 +23,7 @@ class A3OB_OT_proxy_add(bpy.types.Operator):
         proxy_object.location = context.scene.cursor.location
         obj.users_collection[0].objects.link(proxy_object)
         proxy_object.parent = obj
+        proxy_object.matrix_parent_inverse = obj.matrix_world.inverted()
         return {'FINISHED'}
 
 
@@ -186,16 +187,11 @@ class A3OB_PT_object_mesh(bpy.types.Panel):
     
     @classmethod
     def poll(cls, context):
-        obj = context.active_object
-        return (obj
-            and obj.select_get() == True
-            and obj.type == 'MESH'
-            and not obj.a3ob_properties_object_proxy.is_a3_proxy
-            
-        )
+        obj = context.object
+        return obj and obj.type == 'MESH' and not obj.a3ob_properties_object_proxy.is_a3_proxy
         
     def draw(self, context):
-        obj = context.active_object
+        obj = context.object
         object_props = obj.a3ob_properties_object
         
         layout = self.layout
@@ -219,11 +215,11 @@ class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
     
     @classmethod
     def poll(cls, context):
-        obj = context.active_object
-        return obj.a3ob_properties_object.is_a3_lod and not obj.a3ob_properties_object_proxy.is_a3_proxy
+        obj = context.object
+        return obj and obj.type == 'MESH' and obj.a3ob_properties_object.is_a3_lod and not obj.a3ob_properties_object_proxy.is_a3_proxy
     
     def draw(self, context):
-        obj = context.active_object
+        obj = context.object
         object_props = obj.a3ob_properties_object
         
         layout = self.layout
@@ -253,13 +249,8 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
     
     @classmethod
     def poll(cls, context):
-        obj = context.active_object
-        return obj.type == 'MESH' and obj.a3ob_properties_object_proxy.is_a3_proxy
-        
-        # return (context.active_object
-            # and context.active_object.select_get() == True
-            # and context.active_object.type == 'MESH'
-        # )
+        obj = context.object
+        return obj and obj.type == 'MESH' and obj.a3ob_properties_object_proxy.is_a3_proxy and not obj.a3ob_properties_object.is_a3_lod
         
     def draw(self, context):
         obj = context.active_object
@@ -267,7 +258,7 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
         
         layout = self.layout
         row = layout.row()
-        row.prop(object_props, "is_a3_proxy", text="Is Arma 3 Proxy", toggle=1)
+        row.prop(object_props, "is_a3_proxy", text="Is P3D Proxy", toggle=1)
         row.enabled = False
         
         layout.use_property_split = True
@@ -304,6 +295,8 @@ def register():
         bpy.utils.register_class(cls)
         
     bpy.types.VIEW3D_MT_add.append(menu_func)
+    
+    print("\t" + "UI: mesh")
 
 
 def unregister():
@@ -311,3 +304,5 @@ def unregister():
     
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
+    
+    print("\t" + "UI: mesh")

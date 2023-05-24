@@ -9,16 +9,11 @@ class A3OB_PT_material(bpy.types.Panel):
     
     @classmethod
     def poll(cls, context):
-        obj = context.active_object
-        return (obj
-            and obj.select_get() == True
-            and obj.type == 'MESH'
-            and obj.active_material
-        )
+        mat = context.material
+        return mat
         
     def draw(self, context):
-        obj = context.active_object
-        material = obj.active_material
+        material = context.material
         material_props = material.a3ob_properties_material
         
         layout = self.layout
@@ -52,8 +47,12 @@ classes = (
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
+    
+    print("\t" + "UI: material")
 
 
 def unregister():
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
+    
+    print("\t" + "UI: material")

@@ -50,7 +50,7 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
 class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
     is_a3_proxy: bpy.props.BoolProperty (
         name = "Arma 3 Model Proxy",
-        description = "This object is a proxy",
+        description = "This object is a proxy (cannot change manually)",
         default = False
     )
     proxy_path: bpy.props.StringProperty (
@@ -81,7 +81,7 @@ def register():
         
     bpy.types.Object.a3ob_properties_object = bpy.props.PointerProperty(type=A3OB_PG_properties_object_mesh)
     bpy.types.Object.a3ob_properties_object_proxy = bpy.props.PointerProperty(type=A3OB_PG_properties_object_proxy)
-    bpy.types.Object.a3ob_selection_mass = bpy.props.FloatProperty (
+    bpy.types.Object.a3ob_selection_mass = bpy.props.FloatProperty ( # Can't be in property group due to reference requirements
         name = "Current Mass",
         description = "Total mass of current selection",
         default = 0.0,
@@ -94,24 +94,16 @@ def register():
         get = proputils.get_selection_mass,
         set = proputils.set_selection_mass
     )
-    bpy.types.Object.a3ob_selection_mass_target = bpy.props.FloatProperty (
-        name = "Mass",
-        description = "Mass to set equally or distribute",
-        default = 0.0,
-        unit = 'MASS',
-        min = 0,
-        max = 1000000,
-        soft_max = 100000,
-        step = 10,
-        precision = 3
-    )
+    
+    print("\t" + "Properties: object")
 
 
 def unregister():
-    del bpy.types.Object.a3ob_selection_mass_target
     del bpy.types.Object.a3ob_selection_mass
     del bpy.types.Object.a3ob_properties_object_proxy
     del bpy.types.Object.a3ob_properties_object
     
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
+    
+    print("\t" + "Properties: object")
