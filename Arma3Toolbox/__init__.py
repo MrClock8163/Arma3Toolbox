@@ -47,7 +47,7 @@ import bpy
 class A3OB_AT_preferences(bpy.types.AddonPreferences):
     bl_idname = __name__
     
-    tabs: bpy.props.EnumProperty(
+    tabs: bpy.props.EnumProperty (
         name = "Tabs",
         description = "",
         default = 'GENERAL',
@@ -56,7 +56,7 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
             ('PATHS',"Paths","File path related settings",'FILE_TICK',1)
         )
     )
-    a3_tools: bpy.props.StringProperty(
+    a3_tools: bpy.props.StringProperty (
         description = "Install directory of the official Arma 3 Tools",
         name = "Path",
         default = "",
@@ -96,13 +96,13 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         box.use_property_decorate = False
         
         if self.tabs == 'GENERAL':
-            box.prop(self,"a3_tools",text="Arma 3 Tools",icon='TOOL_SETTINGS')
+            box.prop(self, "a3_tools", text="Arma 3 Tools", icon='TOOL_SETTINGS')
             
         elif self.tabs == 'PATHS':
-            box.prop(self,"project_root",icon='DISK_DRIVE')
-            box.prop(self,"export_relative")
-            box.prop(self,"import_absolute")
-            box.prop(self,"custom_data",icon='PRESET')
+            box.prop(self, "project_root", icon='DISK_DRIVE')
+            box.prop(self, "export_relative")
+            box.prop(self, "import_absolute")
+            box.prop(self, "custom_data", icon='PRESET')
 
 
 classes = (
