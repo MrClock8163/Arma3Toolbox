@@ -1,4 +1,4 @@
-# Arma 3 Toolbox
+# Arma 3 Object Builder
 
 This fork of Alwarren's ArmAToolbox aims to clean up the old codebase, reorganize it, as well as add new features eventually.
 
