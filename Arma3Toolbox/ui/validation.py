@@ -49,7 +49,7 @@ class A3OB_PT_validation(bpy.types.Panel):
     def draw_header(self, context):
         layout = self.layout
         row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP').url = "https://github.com/MrClock8163/Arma3Toolbox/wiki/Tool:-Validation"
+        row.operator("wm.url_open", text="", icon='HELP').url = "https://github.com/MrClock8163/Arma3ObjectBuilder/wiki/Tool:-Validation"
         
     def draw(self, context):
         layout = self.layout

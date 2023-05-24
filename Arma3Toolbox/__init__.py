@@ -6,7 +6,7 @@ bl_info = {
     "blender": (2, 80, 0),
     "location": "Object Builder panels in various views",
     "warning": "",
-    "wiki_url": "https://github.com/MrClock8163/Arma3Toolbox/wiki",
+    "wiki_url": "https://github.com/MrClock8163/Arma3ObjectBuilder/wiki",
     "tracker_url": "",
     "category": "3D View"
 }
