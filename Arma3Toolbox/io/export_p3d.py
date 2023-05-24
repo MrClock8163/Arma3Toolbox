@@ -399,6 +399,7 @@ def write_lod(file, obj, materials, proxies, logger):
     for face in obj.data.polygons:
         if len(face.vertices) > 4:
             logger.step("N-gons detected -> skipping lod")
+            logger.level_down()
             return False
     
     binary.write_chars(file, "P3DM")

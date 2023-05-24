@@ -188,7 +188,7 @@ class A3OB_PT_object_mesh(bpy.types.Panel):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'MESH' and obj.a3ob_properties_object.is_a3_lod and not obj.a3ob_properties_object_proxy.is_a3_proxy
+        return obj and obj.type == 'MESH' and not obj.a3ob_properties_object_proxy.is_a3_proxy
         
     def draw(self, context):
         obj = context.object
@@ -216,7 +216,7 @@ class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj == 'MESH' and obj.a3ob_properties_object.is_a3_lod and not obj.a3ob_properties_object_proxy.is_a3_proxy
+        return obj and obj.type == 'MESH' and obj.a3ob_properties_object.is_a3_lod and not obj.a3ob_properties_object_proxy.is_a3_proxy
     
     def draw(self, context):
         obj = context.object
