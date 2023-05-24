@@ -258,7 +258,7 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
         
         layout = self.layout
         row = layout.row()
-        row.prop(object_props, "is_a3_proxy", text="Is Arma 3 Proxy", toggle=1)
+        row.prop(object_props, "is_a3_proxy", text="Is P3D Proxy", toggle=1)
         row.enabled = False
         
         layout.use_property_split = True
