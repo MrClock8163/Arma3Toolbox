@@ -26,7 +26,7 @@ def read_raster(file, ncols, nrows, vscale = 0.01):
     
     if len(data) != ncols * nrows:
         raise IOError("Raster value table is incomplete")
-        
+    
     return data
     
     
@@ -42,7 +42,7 @@ def build_points(values, ncols, nrows, cellsize, centered):
     points = []
     for i in range(nrows):
         for j in range(ncols):
-            points.append((start_x + i * cellsize, start_y + j * -cellsize, values[i*ncols + j]))
+            points.append((start_x + j * cellsize, start_y + i * -cellsize, values[i*ncols + j]))
             
     return points
     
@@ -65,7 +65,7 @@ def read_file(operator, context, file):
         
     values = []
     try:
-        values = read_raster(file, params["ncols"], params["nrows"], 0.01)
+        values = read_raster(file, params["ncols"], params["nrows"], operator.vertical_scale)
     except:
         return False
     

@@ -5,7 +5,7 @@ from ..io import import_asc
 
 
 class A3OB_OP_import_asc(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
-    """Import Esri grid (ASCII)"""
+    """Import Esri ASCII grid as DTM"""
     
     bl_idname = "a3ob.import_asc"
     bl_label = "Import ASC"
@@ -15,6 +15,13 @@ class A3OB_OP_import_asc(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
     filter_glob: bpy.props.StringProperty (
         default = "*.asc",
         options = {'HIDDEN'}
+    )
+    vertical_scale: bpy.props.FloatProperty (
+        name = "Vertical Scaling",
+        description = "Vertical scaling coefficient",
+        default = 1.0,
+        min = -0.001,
+        max = 1000.0
     )
     
     # def draw(self, context):
