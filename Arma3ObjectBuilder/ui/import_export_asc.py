@@ -1,15 +1,15 @@
 import bpy
 import bpy_extras
 
-from ..io import import_asc
+from ..io import import_asc, export_asc
 
 
-class A3OB_OP_import_asc(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
+class A3OB_OP_import_asc(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     """Import Esri ASCII grid as DTM"""
     
     bl_idname = "a3ob.import_asc"
     bl_label = "Import ASC"
-    bl_options = {'UNDO', 'PRESET'}
+    bl_options = {'UNDO'}
     filename_ext = ".asc"
     
     filter_glob: bpy.props.StringProperty (
@@ -36,8 +36,42 @@ class A3OB_OP_import_asc(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
         return {'FINISHED'}
 
 
+class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
+    """Export Esri ASCII grid as DTM"""
+    bl_idname = "a3ob.export_asc"
+    bl_label = "Export ASC"
+    bl_options = {'UNDO'}
+    filename_ext = ".asc"
+    
+    filter_glob: bpy.props.StringProperty (
+        default = "*.asc",
+        options = {'HIDDEN'}
+    )
+    
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        return obj
+    
+    # def draw(self, context):
+        # pass
+    
+    def execute(self, context):
+        obj = context.active_object
+        
+        if not export_asc.valid_resolution(obj.data):
+            self.report({'ERROR'}, "Cannot export irregular raster")
+            return {'FINISHED'}
+            
+        with open(self.filepath, "wt") as file:
+            export_asc.write_file(self, context, file, obj)
+        
+        return {'FINISHED'}
+
+
 classes = (
     A3OB_OP_import_asc,
+    A3OB_OP_export_asc
 )
 
 

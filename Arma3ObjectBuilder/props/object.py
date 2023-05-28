@@ -69,11 +69,6 @@ class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
 
 
 class A3OB_PG_properties_object_dtm(bpy.types.PropertyGroup):
-    is_dtm: bpy.props.BoolProperty (
-        name = "Raster DTM",
-        description = "This object is a DTM raster",
-        default = False
-    )
     origin: bpy.props.EnumProperty (
         name = "Origin",
         description = "Origin point of DTM mesh",

@@ -288,20 +288,17 @@ class A3OB_PT_object_dtm(bpy.types.Panel):
         object_props = obj.a3ob_properties_object_dtm
         
         layout = self.layout
-        layout.prop(object_props, "is_dtm", text="Is Raster DTM", toggle=1)
         
-        if object_props.is_dtm:
-            layout.use_property_split = True
-            layout.use_property_decorate = False
-            
-            layout.separator()
-            layout.prop(object_props, "cellsize")
-            col_origin = layout.column(align=True, heading="Origin")
-            row_origin = col_origin.row(align=True)
-            row_origin.prop(object_props, "origin", text=" ", expand=True)
-            col_origin.prop(object_props, "easting")
-            col_origin.prop(object_props, "northing")
-            layout.prop(object_props, "nodata")
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        
+        layout.prop(object_props, "cellsize")
+        col_origin = layout.column(align=True, heading="Origin")
+        row_origin = col_origin.row(align=True)
+        row_origin.prop(object_props, "origin", text=" ", expand=True)
+        col_origin.prop(object_props, "easting")
+        col_origin.prop(object_props, "northing")
+        layout.prop(object_props, "nodata")
 
 
 def menu_func(self, context):

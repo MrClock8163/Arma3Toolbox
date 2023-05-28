@@ -4,7 +4,7 @@ import bpy_extras
 from ..io import import_p3d, export_p3d
 
 
-class A3OB_OP_import_p3d(bpy.types.Operator,bpy_extras.io_utils.ImportHelper):
+class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     """Import Arma 3 MLOD P3D"""
     
     bl_idname = "a3ob.import_p3d"
@@ -203,7 +203,7 @@ class A3OB_PT_import_p3d_proxies(bpy.types.Panel):
             col.prop(operator, "proxy_action", expand=True)
 
 
-class A3OB_OP_export_p3d(bpy.types.Operator,bpy_extras.io_utils.ExportHelper):
+class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     """Export to Arma 3 MLOD P3D"""
     bl_idname = "a3ob.export_p3d"
     bl_label = "Export P3D"

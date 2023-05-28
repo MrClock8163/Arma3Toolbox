@@ -34,8 +34,8 @@ def build_points(values, ncols, nrows, cellsize, centered):
     start_x = 0
     start_y = 0
     if centered:
-        start_x = -cellsize / 2
-        start_y = -cellsize / 2
+        start_x = cellsize / 2
+        start_y = cellsize / 2
         
     start_y += (nrows - 1) * cellsize
         
@@ -63,19 +63,9 @@ def read_file(operator, context, file):
     except:
         return False
         
-    values = []
-    try:
-        values = read_raster(file, params["ncols"], params["nrows"], operator.vertical_scale)
-    except:
-        return False
-    
-    points = []
-    faces = []   
-    try:
-        points = build_points(values, params["ncols"], params["nrows"], params["cellsize"], "yllcenter" in params)
-        faces = build_faces(params["ncols"], params["nrows"])    
-    except:
-        return False    
+    values = read_raster(file, params["ncols"], params["nrows"], operator.vertical_scale)
+    points = build_points(values, params["ncols"], params["nrows"], params["cellsize"], "yllcenter" in params)
+    faces = build_faces(params["ncols"], params["nrows"])
         
     mesh = bpy.data.meshes.new("Esri ASCII grid")
     mesh.from_pydata(points, [], faces)
@@ -84,11 +74,18 @@ def read_file(operator, context, file):
     obj = bpy.data.objects.new("Esri ASCII grid", mesh)
     context.scene.collection.objects.link(obj)
     
+    object_props = obj.a3ob_properties_object_dtm
+    object_props.cellsize = params["cellsize"]
+    
+    if "yllcenter" in params:
+        object_props.origin = 'CENTER'
+        object_props.easting = params["xllcenter"]
+        object_props.northing = params["yllcenter"]
+    else:
+        object_props.origin = 'CORNER'
+        object_props.easting = params["xllcorner"]
+        object_props.northing = params["yllcorner"]
+        
+    object_props.nodata = params["nodata_value"]
+    
     return True
-    
-    
-#def main():
-#    filepath = "C:/Users/Vekkerur/Desktop/import_asc_dev.asc"
-#    
-#    with open(filepath, "rt") as file:
-#        read_file(None, bpy.context, file)
