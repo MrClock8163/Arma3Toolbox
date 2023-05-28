@@ -333,7 +333,7 @@ def register():
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
     
-    print("\t" + "UI: Import / Export")
+    print("\t" + "UI: P3D Import / Export")
 
 
 def unregister():
@@ -343,4 +343,4 @@ def unregister():
     bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
     
-    print("\t" + "UI: Import / Export")
+    print("\t" + "UI: P3D Import / Export")
