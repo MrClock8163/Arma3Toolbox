@@ -29,15 +29,13 @@ class A3OB_OP_import_asc(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     
     def execute(self, context):
         with open(self.filepath) as file:
-            success = import_asc.read_file(self, context, file)
-            if not success:
-                self.report({'ERROR'}, "The Esri grid could not be imported")
+            import_asc.read_file(self, context, file)
         
         return {'FINISHED'}
 
 
 class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
-    """Export Esri ASCII grid as DTM"""
+    """Export DTM as Esri ASCII grid"""
     bl_idname = "a3ob.export_asc"
     bl_label = "Export ASC"
     bl_options = {'UNDO'}

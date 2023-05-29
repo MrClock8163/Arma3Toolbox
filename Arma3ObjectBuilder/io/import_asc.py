@@ -1,24 +1,32 @@
 import bpy
 
+from ..utilities.logger import ProcessLogger
+
 
 def read_parameter(file):
     line = file.readline().split()
     return line[0].strip().lower(), float(line[1].strip())
 
 
-def read_header(file):
+def read_header(file, logger):
+    logger.step("Header parameters:")
+    logger.level_up()
+    
     params = {}
     for i in range(6):
         keyword, value = read_parameter(file)
         params[keyword] = value
+        logger.step("%s: %f" %(keyword, value))
         
     params["ncols"] = int(params["ncols"])
     params["nrows"] = int(params["nrows"])
     
+    logger.level_down()
+    
     return params
     
     
-def read_raster(file, ncols, nrows, vscale = 0.01):
+def read_raster(file, ncols, nrows, vscale, logger):
     data = []
     for i in range(nrows):
         for value in file.readline().split():
@@ -27,10 +35,12 @@ def read_raster(file, ncols, nrows, vscale = 0.01):
     if len(data) != ncols * nrows:
         raise IOError("Raster value table is incomplete")
     
+    logger.step("Read values: %d" % len(data))
+    
     return data
     
     
-def build_points(values, ncols, nrows, cellsize, centered):
+def build_points(values, ncols, nrows, cellsize, centered, logger):
     start_x = 0
     start_y = 0
     if not centered:
@@ -44,34 +54,37 @@ def build_points(values, ncols, nrows, cellsize, centered):
         for j in range(ncols):
             points.append((start_x + j * cellsize, start_y + i * -cellsize, values[i*ncols + j]))
             
+    logger.step("Built points: %d" % len(points))
+            
     return points
     
     
-def build_faces(ncols, nrows):
+def build_faces(ncols, nrows, logger):
     faces = []
     for i in range(nrows - 1):
         for j in range(ncols - 1):
             faces.append((i*ncols + j, (i + 1)*ncols + j, (i + 1)*ncols + j + 1, i*ncols + j + 1))
+            
+    logger.step("Built faces: %d" % len(faces))
     
     return faces
             
 
 def read_file(operator, context, file):
-    params = {}
-    try:
-        params = read_header(file)
-    except:
-        return False
+    logger = ProcessLogger()
+    logger.step("ASC raster import from %s" % operator.filepath)
+    logger.level_up()
+
+    params = read_header(file, logger)
+    values = read_raster(file, params["ncols"], params["nrows"], operator.vertical_scale, logger)
+    points = build_points(values, params["ncols"], params["nrows"], params["cellsize"], "yllcenter" in params, logger)
+    faces = build_faces(params["ncols"], params["nrows"], logger)
         
-    values = read_raster(file, params["ncols"], params["nrows"], operator.vertical_scale)
-    points = build_points(values, params["ncols"], params["nrows"], params["cellsize"], "yllcenter" in params)
-    faces = build_faces(params["ncols"], params["nrows"])
-        
-    mesh = bpy.data.meshes.new("Esri ASCII grid")
+    mesh = bpy.data.meshes.new("DTM")
     mesh.from_pydata(points, [], faces)
     mesh.update(calc_edges=True)
     
-    obj = bpy.data.objects.new("Esri ASCII grid", mesh)
+    obj = bpy.data.objects.new("DTM", mesh)
     context.scene.collection.objects.link(obj)
     
     object_props = obj.a3ob_properties_object_dtm
@@ -88,4 +101,6 @@ def read_file(operator, context, file):
         
     object_props.nodata = params["nodata_value"]
     
-    return True
+    logger.level_down()
+    logger.step("")
+    logger.step("ASC export finished")
