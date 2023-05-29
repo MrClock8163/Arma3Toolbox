@@ -33,7 +33,7 @@ def read_raster(file, ncols, nrows, vscale = 0.01):
 def build_points(values, ncols, nrows, cellsize, centered):
     start_x = 0
     start_y = 0
-    if centered:
+    if not centered:
         start_x = cellsize / 2
         start_y = cellsize / 2
         
@@ -51,7 +51,7 @@ def build_faces(ncols, nrows):
     faces = []
     for i in range(nrows - 1):
         for j in range(ncols - 1):
-            faces.append((i*ncols + j, i*ncols + j + 1, (i + 1)*ncols + j + 1, (i + 1)*ncols + j))
+            faces.append((i*ncols + j, (i + 1)*ncols + j, (i + 1)*ncols + j + 1, i*ncols + j + 1))
     
     return faces
             

@@ -76,21 +76,26 @@ class A3OB_PG_properties_object_dtm(bpy.types.PropertyGroup):
             ('CENTER', "Center", "Center of the lower left cell"),
             ('CORNER', "Corner", "Lower left corner of the lower left cell")
         ),
-        default = 'CENTER'
+        default = 'CORNER'
     )
     easting: bpy.props.FloatProperty (
         name = "Easting",
         description = "",
-        default = 0
+        unit = 'LENGTH',
+        default = 200000,
+        soft_max = 1000000
     )
     northing: bpy.props.FloatProperty (
         name = "Northing",
         description = "",
-        default = 0
+        unit = 'LENGTH',
+        default = 0,
+        soft_max = 1000000
     )
     cellsize: bpy.props.FloatProperty (
         name = "Raster Spacing",
         description = "Horizontal and vertical spacing between raster points",
+        unit = 'LENGTH',
         default = 1.0
     )
     nodata: bpy.props.FloatProperty (

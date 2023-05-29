@@ -13,11 +13,11 @@ def write_header(file, cellsize, easting, northing, centered, resolution, nodata
     file.write("nrows         " + str(resolution) + "\n")
     
     if centered:
-        file.write("xllcenter     " + str(northing) + "\n")
-        file.write("yllcenter     " + str(easting) + "\n")
+        file.write("xllcenter     " + str(easting) + "\n")
+        file.write("yllcenter     " + str(northing) + "\n")
     else:
-        file.write("xllcorner     " + str(northing) + "\n")
-        file.write("yllcorner     " + str(easting) + "\n")
+        file.write("xllcorner     " + str(easting) + "\n")
+        file.write("yllcorner     " + str(northing) + "\n")
         
     file.write("cellsize      " + str(cellsize) + "\n")
     file.write("NODATA_value  " + str(nodata) + "\n")
