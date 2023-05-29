@@ -9,7 +9,7 @@ class A3OB_OP_import_asc(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     
     bl_idname = "a3ob.import_asc"
     bl_label = "Import ASC"
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'PRESET'}
     filename_ext = ".asc"
     
     filter_glob: bpy.props.StringProperty (
