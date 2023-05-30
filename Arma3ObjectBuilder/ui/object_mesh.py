@@ -253,7 +253,7 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
         return obj and obj.type == 'MESH' and obj.a3ob_properties_object_proxy.is_a3_proxy and not obj.a3ob_properties_object.is_a3_lod
         
     def draw(self, context):
-        obj = context.active_object
+        obj = context.object
         object_props = obj.a3ob_properties_object_proxy
         
         layout = self.layout
@@ -271,6 +271,36 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
         layout.prop(object_props, "proxy_index", text="")
 
 
+class A3OB_PT_object_dtm(bpy.types.Panel):
+    bl_region_type = 'WINDOW'
+    bl_space_type = 'PROPERTIES'
+    bl_label = "Object Builder: Raster DTM Properties"
+    bl_context = "data"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    @classmethod
+    def poll(cls, context):
+        obj = context.object
+        return obj and obj.type == 'MESH' and not obj.a3ob_properties_object_proxy.is_a3_proxy
+        
+    def draw(self, context):
+        obj = context.object
+        object_props = obj.a3ob_properties_object_dtm
+        
+        layout = self.layout
+        
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        
+        layout.prop(object_props, "cellsize")
+        col_origin = layout.column(align=True, heading="Origin")
+        row_origin = col_origin.row(align=True)
+        row_origin.prop(object_props, "origin", text=" ", expand=True)
+        col_origin.prop(object_props, "easting")
+        col_origin.prop(object_props, "northing")
+        layout.prop(object_props, "nodata")
+
+
 def menu_func(self, context):
     self.layout.separator()
     self.layout.operator(A3OB_OT_proxy_add.bl_idname, icon='EMPTY_ARROWS')
@@ -286,7 +316,8 @@ classes = (
     A3OB_UL_common_proxies,
     A3OB_PT_object_mesh,
     A3OB_PT_object_mesh_namedprops,
-    A3OB_PT_object_proxy
+    A3OB_PT_object_proxy,
+    A3OB_PT_object_dtm
 )
 
 

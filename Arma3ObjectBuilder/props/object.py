@@ -68,10 +68,48 @@ class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
     )
 
 
+class A3OB_PG_properties_object_dtm(bpy.types.PropertyGroup):
+    origin: bpy.props.EnumProperty (
+        name = "Origin",
+        description = "Origin point of DTM mesh",
+        items = (
+            ('CENTER', "Center", "Center of the lower left cell"),
+            ('CORNER', "Corner", "Lower left corner of the lower left cell")
+        ),
+        default = 'CORNER'
+    )
+    easting: bpy.props.FloatProperty (
+        name = "Easting",
+        description = "",
+        unit = 'LENGTH',
+        default = 200000,
+        soft_max = 1000000
+    )
+    northing: bpy.props.FloatProperty (
+        name = "Northing",
+        description = "",
+        unit = 'LENGTH',
+        default = 0,
+        soft_max = 1000000
+    )
+    cellsize: bpy.props.FloatProperty (
+        name = "Raster Spacing",
+        description = "Horizontal and vertical spacing between raster points",
+        unit = 'LENGTH',
+        default = 1.0
+    )
+    nodata: bpy.props.FloatProperty (
+        name = "NULL Indicator",
+        description = "Filler value where data does not exist",
+        default = -9999.0
+    )
+
+
 classes = (
     A3OB_PG_properties_named_property,
     A3OB_PG_properties_object_mesh,
-    A3OB_PG_properties_object_proxy
+    A3OB_PG_properties_object_proxy,
+    A3OB_PG_properties_object_dtm
 )
 
 
@@ -81,6 +119,7 @@ def register():
         
     bpy.types.Object.a3ob_properties_object = bpy.props.PointerProperty(type=A3OB_PG_properties_object_mesh)
     bpy.types.Object.a3ob_properties_object_proxy = bpy.props.PointerProperty(type=A3OB_PG_properties_object_proxy)
+    bpy.types.Object.a3ob_properties_object_dtm = bpy.props.PointerProperty(type=A3OB_PG_properties_object_dtm)
     bpy.types.Object.a3ob_selection_mass = bpy.props.FloatProperty ( # Can't be in property group due to reference requirements
         name = "Current Mass",
         description = "Total mass of current selection",
@@ -100,6 +139,7 @@ def register():
 
 def unregister():
     del bpy.types.Object.a3ob_selection_mass
+    del bpy.types.Object.a3ob_properties_object_dtm
     del bpy.types.Object.a3ob_properties_object_proxy
     del bpy.types.Object.a3ob_properties_object
     

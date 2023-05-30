@@ -2,7 +2,7 @@ bl_info = {
     "name": "Arma 3 Object Builder",
     "description": "Collection of tools for editing Arma 3 content",
     "author": "MrClock (present add-on), Hans-Joerg \"Alwarren\" Frieden (original ArmaToolbox add-on)",
-    "version": (0, 1, 0),
+    "version": (0, 2, 0),
     "blender": (2, 80, 0),
     "location": "Object Builder panels in various views",
     "warning": "Work In Progress",
@@ -15,7 +15,8 @@ bl_info = {
 if "bpy" in locals():
     import importlib
 
-    importlib.reload(ui.import_export)
+    importlib.reload(ui.import_export_p3d)
+    importlib.reload(ui.import_export_asc)
     importlib.reload(ui.utilities)
     importlib.reload(ui.mass)
     importlib.reload(ui.material)
@@ -28,7 +29,8 @@ if "bpy" in locals():
     importlib.reload(props.rvmat)
 
 else:    
-    from .ui import import_export
+    from .ui import import_export_p3d
+    from .ui import import_export_asc
     from .ui import utilities
     from .ui import mass
     from .ui import material
@@ -124,7 +126,8 @@ def register():
     object.register()
     rvmat.register()
     windowmanager.register()
-    import_export.register()
+    import_export_p3d.register()
+    import_export_asc.register()
     object_mesh.register()
     material.register()
     mass.register()
@@ -151,7 +154,8 @@ def unregister():
     mass.unregister()
     material.unregister()
     object_mesh.unregister()
-    import_export.unregister()
+    import_export_asc.unregister()
+    import_export_p3d.unregister()
     windowmanager.unregister()
     rvmat.unregister()
     object.unregister()
