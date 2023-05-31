@@ -16,6 +16,7 @@ if "bpy" in locals():
     import importlib
 
     importlib.reload(ui.import_export_p3d)
+    importlib.reload(ui.import_export_rtm)
     importlib.reload(ui.import_export_asc)
     importlib.reload(ui.utilities)
     importlib.reload(ui.mass)
@@ -31,6 +32,7 @@ if "bpy" in locals():
 
 else:    
     from .ui import import_export_p3d
+    from .ui import import_export_rtm
     from .ui import import_export_asc
     from .ui import utilities
     from .ui import mass
@@ -129,6 +131,7 @@ def register():
     rvmat.register()
     windowmanager.register()
     import_export_p3d.register()
+    import_export_rtm.register()
     import_export_asc.register()
     object_mesh.register()
     object_armature.register()
@@ -159,6 +162,7 @@ def unregister():
     object_armature.unregister()
     object_mesh.unregister()
     import_export_asc.unregister()
+    import_export_rtm.unregister()
     import_export_p3d.unregister()
     windowmanager.unregister()
     rvmat.unregister()

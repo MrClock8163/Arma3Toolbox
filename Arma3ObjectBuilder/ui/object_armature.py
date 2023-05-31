@@ -139,7 +139,7 @@ class A3OB_UL_keyframes(bpy.types.UIList):
         
         frame_range = context.scene.frame_end - context.scene.frame_start
         if frame_range > 0:
-            phase = (index - context.scene.frame_start) / (context.scene.frame_end - context.scene.frame_start)
+            phase = (index - context.scene.frame_start) / frame_range
             split.label(text="{:.4f}".format(phase))
         
     def filter_items(self, context, data, propname):

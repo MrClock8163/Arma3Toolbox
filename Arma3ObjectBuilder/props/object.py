@@ -118,6 +118,7 @@ class A3OB_PG_properties_object_armature(bpy.types.PropertyGroup):
         name = "Motion Vector",
         description = "Total motion done during the animation",
         default = (0, 0, 0),
+        subtype = 'XYZ',
         unit = 'LENGTH'
     )
     frames: bpy.props.CollectionProperty (
