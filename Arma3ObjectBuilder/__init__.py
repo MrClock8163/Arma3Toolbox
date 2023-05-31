@@ -21,6 +21,7 @@ if "bpy" in locals():
     importlib.reload(ui.mass)
     importlib.reload(ui.material)
     importlib.reload(ui.object_mesh)
+    importlib.reload(ui.object_armature)
     importlib.reload(ui.hitpoint)
     importlib.reload(ui.validation)
     importlib.reload(ui.conversion)
@@ -35,6 +36,7 @@ else:
     from .ui import mass
     from .ui import material
     from .ui import object_mesh
+    from .ui import object_armature
     from .ui import hitpoint
     from .ui import validation
     from .ui import conversion
@@ -129,6 +131,7 @@ def register():
     import_export_p3d.register()
     import_export_asc.register()
     object_mesh.register()
+    object_armature.register()
     material.register()
     mass.register()
     hitpoint.register()
@@ -153,6 +156,7 @@ def unregister():
     hitpoint.unregister()
     mass.unregister()
     material.unregister()
+    object_armature.unregister()
     object_mesh.unregister()
     import_export_asc.unregister()
     import_export_p3d.unregister()

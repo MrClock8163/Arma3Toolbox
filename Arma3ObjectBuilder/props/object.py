@@ -103,13 +103,42 @@ class A3OB_PG_properties_object_dtm(bpy.types.PropertyGroup):
         description = "Filler value where data does not exist",
         default = -9999.0
     )
+    
+    
+class A3OB_PG_properties_keyframe(bpy.types.PropertyGroup):
+    index: bpy.props.IntProperty (
+        name = "Frame Index",
+        description = "Index of the keyframe to export",
+        default = 0
+    )
+    
+    
+class A3OB_PG_properties_object_armature(bpy.types.PropertyGroup):
+    motion: bpy.props.FloatVectorProperty (
+        name = "Motion Vector",
+        description = "Total motion done during the animation",
+        default = (0, 0, 0),
+        unit = 'LENGTH'
+    )
+    frames: bpy.props.CollectionProperty (
+        name = "RTM keyframes",
+        description = "List of keyframes to export to RTM",
+        type = A3OB_PG_properties_keyframe
+    )
+    frames_index: bpy.props.IntProperty (
+        name = "Selection Index",
+        description = "Index of the currently selected RTM frame",
+        default = -1
+    )
 
 
 classes = (
     A3OB_PG_properties_named_property,
     A3OB_PG_properties_object_mesh,
     A3OB_PG_properties_object_proxy,
-    A3OB_PG_properties_object_dtm
+    A3OB_PG_properties_object_dtm,
+    A3OB_PG_properties_keyframe,
+    A3OB_PG_properties_object_armature
 )
 
 
@@ -120,6 +149,7 @@ def register():
     bpy.types.Object.a3ob_properties_object = bpy.props.PointerProperty(type=A3OB_PG_properties_object_mesh)
     bpy.types.Object.a3ob_properties_object_proxy = bpy.props.PointerProperty(type=A3OB_PG_properties_object_proxy)
     bpy.types.Object.a3ob_properties_object_dtm = bpy.props.PointerProperty(type=A3OB_PG_properties_object_dtm)
+    bpy.types.Object.a3ob_properties_object_armature = bpy.props.PointerProperty(type=A3OB_PG_properties_object_armature)
     bpy.types.Object.a3ob_selection_mass = bpy.props.FloatProperty ( # Can't be in property group due to reference requirements
         name = "Current Mass",
         description = "Total mass of current selection",
@@ -139,6 +169,7 @@ def register():
 
 def unregister():
     del bpy.types.Object.a3ob_selection_mass
+    del bpy.types.Object.a3ob_properties_object_armature
     del bpy.types.Object.a3ob_properties_object_dtm
     del bpy.types.Object.a3ob_properties_object_proxy
     del bpy.types.Object.a3ob_properties_object
