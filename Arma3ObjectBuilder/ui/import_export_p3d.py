@@ -116,7 +116,7 @@ class A3OB_PT_import_p3d_main(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
         
-        layout.prop(operator,"validate_meshes")
+        layout.prop(operator, "validate_meshes")
 
 
 class A3OB_PT_import_p3d_collections(bpy.types.Panel):

@@ -25,6 +25,7 @@ if "bpy" in locals():
     importlib.reload(ui.object_armature)
     importlib.reload(ui.hitpoint)
     importlib.reload(ui.validation)
+    importlib.reload(ui.rtm)
     importlib.reload(ui.conversion)
     importlib.reload(props.windowmanager)
     importlib.reload(props.object)
@@ -41,6 +42,7 @@ else:
     from .ui import object_armature
     from .ui import hitpoint
     from .ui import validation
+    from .ui import rtm
     from .ui import conversion
     from .props import windowmanager
     from .props import object
@@ -139,6 +141,7 @@ def register():
     mass.register()
     hitpoint.register()
     validation.register()
+    rtm.register()
     conversion.register()
     utilities.register()
     
@@ -155,6 +158,7 @@ def unregister():
 
     utilities.unregister()
     conversion.unregister()
+    rtm.unregister()
     validation.unregister()
     hitpoint.unregister()
     mass.unregister()
