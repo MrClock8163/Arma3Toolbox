@@ -30,7 +30,23 @@ def write_frame(file, obj, bones, phase):
         write_matrix(file, matrix)
 
   
-def write_motion(file, motion_vector, logger):
+def write_motion(context, file, obj, frame_start, frame_end, logger):
+    object_props = obj.a3ob_properties_object_armature
+    
+    motion_vector = mathutils.Vector((0, 0, 0))
+    if object_props.motion_source == 'MANUAL' or object_props.motion_bone not in obj.pose.bones:
+        motion_vector = object_props.motion_vector
+    else:
+        bone = obj.pose.bones[object_props.motion_bone]
+        
+        context.scene.frame_set(frame_start)
+        pos_start = (obj.matrix_world @ bone.matrix).to_translation()
+        
+        context.scene.frame_set(frame_end)
+        pos_end = (obj.matrix_world @ bone.matrix).to_translation()
+        
+        motion_vector = pos_end - pos_start
+    
     file.write((struct.pack('<3f', motion_vector[0], motion_vector[2], motion_vector[1])))
     logger.step("Motion: %f" % motion_vector.length)
 
@@ -58,7 +74,7 @@ def write_file(operator, context, file, obj):
     logger.level_up()
     
     binary.write_chars(file, "RTM_0101")
-    write_motion(file, object_props.motion, logger)
+    write_motion(context, file, obj, frame_start, frame_end, logger)
     
     binary.write_ulong(file, len(frame_indices))
     binary.write_ulong(file, len(bones))

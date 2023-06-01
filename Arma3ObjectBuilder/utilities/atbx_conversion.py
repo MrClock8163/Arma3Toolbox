@@ -217,10 +217,17 @@ def convert_mesh(obj, converted_materials, cleanup, logger):
 
 
 def convert_motion(obj, cleanup, logger):
-    obj.a3ob_properties_object_armature.motion = obj.armaObjProps.motionVector
+    if obj.armaObjProps.centerBone == "":
+        obj.a3ob_properties_object_armature.motion_source = 'MANUAL'
+    else:
+        obj.a3ob_properties_object_armature.motion_source = 'CALCULATED'
+        
+    obj.a3ob_properties_object_armature.motion_bone = obj.armaObjProps.centerBone
+    obj.a3ob_properties_object_armature.motion_vector = obj.armaObjProps.motionVector
     
     if cleanup:
         obj.armaObjProps.motionVector = (0, 0, 0)
+        obj.armaObjProps.centerBone = ""
         
     logger.step("Motion vector")
 

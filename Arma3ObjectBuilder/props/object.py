@@ -114,12 +114,26 @@ class A3OB_PG_properties_keyframe(bpy.types.PropertyGroup):
     
     
 class A3OB_PG_properties_object_armature(bpy.types.PropertyGroup):
-    motion: bpy.props.FloatVectorProperty (
+    motion_source: bpy.props.EnumProperty (
+        name = "Motion Source",
+        description = "Source of motion vector",
+        items = (
+            ('MANUAL', "Manual", "The motion vector is explicitly set"),
+            ('CALCULATED', "Calculated", "The motion vector is calculated from the motion of a specific bone during the animation")
+        ),
+        default = 'MANUAL'
+    )
+    motion_vector: bpy.props.FloatVectorProperty (
         name = "Motion Vector",
         description = "Total motion done during the animation",
         default = (0, 0, 0),
         subtype = 'XYZ',
         unit = 'LENGTH'
+    )
+    motion_bone: bpy.props.StringProperty (
+        name = "Reference Bone",
+        description = "Bone to track for motion calculation",
+        default = ""
     )
     frames: bpy.props.CollectionProperty (
         name = "RTM keyframes",

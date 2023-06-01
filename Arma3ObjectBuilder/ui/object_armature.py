@@ -93,10 +93,16 @@ class A3OB_PT_object_armature(bpy.types.Panel):
         object_props = obj.a3ob_properties_object_armature
         
         layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False
+        col = layout.column()
+        col.use_property_split = True
+        col.use_property_decorate = False
+        row_enum = col.row()
+        row_enum.prop(object_props, "motion_source", expand=True)
         
-        layout.prop(object_props, "motion")
+        if object_props.motion_source == 'MANUAL':
+            col.prop(object_props, "motion_vector", text=" ")
+        else:
+            col.prop_search(object_props, "motion_bone", obj.data, "bones",  text="Reference")
 
 
 class A3OB_PT_object_armature_frames(bpy.types.Panel):
