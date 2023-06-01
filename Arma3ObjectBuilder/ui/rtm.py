@@ -44,10 +44,10 @@ class A3OB_PT_keyframes(bpy.types.Panel):
     def poll(cls, context):
         return True
         
-    # def draw_header(self, context):
-        # layout = self.layout
-        # row = layout.row(align=True)
-        # row.operator("wm.url_open", text="", icon='HELP').url = "https://github.com/MrClock8163/Arma3ObjectBuilder/wiki/Tool:-RTM-Frames"
+    def draw_header(self, context):
+        layout = self.layout
+        row = layout.row(align=True)
+        row.operator("wm.url_open", text="", icon='HELP').url = "https://github.com/MrClock8163/Arma3ObjectBuilder/wiki/Tool:-RTM-Frames"
         
     def draw(self, context):
         wm_props = context.window_manager.a3ob_keyframes
