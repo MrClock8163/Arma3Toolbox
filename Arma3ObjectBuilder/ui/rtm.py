@@ -13,7 +13,7 @@ class A3OB_OT_keyframe_add_list(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.active_object
-        return obj and obj.type == 'ARMATURE' and len(obj.pose.bones) > 0 and obj.animation_data and obj.animation_data.action
+        return obj and obj.type == 'ARMATURE' and len(obj.pose.bones) > 0 and (context.window_manager.a3ob_keyframes.mode == 'RANGE' or obj.animation_data and obj.animation_data.action)
         
     def execute(self, context):
         obj = context.active_object
@@ -26,10 +26,10 @@ class A3OB_OT_keyframe_add_list(bpy.types.Operator):
             
         if wm_props.mode == 'TIMELINE':
             count_frames = frameutils.add_frame_timeline(obj)
-            self.report({'INFO'}, f"Added {count_frames} frame(s)")
+            self.report({'INFO'}, f"Added {count_frames} frame(s) to RTM")
         elif wm_props.mode == 'RANGE':
             count_frames = frameutils.add_frame_range(obj, wm_props)
-            self.report({'INFO'}, f"Added {count_frames} frame(s)")
+            self.report({'INFO'}, f"Added {count_frames} frame(s) to RTM")
         
         return {'FINISHED'}
 
