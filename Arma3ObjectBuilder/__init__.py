@@ -16,13 +16,16 @@ if "bpy" in locals():
     import importlib
 
     importlib.reload(ui.import_export_p3d)
+    importlib.reload(ui.import_export_rtm)
     importlib.reload(ui.import_export_asc)
     importlib.reload(ui.utilities)
     importlib.reload(ui.mass)
     importlib.reload(ui.material)
     importlib.reload(ui.object_mesh)
+    importlib.reload(ui.object_armature)
     importlib.reload(ui.hitpoint)
     importlib.reload(ui.validation)
+    importlib.reload(ui.rtm)
     importlib.reload(ui.conversion)
     importlib.reload(props.windowmanager)
     importlib.reload(props.object)
@@ -30,13 +33,16 @@ if "bpy" in locals():
 
 else:    
     from .ui import import_export_p3d
+    from .ui import import_export_rtm
     from .ui import import_export_asc
     from .ui import utilities
     from .ui import mass
     from .ui import material
     from .ui import object_mesh
+    from .ui import object_armature
     from .ui import hitpoint
     from .ui import validation
+    from .ui import rtm
     from .ui import conversion
     from .props import windowmanager
     from .props import object
@@ -127,12 +133,15 @@ def register():
     rvmat.register()
     windowmanager.register()
     import_export_p3d.register()
+    import_export_rtm.register()
     import_export_asc.register()
     object_mesh.register()
+    object_armature.register()
     material.register()
     mass.register()
     hitpoint.register()
     validation.register()
+    rtm.register()
     conversion.register()
     utilities.register()
     
@@ -149,12 +158,15 @@ def unregister():
 
     utilities.unregister()
     conversion.unregister()
+    rtm.unregister()
     validation.unregister()
     hitpoint.unregister()
     mass.unregister()
     material.unregister()
+    object_armature.unregister()
     object_mesh.unregister()
     import_export_asc.unregister()
+    import_export_rtm.unregister()
     import_export_p3d.unregister()
     windowmanager.unregister()
     rvmat.unregister()

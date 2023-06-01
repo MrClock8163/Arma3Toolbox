@@ -185,8 +185,8 @@ def convert_lod_properties(obj, cleanup, logger):
         atbx_props.lod = '-1.0'
         atbx_props.lodDistance = 1.0
         atbx_props.namedProps.clear()
-        
-        
+
+  
 def convert_vertex_masses(obj, cleanup, logger):
     bm = bmesh.new()
     bm.from_mesh(obj.data)
@@ -208,7 +208,7 @@ def convert_vertex_masses(obj, cleanup, logger):
     bm.to_mesh(obj.data)
     bm.free()
 
-    
+
 def convert_mesh(obj, converted_materials, cleanup, logger):
     converted_materials = convert_materials(obj, converted_materials, cleanup, logger)        
     convert_proxies(obj, cleanup, logger)
@@ -216,16 +216,57 @@ def convert_mesh(obj, converted_materials, cleanup, logger):
     convert_vertex_masses(obj, cleanup, logger)
 
 
+def convert_motion(obj, cleanup, logger):
+    if obj.armaObjProps.centerBone == "":
+        obj.a3ob_properties_object_armature.motion_source = 'MANUAL'
+    else:
+        obj.a3ob_properties_object_armature.motion_source = 'CALCULATED'
+        
+    obj.a3ob_properties_object_armature.motion_bone = obj.armaObjProps.centerBone
+    obj.a3ob_properties_object_armature.motion_vector = obj.armaObjProps.motionVector
+    
+    if cleanup:
+        obj.armaObjProps.motionVector = (0, 0, 0)
+        obj.armaObjProps.centerBone = ""
+        
+    logger.step("Motion vector")
+
+
+def convert_frames(obj, cleanup, logger):
+    frames = [frame.timeIndex for frame in obj.armaObjProps.keyFrames]
+    frames.sort()
+    
+    object_props = obj.a3ob_properties_object_armature
+    for index in frames:
+        item = object_props.frames.add()
+        item.index = index
+        
+    if cleanup:
+        obj.armaObjProps.keyFrames.clear()
+        
+    logger.step("Frames: %d" % len(frames))
+
+
+def convert_armature(obj, cleanup, logger):
+    convert_motion(obj, cleanup, logger)
+    convert_frames(obj, cleanup, logger)
+    
+    if cleanup:
+        obj.armaObjProps.isArmaObject = False
+
+
 def convert_objects_item(obj, converted_materials, cleanup, logger):
     logger.level_up()
     
     if obj.type == 'MESH':
         convert_materials = convert_mesh(obj, converted_materials, cleanup, logger)
+    elif obj.type == 'ARMATURE':
+        convert_armature(obj, cleanup, logger)
         
     logger.level_down()
         
     return converted_materials
-    
+
 
 def convert_objects(objects, cleanup):
     logger = ProcessLogger()

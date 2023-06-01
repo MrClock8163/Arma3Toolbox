@@ -23,6 +23,11 @@ class A3OB_OT_convert_to_a3ob(bpy.types.Operator):
             object_pool = context.scene.objects
             
         objects = [obj for obj in object_pool if obj.type in wm_props.types and obj.armaObjProps.isArmaObject]
+        for obj in objects:
+            if obj.mode != 'OBJECT':
+                self.report({'ERROR'}, "All objects must be in object mode in order to perform the conversion")
+                return {'FINISHED'}
+        
         bpy.ops.object.select_all(action='DESELECT')
         
         convertutils.convert_objects(objects, wm_props.cleanup)

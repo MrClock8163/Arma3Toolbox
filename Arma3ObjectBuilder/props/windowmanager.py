@@ -129,6 +129,41 @@ class A3OB_PG_validation(bpy.types.PropertyGroup):
     )
     
     
+class A3OB_PG_keyframes(bpy.types.PropertyGroup):
+    mode: bpy.props.EnumProperty (
+        name = "Mode",
+        description = "List mode",
+        items = (
+            ('TIMELINE', "Timeline", "Add keyframes from animation timeline"),
+            ('RANGE', "Range", "Add keyframes in range")
+        ),
+        default = 'RANGE'
+    )
+    clear: bpy.props.BoolProperty (
+        name = "Clear Existing",
+        description = "Clear existing frames before adding new",
+        default = False
+    )
+    range_start: bpy.props.IntProperty (
+        name = "Start",
+        description = "Start of frame range",
+        default = 0,
+        min = 0
+    )
+    range_end: bpy.props.IntProperty (
+        name = "End",
+        description = "End of frame range",
+        default = 100,
+        min = 0
+    )
+    range_step: bpy.props.IntProperty (
+        name = "Step",
+        description = "Step in frame range",
+        default = 5,
+        min = 1
+    )
+    
+    
 class A3OB_PG_conversion(bpy.types.PropertyGroup):
     use_selection: bpy.props.BoolProperty (
         name = "Selected Only",
@@ -140,9 +175,10 @@ class A3OB_PG_conversion(bpy.types.PropertyGroup):
         description = "Only convert object of the selected types",
         items = (
             ('MESH', "Mesh", ""),
+            ('ARMATURE', "Armature", "")
         ),
         options = {'ENUM_FLAG'},
-        default = {'MESH'}
+        default = {'MESH', 'ARMATURE'}
     )
     cleanup: bpy.props.BoolProperty (
         name = "Cleanup",
@@ -156,6 +192,7 @@ classes = (
     A3OB_PG_mass_editor,
     A3OB_PG_hitpoint_generator,
     A3OB_PG_validation,
+    A3OB_PG_keyframes,
     A3OB_PG_conversion
 )
 
@@ -171,6 +208,7 @@ def register():
     bpy.types.WindowManager.a3ob_mass_editor = bpy.props.PointerProperty(type=A3OB_PG_mass_editor)
     bpy.types.WindowManager.a3ob_hitpoint_generator = bpy.props.PointerProperty(type=A3OB_PG_hitpoint_generator)
     bpy.types.WindowManager.a3ob_validation = bpy.props.PointerProperty(type=A3OB_PG_validation)
+    bpy.types.WindowManager.a3ob_keyframes = bpy.props.PointerProperty(type=A3OB_PG_keyframes)
     bpy.types.WindowManager.a3ob_conversion = bpy.props.PointerProperty(type=A3OB_PG_conversion)
     
     print("\t" + "Properties: window manager")
@@ -179,6 +217,7 @@ def register():
 def unregister():
     del bpy.types.WindowManager.a3ob_conversion
     del bpy.types.WindowManager.a3ob_validation
+    del bpy.types.WindowManager.a3ob_keyframes
     del bpy.types.WindowManager.a3ob_hitpoint_generator
     del bpy.types.WindowManager.a3ob_mass_editor
     del bpy.types.WindowManager.a3ob_namedprops_common_index
