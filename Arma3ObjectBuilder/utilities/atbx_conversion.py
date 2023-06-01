@@ -186,7 +186,7 @@ def convert_lod_properties(obj, cleanup, logger):
         atbx_props.lodDistance = 1.0
         atbx_props.namedProps.clear()
 
-  
+
 def convert_vertex_masses(obj, cleanup, logger):
     bm = bmesh.new()
     bm.from_mesh(obj.data)
@@ -255,13 +255,33 @@ def convert_armature(obj, cleanup, logger):
         obj.armaObjProps.isArmaObject = False
 
 
-def convert_objects_item(obj, converted_materials, cleanup, logger):
+def convert_dtm(obj, cleanup, logger):
+    atbx_props = obj.armaHFProps
+    a3ob_props = obj.a3ob_properties_object_dtm
+    
+    a3ob_props.cellsize = atbx_props.cellSize
+    a3ob_props.origin = 'CORNER'
+    a3ob_props.easting = atbx_props.easting
+    a3ob_props.northing = atbx_props.northing
+    a3ob_props.nodata = atbx_props.undefVal
+    
+    if cleanup:
+        atbx_props.cellSize = 4
+        atbx_props.easting = 0
+        atbx_props.northing = 200_000
+        atbx_props.undefVal = -9999
+        atbx_props.isHeightfield = False
+
+
+def convert_objects_item(obj, object_type, converted_materials, cleanup, logger):
     logger.level_up()
     
-    if obj.type == 'MESH':
+    if object_type == 'LOD':
         convert_materials = convert_mesh(obj, converted_materials, cleanup, logger)
-    elif obj.type == 'ARMATURE':
+    elif object_type == 'ARMATURE':
         convert_armature(obj, cleanup, logger)
+    elif object_type == 'DTM':
+        convert_dtm(obj, cleanup, logger)
         
     logger.level_down()
         
@@ -272,12 +292,19 @@ def convert_objects(objects, cleanup):
     logger = ProcessLogger()
     logger.step("Converting ATBX setup to A3OB")
     logger.level_up()
+    categories = ('LOD', 'DTM', 'ARMATURE')
     
     converted_materials = set()
-    for obj in objects:
-        logger.step(f"{obj.name} ({obj.type})")
-        converted_materials = convert_objects_item(obj, converted_materials, cleanup, logger)
-        logger.step("")
+    for i, category in enumerate(objects):
+        logger.step("Category: %s" % categories[i])
+        logger.level_up()
+        
+        for obj in category:
+            logger.step(str(obj.name))
+            converted_materials = convert_objects_item(obj, categories[i], converted_materials, cleanup, logger)
+            logger.step("")
+            
+        logger.level_down()
     
     logger.level_down()
     logger.step("Conversion finished")

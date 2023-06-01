@@ -22,11 +22,16 @@ class A3OB_OT_convert_to_a3ob(bpy.types.Operator):
         else:
             object_pool = context.scene.objects
             
-        objects = [obj for obj in object_pool if obj.type in wm_props.types and obj.armaObjProps.isArmaObject]
-        for obj in objects:
-            if obj.mode != 'OBJECT':
-                self.report({'ERROR'}, "All objects must be in object mode in order to perform the conversion")
-                return {'FINISHED'}
+        objects_LOD = [obj for obj in object_pool if obj.visible_get() and obj.type == 'MESH' and 'MESH' in wm_props.types and obj.armaObjProps.isArmaObject]
+        objects_DTM = [obj for obj in object_pool if obj.visible_get() and obj.type == 'MESH' and 'DTM' in wm_props.types and obj.armaHFProps.isHeightfield]
+        objects_armature = [obj for obj in object_pool if obj.visible_get() and obj.type == 'ARMATURE' and 'ARMATURE' in wm_props.types and obj.armaObjProps.isArmaObject]
+        objects = [objects_LOD, objects_DTM, objects_armature]
+        
+        for category in objects:
+            for obj in category:
+                if obj.mode != 'OBJECT':
+                    self.report({'ERROR'}, "All objects must be in object mode in order to perform the conversion")
+                    return {'FINISHED'}
         
         bpy.ops.object.select_all(action='DESELECT')
         
