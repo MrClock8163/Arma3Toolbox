@@ -175,9 +175,10 @@ class A3OB_PG_conversion(bpy.types.PropertyGroup):
         description = "Only convert object of the selected types",
         items = (
             ('MESH', "Mesh", ""),
+            ('ARMATURE', "Armature", "")
         ),
         options = {'ENUM_FLAG'},
-        default = {'MESH'}
+        default = {'MESH', 'ARMATURE'}
     )
     cleanup: bpy.props.BoolProperty (
         name = "Cleanup",

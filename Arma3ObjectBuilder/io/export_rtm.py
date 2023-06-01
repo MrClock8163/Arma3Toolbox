@@ -51,9 +51,7 @@ def write_file(operator, context, file, obj):
     static_pose = operator.static_pose or len(frame_indices) == 0
     
     if static_pose:
-        frame_indices = [context.scene.frame_current, context.scene.frame_current]
-        
-    print(frame_indices)    
+        frame_indices = [context.scene.frame_current, context.scene.frame_current]  
     
     bones = [bone.name for bone in armature.bones if not re.match(r"[^a-zA-Z0-9_]", bone.name)]
     
