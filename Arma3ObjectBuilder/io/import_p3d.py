@@ -279,7 +279,7 @@ def build_collections(lod_objects, operator, root_collection):
 def transform_proxy(obj): # Align the object coordinate system with the proxy directions
     rotation_matrix = proxyutils.get_transform_rotation(obj)
     obj.data.transform(rotation_matrix)
-    obj.matrix_world = rotation_matrix.inverted()
+    obj.matrix_world @= rotation_matrix.inverted()
     
     translate = mathutils.Matrix.Translation(-obj.data.vertices[proxyutils.find_center_index(obj.data)].co)
     obj.data.transform(translate)
