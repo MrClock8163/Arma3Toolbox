@@ -82,6 +82,7 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
     bl_region_type = 'UI'
     bl_category = "Object Builder"
     bl_label = "Vertex Mass Editing"
+    bl_options = {'DEFAULT_CLOSED'}
     
     @classmethod
     def poll(cls, context):

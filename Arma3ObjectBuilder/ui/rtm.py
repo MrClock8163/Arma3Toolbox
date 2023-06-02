@@ -39,6 +39,7 @@ class A3OB_PT_keyframes(bpy.types.Panel):
     bl_region_type = 'UI'
     bl_category = "Object Builder"
     bl_label = "RTM Frames"
+    bl_options = {'DEFAULT_CLOSED'}
     
     @classmethod
     def poll(cls, context):
