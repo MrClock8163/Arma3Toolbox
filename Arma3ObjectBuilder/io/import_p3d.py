@@ -284,6 +284,8 @@ def transform_proxy(obj): # Align the object coordinate system with the proxy di
     translate = mathutils.Matrix.Translation(-obj.data.vertices[proxyutils.find_center_index(obj.data)].co)
     obj.data.transform(translate)
     obj.matrix_world @= translate.inverted()
+    
+    obj.data.update()
 
 
 def process_proxies(lod_data, operator, material_dict, addon_prefs):
