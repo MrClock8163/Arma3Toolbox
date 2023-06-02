@@ -197,6 +197,6 @@ common_proxies = {
     "Weapon optic": r"P:\a3\data_f\proxies\weapon_slots\top.p3d",
     "Weapon pointer": r"P:\a3\data_f\proxies\weapon_slots\side.p3d",
     "Weapon suppressor": r"P:\a3\data_f\proxies\weapon_slots\muzzle.p3d",
-    "Weapon magazine": r"P:\a3\data_f\proxies\weapon_slots\magazine.p3d",
+    "Weapon magazine": r"P:\a3\data_f\proxies\weapon_slots\magazineslot.p3d",
     "Weapon bipod": r"P:\a3\data_f_mark\proxies\weapon_slots\underbarrel.p3d"
 }

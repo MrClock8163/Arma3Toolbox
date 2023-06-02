@@ -72,7 +72,7 @@ class A3OB_OT_proxy_extract(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.active_object
-        return obj and obj.type == 'MESH' and obj.a3ob_properties_object_proxy.is_a3_proxy and os.path.exists(obj.a3ob_properties_object_proxy.proxy_path)
+        return obj and obj.type == 'MESH' and obj.a3ob_properties_object_proxy.is_a3_proxy and os.path.exists(obj.a3ob_properties_object_proxy.proxy_path) and os.path.splitext(obj.a3ob_properties_object_proxy.proxy_path)[1].lower() == '.p3d'
     
     def execute(self, context):
         proxy_object = context.active_object
