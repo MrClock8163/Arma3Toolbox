@@ -262,7 +262,6 @@ def group_lod_data(lod_objects, groupby = 'TYPE'):
 
 
 def build_collections(lod_objects, operator, root_collection):
-
     if operator.enclose:
         root_collection = bpy.data.collections.new(name=os.path.basename(operator.filepath))
         bpy.context.scene.collection.children.link(root_collection)
@@ -281,18 +280,17 @@ def transform_proxy(obj): # Align the object coordinate system with the proxy di
     rotation_matrix = proxyutils.get_transform_rotation(obj)
     obj.data.transform(rotation_matrix)
     obj.matrix_world = rotation_matrix.inverted()
-    obj.a3ob_properties_object_proxy.is_a3_proxy = True
     
     translate = mathutils.Matrix.Translation(-obj.data.vertices[proxyutils.find_center_index(obj.data)].co)
     obj.data.transform(translate)
     obj.matrix_world @= translate.inverted()
 
 
-def process_proxies(lod_objects, operator, material_dict, addon_prefs):
+def process_proxies(lod_data, operator, material_dict, addon_prefs):
     regex_proxy = "proxy:(.*)\.(\d{3})"
     regex_proxy_placeholder = "@proxy_(\d{4})"
     
-    for obj, _, proxy_selections_dict in lod_objects:
+    for obj, _, proxy_selections_dict in lod_data:
         bpy.context.view_layer.objects.active = obj
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_all(action='DESELECT')
@@ -316,6 +314,9 @@ def process_proxies(lod_objects, operator, material_dict, addon_prefs):
             
         elif operator.proxy_action == 'SEPARATE':
             for proxy_obj in proxy_objects:
+                proxy_obj.a3ob_properties_object.is_a3_lod = False
+                proxy_obj.a3ob_properties_object_proxy.is_a3_proxy = True
+                
                 transform_proxy(proxy_obj)
                 structutils.cleanup_vertex_groups(proxy_obj)
                 
@@ -476,7 +477,13 @@ def read_lod(context, file, material_dict, additional_data, logger, addon_prefs)
     return obj, lod_resolution_signature, material_dict, proxy_selections_dict
 
 
-def read_file(operator, context, file):
+def read_file(operator, context, file, first_lod_only = False):
+    # If something is left selected in the scene, the proxy separation trips up with the operators
+    for obj in bpy.context.selected_objects:
+        obj.select_set(False)
+        
+    context.view_layer.objects.active = None
+    
     wm = context.window_manager
     wm.progress_begin(0, 1000)
     logger = ProcessLogger()
@@ -489,6 +496,8 @@ def read_file(operator, context, file):
         additional_data = operator.additional_data
     
     version, count_lod = read_file_header(file)
+    if first_lod_only and count_lod > 1:
+        count_lod = 1
     
     logger.log(f"File version: {version}")
     logger.log(f"Number of LODs: {count_lod}")
@@ -534,4 +543,4 @@ def read_file(operator, context, file):
     logger.step("P3D Import finished in %f sec" % (time.time() - time_file_start))
     wm.progress_end()
     
-    return len(lod_data)
+    return lod_data

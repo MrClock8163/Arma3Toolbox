@@ -36,9 +36,9 @@ class A3OB_OT_proxy_common(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        obj = context.active_object
+        obj = context.object
         
-        return obj.type == 'MESH' and obj.a3ob_properties_object_proxy.is_a3_proxy
+        return obj and obj.type == 'MESH' and obj.a3ob_properties_object_proxy.is_a3_proxy
     
     def invoke(self, context, event):
         wm = context.window_manager
@@ -109,7 +109,7 @@ class A3OB_OT_namedprops_remove(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.active_object
-        return obj.a3ob_properties_object.property_index != -1
+        return obj and obj.a3ob_properties_object.property_index != -1
         
     def execute(self, context):
         obj = context.active_object
@@ -133,7 +133,7 @@ class A3OB_OT_namedprops_common(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return context.object is not None
+        return context.object
     
     def invoke(self, context, event):
         wm = context.window_manager
@@ -266,7 +266,7 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
         
         layout.separator()
         row_path = layout.row(align=True)
-        row_path.operator('a3ob.proxy_common', text="", icon='PASTEDOWN')
+        row_path.operator("a3ob.proxy_common", text="", icon='PASTEDOWN')
         row_path.prop(object_props, "proxy_path", text="", icon='MESH_CUBE')
         layout.prop(object_props, "proxy_index", text="")
 
