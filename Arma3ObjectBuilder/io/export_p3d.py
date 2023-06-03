@@ -86,11 +86,10 @@ def get_lod_data(operator, context):
     if operator.use_selection:
         export_objects = context.selected_objects
     
-    lod_objects = []
-    materials = []
-    proxies = []
-    
+    lod_list = []
     for obj in export_objects:
+        lod_item = []
+        
         if obj.type != 'MESH' or not obj.a3ob_properties_object.is_a3_lod or obj.parent != None or obj.a3ob_properties_object.lod == '30':
             continue
             
@@ -138,8 +137,8 @@ def get_lod_data(operator, context):
             
             bpy.ops.mesh.customdata_custom_splitnormals_clear(ctx)
         
-        lod_objects.append(main_object)
-        proxies.append(object_proxies)
+        lod_item.append(main_object)
+        lod_item.append(object_proxies)
         
         object_materials = {0: ("", "")}
         translucency = {0: False}
@@ -153,7 +152,8 @@ def get_lod_data(operator, context):
                 object_materials[i] = ("", "")
                 translucency[i] = False
                 
-        materials.append(object_materials)
+        lod_item.append(object_materials)
+        lod_list.append(lod_item)
                 
         bm = bmesh.new()
         bm.from_mesh(main_object.data)
@@ -169,8 +169,8 @@ def get_lod_data(operator, context):
         bm.faces.sort()
         bm.to_mesh(main_object.data)
         bm.free()
-                
-    return lod_objects, materials, proxies
+    
+    return lod_list
 
 
 def can_export(operator, context):
@@ -484,9 +484,10 @@ def write_file(operator, context, file):
     
     time_file_start = time.time()
     
-    lod_objects, materials, proxies = get_lod_data(operator, context)
+    lod_list = get_lod_data(operator, context)
+    lod_list.sort(key=lambda lod: get_resolution(lod[0]))
     
-    count_lod = len(lod_objects)
+    count_lod = len(lod_list)
     
     logger.log("Detected %d LOD objects" % count_lod)
     
@@ -495,15 +496,15 @@ def write_file(operator, context, file):
     logger.level_up()
     
     exported_count = 0
-    for i, obj in enumerate(lod_objects):
+    for i, lod in enumerate(lod_list):
         time_lod_start = time.time()
         logger.step("LOD %d" % i)
         
-        success = write_lod(file, obj, materials[i], proxies[i], logger)
+        success = write_lod(file, lod[0], lod[2], lod[1], logger)
         if success:
             exported_count += 1
             
-        bpy.data.meshes.remove(obj.data, do_unlink=True)
+        bpy.data.meshes.remove(lod[0].data, do_unlink=True)
         
         logger.log("Done in %f sec" % (time.time() - time_lod_start))
         wm.progress_update(i+1)
