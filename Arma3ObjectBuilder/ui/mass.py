@@ -82,10 +82,11 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
     bl_region_type = 'UI'
     bl_category = "Object Builder"
     bl_label = "Vertex Mass Editing"
+    bl_options = {'DEFAULT_CLOSED'}
     
     @classmethod
     def poll(cls, context):
-        return proputils.can_edit_mass(context)
+        return True
         
     def draw_header(self, context):
         row = self.layout.row(align=True)
@@ -95,6 +96,11 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
         
     def draw(self, context):
         layout = self.layout
+        if not proputils.can_edit_mass(context):
+            layout.label(text="Only available in Edit Mode")
+            layout.enabled = False
+            return 
+        
         wm_props = context.window_manager.a3ob_mass_editor
         
         if not wm_props.enabled:

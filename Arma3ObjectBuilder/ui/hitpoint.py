@@ -25,6 +25,7 @@ class A3OB_PT_hitpoints(bpy.types.Panel):
     bl_region_type = 'UI'
     bl_category = "Object Builder"
     bl_label = "Hit Point Cloud"
+    bl_options = {'DEFAULT_CLOSED'}
     
     @classmethod
     def poll(cls, context):

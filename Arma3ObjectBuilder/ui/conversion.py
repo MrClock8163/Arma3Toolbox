@@ -45,6 +45,7 @@ class A3OB_PT_conversion(bpy.types.Panel):
     bl_region_type = 'UI'
     bl_category = "Object Builder"
     bl_label = "Conversion"
+    bl_options = {'DEFAULT_CLOSED'}
     
     @classmethod
     def poll(cls, context):
