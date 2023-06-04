@@ -6,13 +6,13 @@ from ..utilities import properties as proputils
 from ..utilities import data
 
 
-def proxy_path_update(self, context):
+def proxy_name_update(self, context):
     obj = self.id_data
     name = os.path.basename(os.path.splitext(self.proxy_path)[0]).strip()
     if name == "":
-        name = "Proxy"
+        name = "unknown"
         
-    name += " %d" % self.proxy_index
+    name = "proxy: %s %d" % (name, self.proxy_index)
     obj.name = name
     obj.data.name = name
 
@@ -71,14 +71,15 @@ class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
         description = "File path to the proxy model",
         default = "",
         subtype = 'FILE_PATH',
-        update = proxy_path_update
+        update = proxy_name_update
     )
     proxy_index: bpy.props.IntProperty (
         name = "Index",
         description = "Index of proxy",
         default = 1,
         min = 0,
-        max = 999
+        max = 999,
+        update = proxy_name_update
     )
 
 
