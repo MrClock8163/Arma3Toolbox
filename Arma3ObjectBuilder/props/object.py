@@ -1,7 +1,20 @@
+import os
+
 import bpy
 
 from ..utilities import properties as proputils
 from ..utilities import data
+
+
+def proxy_path_update(self, context):
+    obj = self.id_data
+    name = os.path.basename(os.path.splitext(self.proxy_path)[0]).strip()
+    if name == "":
+        name = "Proxy"
+        
+    name += " %d" % self.proxy_index
+    obj.name = name
+    obj.data.name = name
 
 
 class A3OB_PG_properties_named_property(bpy.types.PropertyGroup):
@@ -57,7 +70,8 @@ class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
         name = "Path",
         description = "File path to the proxy model",
         default = "",
-        subtype = 'FILE_PATH'
+        subtype = 'FILE_PATH',
+        update = proxy_path_update
     )
     proxy_index: bpy.props.IntProperty (
         name = "Index",
