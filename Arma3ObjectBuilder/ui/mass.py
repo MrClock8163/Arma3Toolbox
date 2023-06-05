@@ -1,5 +1,6 @@
 import bpy
 
+from ..utilities import generic as utils
 from ..utilities import properties as proputils
 
 
@@ -90,8 +91,10 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
         
     def draw_header(self, context):
         row = self.layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP').url = "https://github.com/MrClock8163/Arma3ObjectBuilder/wiki/Tool:-Vertex-Mass-Editing"
-        row.separator()
+        if utils.get_addon_preferences(context).show_info_links:
+            row.operator("wm.url_open", text="", icon='HELP').url = "https://github.com/MrClock8163/Arma3ObjectBuilder/wiki/Tool:-Vertex-Mass-Editing"
+            row.separator()
+            
         row.prop(context.window_manager.a3ob_mass_editor, "enabled", text="")
         
     def draw(self, context):

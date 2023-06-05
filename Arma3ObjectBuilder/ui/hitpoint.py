@@ -1,5 +1,6 @@
 import bpy
 
+from ..utilities import generic as utils
 from ..utilities import clouds as cloudutils
 
 
@@ -32,6 +33,9 @@ class A3OB_PT_hitpoints(bpy.types.Panel):
         return True
         
     def draw_header(self, context):
+        if not utils.get_addon_preferences(context).show_info_links:
+            return
+            
         layout = self.layout
         row = layout.row(align=True)
         row.operator("wm.url_open", text="", icon='HELP').url = "https://github.com/MrClock8163/Arma3ObjectBuilder/wiki/Tool:-Hit-Point-Cloud"

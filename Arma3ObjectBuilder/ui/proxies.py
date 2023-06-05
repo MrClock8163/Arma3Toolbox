@@ -3,6 +3,7 @@ import os
 import bpy
 import mathutils
 
+from ..utilities import generic as utils
 from ..utilities import proxy as proxyutils
 from ..io import import_p3d
 
@@ -132,9 +133,13 @@ class A3OB_PT_proxies(bpy.types.Panel):
         return True
         
     def draw_header(self, context):
+        if not utils.get_addon_preferences(context).show_info_links:
+            return
+            
         layout = self.layout
         row = layout.row(align=True)
         row.operator("wm.url_open", text="", icon='HELP').url = "https://github.com/MrClock8163/Arma3ObjectBuilder/wiki/Tool:-Proxies"
+        
     def draw(self, context):
         layout = self.layout
         
