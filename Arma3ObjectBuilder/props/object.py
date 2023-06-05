@@ -3,6 +3,7 @@ import os
 import bpy
 
 from ..utilities import properties as proputils
+from ..utilities import lod as lodutils
 from ..utilities import data
 
 
@@ -13,6 +14,17 @@ def proxy_name_update(self, context):
         name = "unknown"
         
     name = "proxy: %s %d" % (name, self.proxy_index)
+    obj.name = name
+    obj.data.name = name
+
+
+def lod_name_update(self, context):
+    obj = self.id_data
+    object_props = obj.a3ob_properties_object
+    if not object_props.is_a3_lod:
+        return
+    
+    name = "LOD: %s" % lodutils.format_lod_name(int(object_props.lod), object_props.resolution)
     obj.name = name
     obj.data.name = name
 
@@ -32,13 +44,15 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
     is_a3_lod: bpy.props.BoolProperty (
         name = "Arma 3 LOD",
         description = "This object is a LOD for an Arma 3 P3D",
-        default = False
+        default = False,
+        update = lod_name_update
     )
     lod: bpy.props.EnumProperty (
         name = "LOD Type",
         description = "Type of LOD",
         items = data.enum_lod_types,
-        default = '0'
+        default = '0',
+        update = lod_name_update
     )
     resolution: bpy.props.IntProperty (
         name = "Resolution/Index",
@@ -46,7 +60,8 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
         default = 1,
         min = 0,
         soft_max = 10000,
-        step = 1
+        step = 1,
+        update = lod_name_update
     )
     properties: bpy.props.CollectionProperty (
         name = "Named Properties",
