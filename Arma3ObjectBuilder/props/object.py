@@ -2,12 +2,16 @@ import os
 
 import bpy
 
+from ..utilities import generic as utils
 from ..utilities import properties as proputils
 from ..utilities import lod as lodutils
 from ..utilities import data
 
 
 def proxy_name_update(self, context):
+    if not self.dynamic_naming:
+        return
+        
     obj = self.id_data
     name = os.path.basename(os.path.splitext(self.proxy_path)[0]).strip()
     if name == "":
@@ -19,6 +23,9 @@ def proxy_name_update(self, context):
 
 
 def lod_name_update(self, context):
+    if not self.dynamic_naming:
+        return
+        
     obj = self.id_data
     object_props = obj.a3ob_properties_object
     if not object_props.is_a3_lod:
@@ -73,6 +80,12 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
         description = "Index of the currently selected named property",
         default = -1
     )
+    dynamic_naming: bpy.props.BoolProperty (
+        name = "Dynamic Object Naming",
+        description = "Object and object data names are automatically constructed and updated from the properties",
+        default = True,
+        update = lod_name_update
+    )
 
 
 class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
@@ -95,6 +108,12 @@ class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
         min = 0,
         max = 999,
         update = proxy_name_update
+    )
+    dynamic_naming: bpy.props.BoolProperty (
+        name = "Dynamic Object Naming",
+        description = "Object and object data names are automatically constructed and updated from the properties",
+        default = True,
+        update = lod_name_update
     )
 
 
