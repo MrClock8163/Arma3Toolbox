@@ -288,7 +288,7 @@ def transform_proxy(obj): # Align the object coordinate system with the proxy di
     obj.data.update()
 
 
-def process_proxies(lod_data, operator, material_dict, addon_prefs):
+def process_proxies(lod_data, operator, material_dict, dynamic_naming, addon_prefs):
     regex_proxy = "proxy:(.*)\.(\d{3})"
     regex_proxy_placeholder = "@proxy_(\d{4})"
     
@@ -317,7 +317,7 @@ def process_proxies(lod_data, operator, material_dict, addon_prefs):
         elif operator.proxy_action == 'SEPARATE':
             for proxy_obj in proxy_objects:
                 proxy_obj.a3ob_properties_object.is_a3_lod = False
-                proxy_obj.a3ob_properties_object_proxy.is_a3_proxy = True
+                proxy_obj.a3ob_properties_object_proxy.dynamic_naming = dynamic_naming
                 
                 transform_proxy(proxy_obj)
                 structutils.cleanup_vertex_groups(proxy_obj)
@@ -334,6 +334,7 @@ def process_proxies(lod_data, operator, material_dict, addon_prefs):
                     proxy_obj.a3ob_properties_object_proxy.proxy_path = get_file_path(proxy_data_groups[0], addon_prefs, ".p3d")
                     proxy_obj.a3ob_properties_object_proxy.proxy_index = int(proxy_data_groups[1])
                 
+                proxy_obj.a3ob_properties_object_proxy.is_a3_proxy = True
                 proxy_obj.data.materials.clear()
                 proxy_obj.data.materials.append(material_dict[("", "")])
                 proxy_obj.parent = obj
@@ -341,7 +342,7 @@ def process_proxies(lod_data, operator, material_dict, addon_prefs):
         bpy.ops.object.select_all(action='DESELECT')
 
 
-def read_lod(context, file, material_dict, additional_data, logger, addon_prefs):
+def read_lod(context, file, material_dict, additional_data, dynamic_naming, logger, addon_prefs):
     logger.level_up()
 
     # Read LOD header
@@ -419,13 +420,14 @@ def read_lod(context, file, material_dict, additional_data, logger, addon_prefs)
     
     # Setup LOD property
     object_props = obj.a3ob_properties_object
-    object_props.is_a3_lod = True
+    object_props.dynamic_naming = dynamic_naming
     try:
         object_props.lod = str(lod_index)
     except:
         object_props.lod = "30"
         
     object_props.resolution = lod_resolution
+    object_props.is_a3_lod = True
     
     # Add named properties
     for key in named_properties:
@@ -522,7 +524,7 @@ def read_file(operator, context, file, first_lod_only = False):
         time_lod_start = time.time()
         logger.step("LOD %d" % i)
         
-        lod_object, lod_resolution, material_dict, proxy_selections_dict = read_lod(context, file, material_dict, additional_data, logger, addon_prefs)
+        lod_object, lod_resolution, material_dict, proxy_selections_dict = read_lod(context, file, material_dict, additional_data, operator.dynamic_naming, logger, addon_prefs)
 
         if operator.validate_meshes:
             lod_object.data.validate(clean_customdata=False)
@@ -539,7 +541,7 @@ def read_file(operator, context, file, first_lod_only = False):
     
     # Set up proxies
     if operator.proxy_action != 'NOTHING' and 'SELECTIONS' in additional_data:
-        process_proxies(lod_data, operator, material_dict, addon_prefs)
+        process_proxies(lod_data, operator, material_dict, operator.dynamic_naming, addon_prefs)
                
     logger.step("")
     logger.step("P3D Import finished in %f sec" % (time.time() - time_file_start))

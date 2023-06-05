@@ -103,7 +103,6 @@ def convert_proxy_item(obj, selections, dynamic_naming, cleanup):
     atbx_props = obj.armaObjProps
     
     a3ob_props.dynamic_naming = dynamic_naming
-    a3ob_props.is_a3_proxy = True
     atbx_props.isArmaObject = False
     atbx_props.namedProps.clear()
     
@@ -117,6 +116,8 @@ def convert_proxy_item(obj, selections, dynamic_naming, cleanup):
         
         if cleanup:
             obj.vertex_groups.remove(group)
+            
+    a3ob_props.is_a3_proxy = True
 
 
 def convert_proxies(obj, dynamic_naming, cleanup, logger):
@@ -169,7 +170,6 @@ def convert_lod_properties(obj, dynamic_naming, cleanup, logger):
     a3ob_props = obj.a3ob_properties_object
     atbx_props = obj.armaObjProps
     a3ob_props.dynamic_naming = dynamic_naming
-    a3ob_props.is_a3_lod = True
     
     try:
         a3ob_props.lod = lod_conversion[atbx_props.lod]
@@ -177,6 +177,7 @@ def convert_lod_properties(obj, dynamic_naming, cleanup, logger):
         a3ob_props.lod = '30'
         
     a3ob_props.resolution = math.floor(atbx_props.lodDistance)
+    a3ob_props.is_a3_lod = True
     
     logger.step("LOD name: %s" % lodutils.format_lod_name(int(a3ob_props.lod), a3ob_props.resolution))
     

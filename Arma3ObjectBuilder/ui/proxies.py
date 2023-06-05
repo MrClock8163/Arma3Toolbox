@@ -97,6 +97,9 @@ class A3OB_OT_proxy_extract(bpy.types.Operator):
         ),
         default = 'SEPARATE'
     )
+    dynamic_naming: bpy.props.BoolProperty (
+        default = False
+    )
     filepath: bpy.props.StringProperty (
         default = ""
     )
