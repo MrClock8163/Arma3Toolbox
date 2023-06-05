@@ -36,7 +36,7 @@ class A3OB_OT_convert_to_a3ob(bpy.types.Operator):
         
         bpy.ops.object.select_all(action='DESELECT')
         
-        convertutils.convert_objects(objects, wm_props.cleanup)
+        convertutils.convert_objects(objects, wm_props.dynamic_naming, wm_props.cleanup)
         
         return {'FINISHED'}
 
@@ -70,6 +70,7 @@ class A3OB_PT_conversion(bpy.types.Panel):
         col.prop(wm_props, "use_selection")
         col.prop(wm_props, "types", text=" ")
         
+        layout.prop(wm_props, "dynamic_naming")
         layout.prop(wm_props, "cleanup")
         layout.operator("a3ob.convert_to_a3ob", icon='FILE_REFRESH')
 

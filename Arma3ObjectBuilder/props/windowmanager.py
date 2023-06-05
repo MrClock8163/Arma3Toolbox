@@ -181,6 +181,11 @@ class A3OB_PG_conversion(bpy.types.PropertyGroup):
         options = {'ENUM_FLAG'},
         default = {'MESH', 'DTM', 'ARMATURE'}
     )
+    dynamic_naming: bpy.props.BoolProperty (
+        name = "Dynamic Object Naming",
+        description = "Enable Dynamic Object Naming for LOD and proxy objects",
+        default = True
+    )
     cleanup: bpy.props.BoolProperty (
         name = "Cleanup",
         description = "Cleanup the ArmaToolbox-style settings and properties",
