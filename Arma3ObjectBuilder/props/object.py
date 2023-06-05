@@ -141,6 +141,15 @@ class A3OB_PG_properties_object_dtm(bpy.types.PropertyGroup):
         default = 0,
         soft_max = 1000000
     )
+    cellsize_source: bpy.props.EnumProperty (
+        name = "Source",
+        description = "Source of raster spacing",
+        items = (
+            ('MANUAL', "Manual", "The raster spacing is explicitly set"),
+            ('CALCULATED', "Calculated", "The raster spacing is from the distance of the first 2 points of the gird")
+        ),
+        default = 'MANUAL'
+    )
     cellsize: bpy.props.FloatProperty (
         name = "Raster Spacing",
         description = "Horizontal and vertical spacing between raster points",
@@ -152,16 +161,16 @@ class A3OB_PG_properties_object_dtm(bpy.types.PropertyGroup):
         description = "Filler value where data does not exist",
         default = -9999.0
     )
-    
-    
+
+
 class A3OB_PG_properties_keyframe(bpy.types.PropertyGroup):
     index: bpy.props.IntProperty (
         name = "Frame Index",
         description = "Index of the keyframe to export",
         default = 0
     )
-    
-    
+
+
 class A3OB_PG_properties_object_armature(bpy.types.PropertyGroup):
     motion_source: bpy.props.EnumProperty (
         name = "Motion Source",

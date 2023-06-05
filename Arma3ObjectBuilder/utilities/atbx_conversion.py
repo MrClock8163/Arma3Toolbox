@@ -259,6 +259,7 @@ def convert_dtm(obj, cleanup, logger):
     atbx_props = obj.armaHFProps
     a3ob_props = obj.a3ob_properties_object_dtm
     
+    a3ob_props.cellsize_source = 'MANUAL'
     a3ob_props.cellsize = atbx_props.cellSize
     a3ob_props.origin = 'CORNER'
     a3ob_props.easting = atbx_props.easting

@@ -88,6 +88,7 @@ def read_file(operator, context, file):
     context.scene.collection.objects.link(obj)
     
     object_props = obj.a3ob_properties_object_dtm
+    object_props.cellsize_source = 'MANUAL'
     object_props.cellsize = params["cellsize"]
     
     if "yllcenter" in params:

@@ -297,10 +297,16 @@ class A3OB_PT_object_dtm(bpy.types.Panel):
         layout.use_property_split = True
         layout.use_property_decorate = False
         
-        layout.prop(object_props, "cellsize")
-        col_origin = layout.column(align=True, heading="Origin")
+        col_cellsize = layout.column(align=True)
+        row_cellsize_source = col_cellsize.row(align=True)
+        row_cellsize_source.prop(object_props, "cellsize_source", text="Raster Spacing", expand=True)
+        if object_props.cellsize_source == 'MANUAL':
+            col_cellsize.prop(object_props, "cellsize", text=" ")
+        
+        # layout.prop(object_props, "cellsize")
+        col_origin = layout.column(align=True)
         row_origin = col_origin.row(align=True)
-        row_origin.prop(object_props, "origin", text=" ", expand=True)
+        row_origin.prop(object_props, "origin", text="Reference Point", expand=True)
         col_origin.prop(object_props, "easting")
         col_origin.prop(object_props, "northing")
         layout.prop(object_props, "nodata")
