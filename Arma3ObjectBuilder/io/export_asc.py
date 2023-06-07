@@ -5,7 +5,11 @@ import bpy
 from ..utilities.logger import ProcessLogger
 
 
-def valid_resolution(mesh):
+def valid_resolution(operator, context, obj):
+    if operator.apply_modifiers:
+        obj = obj.evaluated_get(context.evaluated_depsgraph_get())
+    
+    mesh = obj.data
     resolution = int(math.sqrt(len(mesh.vertices)))
     return len(mesh.vertices) == resolution**2
 
@@ -73,6 +77,9 @@ def write_file(operator, context, file, obj):
     if obj.mode == 'EDIT':
         obj.update_from_editmode()
         
+    if operator.apply_modifiers:
+        obj = obj.evaluated_get(context.evaluated_depsgraph_get())
+        
     mesh = obj.data
     object_props = obj.a3ob_properties_object_dtm
     
@@ -83,8 +90,12 @@ def write_file(operator, context, file, obj):
     nodata = object_props.nodata
     resolution = int(math.sqrt(len(mesh.vertices)))
     
-    write_header(file, cellsize, easting, northing, centered, resolution, nodata, logger)
     rows = sort_points(mesh, resolution, logger)
+    
+    if object_props.cellsize_source == 'CALCULATED' and resolution != 1:
+        cellsize = rows[0][1][0] - rows[0][0][0]
+    
+    write_header(file, cellsize, easting, northing, centered, resolution, nodata, logger)
     write_raster(file, rows, logger)
     
     logger.level_down()

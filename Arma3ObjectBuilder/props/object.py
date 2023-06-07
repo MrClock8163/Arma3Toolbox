@@ -1,7 +1,39 @@
+import os
+
 import bpy
 
+from ..utilities import generic as utils
 from ..utilities import properties as proputils
+from ..utilities import lod as lodutils
 from ..utilities import data
+
+
+def proxy_name_update(self, context):
+    if not self.dynamic_naming:
+        return
+        
+    obj = self.id_data
+    name = os.path.basename(os.path.splitext(self.proxy_path)[0]).strip()
+    if name == "":
+        name = "unknown"
+        
+    name = "proxy: %s %d" % (name, self.proxy_index)
+    obj.name = name
+    obj.data.name = name
+
+
+def lod_name_update(self, context):
+    if not self.dynamic_naming:
+        return
+        
+    obj = self.id_data
+    object_props = obj.a3ob_properties_object
+    if not object_props.is_a3_lod:
+        return
+    
+    name = "LOD: %s" % lodutils.format_lod_name(int(object_props.lod), object_props.resolution)
+    obj.name = name
+    obj.data.name = name
 
 
 class A3OB_PG_properties_named_property(bpy.types.PropertyGroup):
@@ -19,13 +51,15 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
     is_a3_lod: bpy.props.BoolProperty (
         name = "Arma 3 LOD",
         description = "This object is a LOD for an Arma 3 P3D",
-        default = False
+        default = False,
+        update = lod_name_update
     )
     lod: bpy.props.EnumProperty (
         name = "LOD Type",
         description = "Type of LOD",
         items = data.enum_lod_types,
-        default = '0'
+        default = '0',
+        update = lod_name_update
     )
     resolution: bpy.props.IntProperty (
         name = "Resolution/Index",
@@ -33,7 +67,8 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
         default = 1,
         min = 0,
         soft_max = 10000,
-        step = 1
+        step = 1,
+        update = lod_name_update
     )
     properties: bpy.props.CollectionProperty (
         name = "Named Properties",
@@ -44,6 +79,12 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
         name = "Named Property Index",
         description = "Index of the currently selected named property",
         default = -1
+    )
+    dynamic_naming: bpy.props.BoolProperty (
+        name = "Dynamic Object Naming",
+        description = "Object and object data names are automatically constructed and updated from the properties",
+        default = True,
+        update = lod_name_update
     )
 
 
@@ -57,14 +98,22 @@ class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
         name = "Path",
         description = "File path to the proxy model",
         default = "",
-        subtype = 'FILE_PATH'
+        subtype = 'FILE_PATH',
+        update = proxy_name_update
     )
     proxy_index: bpy.props.IntProperty (
         name = "Index",
         description = "Index of proxy",
         default = 1,
         min = 0,
-        max = 999
+        max = 999,
+        update = proxy_name_update
+    )
+    dynamic_naming: bpy.props.BoolProperty (
+        name = "Dynamic Object Naming",
+        description = "Object and object data names are automatically constructed and updated from the properties",
+        default = True,
+        update = lod_name_update
     )
 
 
@@ -92,6 +141,15 @@ class A3OB_PG_properties_object_dtm(bpy.types.PropertyGroup):
         default = 0,
         soft_max = 1000000
     )
+    cellsize_source: bpy.props.EnumProperty (
+        name = "Source",
+        description = "Source of raster spacing",
+        items = (
+            ('MANUAL', "Manual", "The raster spacing is explicitly set"),
+            ('CALCULATED', "Calculated", "The raster spacing is from the distance of the first 2 points of the gird")
+        ),
+        default = 'MANUAL'
+    )
     cellsize: bpy.props.FloatProperty (
         name = "Raster Spacing",
         description = "Horizontal and vertical spacing between raster points",
@@ -103,16 +161,16 @@ class A3OB_PG_properties_object_dtm(bpy.types.PropertyGroup):
         description = "Filler value where data does not exist",
         default = -9999.0
     )
-    
-    
+
+
 class A3OB_PG_properties_keyframe(bpy.types.PropertyGroup):
     index: bpy.props.IntProperty (
         name = "Frame Index",
         description = "Index of the keyframe to export",
         default = 0
     )
-    
-    
+
+
 class A3OB_PG_properties_object_armature(bpy.types.PropertyGroup):
     motion_source: bpy.props.EnumProperty (
         name = "Motion Source",

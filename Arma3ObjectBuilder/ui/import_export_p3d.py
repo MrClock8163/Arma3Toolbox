@@ -64,6 +64,11 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         ),
         default = 'SEPARATE'
     )
+    dynamic_naming: bpy.props.BoolProperty (
+        name = "Dynamic Naming",
+        description = "Enable Dynamic Object Naming for LOD and proxy objects",
+        default = True
+    )
     
     def draw(self, context):
         pass
@@ -116,6 +121,7 @@ class A3OB_PT_import_p3d_main(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
         
+        layout.prop(operator, "dynamic_naming")
         layout.prop(operator, "validate_meshes")
 
 

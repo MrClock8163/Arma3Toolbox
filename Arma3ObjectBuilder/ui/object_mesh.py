@@ -195,7 +195,9 @@ class A3OB_PT_object_mesh(bpy.types.Panel):
         object_props = obj.a3ob_properties_object
         
         layout = self.layout
-        layout.prop(object_props, "is_a3_lod", text="Is P3D LOD", toggle=1)
+        row_toggle = layout.row(align=True)
+        row_toggle.prop(object_props, "is_a3_lod", text="Is P3D LOD", toggle=1)
+        row_toggle.prop(object_props, "dynamic_naming", text="", icon='SYNTAX_OFF')
         
         layout.use_property_split = True
         layout.use_property_decorate = False
@@ -257,9 +259,12 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
         object_props = obj.a3ob_properties_object_proxy
         
         layout = self.layout
-        row = layout.row()
-        row.prop(object_props, "is_a3_proxy", text="Is P3D Proxy", toggle=1)
-        row.enabled = False
+        row = layout.row(align=True)
+        col_enable = row.column(align=True)
+        col_enable.prop(object_props, "is_a3_proxy", text="Is P3D Proxy", toggle=1)
+        col_enable.enabled = False
+        col_naming = row.column(align=True)
+        col_naming.prop(object_props, "dynamic_naming", text="", icon='SYNTAX_OFF')
         
         layout.use_property_split = True
         layout.use_property_decorate = False
@@ -292,10 +297,16 @@ class A3OB_PT_object_dtm(bpy.types.Panel):
         layout.use_property_split = True
         layout.use_property_decorate = False
         
-        layout.prop(object_props, "cellsize")
-        col_origin = layout.column(align=True, heading="Origin")
+        col_cellsize = layout.column(align=True)
+        row_cellsize_source = col_cellsize.row(align=True)
+        row_cellsize_source.prop(object_props, "cellsize_source", text="Raster Spacing", expand=True)
+        if object_props.cellsize_source == 'MANUAL':
+            col_cellsize.prop(object_props, "cellsize", text=" ")
+        
+        # layout.prop(object_props, "cellsize")
+        col_origin = layout.column(align=True)
         row_origin = col_origin.row(align=True)
-        row_origin.prop(object_props, "origin", text=" ", expand=True)
+        row_origin.prop(object_props, "origin", text="Reference Point", expand=True)
         col_origin.prop(object_props, "easting")
         col_origin.prop(object_props, "northing")
         layout.prop(object_props, "nodata")

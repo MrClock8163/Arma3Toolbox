@@ -38,18 +38,23 @@ class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     """Export DTM as Esri ASCII grid"""
     bl_idname = "a3ob.export_asc"
     bl_label = "Export ASC"
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'PRESET'}
     filename_ext = ".asc"
     
     filter_glob: bpy.props.StringProperty (
         default = "*.asc",
         options = {'HIDDEN'}
     )
+    apply_modifiers: bpy.props.BoolProperty (
+        name = "Apply Modifiers",
+        description = "Apply the assigned modifiers to the DTM object during export",
+        default = True
+    )
     
     @classmethod
     def poll(cls, context):
         obj = context.active_object
-        return obj
+        return obj and obj.type == 'MESH' and len(obj.data.vertices) > 0
     
     # def draw(self, context):
         # pass
@@ -57,8 +62,8 @@ class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     def execute(self, context):
         obj = context.active_object
         
-        if not export_asc.valid_resolution(obj.data):
-            self.report({'ERROR'}, "Cannot export irregular raster")
+        if not export_asc.valid_resolution(self, context, obj):
+            self.report({'ERROR'}, "Cannot export irregular raster, raster resolutions must be equal in X and Y directions")
             return {'FINISHED'}
             
         with open(self.filepath, "wt") as file:

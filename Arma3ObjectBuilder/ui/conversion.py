@@ -1,5 +1,6 @@
 import bpy
 
+from ..utilities import generic as utils
 from ..utilities import atbx_conversion as convertutils
 
 
@@ -35,7 +36,7 @@ class A3OB_OT_convert_to_a3ob(bpy.types.Operator):
         
         bpy.ops.object.select_all(action='DESELECT')
         
-        convertutils.convert_objects(objects, wm_props.cleanup)
+        convertutils.convert_objects(objects, wm_props.dynamic_naming, wm_props.cleanup)
         
         return {'FINISHED'}
 
@@ -52,6 +53,9 @@ class A3OB_PT_conversion(bpy.types.Panel):
         return True
         
     def draw_header(self, context):
+        if not utils.get_addon_preferences(context).show_info_links:
+            return
+            
         layout = self.layout
         row = layout.row(align=True)
         row.operator("wm.url_open", text="", icon='HELP').url = "https://github.com/MrClock8163/Arma3Toolbox/wiki/Tool:-Conversion"
@@ -66,6 +70,7 @@ class A3OB_PT_conversion(bpy.types.Panel):
         col.prop(wm_props, "use_selection")
         col.prop(wm_props, "types", text=" ")
         
+        layout.prop(wm_props, "dynamic_naming")
         layout.prop(wm_props, "cleanup")
         layout.operator("a3ob.convert_to_a3ob", icon='FILE_REFRESH')
 

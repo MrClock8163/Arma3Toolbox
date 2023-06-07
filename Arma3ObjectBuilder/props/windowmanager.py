@@ -181,12 +181,78 @@ class A3OB_PG_conversion(bpy.types.PropertyGroup):
         options = {'ENUM_FLAG'},
         default = {'MESH', 'DTM', 'ARMATURE'}
     )
+    dynamic_naming: bpy.props.BoolProperty (
+        name = "Dynamic Object Naming",
+        description = "Enable Dynamic Object Naming for LOD and proxy objects",
+        default = True
+    )
     cleanup: bpy.props.BoolProperty (
         name = "Cleanup",
         description = "Cleanup the ArmaToolbox-style settings and properties",
         default = True
     )
-    
+
+
+class A3OB_PG_renamable(bpy.types.PropertyGroup):
+    path: bpy.props.StringProperty (
+        name = "From",
+        description = "File path",
+        default = ""
+    )
+
+
+class A3OB_PG_renaming(bpy.types.PropertyGroup):
+    source_filter: bpy.props.EnumProperty (
+        name = "Filter",
+        description = "",
+        items = (
+            ('TEX', "Texture", "Show paths to textures"),
+            ('RVMAT', "RVMAT", "Show paths to RVMATs"),
+            ('PROXY', "Proxy", "Show paths to proxies")
+        ),
+        options = {'ENUM_FLAG'},
+        default = {'TEX','RVMAT', 'PROXY'}
+    )
+    path_list: bpy.props.CollectionProperty (
+        type = A3OB_PG_renamable
+    )
+    path_list_index: bpy.props.IntProperty (
+        name = "Selection Index",
+        default = -1
+    )
+    new_path: bpy.props.StringProperty (
+        name = "To",
+        description = "New file path",
+        default = "",
+        subtype = 'FILE_PATH'
+    )
+    root_old: bpy.props.StringProperty (
+        name = "From",
+        description = "Path root to change",
+        default = "",
+        subtype = 'FILE_PATH'
+    )
+    root_new: bpy.props.StringProperty (
+        name = "To",
+        description = "Path to change root to",
+        default = "",
+        subtype = 'FILE_PATH'
+    )
+    vgroup_old: bpy.props.StringProperty (
+        name = "From",
+        description = "Vertex group to rename",
+        default = ""
+    )
+    vgroup_new: bpy.props.StringProperty (
+        name = "To",
+        description = "New vertex group name"
+    )
+    vgroup_match_whole: bpy.props.BoolProperty (
+        name = "Whole Name",
+        description = "Only replace if the whole name matches",
+        default = True
+    )
+
 
 classes = (
     A3OB_PG_common_proxy,
@@ -194,7 +260,9 @@ classes = (
     A3OB_PG_hitpoint_generator,
     A3OB_PG_validation,
     A3OB_PG_keyframes,
-    A3OB_PG_conversion
+    A3OB_PG_conversion,
+    A3OB_PG_renamable,
+    A3OB_PG_renaming
 )
 
 
@@ -203,19 +271,21 @@ def register():
         bpy.utils.register_class(cls)
         
     bpy.types.WindowManager.a3ob_proxy_common = bpy.props.CollectionProperty(type=A3OB_PG_common_proxy)
-    bpy.types.WindowManager.a3ob_proxy_common_index = bpy.props.IntProperty(name="Selection Index",default = -1)
+    bpy.types.WindowManager.a3ob_proxy_common_index = bpy.props.IntProperty(name="Selection Index", default = -1)
     bpy.types.WindowManager.a3ob_namedprops_common = bpy.props.CollectionProperty(type=objectprops.A3OB_PG_properties_named_property)
-    bpy.types.WindowManager.a3ob_namedprops_common_index = bpy.props.IntProperty(name="Selection Index",default = -1)
+    bpy.types.WindowManager.a3ob_namedprops_common_index = bpy.props.IntProperty(name="Selection Index", default = -1)
     bpy.types.WindowManager.a3ob_mass_editor = bpy.props.PointerProperty(type=A3OB_PG_mass_editor)
     bpy.types.WindowManager.a3ob_hitpoint_generator = bpy.props.PointerProperty(type=A3OB_PG_hitpoint_generator)
     bpy.types.WindowManager.a3ob_validation = bpy.props.PointerProperty(type=A3OB_PG_validation)
     bpy.types.WindowManager.a3ob_keyframes = bpy.props.PointerProperty(type=A3OB_PG_keyframes)
     bpy.types.WindowManager.a3ob_conversion = bpy.props.PointerProperty(type=A3OB_PG_conversion)
+    bpy.types.WindowManager.a3ob_renaming = bpy.props.PointerProperty(type=A3OB_PG_renaming)
     
     print("\t" + "Properties: window manager")
     
     
 def unregister():
+    del bpy.types.WindowManager.a3ob_renaming
     del bpy.types.WindowManager.a3ob_conversion
     del bpy.types.WindowManager.a3ob_validation
     del bpy.types.WindowManager.a3ob_keyframes

@@ -96,13 +96,13 @@ def convert_materials(obj, converted_materials, cleanup, logger):
     return converted_materials
 
 
-def convert_proxy_item(obj, selections, cleanup):
+def convert_proxy_item(obj, selections, dynamic_naming, cleanup):
     import_p3d.transform_proxy(obj)
     structutils.cleanup_vertex_groups(obj)
     a3ob_props = obj.a3ob_properties_object_proxy
     atbx_props = obj.armaObjProps
     
-    a3ob_props.is_a3_proxy = True
+    a3ob_props.dynamic_naming = dynamic_naming
     atbx_props.isArmaObject = False
     atbx_props.namedProps.clear()
     
@@ -116,9 +116,11 @@ def convert_proxy_item(obj, selections, cleanup):
         
         if cleanup:
             obj.vertex_groups.remove(group)
+            
+    a3ob_props.is_a3_proxy = True
 
 
-def convert_proxies(obj, cleanup, logger):
+def convert_proxies(obj, dynamic_naming, cleanup, logger):
     regex_proxy_placeholder = "@@armaproxy(\.\d+)?"
     proxy_selections = {proxy.name: (proxy.path, proxy.index) for proxy in obj.armaObjProps.proxyArray}
     if cleanup:
@@ -144,7 +146,7 @@ def convert_proxies(obj, cleanup, logger):
     
     for proxy in proxy_objects:
         proxy.parent = obj
-        convert_proxy_item(proxy, proxy_selections, cleanup)
+        convert_proxy_item(proxy, proxy_selections, dynamic_naming, cleanup)
         
     bpy.ops.object.select_all(action='DESELECT')
     
@@ -164,10 +166,10 @@ def convert_namedprops(a3ob_props, atbx_props, logger):
         logger.step("Named properties: %d" % count)
 
 
-def convert_lod_properties(obj, cleanup, logger):
+def convert_lod_properties(obj, dynamic_naming, cleanup, logger):
     a3ob_props = obj.a3ob_properties_object
     atbx_props = obj.armaObjProps
-    a3ob_props.is_a3_lod = True
+    a3ob_props.dynamic_naming = dynamic_naming
     
     try:
         a3ob_props.lod = lod_conversion[atbx_props.lod]
@@ -175,6 +177,7 @@ def convert_lod_properties(obj, cleanup, logger):
         a3ob_props.lod = '30'
         
     a3ob_props.resolution = math.floor(atbx_props.lodDistance)
+    a3ob_props.is_a3_lod = True
     
     logger.step("LOD name: %s" % lodutils.format_lod_name(int(a3ob_props.lod), a3ob_props.resolution))
     
@@ -209,10 +212,10 @@ def convert_vertex_masses(obj, cleanup, logger):
     bm.free()
 
 
-def convert_mesh(obj, converted_materials, cleanup, logger):
+def convert_mesh(obj, converted_materials, dynamic_naming, cleanup, logger):
     converted_materials = convert_materials(obj, converted_materials, cleanup, logger)        
-    convert_proxies(obj, cleanup, logger)
-    convert_lod_properties(obj, cleanup, logger)
+    convert_proxies(obj, dynamic_naming, cleanup, logger)
+    convert_lod_properties(obj, dynamic_naming, cleanup, logger)
     convert_vertex_masses(obj, cleanup, logger)
 
 
@@ -259,6 +262,7 @@ def convert_dtm(obj, cleanup, logger):
     atbx_props = obj.armaHFProps
     a3ob_props = obj.a3ob_properties_object_dtm
     
+    a3ob_props.cellsize_source = 'MANUAL'
     a3ob_props.cellsize = atbx_props.cellSize
     a3ob_props.origin = 'CORNER'
     a3ob_props.easting = atbx_props.easting
@@ -273,11 +277,11 @@ def convert_dtm(obj, cleanup, logger):
         atbx_props.isHeightfield = False
 
 
-def convert_objects_item(obj, object_type, converted_materials, cleanup, logger):
+def convert_objects_item(obj, object_type, converted_materials, dynamic_naming, cleanup, logger):
     logger.level_up()
     
     if object_type == 'LOD':
-        convert_materials = convert_mesh(obj, converted_materials, cleanup, logger)
+        convert_materials = convert_mesh(obj, converted_materials, dynamic_naming, cleanup, logger)
     elif object_type == 'ARMATURE':
         convert_armature(obj, cleanup, logger)
     elif object_type == 'DTM':
@@ -288,7 +292,7 @@ def convert_objects_item(obj, object_type, converted_materials, cleanup, logger)
     return converted_materials
 
 
-def convert_objects(objects, cleanup):
+def convert_objects(objects, dynamic_naming, cleanup):
     logger = ProcessLogger()
     logger.step("Converting ATBX setup to A3OB")
     logger.level_up()
@@ -301,7 +305,7 @@ def convert_objects(objects, cleanup):
         
         for obj in category:
             logger.step(str(obj.name))
-            converted_materials = convert_objects_item(obj, categories[i], converted_materials, cleanup, logger)
+            converted_materials = convert_objects_item(obj, categories[i], converted_materials, dynamic_naming, cleanup, logger)
             logger.step("")
             
         logger.level_down()

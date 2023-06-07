@@ -2,7 +2,7 @@ bl_info = {
     "name": "Arma 3 Object Builder",
     "description": "Collection of tools for editing Arma 3 content",
     "author": "MrClock (present add-on), Hans-Joerg \"Alwarren\" Frieden (original ArmaToolbox add-on)",
-    "version": (0, 3, 1),
+    "version": (0, 3, 2),
     "blender": (2, 80, 0),
     "location": "Object Builder panels in various views",
     "warning": "Work In Progress",
@@ -28,6 +28,7 @@ if "bpy" in locals():
     importlib.reload(ui.proxies)
     importlib.reload(ui.rtm)
     importlib.reload(ui.conversion)
+    importlib.reload(ui.paths)
     importlib.reload(props.windowmanager)
     importlib.reload(props.object)
     importlib.reload(props.rvmat)
@@ -46,6 +47,7 @@ else:
     from .ui import proxies
     from .ui import rtm
     from .ui import conversion
+    from .ui import paths
     from .props import windowmanager
     from .props import object
     from .props import rvmat
@@ -66,12 +68,19 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
             ('PATHS',"Paths","File path related settings",'FILE_TICK',1)
         )
     )
+    # General
     a3_tools: bpy.props.StringProperty (
         description = "Install directory of the official Arma 3 Tools",
         name = "Path",
         default = "",
         subtype = 'DIR_PATH'
     )
+    show_info_links: bpy.props.BoolProperty (
+        name = "Show Tool Help Links",
+        description = "Display links to the addon documentation in the headers of tool panels",
+        default = True
+    )
+    # Paths
     project_root: bpy.props.StringProperty (
         name = "Project Root",
         description = "Root directory of the project (should be P:\ for most cases)",
@@ -106,10 +115,7 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         box.use_property_decorate = False
         
         if self.tabs == 'GENERAL':
-            # box.prop(self, "a3_tools", text="Arma 3 Tools", icon='TOOL_SETTINGS')
-            row_label = box.row()
-            row_label.label(text="There are no settings in this category at the present time")
-            row_label.enabled = False
+            box.prop(self, "show_info_links")
             
         elif self.tabs == 'PATHS':
             box.prop(self, "project_root", icon='DISK_DRIVE')
@@ -142,6 +148,7 @@ def register():
     material.register()
     mass.register()
     hitpoint.register()
+    paths.register()
     proxies.register()
     validation.register()
     rtm.register()
@@ -164,6 +171,7 @@ def unregister():
     rtm.unregister()
     validation.unregister()
     proxies.unregister()
+    paths.unregister()
     hitpoint.unregister()
     mass.unregister()
     material.unregister()
