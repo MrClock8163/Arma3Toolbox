@@ -25,6 +25,16 @@ class A3OB_MT_object_builder_convexity(bpy.types.Menu):
         self.layout.operator(A3OB_OT_component_convex_hull.bl_idname)
 
 
+class A3OB_MT_object_builder_faces(bpy.types.Menu):
+    """Object Builder face functions"""
+    
+    bl_label = "Faces"
+    
+    def draw(self, context):
+        self.layout.operator(A3OB_OT_sort_faces.bl_idname)
+        self.layout.operator(A3OB_OT_recalculate_normals.bl_idname)
+
+
 class A3OB_MT_object_builder_misc(bpy.types.Menu):
     """Object Builder miscellaneous functions"""
     
@@ -42,6 +52,7 @@ class A3OB_MT_object_builder(bpy.types.Menu):
     def draw(self, context):
         self.layout.menu("A3OB_MT_object_builder_topo")
         self.layout.menu("A3OB_MT_object_builder_convexity")
+        self.layout.menu("A3OB_MT_object_builder_faces")
         self.layout.menu("A3OB_MT_object_builder_misc")
 
 
@@ -141,6 +152,39 @@ class A3OB_OT_find_components(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class A3OB_OT_sort_faces(bpy.types.Operator):
+    """Sort selected faces to the end of the face list (relative order of selected faces is maintained)"""
+    
+    bl_label = "Sort"
+    bl_idname = "a3ob.sort_faces"
+    
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        return obj and len(context.selected_objects) == 1 and obj.type == 'MESH' and obj.mode == 'EDIT'
+    
+    def execute(self, context):
+        bpy.ops.mesh.sort_elements(type='SELECTED', elements={'FACE'}, reverse=True)
+        return {'FINISHED'}
+
+
+class A3OB_OT_recalculate_normals(bpy.types.Operator):
+    """Recalculate face normals"""
+    
+    bl_label = "Recalculate Normals"
+    bl_idname = "a3ob.recalculate_normals"
+    
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        return obj and len(context.selected_objects) == 1 and obj.type == 'MESH' and obj.mode == 'EDIT'
+    
+    def execute(self, context):
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.normals_make_consistent(inside=False)
+        return {'FINISHED'}
+
+
 class A3OB_OT_cleanup_vertex_groups(bpy.types.Operator):
     """Cleanup vertex groups with no vertices assigned"""
     
@@ -191,10 +235,13 @@ classes = (
     A3OB_OT_convex_hull,
     A3OB_OT_component_convex_hull,
     A3OB_OT_find_components,
+    A3OB_OT_sort_faces,
+    A3OB_OT_recalculate_normals,
     A3OB_OT_cleanup_vertex_groups,
     A3OB_OT_redefine_vertex_group,
     A3OB_MT_object_builder,
     A3OB_MT_object_builder_topo,
+    A3OB_MT_object_builder_faces,
     A3OB_MT_object_builder_convexity,
     A3OB_MT_object_builder_misc
 )
