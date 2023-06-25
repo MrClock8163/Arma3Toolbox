@@ -29,6 +29,7 @@ if "bpy" in locals():
     importlib.reload(ui.tool_rtm)
     importlib.reload(ui.tool_conversion)
     importlib.reload(ui.tool_paths)
+    importlib.reload(ui.tool_color)
     importlib.reload(props.windowmanager)
     importlib.reload(props.object)
     importlib.reload(props.rvmat)
@@ -48,6 +49,7 @@ else:
     from .ui import tool_rtm
     from .ui import tool_conversion
     from .ui import tool_paths
+    from .ui import tool_color
     from .props import windowmanager
     from .props import object
     from .props import rvmat
@@ -153,6 +155,7 @@ def register():
     tool_validation.register()
     tool_rtm.register()
     tool_conversion.register()
+    tool_color.register()
     tool_utilities.register()
     
     print("Register done")
@@ -167,6 +170,7 @@ def unregister():
         unregister_class(cls)
 
     tool_utilities.unregister()
+    tool_color.unregister()
     tool_conversion.unregister()
     tool_rtm.unregister()
     tool_validation.unregister()
