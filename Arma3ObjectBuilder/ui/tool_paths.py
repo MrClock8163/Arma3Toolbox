@@ -85,7 +85,7 @@ class A3OB_PT_renaming(bpy.types.Panel):
             
         layout = self.layout
         row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP').url = "https://github.com/MrClock8163/Arma3ObjectBuilder/wiki/Tool:-Renaming"
+        row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/renaming"
 
     def draw(self, context):
         pass

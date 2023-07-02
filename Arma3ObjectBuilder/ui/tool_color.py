@@ -15,13 +15,13 @@ class A3OB_PT_colors(bpy.types.Panel):
     def poll(cls, context):
         return True
         
-    # def draw_header(self, context):
-        # if not utils.get_addon_preferences(context).show_info_links:
-            # return
+    def draw_header(self, context):
+        if not utils.get_addon_preferences(context).show_info_links:
+            return
             
-        # layout = self.layout
-        # row = layout.row(align=True)
-        # row.operator("wm.url_open", text="", icon='HELP').url = "https://github.com/MrClock8163/Arma3Toolbox/wiki/Tool:-Conversion"
+        layout = self.layout
+        row = layout.row(align=True)
+        row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/colors"
         
     def draw(self, context):
         layout = self.layout

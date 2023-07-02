@@ -52,7 +52,7 @@ class A3OB_PT_keyframes(bpy.types.Panel):
             
         layout = self.layout
         row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP').url = "https://github.com/MrClock8163/Arma3ObjectBuilder/wiki/Tool:-RTM-Frames"
+        row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/rtm-frames"
         
     def draw(self, context):
         wm_props = context.window_manager.a3ob_keyframes
