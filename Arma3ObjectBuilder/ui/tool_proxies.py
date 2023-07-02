@@ -28,10 +28,10 @@ class A3OB_OT_proxy_realign_ocs(bpy.types.Operator):
 
 
 class A3OB_OT_proxy_align(bpy.types.Operator):
-    """Align the proxy object coordinate system with proxy directions"""
+    """Align the proxy object to another selected object"""
     
     bl_idname = "a3ob.proxy_align"
-    bl_label = "Align With Object"
+    bl_label = "Align To Object"
     bl_options = {'UNDO'}
     
     @classmethod
@@ -53,6 +53,36 @@ class A3OB_OT_proxy_align(bpy.types.Operator):
         
         proxy.matrix_world = obj.matrix_world
         proxy.scale = mathutils.Vector((1, 1, 1))
+                    
+        return {'FINISHED'}
+
+
+class A3OB_OT_proxy_align_object(bpy.types.Operator):
+    """Align an object to a selected proxy object"""
+    
+    bl_idname = "a3ob.proxy_align_object"
+    bl_label = "Align To Proxy"
+    bl_options = {'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        selected = context.selected_objects
+        
+        if not obj or len(selected) != 2:
+            return False
+            
+        selected.remove(obj)
+        return obj.mode == 'OBJECT' and obj.a3ob_properties_object_proxy.is_a3_proxy and selected[0] and selected[0].mode == 'OBJECT'
+    
+    def execute(self, context):
+        proxy = context.active_object
+        selected = context.selected_objects.copy()
+        selected.remove(proxy)
+        obj = selected[0]
+        
+        obj.matrix_world = proxy.matrix_world
+        obj.scale = mathutils.Vector((1, 1, 1))
                     
         return {'FINISHED'}
 
@@ -146,13 +176,16 @@ class A3OB_PT_proxies(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         
-        layout.operator("a3ob.proxy_align", icon='CUBE')
+        col_align = layout.column(align=True)
+        col_align.operator("a3ob.proxy_align", icon='CUBE')
+        col_align.operator("a3ob.proxy_align_object", icon='EMPTY_DATA')
         layout.operator("a3ob.proxy_realign_ocs", icon='ORIENTATION_GLOBAL')
         layout.operator("a3ob.proxy_extract", icon='IMPORT')
 
 
 classes = (
     A3OB_OT_proxy_align,
+    A3OB_OT_proxy_align_object,
     A3OB_OT_proxy_realign_ocs,
     A3OB_OT_proxy_extract,
     A3OB_PT_proxies
