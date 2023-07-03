@@ -1,0 +1,47 @@
+name: Feature Request
+description: Request a new feature
+title: "Feature: "
+labels: ["feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Before you submit the request
+        - Make sure...
+          - you use the latest version of the add-on
+          - the same feature was not requested before
+        - Consider if others would benefit from the feature as well (Niche personal features without broader application probably won't be worked on)
+  - type: dropdown
+    id: type
+    attributes:
+      label: Category
+      options:
+        - Import-Export
+        - Tool
+        - Utility
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: name
+    attributes:
+      label: Name of new feature
+      description: Provide a name for the feature you'd like to see!
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the new feature you'd like to see in detail! (You can include images)
+      placeholder: The feature I'd like to request is...
+    validations:
+      required: true
+  - type: input
+    id: contact
+    attributes:
+      label: Contact details
+      description: Optional contact info (discord, email, etc.) if we need further information
+      placeholder: ex. email@example.com
+    validations:
+      required: false
