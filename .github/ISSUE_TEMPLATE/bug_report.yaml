@@ -20,6 +20,8 @@ body:
       options:
         - Release
         - Live codebase
+    validations:
+      required: true
   - type: textarea
     id: description
     attributes:
