@@ -2,7 +2,6 @@ name: Bug Report
 description: Report a bug with add-on
 title: "Bug: "
 labels: ["bug"]
-assignees: ""
 body:
   - type: markdown
     attributes:
