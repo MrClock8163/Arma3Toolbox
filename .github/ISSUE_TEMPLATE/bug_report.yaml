@@ -1,0 +1,55 @@
+name: Bug Report
+description: Report a bug with add-on
+title: "Bug: "
+labels: ["bug"]
+assignees: ""
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Before you submit the report
+        - Make sure...
+          - the bug was not reported before
+          - you can reproduce the issue
+          - you use the latest version of the add-on
+        - Learn the difference between a "bug" and a "feature that works differently than I'd like", you can make a change request for the latter
+  - type: dropdown
+    id: version
+    attributes:
+      label: Add-on version
+      description: What version of the add-on are you using?
+      options:
+        - Release
+        - Live codebase
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the bug the best you can! (You can include images)
+      placeholder: The bug I ran into is...
+    validations:
+      required: true
+  - type: textarea
+    id: reproducing
+    attributes:
+      label: Steps to reproduce
+      description: Provide a way to reproduce the bug!
+      placeholder: You can reproduce the bug by...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Stack trace
+      description: Please copy any relevant stack trace outputs from the Blender System Console into this field (if available). This will be automatically formatted into code, so no need for backticks.
+      render: shell
+    validations:
+      required: false
+  - type: input
+    id: contact
+    attributes:
+      label: Contact details
+      description: Optional contact info (discord, email, etc.) if we need further information
+      placeholder: ex. email@example.com
+    validations:
+      required: false
