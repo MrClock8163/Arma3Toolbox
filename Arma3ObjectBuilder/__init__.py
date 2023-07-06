@@ -30,6 +30,7 @@ if "bpy" in locals():
     importlib.reload(ui.tool_conversion)
     importlib.reload(ui.tool_paths)
     importlib.reload(ui.tool_color)
+    importlib.reload(ui.tool_weights)
     importlib.reload(props.windowmanager)
     importlib.reload(props.object)
     importlib.reload(props.rvmat)
@@ -50,6 +51,7 @@ else:
     from .ui import tool_conversion
     from .ui import tool_paths
     from .ui import tool_color
+    from .ui import tool_weights
     from .props import windowmanager
     from .props import object
     from .props import rvmat
@@ -72,8 +74,8 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
     )
     # General
     a3_tools: bpy.props.StringProperty (
+        name = "Arma 3 Tools",
         description = "Install directory of the official Arma 3 Tools",
-        name = "Path",
         default = "",
         subtype = 'DIR_PATH'
     )
@@ -117,6 +119,7 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         box.use_property_decorate = False
         
         if self.tabs == 'GENERAL':
+            box.prop(self, "a3_tools", icon='TOOL_SETTINGS')
             box.prop(self, "show_info_links")
             
         elif self.tabs == 'PATHS':
@@ -156,6 +159,7 @@ def register():
     tool_rtm.register()
     tool_conversion.register()
     tool_color.register()
+    tool_weights.register()
     tool_utilities.register()
     
     print("Register done")
@@ -170,6 +174,7 @@ def unregister():
         unregister_class(cls)
 
     tool_utilities.unregister()
+    tool_weights.unregister()
     tool_color.unregister()
     tool_conversion.unregister()
     tool_rtm.unregister()
