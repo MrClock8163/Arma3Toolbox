@@ -1,7 +1,6 @@
 import bpy
 
 from ..utilities import generic as utils
-from ..utilities import colors as colorutils
 
 
 class A3OB_PT_colors(bpy.types.Panel):
