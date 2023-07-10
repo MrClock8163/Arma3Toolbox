@@ -152,7 +152,7 @@ def select_vertices_unnormalized(obj, bone_indices):
             
             vert.select_set(abs(weights-1) > 0.01)
         
-    bmesh.update_edit_mesh(mesh, False, False)
+    bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
 
 
 def normalize_weights(obj, bone_indices):
@@ -181,7 +181,7 @@ def normalize_weights(obj, bone_indices):
                 
                 vert[deform][key] /= weights
         
-    bmesh.update_edit_mesh(mesh, False, False)
+    bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
     
     return normalized
 
@@ -203,7 +203,7 @@ def select_vertices_overdetermined(obj, bone_indices):
             
             vert.select_set(bones > 3)
         
-    bmesh.update_edit_mesh(mesh, False, False)
+    bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
 
 
 def prune_overdetermined(obj, bone_indices):
@@ -235,7 +235,7 @@ def prune_overdetermined(obj, bone_indices):
             for id, weight in (bones[0:3] + sections):
                 vert[deform][id] = weight
         
-    bmesh.update_edit_mesh(mesh, False, False)
+    bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
     
     return pruned
 
@@ -262,7 +262,7 @@ def prune_weights(obj, threshold):
             for id, weight in weights:
                 vert[deform][id] = weight
         
-    bmesh.update_edit_mesh(mesh, False, False)
+    bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
     
     return pruned
 
