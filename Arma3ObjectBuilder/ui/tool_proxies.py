@@ -143,7 +143,15 @@ class A3OB_OT_proxy_extract(bpy.types.Operator):
         proxy_object = context.active_object
         self.filepath = proxy_object.a3ob_properties_object_proxy.proxy_path
         with open(self.filepath, "rb") as file:
-            lod_data = import_p3d.read_file(self, context, file, True)
+            try:
+                lod_data = import_p3d.read_file(self, context, file, True)
+                self.report({'INFO'}, "Succesfully extracted proxy (check the logs in the system console)")
+            except struct.error as ex:
+                self.report({'ERROR'}, "Unexpected EndOfFile (check the system console)")
+                traceback.print_exc()
+            except Exception as ex:
+                self.report({'ERROR'}, "%s (check the system console)" % str(ex))
+                traceback.print_exc()
         
         imported_object = lod_data[0][0]
         imported_object.matrix_world = proxy_object.matrix_world

@@ -32,7 +32,7 @@ class A3OB_OT_validate_lod(bpy.types.Operator):
         if valid:
             self.report({'INFO'}, "Validation succeeded")
         else:
-            self.report({'ERROR'}, "Validation failed (see the System Console for more info)")
+            self.report({'ERROR'}, "Validation failed (check the logs in the system console)")
 
         return {'FINISHED'}
 

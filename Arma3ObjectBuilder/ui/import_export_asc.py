@@ -1,3 +1,5 @@
+import traceback
+
 import bpy
 import bpy_extras
 
@@ -24,12 +26,13 @@ class A3OB_OP_import_asc(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         max = 1000.0
     )
     
-    # def draw(self, context):
-        # pass
-    
     def execute(self, context):
         with open(self.filepath) as file:
-            import_asc.read_file(self, context, file)
+            try:
+                import_asc.read_file(self, context, file)
+            except Exception as ex:
+                self.report({'ERROR'}, str(ex))
+                traceback.print_exc()
         
         return {'FINISHED'}
 
@@ -56,9 +59,6 @@ class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         obj = context.active_object
         return obj and obj.type == 'MESH' and len(obj.data.vertices) > 0
     
-    # def draw(self, context):
-        # pass
-    
     def execute(self, context):
         obj = context.active_object
         
@@ -67,7 +67,11 @@ class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             return {'FINISHED'}
             
         with open(self.filepath, "wt") as file:
-            export_asc.write_file(self, context, file, obj)
+            try:
+                export_asc.write_file(self, context, file, obj)
+            except Exception as ex:
+                self.report({'ERROR'}, "%s (check the system console)" % str(ex))
+                traceback.print_exc()
         
         return {'FINISHED'}
 
