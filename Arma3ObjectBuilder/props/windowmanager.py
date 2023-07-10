@@ -2,10 +2,34 @@ import bpy
 
 from . import object as objectprops
 from ..utilities import data
+from ..utilities import colors as colorutils
 
 
-def mesh_object_poll(self,object):
+def mesh_object_poll(self, object):
     return object.type == 'MESH'
+
+
+def color_conversion_update(self, context):
+    rgb = (0, 0, 0)
+    if self.input_type == 'S8':
+        rgb = (self.input_red_int, self.input_green_int, self.input_blue_int)
+    else:
+        rgb = (self.input_red_float, self.input_green_float, self.input_blue_float)
+    
+    rgb_out = colorutils.convert_color(rgb, self.input_type, self.output_type)
+    if self.output_type == 'S8':
+        self.output_red_int = rgb_out[0]
+        self.output_green_int = rgb_out[1]
+        self.output_blue_int = rgb_out[2]
+    else:
+        self.output_red_float = rgb_out[0]
+        self.output_green_float = rgb_out[1]
+        self.output_blue_float = rgb_out[2]
+        
+    if self.output_type in {'S8', 'S'}:
+        self.output_srgb = colorutils.convert_color(rgb, self.input_type, 'S')
+    else:
+        self.output_linear = rgb_out
 
 
 class A3OB_PG_common_proxy(bpy.types.PropertyGroup):
@@ -254,6 +278,201 @@ class A3OB_PG_renaming(bpy.types.PropertyGroup):
     )
 
 
+class A3OB_PG_colors(bpy.types.PropertyGroup):
+    input_type: bpy.props.EnumProperty (
+        name = "Input Type",
+        description = "Color space of the input value",
+        items = (
+            ('S8', "sRGB 8-bit", "8-bit sRGB color [0 - 255]"),
+            ('S', "sRGB", "Decimal sRGB color [0.0 - 1.0]"),
+            ('L', "Linear", "Linear RGB color [0.0 - 1.0]")
+        ),
+        default = 'S8',
+        update = color_conversion_update
+    )
+    output_type: bpy.props.EnumProperty (
+        name = "Output Type",
+        description = "Color space of the output value",
+        items = (
+            ('S8', "sRGB 8-bit", "8-bit sRGB color [0 - 255]"),
+            ('S', "sRGB", "Decimal sRGB color [0.0 - 1.0]"),
+            ('L', "Linear", "Linear RGB color [0.0 - 1.0]")
+        ),
+        default = 'S',
+        update = color_conversion_update
+    )
+    # Float inputs
+    input_red_float: bpy.props.FloatProperty (
+        name = "R",
+        description = "Input red value",
+        default = 0,
+        min = 0,
+        max = 1,
+        precision = 3,
+        update = color_conversion_update
+    )
+    input_green_float: bpy.props.FloatProperty (
+        name = "G",
+        description = "Input green value",
+        default = 0,
+        min = 0,
+        max = 1,
+        precision = 3,
+        update = color_conversion_update
+    )
+    input_blue_float: bpy.props.FloatProperty (
+        name = "B",
+        description = "Input blue value",
+        default = 0,
+        min = 0,
+        max = 1,
+        precision = 3,
+        update = color_conversion_update
+    )
+    # Integer inputs
+    input_red_int: bpy.props.IntProperty (
+        name = "R",
+        description = "Input red value",
+        default = 0,
+        min = 0,
+        max = 255,
+        update = color_conversion_update
+    )
+    input_green_int: bpy.props.IntProperty (
+        name = "G",
+        description = "Input green value",
+        default = 0,
+        min = 0,
+        max = 255,
+        update = color_conversion_update
+    )
+    input_blue_int: bpy.props.IntProperty (
+        name = "B",
+        description = "Input blue value",
+        default = 0,
+        min = 0,
+        max = 255,
+        update = color_conversion_update
+    )
+    # Float outputs
+    output_red_float: bpy.props.FloatProperty (
+        name = "R",
+        description = "Output red value",
+        default = 0,
+        min = 0,
+        max = 1,
+        precision = 3
+    )
+    output_green_float: bpy.props.FloatProperty (
+        name = "G",
+        description = "Output green value",
+        default = 0,
+        min = 0,
+        max = 1,
+        precision = 3
+    )
+    output_blue_float: bpy.props.FloatProperty (
+        name = "B",
+        description = "Output blue value",
+        default = 0,
+        min = 0,
+        max = 1,
+        precision = 3
+    )
+    # Integer outputs
+    output_red_int: bpy.props.IntProperty (
+        name = "R",
+        description = "Output red value",
+        default = 0,
+        min = 0,
+        max = 255
+    )
+    output_green_int: bpy.props.IntProperty (
+        name = "G",
+        description = "Output green value",
+        default = 0,
+        min = 0,
+        max = 255
+    )
+    output_blue_int: bpy.props.IntProperty (
+        name = "B",
+        description = "Output blue value",
+        default = 0,
+        min = 0,
+        max = 255
+    )
+    # Color outputs
+    output_srgb: bpy.props.FloatVectorProperty (
+        name = "Output Color",
+        description = "Color sample of the output color",
+        subtype = 'COLOR_GAMMA',
+        min = 0,
+        max = 1
+    )
+    output_linear: bpy.props.FloatVectorProperty (
+        name = "Output Color",
+        description = "Color sample of the output color",
+        subtype = 'COLOR',
+        min = 0,
+        max = 1
+    )
+
+
+class A3OB_PG_bone(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty (
+        name = "Name",
+        description = "Name of the bone item"
+    )
+    parent: bpy.props.StringProperty (
+        name = "Parent",
+        description = "Name of the parent bone"
+    )
+
+
+class A3OB_PG_skeleton(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty (
+        name = "Name",
+        description = "Name of the skeleton"
+    )
+    bones: bpy.props.CollectionProperty (
+        type = A3OB_PG_bone
+    )
+    bones_index: bpy.props.IntProperty (
+        name = "Selection Index",
+        default = -1
+    )
+
+
+class A3OB_PG_weights(bpy.types.PropertyGroup):
+    filepath: bpy.props.StringProperty (
+        name = "File Path",
+        description = "File path of the model.cfg file",
+        subtype = 'FILE_PATH'
+    )
+    skeletons: bpy.props.CollectionProperty (
+        type = A3OB_PG_skeleton
+    )
+    skeletons_index: bpy.props.IntProperty (
+        name = "Selection Index",
+        default = -1
+    )
+    bones: bpy.props.CollectionProperty (
+        type = A3OB_PG_bone
+    )
+    bones_index: bpy.props.IntProperty (
+        name = "Selection Index",
+        default = -1
+    )
+    prune_threshold: bpy.props.FloatProperty (
+        name = "Threshold",
+        description = "Selection weight threshold",
+        min = 0.0,
+        max = 1.0,
+        default = 0.001,
+        precision = 3
+    )
+
+
 classes = (
     A3OB_PG_common_proxy,
     A3OB_PG_mass_editor,
@@ -262,7 +481,11 @@ classes = (
     A3OB_PG_keyframes,
     A3OB_PG_conversion,
     A3OB_PG_renamable,
-    A3OB_PG_renaming
+    A3OB_PG_renaming,
+    A3OB_PG_colors,
+    A3OB_PG_bone,
+    A3OB_PG_skeleton,
+    A3OB_PG_weights
 )
 
 
@@ -280,11 +503,15 @@ def register():
     bpy.types.WindowManager.a3ob_keyframes = bpy.props.PointerProperty(type=A3OB_PG_keyframes)
     bpy.types.WindowManager.a3ob_conversion = bpy.props.PointerProperty(type=A3OB_PG_conversion)
     bpy.types.WindowManager.a3ob_renaming = bpy.props.PointerProperty(type=A3OB_PG_renaming)
+    bpy.types.WindowManager.a3ob_colors = bpy.props.PointerProperty(type=A3OB_PG_colors)
+    bpy.types.WindowManager.a3ob_weights = bpy.props.PointerProperty(type=A3OB_PG_weights)
     
     print("\t" + "Properties: window manager")
     
     
 def unregister():
+    del bpy.types.WindowManager.a3ob_weights
+    del bpy.types.WindowManager.a3ob_colors
     del bpy.types.WindowManager.a3ob_renaming
     del bpy.types.WindowManager.a3ob_conversion
     del bpy.types.WindowManager.a3ob_validation

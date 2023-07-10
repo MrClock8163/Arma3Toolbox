@@ -46,7 +46,7 @@ def set_selection_mass(self, value):
     for vertex in verts:
         vertex[layer] = round(vertex[layer] + correction, 3)
         
-    bmesh.update_edit_mesh(mesh, False, False)
+    bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
 
 
 def set_selection_mass_each(obj, value):
@@ -89,7 +89,7 @@ def clear_selection_masses(obj):
     bm = bmesh.from_edit_mesh(mesh)
     layer = bm.verts.layers.float.get("a3ob_mass")
     bm.verts.layers.float.remove(layer)
-    bmesh.update_edit_mesh(mesh)
+    bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
 
 
 def calculate_volume(bm):

@@ -32,7 +32,7 @@ class A3OB_OT_validate_lod(bpy.types.Operator):
         if valid:
             self.report({'INFO'}, "Validation succeeded")
         else:
-            self.report({'ERROR'}, "Validation failed (see the System Console for more info)")
+            self.report({'ERROR'}, "Validation failed (check the logs in the system console)")
 
         return {'FINISHED'}
 
@@ -54,7 +54,7 @@ class A3OB_PT_validation(bpy.types.Panel):
             
         layout = self.layout
         row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP').url = "https://github.com/MrClock8163/Arma3ObjectBuilder/wiki/Tool:-Validation"
+        row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/validation"
         
     def draw(self, context):
         layout = self.layout

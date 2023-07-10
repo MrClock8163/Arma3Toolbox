@@ -2,12 +2,12 @@ bl_info = {
     "name": "Arma 3 Object Builder",
     "description": "Collection of tools for editing Arma 3 content",
     "author": "MrClock (present add-on), Hans-Joerg \"Alwarren\" Frieden (original ArmaToolbox add-on)",
-    "version": (0, 3, 2),
-    "blender": (2, 80, 0),
+    "version": (0, 3, 3),
+    "blender": (2, 90, 0),
     "location": "Object Builder panels in various views",
     "warning": "Work In Progress",
-    "wiki_url": "https://github.com/MrClock8163/Arma3ObjectBuilder/wiki",
-    "tracker_url": "",
+    "wiki_url": "https://mrcmodding.gitbook.io/arma-3-object-builder/home",
+    "tracker_url": "https://github.com/MrClock8163/Arma3ObjectBuilder/issues",
     "category": "3D View"
 }
 
@@ -18,17 +18,19 @@ if "bpy" in locals():
     importlib.reload(ui.import_export_p3d)
     importlib.reload(ui.import_export_rtm)
     importlib.reload(ui.import_export_asc)
-    importlib.reload(ui.utilities)
-    importlib.reload(ui.mass)
-    importlib.reload(ui.material)
-    importlib.reload(ui.object_mesh)
-    importlib.reload(ui.object_armature)
-    importlib.reload(ui.hitpoint)
-    importlib.reload(ui.validation)
-    importlib.reload(ui.proxies)
-    importlib.reload(ui.rtm)
-    importlib.reload(ui.conversion)
-    importlib.reload(ui.paths)
+    importlib.reload(ui.tool_utilities)
+    importlib.reload(ui.tool_mass)
+    importlib.reload(ui.props_material)
+    importlib.reload(ui.props_object_mesh)
+    importlib.reload(ui.props_object_armature)
+    importlib.reload(ui.tool_hitpoint)
+    importlib.reload(ui.tool_validation)
+    importlib.reload(ui.tool_proxies)
+    importlib.reload(ui.tool_rtm)
+    importlib.reload(ui.tool_conversion)
+    importlib.reload(ui.tool_paths)
+    importlib.reload(ui.tool_color)
+    importlib.reload(ui.tool_weights)
     importlib.reload(props.windowmanager)
     importlib.reload(props.object)
     importlib.reload(props.rvmat)
@@ -37,17 +39,19 @@ else:
     from .ui import import_export_p3d
     from .ui import import_export_rtm
     from .ui import import_export_asc
-    from .ui import utilities
-    from .ui import mass
-    from .ui import material
-    from .ui import object_mesh
-    from .ui import object_armature
-    from .ui import hitpoint
-    from .ui import validation
-    from .ui import proxies
-    from .ui import rtm
-    from .ui import conversion
-    from .ui import paths
+    from .ui import tool_utilities
+    from .ui import tool_mass
+    from .ui import props_material
+    from .ui import props_object_mesh
+    from .ui import props_object_armature
+    from .ui import tool_hitpoint
+    from .ui import tool_validation
+    from .ui import tool_proxies
+    from .ui import tool_rtm
+    from .ui import tool_conversion
+    from .ui import tool_paths
+    from .ui import tool_color
+    from .ui import tool_weights
     from .props import windowmanager
     from .props import object
     from .props import rvmat
@@ -70,8 +74,8 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
     )
     # General
     a3_tools: bpy.props.StringProperty (
+        name = "Arma 3 Tools",
         description = "Install directory of the official Arma 3 Tools",
-        name = "Path",
         default = "",
         subtype = 'DIR_PATH'
     )
@@ -115,6 +119,7 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         box.use_property_decorate = False
         
         if self.tabs == 'GENERAL':
+            box.prop(self, "a3_tools", icon='TOOL_SETTINGS')
             box.prop(self, "show_info_links")
             
         elif self.tabs == 'PATHS':
@@ -143,17 +148,19 @@ def register():
     import_export_p3d.register()
     import_export_rtm.register()
     import_export_asc.register()
-    object_mesh.register()
-    object_armature.register()
-    material.register()
-    mass.register()
-    hitpoint.register()
-    paths.register()
-    proxies.register()
-    validation.register()
-    rtm.register()
-    conversion.register()
-    utilities.register()
+    props_object_mesh.register()
+    props_object_armature.register()
+    props_material.register()
+    tool_mass.register()
+    tool_hitpoint.register()
+    tool_paths.register()
+    tool_proxies.register()
+    tool_validation.register()
+    tool_rtm.register()
+    tool_conversion.register()
+    tool_color.register()
+    tool_weights.register()
+    tool_utilities.register()
     
     print("Register done")
 
@@ -166,17 +173,19 @@ def unregister():
     for cls in reversed(classes):
         unregister_class(cls)
 
-    utilities.unregister()
-    conversion.unregister()
-    rtm.unregister()
-    validation.unregister()
-    proxies.unregister()
-    paths.unregister()
-    hitpoint.unregister()
-    mass.unregister()
-    material.unregister()
-    object_armature.unregister()
-    object_mesh.unregister()
+    tool_utilities.unregister()
+    tool_weights.unregister()
+    tool_color.unregister()
+    tool_conversion.unregister()
+    tool_rtm.unregister()
+    tool_validation.unregister()
+    tool_proxies.unregister()
+    tool_paths.unregister()
+    tool_hitpoint.unregister()
+    tool_mass.unregister()
+    props_material.unregister()
+    props_object_armature.unregister()
+    props_object_mesh.unregister()
     import_export_asc.unregister()
     import_export_rtm.unregister()
     import_export_p3d.unregister()

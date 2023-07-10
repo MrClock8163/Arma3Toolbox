@@ -20,6 +20,19 @@ def read_long(file):
 
 def read_ulong(file):
     return struct.unpack('<I',file.read(4))[0]
+
+def read_compressed_uint(file):
+    output = 0
+    extra = 0
+    
+    output = read_byte(file)
+    extra = output
+    
+    while extra & 0x80:
+        extra = read_byte(file)
+        output += (extra - 1) * 0x80
+    
+    return output
     
 def read_float(file):
     return struct.unpack('<f',file.read(4))[0]

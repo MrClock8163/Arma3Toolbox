@@ -1,3 +1,6 @@
+import traceback
+import struct
+
 import bpy
 import bpy_extras
 
@@ -76,6 +79,16 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     def execute(self, context):
         
         with open(self.filepath, "rb") as file:
+            try:
+                lod_data = import_p3d.read_file(self, context, file)
+                self.report({'INFO'}, f"Succesfully imported {len(lod_data)} LODs (check the logs in the system console)")
+            except struct.error as ex:
+                self.report({'ERROR'}, "Unexpected EndOfFile (check the system console)")
+                traceback.print_exc()
+            except Exception as ex:
+                self.report({'ERROR'}, "%s (check the system console)" % str(ex))
+                traceback.print_exc()
+                
         # filename = os.path.basename(self.filepath)
         
         # if not self.enclose:
@@ -93,8 +106,8 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             # utils.show_infoBox(str(e),"Unexpected I/O error",'ERROR')
             
         # import_p3d.import_file(context,file,self.groupby,self.preserve_normals,self.validate_meshes,self.setup_materials,filename.strip()) # Allow exceptions for testing
-            lod_data = import_p3d.read_file(self, context, file) # Allow exceptions for testing
-            self.report({'INFO'}, f"Succesfully imported {len(lod_data)} LODs")
+            # lod_data = import_p3d.read_file(self, context, file) # Allow exceptions for testing
+            # self.report({'INFO'}, f"Succesfully imported {len(lod_data)} LODs")
         # file.close()
         
         return {'FINISHED'}
@@ -253,9 +266,13 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     def execute(self, context):
         if export_p3d.can_export(self, context):
             with open(self.filepath, "wb") as file:
-                lod_count, exported_count = export_p3d.write_file(self, context, file)
-
-            self.report({'INFO'}, f"Succesfully exported {exported_count}/{lod_count} LODs")
+                try:
+                    lod_count, exported_count = export_p3d.write_file(self, context, file)
+                    self.report({'INFO'}, f"Succesfully exported {exported_count}/{lod_count} LODs (check the logs in the system console)")
+                except Exception as ex:
+                    self.report({'ERROR'}, "%s (check the system console)" % str(ex))
+                    traceback.print_exc()
+                
         else:
             self.report({'INFO'}, "There are no LODs to export")
         

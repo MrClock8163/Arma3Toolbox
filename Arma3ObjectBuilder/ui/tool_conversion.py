@@ -1,3 +1,5 @@
+import traceback
+
 import bpy
 
 from ..utilities import generic as utils
@@ -34,9 +36,13 @@ class A3OB_OT_convert_to_a3ob(bpy.types.Operator):
                     self.report({'ERROR'}, "All objects must be in object mode in order to perform the conversion")
                     return {'FINISHED'}
         
-        bpy.ops.object.select_all(action='DESELECT')
-        
-        convertutils.convert_objects(objects, wm_props.dynamic_naming, wm_props.cleanup)
+        try:
+            bpy.ops.object.select_all(action='DESELECT')
+            convertutils.convert_objects(objects, wm_props.dynamic_naming, wm_props.cleanup)
+            self.report({'INFO'}, "Finished setup conversion (check the logs in the system console)")
+        except Exception as ex:
+            self.report({'ERROR'}, "%s (check the system console)" % str(ex))
+            traceback.print_exc()
         
         return {'FINISHED'}
 
@@ -58,7 +64,7 @@ class A3OB_PT_conversion(bpy.types.Panel):
             
         layout = self.layout
         row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP').url = "https://github.com/MrClock8163/Arma3Toolbox/wiki/Tool:-Conversion"
+        row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/conversion"
         
     def draw(self, context):
         layout = self.layout

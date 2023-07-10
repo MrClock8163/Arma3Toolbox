@@ -206,9 +206,9 @@ def encode_selection_weight(weight):
     return value
 
 
-def write_vertex(file, co):
+def write_vertex(file, co, flag = 0):
     file.write(struct.pack('<fff', co[0], co[2], co[1]))
-    binary.write_ulong(file, 0)
+    binary.write_ulong(file, flag)
 
 
 def write_normal(file, normal):
@@ -428,8 +428,12 @@ def write_lod(file, obj, materials, proxies, logger):
     binary.write_ulong(file, count_faces)
     binary.write_ulong(file, 0) # unknown flags/padding
     
+    vertex_flag = 33554432
+    if obj.a3ob_properties_object.normals_flag == 'AVG':
+        vertex_flag = 0
+    
     for vert in bm.verts:
-        write_vertex(file, vert.co)
+        write_vertex(file, vert.co, vertex_flag)
         
     logger.step("Wrote veritces: %d" % count_verts)
         
