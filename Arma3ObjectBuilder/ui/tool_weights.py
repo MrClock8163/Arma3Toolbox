@@ -159,7 +159,33 @@ class A3OB_OT_weights_prune(bpy.types.Operator):
         wm_props = context.window_manager.a3ob_weights
         pruned = mcfgutils.prune_weights(obj, wm_props.prune_threshold)
         
-        self.report({'INFO'}, f"Pruned {pruned} selection(s)")
+        self.report({'INFO'}, f"Pruned selection(s) from {pruned} vertices")
+        
+        return {'FINISHED'}
+
+
+class A3OB_OT_weights_cleanup(bpy.types.Operator):
+    """General weight painting cleanup"""
+    
+    bl_idname = "a3ob.weights_cleanup"
+    bl_label = "General Cleanup"
+    bl_options = {'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        wm_props = context.window_manager.a3ob_weights
+        return obj and len(context.selected_objects) == 1 and obj.type == 'MESH' and obj.mode == 'EDIT' and wm_props.skeletons_index in range(len(wm_props.skeletons))
+        
+    def execute(self, context):
+        obj = context.active_object
+        wm_props = context.window_manager.a3ob_weights
+        cfgbones = wm_props.skeletons[wm_props.skeletons_index].bones
+        
+        bone_indices = mcfgutils.get_bone_group_indices(obj, cfgbones)
+        cleaned = mcfgutils.cleanup(obj, bone_indices, wm_props.prune_threshold)
+        
+        self.report({'INFO'}, f"Cleaned up weight painting on {cleaned} vertices")
         
         return {'FINISHED'}
 
@@ -241,6 +267,8 @@ class A3OB_PT_weights(bpy.types.Panel):
         col_edit.operator("a3ob.weights_normalize", icon='BRUSH_DATA')
         col_edit.operator("a3ob.weights_prune", icon='TRASH')
         col_edit.prop(wm_props, "prune_threshold")
+        
+        layout.operator("a3ob.weights_cleanup", icon='WPAINT_HLT')
 
 classes = (
     A3OB_OT_weights_load_cfgskeletons,
@@ -249,6 +277,7 @@ classes = (
     A3OB_OT_weights_normalize,
     A3OB_OT_weights_prune_overdetermined,
     A3OB_OT_weights_prune,
+    A3OB_OT_weights_cleanup,
     A3OB_UL_cfgskeletons,
     A3OB_UL_cfgbones,
     A3OB_PT_weights

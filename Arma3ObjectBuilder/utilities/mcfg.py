@@ -171,8 +171,9 @@ def normalize_weights(obj, bone_indices):
                     continue
                 
                 weights += vert[deform][key]
-                if abs(weights-1) > 0.01:
-                    normalized += 1
+                
+            if abs(weights-1) > 0.01:
+                normalized += 1
             
             for key in vert[deform].keys():
                 if key not in bone_indices:
@@ -227,7 +228,7 @@ def prune_overdetermined(obj, bone_indices):
             if len(bones) <= 3:
                 continue
             
-            pruned += len(bones) - 3
+            pruned += 1
             bones.sort(reverse=True, key=lambda item: item[1])
             
             vert[deform].clear()
@@ -254,7 +255,8 @@ def prune_weights(obj, threshold):
                 if vert[deform][key] > threshold:
                     weights.append((key, vert[deform][key]))
             
-            pruned += len(vert[deform].keys()) - len(weights)
+            if len(vert[deform].keys()) > len(weights):
+                pruned += 1
             
             vert[deform].clear()
             for id, weight in weights:
@@ -263,3 +265,11 @@ def prune_weights(obj, threshold):
     bmesh.update_edit_mesh(mesh, False, False)
     
     return pruned
+
+
+def cleanup(obj, bone_indices, threshold):
+    verts_prune_selection = prune_weights(obj, threshold)
+    verts_prune_overdetermined = prune_overdetermined(obj, bone_indices)
+    verts_normalized = normalize_weights(obj, bone_indices)
+    
+    return max(verts_prune_selection, verts_prune_overdetermined, verts_normalized)
