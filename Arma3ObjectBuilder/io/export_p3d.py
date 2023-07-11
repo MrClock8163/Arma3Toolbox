@@ -490,7 +490,7 @@ def write_lod(file, obj, materials, proxies, logger):
     binary.write_float(file,get_resolution(obj)) # LOD resolution index
     
     logger.step("Resolution signature: %d" % float(get_resolution(obj)))
-    logger.step("Name: %s" % f"{data.lod_type_names[int(obj.a3ob_properties_object.lod)][0]} {obj.a3ob_properties_object.resolution}")
+    logger.step("Name: %s" % lodutils.format_lod_name(int(obj.a3ob_properties_object.lod), obj.a3ob_properties_object.resolution))
     
     logger.level_down()
     
