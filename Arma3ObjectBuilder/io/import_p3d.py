@@ -45,8 +45,9 @@ def read_normal(file):
 
 def read_face_pseudo_vertextable(file):
     point_id, normal_id = struct.unpack('<II', file.read(8))
-    file.read(8) # dump embedded UV coordinates
-    return point_id, normal_id
+    # file.read(8) # dump embedded UV coordinates
+    u, v = struct.unpack('<ff', file.read(8))
+    return point_id, normal_id, u, v
 
 
 def read_face(file):
@@ -116,6 +117,20 @@ def get_file_path(path, addon_prefs, extension = ""):
     return path
 
 
+# It's not guaranteed that a LOD has a #UVSet# TAGG section, so the UVs embedded into
+# the face data should not be discarded
+def process_embedded_uv(bm, face_data_dict):
+    uv_layer = bm.loops.layers.uv.new("UVSet 0")
+    
+    for face in bm.faces:
+        data = face_data_dict[face.index][0]
+        for loop in face.loops:
+            for table in data:
+                if table[0] == loop.vert.index:
+                    loop[uv_layer].uv = (table[2], 1 - table[3])
+                    break
+
+
 def process_taggs(file, bm, additional_data, count_verts, count_faces, logger):
     count = 0
     named_selections = []
@@ -169,7 +184,9 @@ def process_taggs(file, bm, additional_data, count_verts, count_faces, logger):
         # UV
         elif tagg_name == "#UVSet#" and 'UV' in additional_data:
             uv_id = binary.read_ulong(file)
-            uv_layer = bm.loops.layers.uv.new(f"UVSet {uv_id}")
+            uv_layer = bm.loops.layers.uv.get("UVSet %d" % uv_id)
+            if not uv_layer:
+                uv_layer = bm.loops.layers.uv.new("UVSet %d" % uv_id)
             
             for face in bm.faces:
                 for loop in face.loops:
@@ -435,6 +452,10 @@ def read_lod(context, file, material_dict, additional_data, dynamic_naming, logg
     bm.verts.ensure_lookup_table()
     bm.edges.ensure_lookup_table()
     bm.faces.ensure_lookup_table()
+    
+    # Embedded UV set
+    process_embedded_uv(bm, face_data_dict)
+    logger.step("Added embedded UVSet 0")
     
     taggSignature = read_signature(file)
     if taggSignature != "TAGG":
