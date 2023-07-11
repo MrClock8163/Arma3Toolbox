@@ -406,7 +406,6 @@ def write_tagg_named_properties(file, obj):
 def write_file_header(file, count_lod):
     binary.write_chars(file, "MLOD")
     binary.write_ulong(file, 257)
-    binary.write_ulong(file, count_lod)
 
 
 def write_lod(file, obj, materials, proxies, logger):
@@ -513,7 +512,9 @@ def write_file(operator, context, file):
     
     logger.log("Detected %d LOD objects" % count_lod)
     
-    write_file_header(file,count_lod)
+    write_file_header(file, count_lod)
+    lod_count_pos = file.tell()
+    binary.write_ulong(file, count_lod) # temporary placeholder value
     
     logger.level_up()
     
@@ -529,11 +530,14 @@ def write_file(operator, context, file):
         bpy.data.meshes.remove(lod[0].data, do_unlink=True)
         
         logger.log("Done in %f sec" % (time.time() - time_lod_start))
-        wm.progress_update(i+1)
+        wm.progress_update(i + 1)
+    
+    file.seek(lod_count_pos, 0)
+    binary.write_ulong(file, exported_count) # actual LOD count
         
     logger.level_down()
     logger.step("")
     logger.step("P3D export finished in %f sec" % (time.time() - time_file_start))
     wm.progress_end()
     
-    return count_lod,exported_count
+    return count_lod, exported_count
