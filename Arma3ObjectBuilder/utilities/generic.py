@@ -82,7 +82,10 @@ def strip_extension(path):
     return os.path.splitext(path)[0]
 
 
-def get_addon_preferences(context):
+def get_addon_preferences(context = None):
+    if not context:
+        context = bpy.context
+        
     name = __name__.split(".")[0]
     return context.preferences.addons[name].preferences
 

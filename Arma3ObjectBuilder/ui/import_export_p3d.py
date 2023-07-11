@@ -1,10 +1,12 @@
 import traceback
 import struct
+import os
 
 import bpy
 import bpy_extras
 
 from ..io import import_p3d, export_p3d
+from ..utilities import generic as utils
 
 
 class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
@@ -76,8 +78,7 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     def draw(self, context):
         pass
     
-    def execute(self, context):
-        
+    def execute(self, context):        
         with open(self.filepath, "rb") as file:
             try:
                 lod_data = import_p3d.read_file(self, context, file)
@@ -88,27 +89,6 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             except Exception as ex:
                 self.report({'ERROR'}, "%s (check the system console)" % str(ex))
                 traceback.print_exc()
-                
-        # filename = os.path.basename(self.filepath)
-        
-        # if not self.enclose:
-        #     filename = ""
-            
-        # print(type(self.additional_data))
-        
-        # try:
-            # import_p3d.import_file(context,file,self.groupby,filename.strip())
-        # except IOError as e:
-            # utils.show_infoBox(str(e),"I/O error",'INFO')
-        # except struct.error as e:
-            # utils.show_infoBox("Unexpected EnfOfFile","I/O error",'INFO')
-        # except Exception as e:
-            # utils.show_infoBox(str(e),"Unexpected I/O error",'ERROR')
-            
-        # import_p3d.import_file(context,file,self.groupby,self.preserve_normals,self.validate_meshes,self.setup_materials,filename.strip()) # Allow exceptions for testing
-            # lod_data = import_p3d.read_file(self, context, file) # Allow exceptions for testing
-            # self.report({'INFO'}, f"Succesfully imported {len(lod_data)} LODs")
-        # file.close()
         
         return {'FINISHED'}
 
@@ -265,13 +245,25 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     
     def execute(self, context):
         if export_p3d.can_export(self, context):
-            with open(self.filepath, "wb") as file:
+            temppath = self.filepath + ".temp"
+            success = False
+            
+            with open(temppath, "wb") as file:
                 try:
                     lod_count, exported_count = export_p3d.write_file(self, context, file)
                     self.report({'INFO'}, f"Succesfully exported {exported_count}/{lod_count} LODs (check the logs in the system console)")
+                    success = True
                 except Exception as ex:
                     self.report({'ERROR'}, "%s (check the system console)" % str(ex))
                     traceback.print_exc()
+            
+            if success:
+                if os.path.isfile(self.filepath):
+                    os.remove(self.filepath)
+                    
+                os.rename(temppath, os.path.splitext(temppath)[0])
+            elif not success and not utils.get_addon_preferences(context).preserve_faulty_output:
+                os.remove(temppath)
                 
         else:
             self.report({'INFO'}, "There are no LODs to export")
