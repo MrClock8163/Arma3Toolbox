@@ -63,6 +63,23 @@ def read_face(file):
     return vertex_tables, texture, material
 
 
+# The 32-bit floats written to the P3D may have lost
+# their normalization due to the precision loss, and
+# this would cause blender to produce weird results.
+def renormalize_vertex_normals(normals_dict):
+    for i in normals_dict:
+        normal = normals_dict[i]
+        length = math.sqrt(normal[0]**2 + normal[1]**2 + normal[2]**2)
+        
+        if length == 0:
+            continue
+            
+        coef = 1 / length
+        normals_dict[i] = (normal[0] * coef, normal[1] * coef, normal[2] * coef)
+    
+    return normals_dict
+
+
 def decode_selection_weight(weight):
     if weight == 0:
         return 0.0
@@ -115,8 +132,10 @@ def process_taggs(file, bm, additional_data, count_verts, count_faces, logger):
                 raise IOError("Invalid EOF")
             break
             
-        # Sharps (technically redundant with the split vertex normals, may be scrapped later)
-        elif tagg_name == "#SharpEdges#" and 'NORMALS' not in additional_data:
+        # Sharps
+        elif tagg_name == "#SharpEdges#":
+            sharp_edges = []
+            
             for i in range(int(tagg_length / (4 * 2))):
                 point1_id = binary.read_ulong(file)
                 point2_id = binary.read_ulong(file)
@@ -124,7 +143,10 @@ def process_taggs(file, bm, additional_data, count_verts, count_faces, logger):
                 if point1_id != point2_id:
                     edge = bm.edges.get([bm.verts[point1_id], bm.verts[point2_id]])
                     if edge is not None:
-                        edge.smooth = False
+                        sharp_edges.append(edge)
+            
+            for edge in bm.edges:
+                edge.smooth = edge not in sharp_edges
         
         # Property
         elif tagg_name == "#Property#" and 'PROPS' in additional_data:
@@ -242,7 +264,6 @@ def process_normals(mesh, face_data_dict, normals_dict):
                     loop_normals.insert(i, normals_dict[table[1]])   
     
     mesh.normals_split_custom_set(loop_normals)
-    mesh.free_normals_split()
 
 
 def group_lod_data(lod_objects, groupby = 'TYPE'):    
@@ -304,8 +325,12 @@ def process_proxies(lod_data, operator, material_dict, dynamic_naming, addon_pre
                 
             obj.vertex_groups.active = group
             bpy.ops.object.vertex_group_select()
-            bpy.ops.mesh.separate(type='SELECTED')
-            obj.vertex_groups.remove(group)
+            
+            try:
+                bpy.ops.mesh.separate(type='SELECTED')
+                obj.vertex_groups.remove(group)
+            except:
+                pass
             
         bpy.ops.object.mode_set(mode='OBJECT')
         
@@ -390,6 +415,19 @@ def read_lod(context, file, material_dict, additional_data, dynamic_naming, logg
     
     for face in mesh.polygons:
         face.use_smooth = True
+    
+    # Apply split normals
+    #
+    # Split normals apparently also set up hard edges where necessary,
+    # but due to a seemingly Blender specific phenomenon, random sharp
+    # edges tend to appear where the loop vertices on both edges of an edge
+    # have split normals. To combat this, the normals have to be processed
+    # before the #SharpEdges# TAGG, so that the sharp edges get cleaned up
+    # by the TAGG processing.
+    if 'NORMALS' in additional_data:
+        normals_dict = renormalize_vertex_normals(normals_dict)
+        process_normals(mesh, face_data_dict, normals_dict)
+        logger.step("Applied split normals")
         
     # Read TAGGs
     bm = bmesh.new()
@@ -448,10 +486,9 @@ def read_lod(context, file, material_dict, additional_data, dynamic_naming, logg
         material_dict = process_materials(mesh, face_data_dict, material_dict, addon_prefs)
         logger.step("Assigned materials")
         
-    # Apply split normals
-    if 'NORMALS' in additional_data and lod_index in data.lod_visuals: 
-        process_normals(mesh, face_data_dict, normals_dict)
-        logger.step("Applied split normals")
+    # Cleanup split normals if they are not needed
+    if 'NORMALS' in additional_data and lod_index not in data.lod_visuals: 
+        bpy.ops.mesh.customdata_custom_splitnormals_clear({"active_object": obj, "object": obj})
         
     # Add vertex group names to object
     #
