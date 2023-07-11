@@ -44,9 +44,7 @@ def read_normal(file):
 
 
 def read_face_pseudo_vertextable(file):
-    point_id, normal_id = struct.unpack('<II', file.read(8))
-    # file.read(8) # dump embedded UV coordinates
-    u, v = struct.unpack('<ff', file.read(8))
+    point_id, normal_id, u ,v = struct.unpack('<IIff', file.read(16))
     return point_id, normal_id, u, v
 
 

@@ -173,6 +173,21 @@ def get_lod_data(operator, context):
     return lod_list
 
 
+def get_normals(mesh):
+    normals = {}
+    normals_lookup_dict = {}
+
+    for i, loop in enumerate(mesh.loops):
+        normal = loop.normal.copy().freeze()
+        
+        if normal not in normals:
+            normals[normal] = len(normals)
+        
+        normals_lookup_dict[i] = normals[normal]
+    
+    return normals.keys(), normals_lookup_dict
+
+
 def can_export(operator, context):
     scene = context.scene
     export_objects = scene.objects
@@ -215,22 +230,22 @@ def write_normal(file, normal):
     file.write(struct.pack('<fff', -normal[0], -normal[2], -normal[1]))
 
 
-def write_face_pseudo_vertextable(file, loop, uv_layer):
-    binary.write_ulong(file,loop.vert.index)
-    binary.write_ulong(file,loop.index)
+def write_face_pseudo_vertextable(file, loop, uv_layer, normals_lookup_dict):
+    binary.write_ulong(file, loop.vert.index)
+    binary.write_ulong(file, normals_lookup_dict[loop.index])
     
     if not uv_layer:
         file.write(struct.pack('<ff', 0, 0))
     
-    file.write(struct.pack('<ff', loop[uv_layer].uv[0], 1-loop[uv_layer].uv[1]))
+    file.write(struct.pack('<ff', loop[uv_layer].uv[0], 1 - loop[uv_layer].uv[1]))
 
 
-def write_face(file, bm, face, materials, uv_layer):
+def write_face(file, bm, face, materials, uv_layer, normals_lookup_dict):
     count_sides = len(face.loops)
     binary.write_ulong(file, count_sides)
     
     for i in range(count_sides):
-        write_face_pseudo_vertextable(file, face.loops[i], uv_layer)
+        write_face_pseudo_vertextable(file, face.loops[i], uv_layer, normals_lookup_dict)
         
     if count_sides < 4:
         file.write(struct.pack('<4I', 0, 0, 0, 0)) # empty filler for triangles
@@ -412,6 +427,8 @@ def write_lod(file, obj, materials, proxies, logger):
     mesh = obj.data
     mesh.calc_normals_split()
     
+    normals, normals_lookup_dict = get_normals(mesh)
+    
     bm = bmesh.new()
     bm.from_mesh(mesh)
     bm.normal_update()
@@ -420,11 +437,11 @@ def write_lod(file, obj, materials, proxies, logger):
     bm.faces.ensure_lookup_table()
     
     count_verts = len(mesh.vertices)
-    count_loops = len(mesh.loops)
+    count_normals = len(normals)
     count_faces = len(mesh.polygons)
     
     binary.write_ulong(file, count_verts)
-    binary.write_ulong(file, count_loops) # number of normals
+    binary.write_ulong(file, count_normals)
     binary.write_ulong(file, count_faces)
     binary.write_ulong(file, 0) # unknown flags/padding
     
@@ -437,17 +454,17 @@ def write_lod(file, obj, materials, proxies, logger):
         
     logger.step("Wrote veritces: %d" % count_verts)
         
-    for loop in mesh.loops:
-        write_normal(file, loop.normal)
+    for normal in normals:
+        write_normal(file, normal)
         
-    logger.step("Wrote vertex normals: %d" % count_loops)
+    logger.step("Wrote vertex normals: %d" % count_normals)
         
     first_uv_layer = None
     if len(bm.loops.layers.uv.values()) > 0: # 1st UV set needs to be written into the face data section too
         first_uv_layer = bm.loops.layers.uv.values()[0]
         
     for face in bm.faces:
-        write_face(file, bm, face, materials, first_uv_layer)
+        write_face(file, bm, face, materials, first_uv_layer, normals_lookup_dict)
         
     logger.step("Wrote faces: %d" % count_faces)
         
