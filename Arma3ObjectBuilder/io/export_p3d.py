@@ -236,6 +236,7 @@ def write_face_pseudo_vertextable(file, loop, uv_layer, normals_lookup_dict):
     
     if not uv_layer:
         file.write(struct.pack('<ff', 0, 0))
+        return
     
     file.write(struct.pack('<ff', loop[uv_layer].uv[0], 1 - loop[uv_layer].uv[1]))
 
