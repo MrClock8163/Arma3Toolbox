@@ -68,7 +68,7 @@ class A3OB_OP_export_rtm(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                 if not self.static_pose and static:
                     self.report({'INFO'}, "No frames were added for export, exported as static pose")
                 else:
-                    self.report({'INFO'}, f"Exported {frame_count} frame(s)")
+                    self.report({'INFO'}, "Exported %d frame(s)" % frame_count)
                 
                 success = True
                     

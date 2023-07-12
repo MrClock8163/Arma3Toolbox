@@ -170,7 +170,7 @@ class A3OB_OT_namedprops_common(bpy.types.Operator):
 
 class A3OB_UL_namedprops(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
-        layout.label(text=f"{item.name} = {item.value}")
+        layout.label(text="%s = %s" % (item.name, item.value))
 
 
 class A3OB_UL_common_proxies(bpy.types.UIList):

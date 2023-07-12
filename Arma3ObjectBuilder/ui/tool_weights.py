@@ -111,7 +111,7 @@ class A3OB_OT_weights_normalize(bpy.types.Operator):
         bone_indices = mcfgutils.get_bone_group_indices(obj, cfgbones)
         normalized = mcfgutils.normalize_weights(obj, bone_indices)
         
-        self.report({'INFO'}, f"Normalized weights on {normalized} vertices")
+        self.report({'INFO'}, "Normalized weights on %d vertices" % normalized)
         
         return {'FINISHED'}
 
@@ -137,7 +137,7 @@ class A3OB_OT_weights_prune_overdetermined(bpy.types.Operator):
         bone_indices = mcfgutils.get_bone_group_indices(obj, cfgbones)
         pruned = mcfgutils.prune_overdetermined(obj, bone_indices)
         
-        self.report({'INFO'}, f"Pruned excess bones from {pruned} vertices")
+        self.report({'INFO'}, "Pruned excess bones from %d vertices" % pruned)
         
         return {'FINISHED'}
 
@@ -159,7 +159,7 @@ class A3OB_OT_weights_prune(bpy.types.Operator):
         wm_props = context.window_manager.a3ob_weights
         pruned = mcfgutils.prune_weights(obj, wm_props.prune_threshold)
         
-        self.report({'INFO'}, f"Pruned selection(s) from {pruned} vertices")
+        self.report({'INFO'}, "Pruned selection(s) from %d vertices" % pruned)
         
         return {'FINISHED'}
 
@@ -185,7 +185,7 @@ class A3OB_OT_weights_cleanup(bpy.types.Operator):
         bone_indices = mcfgutils.get_bone_group_indices(obj, cfgbones)
         cleaned = mcfgutils.cleanup(obj, bone_indices, wm_props.prune_threshold)
         
-        self.report({'INFO'}, f"Cleaned up weight painting on {cleaned} vertices")
+        self.report({'INFO'}, "Cleaned up weight painting on %d vertices" % cleaned)
         
         return {'FINISHED'}
 
@@ -208,7 +208,7 @@ class A3OB_UL_cfgskeletons(bpy.types.UIList):
 class A3OB_UL_cfgbones(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         if item.parent != "":
-            layout.label(text=f"{item.name}: {item.parent}")
+            layout.label(text="%s: %s" % (item.name, item.parent))
         else:
             layout.label(text=item.name)
     

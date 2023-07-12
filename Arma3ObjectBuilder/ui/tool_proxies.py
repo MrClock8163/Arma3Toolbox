@@ -1,4 +1,5 @@
 import os
+import struct
 
 import bpy
 import mathutils

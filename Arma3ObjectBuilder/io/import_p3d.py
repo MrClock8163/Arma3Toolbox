@@ -24,7 +24,7 @@ def read_signature(file):
 def read_file_header(file):
     signature = read_signature(file)
     if signature != "MLOD":
-        raise IOError(f"Invalid MLOD signature: {signature}")
+        raise IOError("Invalid MLOD signature: %s" % signature)
         
     version = binary.read_ulong(file)
     count_lod = binary.read_ulong(file)
@@ -164,7 +164,7 @@ def process_taggs(file, bm, additional_data, count_verts, count_faces, logger):
         # Property
         elif tagg_name == "#Property#" and 'PROPS' in additional_data:
             if tagg_length != 128:
-                raise IOError(f"Invalid named property length: {tagg_length}")
+                raise IOError("Invalid named property length: %d" % tagg_length)
                 
             key = binary.read_char(file, 64)
             value = binary.read_char(file, 64)
@@ -229,7 +229,7 @@ def process_materials(mesh, face_data_dict, material_dict, addon_prefs):
         if (texture_name, material_name) in material_dict:
             blender_material = material_dict[(texture_name, material_name)]
         else:
-            blender_material = bpy.data.materials.new(f"P3D: {os.path.basename(texture_name)} :: {os.path.basename(material_name)}")
+            blender_material = bpy.data.materials.new("P3D: %s :: %s" % (os.path.basename(texture_name), os.path.basename(material_name)))
             material_props = blender_material.a3ob_properties_material
                 
             if re.match(regex_procedural, texture_name):
@@ -388,16 +388,16 @@ def read_lod(context, file, material_dict, additional_data, dynamic_naming, logg
     # Read LOD header
     signature = read_signature(file)
     if signature != "P3DM":
-        raise IOError(f"Unsupported LOD signature: {signature}")
+        raise IOError("Unsupported LOD signature: %s" % signature)
         
     version_major = binary.read_ulong(file)
     version_minor = binary.read_ulong(file)
     
     if version_major != 0x1c or version_minor != 0x100:
-        raise IOError(f"Unsupported LOD version: {version_major}.{version_minor}")
+        raise IOError("Unsupported LOD version: %d.%d" % (version_major, version_minor))
         
     logger.step("Type: P3DM")
-    logger.step(f"Version: {version_major}.{version_minor}")
+    logger.step("Version: %d.%d" % (version_major, version_minor))
                 
     count_verts = binary.read_ulong(file)
     count_normals = binary.read_ulong(file)
@@ -457,7 +457,7 @@ def read_lod(context, file, material_dict, additional_data, dynamic_naming, logg
     
     taggSignature = read_signature(file)
     if taggSignature != "TAGG":
-        raise IOError(f"Invalid TAGG section signature: {taggSignature}")
+        raise IOError("Invalid TAGG section signature: %s" % taggSignature)
     
     named_selections, named_properties = process_taggs(file, bm, additional_data, count_verts, count_faces, logger)
     
@@ -559,11 +559,11 @@ def read_file(operator, context, file, first_lod_only = False):
     if first_lod_only and count_lod > 1:
         count_lod = 1
     
-    logger.log(f"File version: {version}")
-    logger.log(f"Number of LODs: {count_lod}")
+    logger.log("File version: %d" % version)
+    logger.log("Number of LODs: %d" % count_lod)
     
     if version != 257:
-        raise IOError(f"Unsupported file version: {version}")
+        raise IOError("Unsupported file version: %d" % version)
     
     lod_data = []
     

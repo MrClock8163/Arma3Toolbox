@@ -1,5 +1,5 @@
 import struct
-    
+
 def read_byte(file):
     return struct.unpack('B',file.read(1))[0]
     

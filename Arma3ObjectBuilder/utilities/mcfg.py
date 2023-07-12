@@ -21,7 +21,7 @@ class Bone():
         return hash(self.name)
     
     def __repr__(self):
-        return f"\"{self.name}\""
+        return "\"%s\"" % self.name
 
 
 def cfgconvert(filepath, exepath):

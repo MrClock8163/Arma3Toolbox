@@ -82,7 +82,7 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         with open(self.filepath, "rb") as file:
             try:
                 lod_data = import_p3d.read_file(self, context, file)
-                self.report({'INFO'}, f"Succesfully imported {len(lod_data)} LODs (check the logs in the system console)")
+                self.report({'INFO'}, "Succesfully imported %d LODs (check the logs in the system console)" % len(lod_data))
             except struct.error as ex:
                 self.report({'ERROR'}, "Unexpected EndOfFile (check the system console)")
                 traceback.print_exc()
@@ -251,7 +251,7 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             with open(temppath, "wb") as file:
                 try:
                     lod_count, exported_count = export_p3d.write_file(self, context, file)
-                    self.report({'INFO'}, f"Succesfully exported {exported_count}/{lod_count} LODs (check the logs in the system console)")
+                    self.report({'INFO'}, "Succesfully exported %d/%d LODs (check the logs in the system console)" % (exported_count, lod_count))
                     success = True
                 except Exception as ex:
                     self.report({'ERROR'}, "%s (check the system console)" % str(ex))

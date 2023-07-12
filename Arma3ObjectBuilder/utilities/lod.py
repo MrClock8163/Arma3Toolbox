@@ -49,7 +49,7 @@ def get_lod_name(index):
 
 def format_lod_name(index, resolution):
     if data.lod_resolution_position.get(index, None) is not None:
-        return f"{get_lod_name(index)} {resolution}"
+        return "%s %d" % (get_lod_name(index), resolution)
         
     return get_lod_name(index)
     
@@ -87,7 +87,7 @@ def validate_lod(obj, wm_props):
     
 def validate_geometry(obj, wm_props, sub_type = False):
     logger = ProcessLogger()
-    logger.step(f"Validating {obj.name} as Geometry")
+    logger.step("Validating %s as Geometry" % obj.name)
     logger.level_up()
     is_valid = True
     
@@ -115,7 +115,7 @@ def validate_geometry(obj, wm_props, sub_type = False):
                 is_valid = False
     
     if count_concave > 0:
-        logger.step(f"ERROR: {count_concave} concave edge(s)")
+        logger.step("ERROR: %d concave edge(s)" % count_concave)
         is_valid = False
         
     # Component selections -> error
@@ -175,7 +175,7 @@ def validate_geometry(obj, wm_props, sub_type = False):
     
 def validate_shadow(obj, wm_props):
     logger = ProcessLogger()
-    logger.step(f"Validating {obj.name} as Shadow Volume")
+    logger.step("Validating %s as Shadow Volume" % obj.name)
     logger.level_up()
     is_valid = True
     

@@ -37,7 +37,7 @@ def find_components(obj, do_convex_hull=False):
         if do_convex_hull:
             convex_hull()
             
-        group = component_object.vertex_groups.new(name=("Component%02d" % (component_id)))
+        group = component_object.vertex_groups.new(name=("Component%02d" % component_id))
         group.add([vert.index for vert in component_object.data.vertices], 1, 'REPLACE')
         
     if len(components) > 0:

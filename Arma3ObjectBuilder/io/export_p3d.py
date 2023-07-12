@@ -46,7 +46,7 @@ def get_texture_string(material_properties, addon_prefs):
         return format_path(material_properties.texture_path, addon_prefs.project_root, addon_prefs.export_relative)
     elif texture_type == 'COLOR':
         color = material_properties.color_value
-        return f"#(argb,8,8,3)color({round(color[0],3)},{round(color[1],3)},{round(color[2],3)},{round(color[3],3)},{material_properties.color_type})"
+        return "#(argb,8,8,3)color(%.3f,%.3f,%.3f,%.3f,%s)" % (color[0], color[1], color[2], color[3], material_properties.color_type)
     elif texture_type == 'CUSTOM':
         return material_properties.color_raw
     else:
@@ -62,7 +62,7 @@ def get_proxy_string(proxy_props, addon_prefs):
     if len(path) > 0 and path[0] != "\\":
         path = "\\" + path
         
-    return f"proxy:{path}.{'%03d' % proxy_props.proxy_index}"
+    return "proxy:%s.%03d" % (path, proxy_props.proxy_index)
 
 
 def format_path(path, root = "", make_relative = True, strip_extension = False):
