@@ -77,12 +77,12 @@ class A3OB_OP_export_rtm(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                 traceback.print_exc()
         
         if success:
-                if os.path.isfile(self.filepath):
-                    os.remove(self.filepath)
-                    
-                os.rename(temppath, os.path.splitext(temppath)[0])
-            elif not success and not utils.get_addon_preferences(context).preserve_faulty_output:
-                os.remove(temppath)
+            if os.path.isfile(self.filepath):
+                os.remove(self.filepath)
+                
+            os.rename(temppath, os.path.splitext(temppath)[0])
+        elif not success and not utils.get_addon_preferences(context).preserve_faulty_output:
+            os.remove(temppath)
             
         return {'FINISHED'}
         
