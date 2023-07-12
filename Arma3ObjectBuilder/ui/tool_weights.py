@@ -15,17 +15,17 @@ class A3OB_OT_weights_load_cfgskeletons(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        filepath = context.window_manager.a3ob_weights.filepath
-        exepath = os.path.join(utils.get_addon_preferences(context).a3_tools, "cfgconvert/cfgconvert.exe")
+        filepath = utils.abspath(context.window_manager.a3ob_weights.filepath)
+        exepath = os.path.join(utils.abspath(utils.get_addon_preferences(context).a3_tools), "cfgconvert/cfgconvert.exe")
         return os.path.isfile(exepath) and filepath != "" and os.path.isfile(filepath) and os.path.splitext(filepath)[1].lower() == ".cfg"
         
     def execute(self, context):
         wm_props = context.window_manager.a3ob_weights
-        exepath = os.path.join(utils.get_addon_preferences(context).a3_tools, "cfgconvert/cfgconvert.exe")
+        exepath = os.path.join(utils.abspath(utils.get_addon_preferences(context).a3_tools), "cfgconvert/cfgconvert.exe")
         
         wm_props.skeletons.clear()
         
-        data = mcfgutils.read_mcfg(wm_props.filepath, exepath)
+        data = mcfgutils.read_mcfg(utils.abspath(wm_props.filepath), exepath)
         
         if data:
             skeletons = mcfgutils.get_skeletons(data)

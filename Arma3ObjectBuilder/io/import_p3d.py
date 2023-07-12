@@ -106,7 +106,7 @@ def get_file_path(path, addon_prefs, extension = ""):
         path += extension
     
     if addon_prefs.import_absolute:
-        root = addon_prefs.project_root.strip().lower()
+        root = utils.abspath(addon_prefs.project_root).lower()
         if not path.startswith(root):
             absPath = os.path.join(root, path)
             if os.path.exists(absPath):

@@ -92,7 +92,7 @@ def get_addon_preferences(context = None):
 
 def get_common_proxies(context):
     prefs = get_addon_preferences(context)
-    custom_path = prefs.custom_data
+    custom_path = abspath(prefs.custom_data)
     proxies = data.common_proxies
     
     if not os.path.exists(custom_path):
@@ -113,7 +113,7 @@ def get_common_proxies(context):
 
 def get_common_namedprops(context):
     prefs = get_addon_preferences(context)
-    custom_path = prefs.custom_data
+    custom_path = abspath(prefs.custom_data)
     namedprops = data.common_namedprops
     
     if not os.path.exists(custom_path):
@@ -130,3 +130,10 @@ def get_common_namedprops(context):
         pass
         
     return {**namedprops, **custom_namedprops}
+
+
+def abspath(path):
+    if not path.startswith("//"):
+        return path
+    
+    return os.path.abspath(bpy.path.abspath(path))

@@ -13,7 +13,7 @@ def proxy_name_update(self, context):
         return
         
     obj = self.id_data
-    name = os.path.basename(os.path.splitext(self.proxy_path)[0]).strip()
+    name = os.path.basename(os.path.splitext(utils.abspath(self.proxy_path))[0]).strip()
     if name == "":
         name = "unknown"
         

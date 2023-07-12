@@ -43,7 +43,7 @@ def get_texture_string(material_properties, addon_prefs):
     texture_type = material_properties.texture_type
     
     if texture_type == 'TEX':
-        return format_path(material_properties.texture_path, addon_prefs.project_root, addon_prefs.export_relative)
+        return format_path(utils.abspath(material_properties.texture_path), utils.abspath(addon_prefs.project_root), addon_prefs.export_relative)
     elif texture_type == 'COLOR':
         color = material_properties.color_value
         return "#(argb,8,8,3)color(%.3f,%.3f,%.3f,%.3f,%s)" % (color[0], color[1], color[2], color[3], material_properties.color_type)
@@ -54,11 +54,11 @@ def get_texture_string(material_properties, addon_prefs):
 
 
 def get_material_string(material_properties, addon_prefs):
-    return format_path(material_properties.material_path, addon_prefs.project_root, addon_prefs.export_relative)
+    return format_path(utils.abspath(material_properties.material_path), utils.abspath(addon_prefs.project_root), addon_prefs.export_relative)
 
 
 def get_proxy_string(proxy_props, addon_prefs):
-    path = format_path(proxy_props.proxy_path, addon_prefs.project_root, addon_prefs.export_relative, True)
+    path = format_path(utils.abspath(proxy_props.proxy_path), utils.abspath(addon_prefs.project_root), addon_prefs.export_relative, True)
     if len(path) > 0 and path[0] != "\\":
         path = "\\" + path
         
