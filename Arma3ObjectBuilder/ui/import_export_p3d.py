@@ -74,6 +74,11 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         description = "Enable Dynamic Object Naming for LOD and proxy objects",
         default = True
     )
+    first_lod_only: bpy.props.BoolProperty (
+        name = "First LOD Only",
+        description = "Import only the first LOD found in the file",
+        default = False
+    )
     
     def draw(self, context):
         pass
@@ -81,7 +86,7 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     def execute(self, context):        
         with open(self.filepath, "rb") as file:
             try:
-                lod_data = import_p3d.read_file(self, context, file)
+                lod_data = import_p3d.read_file(self, context, file, self.first_lod_only)
                 self.report({'INFO'}, "Succesfully imported %d LODs (check the logs in the system console)" % len(lod_data))
             except struct.error as ex:
                 self.report({'ERROR'}, "Unexpected EndOfFile (check the system console)")
@@ -115,6 +120,7 @@ class A3OB_PT_import_p3d_main(bpy.types.Panel):
         operator = sfile.active_operator
         
         layout.prop(operator, "dynamic_naming")
+        layout.prop(operator, "first_lod_only")
         layout.prop(operator, "validate_meshes")
 
 

@@ -556,11 +556,13 @@ def read_file(operator, context, file, first_lod_only = False):
         additional_data = operator.additional_data
     
     version, count_lod = read_file_header(file)
-    if first_lod_only and count_lod > 1:
-        count_lod = 1
     
     logger.log("File version: %d" % version)
     logger.log("Number of LODs: %d" % count_lod)
+    
+    if first_lod_only and count_lod > 1:
+        logger.log("Importing 1st LOD only")
+        count_lod = 1
     
     if version != 257:
         raise IOError("Unsupported file version: %d" % version)
@@ -588,7 +590,7 @@ def read_file(operator, context, file, first_lod_only = False):
         lod_data.append((lod_object, lod_resolution, proxy_selections_dict))
         
         logger.log("Done in %f sec" % (time.time() - time_lod_start))
-        wm.progress_update(i+1)
+        wm.progress_update(i + 1)
         
     logger.level_down()
     

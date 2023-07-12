@@ -131,6 +131,9 @@ class A3OB_OT_proxy_extract(bpy.types.Operator):
     dynamic_naming: bpy.props.BoolProperty (
         default = False
     )
+    first_lod_only: bpy.props.BoolProperty (
+        default = True
+    )
     filepath: bpy.props.StringProperty (
         default = ""
     )
@@ -146,7 +149,7 @@ class A3OB_OT_proxy_extract(bpy.types.Operator):
         self.filepath = utils.abspath(proxy_object.a3ob_properties_object_proxy.proxy_path)
         with open(self.filepath, "rb") as file:
             try:
-                lod_data = import_p3d.read_file(self, context, file, True)
+                lod_data = import_p3d.read_file(self, context, file, self.first_lod_only)
                 self.report({'INFO'}, "Succesfully extracted proxy (check the logs in the system console)")
             except struct.error as ex:
                 self.report({'ERROR'}, "Unexpected EndOfFile (check the system console)")
