@@ -1,8 +1,8 @@
 import bpy
 import bmesh
 
-from ..utilities import generic as utils
-from ..utilities import lod as lodutils
+from . import generic as utils
+from . import lod as lodutils
 
 
 def can_edit_mass(context):

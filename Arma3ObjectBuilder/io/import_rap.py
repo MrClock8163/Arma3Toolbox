@@ -1,6 +1,6 @@
 from enum import Enum
 
-from ..io import binary_handler as binary
+from . import binary_handler as binary
 
 
 class Cfg():

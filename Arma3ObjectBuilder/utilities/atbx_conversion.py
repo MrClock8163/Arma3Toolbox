@@ -5,9 +5,9 @@ import bpy
 import bmesh
 import mathutils
 
-from ..utilities import structure as structutils
-from ..utilities import lod as lodutils
-from ..utilities.logger import ProcessLogger
+from . import structure as structutils
+from . import lod as lodutils
+from .logger import ProcessLogger
 from ..io import import_p3d
 
 
