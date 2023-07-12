@@ -6,7 +6,7 @@ import bpy
 import bmesh
 
 from ..utilities import generic as utils
-from . import rap
+from ..io import import_rap as rap
 
 
 class Bone():
