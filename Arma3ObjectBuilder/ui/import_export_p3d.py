@@ -248,7 +248,7 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     validate_lods: bpy.props.BoolProperty (
         name = "Validate LODs",
         description = "Validate LOD objects, and skip the export of invalid ones",
-        default = True
+        default = False
     )
     validate_lods_warning_errors: bpy.props.BoolProperty (
         name = "Warnings Are Errors",
@@ -360,7 +360,10 @@ class A3OB_PT_export_p3d_validate(bpy.types.Panel):
         
         col = layout.column(align=True)
         col.prop(operator, "validate_lods")
-        col.prop(operator, "validate_lods_warning_errors")
+        row = col.row(align=True)
+        row.prop(operator, "validate_lods_warning_errors")
+        if not operator.validate_lods:
+            row.enabled = False
 
 
 classes = (

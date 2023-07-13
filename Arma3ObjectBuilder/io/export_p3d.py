@@ -12,6 +12,26 @@ from ..utilities import errors
 from ..utilities.logger import ProcessLogger
 
 
+def can_export(operator, context):
+    scene = context.scene
+    export_objects = scene.objects
+    
+    if operator.use_selection:
+        export_objects = context.selected_objects
+        
+    for obj in export_objects:
+        if obj.type == 'MESH' and obj.a3ob_properties_object.is_a3_lod and obj.parent == None and obj.a3ob_properties_object.lod != '30':
+            return True
+            
+    return False
+
+
+def duplicate_object(obj):
+    new_object = obj.copy()
+    new_object.data = obj.data.copy()
+    return new_object
+
+
 # may be worth looking into bpy.ops.object.convert(target='MESH') instead to reduce operator calls
 def apply_modifiers(obj, context):
     ctx = context.copy()
@@ -34,10 +54,17 @@ def merge_objects(main_object, sub_objects, context):
     bpy.ops.object.join(ctx)
 
 
-def duplicate_object(obj):
-    new_object = obj.copy()
-    new_object.data = obj.data.copy()
-    return new_object
+def format_path(path, root = "", make_relative = True, strip_extension = False):
+    path = utils.replace_slashes(path.strip())
+    
+    if make_relative:
+        root = utils.replace_slashes(root.strip())
+        path = utils.make_relative(path, root)
+        
+    if strip_extension:
+        path = utils.strip_extension(path)
+        
+    return path
 
 
 def get_texture_string(material_properties, addon_prefs):
@@ -64,19 +91,6 @@ def get_proxy_string(proxy_props, addon_prefs):
         path = "\\" + path
         
     return "proxy:%s.%03d" % (path, proxy_props.proxy_index)
-
-
-def format_path(path, root = "", make_relative = True, strip_extension = False):
-    path = utils.replace_slashes(path.strip())
-    
-    if make_relative:
-        root = utils.replace_slashes(root.strip())
-        path = utils.make_relative(path, root)
-        
-    if strip_extension:
-        path = utils.strip_extension(path)
-        
-    return path
 
 
 def get_lod_data(operator, context):
@@ -187,20 +201,6 @@ def get_normals(mesh):
         normals_lookup_dict[i] = normals[normal]
     
     return normals.keys(), normals_lookup_dict
-
-
-def can_export(operator, context):
-    scene = context.scene
-    export_objects = scene.objects
-    
-    if operator.use_selection:
-        export_objects = context.selected_objects
-        
-    for obj in export_objects:
-        if obj.type == 'MESH' and obj.a3ob_properties_object.is_a3_lod and obj.parent == None and obj.a3ob_properties_object.lod != '30':
-            return True
-            
-    return False
 
 
 def get_resolution(obj):
@@ -420,7 +420,7 @@ def write_lod(file, obj, materials, proxies, validator, logger):
     
     if validator:
         if not validator.validate(obj.a3ob_properties_object.lod):
-            logger.step("Failed validation -> skipping LOD (run manual validation for details")
+            logger.step("Failed validation -> skipping LOD (run manual validation for details)")
             logger.step("Name: %s" % lodutils.format_lod_name(int(obj.a3ob_properties_object.lod), obj.a3ob_properties_object.resolution))
             logger.level_down()
             return False
@@ -535,7 +535,9 @@ def write_file(operator, context, file):
         time_lod_start = time.time()
         logger.step("LOD %d" % i)
         
-        validator.obj = lod[0]
+        if validator:
+            validator.obj = lod[0]
+            
         success = write_lod(file, lod[0], lod[2], lod[1], validator, logger)
         if success:
             exported_count += 1
@@ -546,7 +548,7 @@ def write_file(operator, context, file):
         wm.progress_update(i + 1)
     
     if exported_count == 0:
-        raise errors.P3DError("All LODs failed validation/had n-gons, cannot write P3D with 0 LODs")
+        raise errors.P3DError("All LODs had n-gons/failed validation, cannot write P3D with 0 LODs")
     
     file.seek(lod_count_pos, 0)
     binary.write_ulong(file, exported_count) # actual LOD count

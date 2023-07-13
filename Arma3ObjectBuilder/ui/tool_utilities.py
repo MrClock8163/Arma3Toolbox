@@ -255,9 +255,9 @@ def vertex_groups_func(self, context):
     layout = self.layout
     row = layout.row(align=True)
     row.alignment = 'RIGHT'
-    row.operator(A3OB_OT_find_components.bl_idname, text="", icon='STICKY_UVS_DISABLE')
-    row.operator(A3OB_OT_redefine_vertex_group.bl_idname, text="", icon='PASTEDOWN')
-    row.operator(A3OB_OT_cleanup_vertex_groups.bl_idname, text="", icon='TRASH')
+    row.operator("a3ob.find_components", text="", icon='STICKY_UVS_DISABLE')
+    row.operator("a3ob.vertex_group_redefine", text="", icon='PASTEDOWN')
+    row.operator("a3ob.vertex_groups_cleanup", text="", icon='TRASH')
 
 
 def register():

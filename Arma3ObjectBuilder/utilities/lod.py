@@ -153,7 +153,8 @@ class Validator():
                         
                     count_invalid += 1
                     
-                logger.step("WARNING: geometry is not contiguous")
+                if not self.lazy:
+                    logger.step("WARNING: geometry is not contiguous")
             
             # Convexity -> error
             count_concave = 0
@@ -173,19 +174,22 @@ class Validator():
                 logger.step("ERROR: %d concave edge(s)" % count_concave)
                 count_invalid += 1
                 
-            # Component selections -> error
+            # Component selections -> warning
             has_components = False
             for group in self.obj.vertex_groups:
                 if re.match("component\d+", group.name, re.IGNORECASE):
                     has_components = True
                     break
             else:
-                if self.lazy:
+                if self.lazy and self.warning_errors:
                     raise errors.LODError("LOD has no component selection(s)")
                     
             if not has_components:
-                logger.step("ERROR: component selections are not defined")
-                count_invalid += 1
+                if not self.lazy:
+                    logger.step("WARNING: component selections are not defined")
+                
+                if self.warning_errors:
+                    count_invalid += 1
                 
             # Mass -> error, warning
             if not sub_type:
@@ -212,8 +216,9 @@ class Validator():
                         count_invalid += 1
                         if self.lazy:
                             raise errors.LODError("LOD has vertices with no vertex mass defined")
-                            
-                    logger.step("WARNING: vertex mass is not defined for all vertices")
+                    
+                    if not self.lazy:
+                        logger.step("WARNING: vertex mass is not defined for all vertices")
                 
             # Triangulated -> warning
             if not Validator.is_triangulated(bm):
@@ -221,8 +226,9 @@ class Validator():
                     count_invalid += 1
                     if self.lazy:
                         raise errors.LODError("LOD is not triangulated")
-                    
-                logger.step("WARNING: geometry is not triangulated, convexity is not definite")
+                
+                if not self.lazy:
+                    logger.step("WARNING: geometry is not triangulated, convexity is not definite")
             
             # Distance from center -> info
             if not self.lazy:

@@ -45,8 +45,7 @@ def read_normal(file):
 
 
 def read_face_pseudo_vertextable(file):
-    point_id, normal_id, u ,v = struct.unpack('<IIff', file.read(16))
-    return point_id, normal_id, u, v
+    return struct.unpack('<IIff', file.read(16)) # point_id, normal_id, u ,v
 
 
 def read_face(file):
@@ -61,23 +60,6 @@ def read_face(file):
     material = binary.read_asciiz(file)
     
     return vertex_tables, texture, material
-
-
-# The 32-bit floats written to the P3D may have lost
-# their normalization due to the precision loss, and
-# this would cause blender to produce weird results.
-def renormalize_vertex_normals(normals_dict):
-    for i in normals_dict:
-        normal = normals_dict[i]
-        length = math.sqrt(normal[0]**2 + normal[1]**2 + normal[2]**2)
-        
-        if length == 0:
-            continue
-            
-        coef = 1 / length
-        normals_dict[i] = (normal[0] * coef, normal[1] * coef, normal[2] * coef)
-    
-    return normals_dict
 
 
 def decode_selection_weight(weight):
@@ -264,6 +246,23 @@ def process_materials(mesh, face_data_dict, material_dict, addon_prefs):
         mesh.polygons[i].material_index = material_index
         
     return material_dict
+
+
+# The 32-bit floats written to the P3D may have lost
+# their normalization due to the precision loss, and
+# this would cause blender to produce weird results.
+def renormalize_vertex_normals(normals_dict):
+    for i in normals_dict:
+        normal = normals_dict[i]
+        length = math.sqrt(normal[0]**2 + normal[1]**2 + normal[2]**2)
+        
+        if length == 0:
+            continue
+            
+        coef = 1 / length
+        normals_dict[i] = (normal[0] * coef, normal[1] * coef, normal[2] * coef)
+    
+    return normals_dict
 
 
 def process_normals(mesh, face_data_dict, normals_dict):
