@@ -245,6 +245,16 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         description = "Apply the assigned modifiers to the LOD objects during export",
         default = True
     )
+    validate_lods: bpy.props.BoolProperty (
+        name = "Validate LODs",
+        description = "Validate LOD objects, and skip the export of invalid ones",
+        default = True
+    )
+    validate_lods_warning_errors: bpy.props.BoolProperty (
+        name = "Warnings Are Errors",
+        description = "Treat warnings as errors",
+        default = True
+    )
     
     def draw(self, context):
         pass
@@ -328,6 +338,31 @@ class A3OB_PT_export_p3d_meshes(bpy.types.Panel):
         col.prop(operator, "preserve_normals")
 
 
+class A3OB_PT_export_p3d_validate(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "LODs"
+    bl_parent_id = "FILE_PT_operator"
+    
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        return operator.bl_idname == "A3OB_OT_export_p3d"
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        col = layout.column(align=True)
+        col.prop(operator, "validate_lods")
+        col.prop(operator, "validate_lods_warning_errors")
+
+
 classes = (
     A3OB_OP_import_p3d,
     A3OB_PT_import_p3d_main,
@@ -336,7 +371,8 @@ classes = (
     A3OB_PT_import_p3d_proxies,
     A3OB_OP_export_p3d,
     A3OB_PT_export_p3d_include,
-    A3OB_PT_export_p3d_meshes
+    A3OB_PT_export_p3d_meshes,
+    A3OB_PT_export_p3d_validate
 )
 
 

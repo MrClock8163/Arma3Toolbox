@@ -8,6 +8,7 @@ from . import binary_handler as binary
 from ..utilities import generic as utils
 from ..utilities import lod as lodutils
 from ..utilities import data
+from ..utilities import errors
 from ..utilities.logger import ProcessLogger
 
 
@@ -408,12 +409,19 @@ def write_file_header(file, count_lod):
     binary.write_ulong(file, 257)
 
 
-def write_lod(file, obj, materials, proxies, logger):
+def write_lod(file, obj, materials, proxies, validator, logger):
     logger.level_up()
     
-    for face in obj.data.polygons:
-        if len(face.vertices) > 4:
-            logger.step("N-gons detected -> skipping lod")
+    if lodutils.has_ngons(obj.data):
+        logger.step("N-gons detected -> skipping LOD")
+        logger.step("Name: %s" % lodutils.format_lod_name(int(obj.a3ob_properties_object.lod), obj.a3ob_properties_object.resolution))
+        logger.level_down()
+        return False
+    
+    if validator:
+        if not validator.validate(obj.a3ob_properties_object.lod):
+            logger.step("Failed validation -> skipping LOD (run manual validation for details")
+            logger.step("Name: %s" % lodutils.format_lod_name(int(obj.a3ob_properties_object.lod), obj.a3ob_properties_object.resolution))
             logger.level_down()
             return False
     
@@ -519,11 +527,16 @@ def write_file(operator, context, file):
     logger.level_up()
     
     exported_count = 0
+    validator = None
+    if operator.validate_lods:
+        validator = lodutils.Validator(None, operator.validate_lods_warning_errors, True)
+        
     for i, lod in enumerate(lod_list):
         time_lod_start = time.time()
         logger.step("LOD %d" % i)
         
-        success = write_lod(file, lod[0], lod[2], lod[1], logger)
+        validator.obj = lod[0]
+        success = write_lod(file, lod[0], lod[2], lod[1], validator, logger)
         if success:
             exported_count += 1
             
@@ -531,6 +544,9 @@ def write_file(operator, context, file):
         
         logger.log("Done in %f sec" % (time.time() - time_lod_start))
         wm.progress_update(i + 1)
+    
+    if exported_count == 0:
+        raise errors.P3DError("All LODs failed validation/had n-gons, cannot write P3D with 0 LODs")
     
     file.seek(lod_count_pos, 0)
     binary.write_ulong(file, exported_count) # actual LOD count

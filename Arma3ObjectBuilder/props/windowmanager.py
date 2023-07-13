@@ -143,16 +143,16 @@ class A3OB_PG_validation(bpy.types.PropertyGroup):
     lod: bpy.props.EnumProperty (
         name = "Type",
         description = "Type of LOD",
-        items = data.enum_lod_types_validation,
-        default = '4'
+        items = data.enum_lod_types,
+        default = '0'
     )
     warning_errors: bpy.props.BoolProperty (
         name = "Warnings Are Errors",
         description = "Treat warnings as errors during validation",
         default = True
     )
-    
-    
+
+
 class A3OB_PG_keyframes(bpy.types.PropertyGroup):
     mode: bpy.props.EnumProperty (
         name = "Mode",
@@ -186,8 +186,8 @@ class A3OB_PG_keyframes(bpy.types.PropertyGroup):
         default = 5,
         min = 1
     )
-    
-    
+
+ 
 class A3OB_PG_conversion(bpy.types.PropertyGroup):
     use_selection: bpy.props.BoolProperty (
         name = "Selected Only",
