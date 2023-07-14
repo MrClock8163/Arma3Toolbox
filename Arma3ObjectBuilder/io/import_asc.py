@@ -33,7 +33,7 @@ def read_raster(file, ncols, nrows, vscale, logger):
             data.append(float(value) * vscale)
     
     if len(data) != ncols * nrows:
-        raise IOError("Raster value table is incomplete")
+        raise errors.ASCError("Raster value table is incomplete")
     
     logger.step("Read values: %d" % len(data))
     

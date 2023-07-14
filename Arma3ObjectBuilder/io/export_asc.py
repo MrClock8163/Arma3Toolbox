@@ -61,7 +61,7 @@ def write_raster(file, rows, logger):
     for row in rows:
         row_string = []
         for value in row:
-            row_string.append("{:.4f}".format(value[2]))
+            row_string.append("%.4f" % value[2])
             
         file.write(" ".join(row_string) + "\n")
     

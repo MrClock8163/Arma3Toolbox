@@ -71,9 +71,9 @@ class A3OB_OT_check_convexity(bpy.types.Operator):
         name, concaves = structutils.check_convexity()
         
         if concaves > 0:
-            self.report({'WARNING'}, f'{name} has {concaves} concave edges')
+            self.report({'WARNING'}, "%s has %d concave edge(s)" % (name, concaves))
         else:
-            self.report({'INFO'}, f'{name} is convex')
+            self.report({'INFO'}, "%s is convex" % name)
         
         return {'FINISHED'}
 
@@ -128,7 +128,7 @@ class A3OB_OT_component_convex_hull(bpy.types.Operator):
         obj = context.active_object
         count_components = structutils.find_components(obj, True)
         bpy.ops.object.mode_set(mode=mode)
-        self.report({'INFO'}, f'Created {count_components} component(s) in {obj.name}')
+        self.report({'INFO'}, "Created %d component(s) in %s" % (count_components, obj.name))
         return {'FINISHED'}
 
 
@@ -148,7 +148,7 @@ class A3OB_OT_find_components(bpy.types.Operator):
         obj = context.active_object
         count_components = structutils.find_components(obj)
         bpy.ops.object.mode_set(mode=mode)
-        self.report({'INFO'}, f'Created {count_components} component(s) in {obj.name}')
+        self.report({'INFO'}, "Created %d component(s) in %s" % (count_components, obj.name))
         return {'FINISHED'}
 
 
@@ -206,8 +206,7 @@ class A3OB_OT_cleanup_vertex_groups(bpy.types.Operator):
         
         bpy.ops.object.mode_set(mode=mode)
         
-        self.report({'INFO'} ,f"Removed {removed} unused vertex group(s) from {obj.name}")
-        utils.show_info_box(f"Removed {removed} unused vertex group(s) from {obj.name}", "Info", 'INFO')
+        self.report({'INFO'} ,"Removed %d unused vertex group(s) from %s" % (removed, obj.name))
         
         return {'FINISHED'}
 
@@ -256,9 +255,9 @@ def vertex_groups_func(self, context):
     layout = self.layout
     row = layout.row(align=True)
     row.alignment = 'RIGHT'
-    row.operator(A3OB_OT_find_components.bl_idname, text="", icon='STICKY_UVS_DISABLE')
-    row.operator(A3OB_OT_redefine_vertex_group.bl_idname, text="", icon='PASTEDOWN')
-    row.operator(A3OB_OT_cleanup_vertex_groups.bl_idname, text="", icon='TRASH')
+    row.operator("a3ob.find_components", text="", icon='STICKY_UVS_DISABLE')
+    row.operator("a3ob.vertex_group_redefine", text="", icon='PASTEDOWN')
+    row.operator("a3ob.vertex_groups_cleanup", text="", icon='TRASH')
 
 
 def register():

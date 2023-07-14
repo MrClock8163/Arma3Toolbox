@@ -4,7 +4,7 @@ import re
 import bpy
 import mathutils
 
-from ..io import binary_handler as binary
+from . import binary_handler as binary
 from ..utilities.logger import ProcessLogger
 
 

@@ -1,4 +1,5 @@
 import traceback
+import os
 
 import bpy
 import bpy_extras
@@ -27,12 +28,24 @@ class A3OB_OP_import_asc(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     )
     
     def execute(self, context):
+        temppath = self.filepath + ".temp"
+        success = False
+        
         with open(self.filepath) as file:
             try:
                 import_asc.read_file(self, context, file)
+                success = True
             except Exception as ex:
                 self.report({'ERROR'}, str(ex))
                 traceback.print_exc()
+        
+        if success:
+            if os.path.isfile(self.filepath):
+                os.remove(self.filepath)
+                
+            os.rename(temppath, os.path.splitext(temppath)[0])
+        elif not success and not utils.get_addon_preferences(context).preserve_faulty_output:
+            os.remove(temppath)
         
         return {'FINISHED'}
 

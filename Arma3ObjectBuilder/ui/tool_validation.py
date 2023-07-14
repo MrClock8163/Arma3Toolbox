@@ -28,7 +28,8 @@ class A3OB_OT_validate_lod(bpy.types.Operator):
                 self.report({'INFO'}, "No validation rules for detected LOD type")
                 return {'FINISHED'}
         
-        valid = lodutils.validate_lod(obj, wm_props)
+        validator = lodutils.Validator(obj, wm_props.warning_errors)
+        valid = validator.validate(wm_props.lod)
         if valid:
             self.report({'INFO'}, "Validation succeeded")
         else:

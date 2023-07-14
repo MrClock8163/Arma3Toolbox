@@ -1,10 +1,12 @@
 import traceback
 import struct
+import os
 
 import bpy
 import bpy_extras
 
 from ..io import import_p3d, export_p3d
+from ..utilities import generic as utils
 
 
 class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
@@ -72,43 +74,26 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         description = "Enable Dynamic Object Naming for LOD and proxy objects",
         default = True
     )
+    first_lod_only: bpy.props.BoolProperty (
+        name = "First LOD Only",
+        description = "Import only the first LOD found in the file",
+        default = False
+    )
     
     def draw(self, context):
         pass
     
-    def execute(self, context):
-        
+    def execute(self, context):        
         with open(self.filepath, "rb") as file:
             try:
-                lod_data = import_p3d.read_file(self, context, file)
-                self.report({'INFO'}, f"Succesfully imported {len(lod_data)} LODs (check the logs in the system console)")
+                lod_data = import_p3d.read_file(self, context, file, self.first_lod_only)
+                self.report({'INFO'}, "Succesfully imported %d LODs (check the logs in the system console)" % len(lod_data))
             except struct.error as ex:
                 self.report({'ERROR'}, "Unexpected EndOfFile (check the system console)")
                 traceback.print_exc()
             except Exception as ex:
                 self.report({'ERROR'}, "%s (check the system console)" % str(ex))
                 traceback.print_exc()
-                
-        # filename = os.path.basename(self.filepath)
-        
-        # if not self.enclose:
-        #     filename = ""
-            
-        # print(type(self.additional_data))
-        
-        # try:
-            # import_p3d.import_file(context,file,self.groupby,filename.strip())
-        # except IOError as e:
-            # utils.show_infoBox(str(e),"I/O error",'INFO')
-        # except struct.error as e:
-            # utils.show_infoBox("Unexpected EnfOfFile","I/O error",'INFO')
-        # except Exception as e:
-            # utils.show_infoBox(str(e),"Unexpected I/O error",'ERROR')
-            
-        # import_p3d.import_file(context,file,self.groupby,self.preserve_normals,self.validate_meshes,self.setup_materials,filename.strip()) # Allow exceptions for testing
-            # lod_data = import_p3d.read_file(self, context, file) # Allow exceptions for testing
-            # self.report({'INFO'}, f"Succesfully imported {len(lod_data)} LODs")
-        # file.close()
         
         return {'FINISHED'}
 
@@ -135,6 +120,7 @@ class A3OB_PT_import_p3d_main(bpy.types.Panel):
         operator = sfile.active_operator
         
         layout.prop(operator, "dynamic_naming")
+        layout.prop(operator, "first_lod_only")
         layout.prop(operator, "validate_meshes")
 
 
@@ -259,19 +245,41 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         description = "Apply the assigned modifiers to the LOD objects during export",
         default = True
     )
+    validate_lods: bpy.props.BoolProperty (
+        name = "Validate LODs",
+        description = "Validate LOD objects, and skip the export of invalid ones",
+        default = False
+    )
+    validate_lods_warning_errors: bpy.props.BoolProperty (
+        name = "Warnings Are Errors",
+        description = "Treat warnings as errors",
+        default = True
+    )
     
     def draw(self, context):
         pass
     
     def execute(self, context):
         if export_p3d.can_export(self, context):
-            with open(self.filepath, "wb") as file:
+            temppath = self.filepath + ".temp"
+            success = False
+            
+            with open(temppath, "wb") as file:
                 try:
                     lod_count, exported_count = export_p3d.write_file(self, context, file)
-                    self.report({'INFO'}, f"Succesfully exported {exported_count}/{lod_count} LODs (check the logs in the system console)")
+                    self.report({'INFO'}, "Succesfully exported %d/%d LODs (check the logs in the system console)" % (exported_count, lod_count))
+                    success = True
                 except Exception as ex:
                     self.report({'ERROR'}, "%s (check the system console)" % str(ex))
                     traceback.print_exc()
+            
+            if success:
+                if os.path.isfile(self.filepath):
+                    os.remove(self.filepath)
+                    
+                os.rename(temppath, os.path.splitext(temppath)[0])
+            elif not success and not utils.get_addon_preferences(context).preserve_faulty_output:
+                os.remove(temppath)
                 
         else:
             self.report({'INFO'}, "There are no LODs to export")
@@ -330,6 +338,34 @@ class A3OB_PT_export_p3d_meshes(bpy.types.Panel):
         col.prop(operator, "preserve_normals")
 
 
+class A3OB_PT_export_p3d_validate(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "LODs"
+    bl_parent_id = "FILE_PT_operator"
+    
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        return operator.bl_idname == "A3OB_OT_export_p3d"
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        col = layout.column(align=True)
+        col.prop(operator, "validate_lods")
+        row = col.row(align=True)
+        row.prop(operator, "validate_lods_warning_errors")
+        if not operator.validate_lods:
+            row.enabled = False
+
+
 classes = (
     A3OB_OP_import_p3d,
     A3OB_PT_import_p3d_main,
@@ -338,7 +374,8 @@ classes = (
     A3OB_PT_import_p3d_proxies,
     A3OB_OP_export_p3d,
     A3OB_PT_export_p3d_include,
-    A3OB_PT_export_p3d_meshes
+    A3OB_PT_export_p3d_meshes,
+    A3OB_PT_export_p3d_validate
 )
 
 

@@ -27,10 +27,10 @@ class A3OB_OT_keyframe_add_list(bpy.types.Operator):
             
         if wm_props.mode == 'TIMELINE':
             count_frames = frameutils.add_frame_timeline(obj)
-            self.report({'INFO'}, f"Added {count_frames} frame(s) to RTM")
+            self.report({'INFO'}, "Added %d frame(s) to RTM" % count_frames)
         elif wm_props.mode == 'RANGE':
             count_frames = frameutils.add_frame_range(obj, wm_props)
-            self.report({'INFO'}, f"Added {count_frames} frame(s) to RTM")
+            self.report({'INFO'}, "Added %d frame(s) to RTM" % count_frames)
         
         return {'FINISHED'}
 

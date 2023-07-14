@@ -1,6 +1,7 @@
 from enum import Enum
 
-from ..io import binary_handler as binary
+from . import binary_handler as binary
+from ..utilities import errors
 
 
 class Cfg():
@@ -326,7 +327,7 @@ class CFGReader():
                         padding2 = binary.read_ulong(file)
                         
                         if not (padding1 == 0 and padding2 == 8):
-                            raise Exception("Invalid file header padding")
+                            raise errors.RAPError("Invalid file header padding")
                 
                 output.enum_offset = binary.read_ulong(file)
                 
@@ -348,7 +349,7 @@ class CFGReader():
                     output.enums.append(new_item)
                     
                 if file.peek():
-                    raise Exception("Invalid EOF")
+                    raise errors.RAPError("Invalid EOF")
                 
             except:
                 output = None

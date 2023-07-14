@@ -2,7 +2,7 @@ bl_info = {
     "name": "Arma 3 Object Builder",
     "description": "Collection of tools for editing Arma 3 content",
     "author": "MrClock (present add-on), Hans-Joerg \"Alwarren\" Frieden (original ArmaToolbox add-on)",
-    "version": (0, 3, 3),
+    "version": (0, 3, 4),
     "blender": (2, 90, 0),
     "location": "Object Builder panels in various views",
     "warning": "Work In Progress",
@@ -84,6 +84,11 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         description = "Display links to the addon documentation in the headers of tool panels",
         default = True
     )
+    preserve_faulty_output: bpy.props.BoolProperty (
+        name = "Preserve Faulty Output",
+        description = "Preserve the .temp files if an export failed (could be useful to attach to a bug report)",
+        default = False
+    )
     # Paths
     project_root: bpy.props.StringProperty (
         name = "Project Root",
@@ -121,6 +126,7 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         if self.tabs == 'GENERAL':
             box.prop(self, "a3_tools", icon='TOOL_SETTINGS')
             box.prop(self, "show_info_links")
+            box.prop(self, "preserve_faulty_output")
             
         elif self.tabs == 'PATHS':
             box.prop(self, "project_root", icon='DISK_DRIVE')

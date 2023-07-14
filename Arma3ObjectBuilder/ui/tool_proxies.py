@@ -1,4 +1,5 @@
 import os
+import struct
 
 import bpy
 import mathutils
@@ -130,6 +131,9 @@ class A3OB_OT_proxy_extract(bpy.types.Operator):
     dynamic_naming: bpy.props.BoolProperty (
         default = False
     )
+    first_lod_only: bpy.props.BoolProperty (
+        default = True
+    )
     filepath: bpy.props.StringProperty (
         default = ""
     )
@@ -137,14 +141,15 @@ class A3OB_OT_proxy_extract(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.active_object
-        return obj and obj.type == 'MESH' and len(context.selected_objects) == 1 and obj.a3ob_properties_object_proxy.is_a3_proxy and os.path.exists(obj.a3ob_properties_object_proxy.proxy_path) and os.path.splitext(obj.a3ob_properties_object_proxy.proxy_path)[1].lower() == '.p3d'
+        path = utils.abspath(obj.a3ob_properties_object_proxy.proxy_path)
+        return obj and obj.type == 'MESH' and len(context.selected_objects) == 1 and obj.a3ob_properties_object_proxy.is_a3_proxy and os.path.exists(path) and os.path.splitext(path)[1].lower() == '.p3d'
     
     def execute(self, context):
         proxy_object = context.active_object
-        self.filepath = proxy_object.a3ob_properties_object_proxy.proxy_path
+        self.filepath = utils.abspath(proxy_object.a3ob_properties_object_proxy.proxy_path)
         with open(self.filepath, "rb") as file:
             try:
-                lod_data = import_p3d.read_file(self, context, file, True)
+                lod_data = import_p3d.read_file(self, context, file, self.first_lod_only)
                 self.report({'INFO'}, "Succesfully extracted proxy (check the logs in the system console)")
             except struct.error as ex:
                 self.report({'ERROR'}, "Unexpected EndOfFile (check the system console)")

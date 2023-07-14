@@ -1,4 +1,5 @@
 import traceback
+import os
 
 import bpy
 import bpy_extras
@@ -57,19 +58,31 @@ class A3OB_OP_export_rtm(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         
     def execute(self, context):
         obj = context.active_object
+        temppath = self.filepath + ".temp"
+        success = False
                 
-        with open(self.filepath, "wb") as file:
+        with open(temppath, "wb") as file:
             try:
                 static, frame_count = export_rtm.write_file(self, context, file, obj)
             
                 if not self.static_pose and static:
                     self.report({'INFO'}, "No frames were added for export, exported as static pose")
                 else:
-                    self.report({'INFO'}, f"Exported {frame_count} frame(s)")
+                    self.report({'INFO'}, "Exported %d frame(s)" % frame_count)
+                
+                success = True
                     
             except Exception as ex:
                 self.report({'ERROR'}, "%s (check the system console)" % str(ex))
                 traceback.print_exc()
+        
+        if success:
+            if os.path.isfile(self.filepath):
+                os.remove(self.filepath)
+                
+            os.rename(temppath, os.path.splitext(temppath)[0])
+        elif not success and not utils.get_addon_preferences(context).preserve_faulty_output:
+            os.remove(temppath)
             
         return {'FINISHED'}
         

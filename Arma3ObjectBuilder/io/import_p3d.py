@@ -14,6 +14,7 @@ from ..utilities import lod as lodutils
 from ..utilities import proxy as proxyutils
 from ..utilities import structure as structutils
 from ..utilities import data
+from ..utilities import errors
 from ..utilities.logger import ProcessLogger
 
 
@@ -24,7 +25,7 @@ def read_signature(file):
 def read_file_header(file):
     signature = read_signature(file)
     if signature != "MLOD":
-        raise IOError(f"Invalid MLOD signature: {signature}")
+        raise errors.P3DError("Invalid MLOD signature: %s" % signature)
         
     version = binary.read_ulong(file)
     count_lod = binary.read_ulong(file)
@@ -44,9 +45,7 @@ def read_normal(file):
 
 
 def read_face_pseudo_vertextable(file):
-    point_id, normal_id = struct.unpack('<II', file.read(8))
-    file.read(8) # dump embedded UV coordinates
-    return point_id, normal_id
+    return struct.unpack('<IIff', file.read(16)) # point_id, normal_id, u ,v
 
 
 def read_face(file):
@@ -90,13 +89,27 @@ def get_file_path(path, addon_prefs, extension = ""):
         path += extension
     
     if addon_prefs.import_absolute:
-        root = addon_prefs.project_root.strip().lower()
+        root = utils.abspath(addon_prefs.project_root).lower()
         if not path.startswith(root):
             absPath = os.path.join(root, path)
             if os.path.exists(absPath):
                 return absPath
     
     return path
+
+
+# It's not guaranteed that a LOD has a #UVSet# TAGG section, so the UVs embedded into
+# the face data should not be discarded
+def process_embedded_uv(bm, face_data_dict):
+    uv_layer = bm.loops.layers.uv.new("UVSet 0")
+    
+    for face in bm.faces:
+        data = face_data_dict[face.index][0]
+        for loop in face.loops:
+            for table in data:
+                if table[0] == loop.vert.index:
+                    loop[uv_layer].uv = (table[2], 1 - table[3])
+                    break
 
 
 def process_taggs(file, bm, additional_data, count_verts, count_faces, logger):
@@ -112,11 +125,13 @@ def process_taggs(file, bm, additional_data, count_verts, count_faces, logger):
         # EOF
         if tagg_name == "#EndOfFile#":
             if tagg_length != 0:
-                raise IOError("Invalid EOF")
+                raise errors.P3DError("Invalid EOF")
             break
             
-        # Sharps (technically redundant with the split vertex normals, may be scrapped later)
-        elif tagg_name == "#SharpEdges#" and 'NORMALS' not in additional_data:
+        # Sharps
+        elif tagg_name == "#SharpEdges#":
+            sharp_edges = []
+            
             for i in range(int(tagg_length / (4 * 2))):
                 point1_id = binary.read_ulong(file)
                 point2_id = binary.read_ulong(file)
@@ -124,12 +139,15 @@ def process_taggs(file, bm, additional_data, count_verts, count_faces, logger):
                 if point1_id != point2_id:
                     edge = bm.edges.get([bm.verts[point1_id], bm.verts[point2_id]])
                     if edge is not None:
-                        edge.smooth = False
+                        sharp_edges.append(edge)
+            
+            for edge in bm.edges:
+                edge.smooth = edge not in sharp_edges
         
         # Property
         elif tagg_name == "#Property#" and 'PROPS' in additional_data:
             if tagg_length != 128:
-                raise IOError(f"Invalid named property length: {tagg_length}")
+                raise errors.P3DError("Invalid named property length: %d" % tagg_length)
                 
             key = binary.read_char(file, 64)
             value = binary.read_char(file, 64)
@@ -147,7 +165,9 @@ def process_taggs(file, bm, additional_data, count_verts, count_faces, logger):
         # UV
         elif tagg_name == "#UVSet#" and 'UV' in additional_data:
             uv_id = binary.read_ulong(file)
-            uv_layer = bm.loops.layers.uv.new(f"UVSet {uv_id}")
+            uv_layer = bm.loops.layers.uv.get("UVSet %d" % uv_id)
+            if not uv_layer:
+                uv_layer = bm.loops.layers.uv.new("UVSet %d" % uv_id)
             
             for face in bm.faces:
                 for loop in face.loops:
@@ -192,7 +212,7 @@ def process_materials(mesh, face_data_dict, material_dict, addon_prefs):
         if (texture_name, material_name) in material_dict:
             blender_material = material_dict[(texture_name, material_name)]
         else:
-            blender_material = bpy.data.materials.new(f"P3D: {os.path.basename(texture_name)} :: {os.path.basename(material_name)}")
+            blender_material = bpy.data.materials.new("P3D: %s :: %s" % (os.path.basename(texture_name), os.path.basename(material_name)))
             material_props = blender_material.a3ob_properties_material
                 
             if re.match(regex_procedural, texture_name):
@@ -228,6 +248,23 @@ def process_materials(mesh, face_data_dict, material_dict, addon_prefs):
     return material_dict
 
 
+# The 32-bit floats written to the P3D may have lost
+# their normalization due to the precision loss, and
+# this would cause blender to produce weird results.
+def renormalize_vertex_normals(normals_dict):
+    for i in normals_dict:
+        normal = normals_dict[i]
+        length = math.sqrt(normal[0]**2 + normal[1]**2 + normal[2]**2)
+        
+        if length == 0:
+            continue
+            
+        coef = 1 / length
+        normals_dict[i] = (normal[0] * coef, normal[1] * coef, normal[2] * coef)
+    
+    return normals_dict
+
+
 def process_normals(mesh, face_data_dict, normals_dict):
     loop_normals = []
     for face in mesh.polygons:
@@ -242,7 +279,6 @@ def process_normals(mesh, face_data_dict, normals_dict):
                     loop_normals.insert(i, normals_dict[table[1]])   
     
     mesh.normals_split_custom_set(loop_normals)
-    mesh.free_normals_split()
 
 
 def group_lod_data(lod_objects, groupby = 'TYPE'):    
@@ -304,8 +340,12 @@ def process_proxies(lod_data, operator, material_dict, dynamic_naming, addon_pre
                 
             obj.vertex_groups.active = group
             bpy.ops.object.vertex_group_select()
-            bpy.ops.mesh.separate(type='SELECTED')
-            obj.vertex_groups.remove(group)
+            
+            try:
+                bpy.ops.mesh.separate(type='SELECTED')
+                obj.vertex_groups.remove(group)
+            except:
+                pass
             
         bpy.ops.object.mode_set(mode='OBJECT')
         
@@ -348,16 +388,16 @@ def read_lod(context, file, material_dict, additional_data, dynamic_naming, logg
     # Read LOD header
     signature = read_signature(file)
     if signature != "P3DM":
-        raise IOError(f"Unsupported LOD signature: {signature}")
+        raise errors.P3DError("Unsupported LOD signature: %s" % signature)
         
     version_major = binary.read_ulong(file)
     version_minor = binary.read_ulong(file)
     
     if version_major != 0x1c or version_minor != 0x100:
-        raise IOError(f"Unsupported LOD version: {version_major}.{version_minor}")
+        raise errors.P3DError("Unsupported LOD version: %d.%d" % (version_major, version_minor))
         
     logger.step("Type: P3DM")
-    logger.step(f"Version: {version_major}.{version_minor}")
+    logger.step("Version: %d.%d" % (version_major, version_minor))
                 
     count_verts = binary.read_ulong(file)
     count_normals = binary.read_ulong(file)
@@ -390,6 +430,19 @@ def read_lod(context, file, material_dict, additional_data, dynamic_naming, logg
     
     for face in mesh.polygons:
         face.use_smooth = True
+    
+    # Apply split normals
+    #
+    # Split normals apparently also set up hard edges where necessary,
+    # but due to a seemingly Blender specific phenomenon, random sharp
+    # edges tend to appear where the loop vertices on both edges of an edge
+    # have split normals. To combat this, the normals have to be processed
+    # before the #SharpEdges# TAGG, so that the sharp edges get cleaned up
+    # by the TAGG processing.
+    if 'NORMALS' in additional_data:
+        normals_dict = renormalize_vertex_normals(normals_dict)
+        process_normals(mesh, face_data_dict, normals_dict)
+        logger.step("Applied split normals")
         
     # Read TAGGs
     bm = bmesh.new()
@@ -398,9 +451,13 @@ def read_lod(context, file, material_dict, additional_data, dynamic_naming, logg
     bm.edges.ensure_lookup_table()
     bm.faces.ensure_lookup_table()
     
+    # Embedded UV set
+    process_embedded_uv(bm, face_data_dict)
+    logger.step("Added embedded UVSet 0")
+    
     taggSignature = read_signature(file)
     if taggSignature != "TAGG":
-        raise IOError(f"Invalid TAGG section signature: {taggSignature}")
+        raise errors.P3DError("Invalid TAGG section signature: %s" % taggSignature)
     
     named_selections, named_properties = process_taggs(file, bm, additional_data, count_verts, count_faces, logger)
     
@@ -448,10 +505,9 @@ def read_lod(context, file, material_dict, additional_data, dynamic_naming, logg
         material_dict = process_materials(mesh, face_data_dict, material_dict, addon_prefs)
         logger.step("Assigned materials")
         
-    # Apply split normals
-    if 'NORMALS' in additional_data and lod_index in data.lod_visuals: 
-        process_normals(mesh, face_data_dict, normals_dict)
-        logger.step("Applied split normals")
+    # Cleanup split normals if they are not needed
+    if 'NORMALS' in additional_data and lod_index not in data.lod_visuals: 
+        bpy.ops.mesh.customdata_custom_splitnormals_clear({"active_object": obj, "object": obj})
         
     # Add vertex group names to object
     #
@@ -500,14 +556,16 @@ def read_file(operator, context, file, first_lod_only = False):
         additional_data = operator.additional_data
     
     version, count_lod = read_file_header(file)
+    
+    logger.log("File version: %d" % version)
+    logger.log("Number of LODs: %d" % count_lod)
+    
     if first_lod_only and count_lod > 1:
+        logger.log("Importing 1st LOD only")
         count_lod = 1
     
-    logger.log(f"File version: {version}")
-    logger.log(f"Number of LODs: {count_lod}")
-    
     if version != 257:
-        raise IOError(f"Unsupported file version: {version}")
+        raise errors.P3DError("Unsupported file version: %d" % version)
     
     lod_data = []
     
@@ -532,7 +590,7 @@ def read_file(operator, context, file, first_lod_only = False):
         lod_data.append((lod_object, lod_resolution, proxy_selections_dict))
         
         logger.log("Done in %f sec" % (time.time() - time_lod_start))
-        wm.progress_update(i+1)
+        wm.progress_update(i + 1)
         
     logger.level_down()
     

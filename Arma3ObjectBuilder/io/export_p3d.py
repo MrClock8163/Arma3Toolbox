@@ -8,7 +8,28 @@ from . import binary_handler as binary
 from ..utilities import generic as utils
 from ..utilities import lod as lodutils
 from ..utilities import data
+from ..utilities import errors
 from ..utilities.logger import ProcessLogger
+
+
+def can_export(operator, context):
+    scene = context.scene
+    export_objects = scene.objects
+    
+    if operator.use_selection:
+        export_objects = context.selected_objects
+        
+    for obj in export_objects:
+        if obj.type == 'MESH' and obj.a3ob_properties_object.is_a3_lod and obj.parent == None and obj.a3ob_properties_object.lod != '30':
+            return True
+            
+    return False
+
+
+def duplicate_object(obj):
+    new_object = obj.copy()
+    new_object.data = obj.data.copy()
+    return new_object
 
 
 # may be worth looking into bpy.ops.object.convert(target='MESH') instead to reduce operator calls
@@ -33,38 +54,6 @@ def merge_objects(main_object, sub_objects, context):
     bpy.ops.object.join(ctx)
 
 
-def duplicate_object(obj):
-    new_object = obj.copy()
-    new_object.data = obj.data.copy()
-    return new_object
-
-
-def get_texture_string(material_properties, addon_prefs):
-    texture_type = material_properties.texture_type
-    
-    if texture_type == 'TEX':
-        return format_path(material_properties.texture_path, addon_prefs.project_root, addon_prefs.export_relative)
-    elif texture_type == 'COLOR':
-        color = material_properties.color_value
-        return f"#(argb,8,8,3)color({round(color[0],3)},{round(color[1],3)},{round(color[2],3)},{round(color[3],3)},{material_properties.color_type})"
-    elif texture_type == 'CUSTOM':
-        return material_properties.color_raw
-    else:
-        return ""
-
-
-def get_material_string(material_properties, addon_prefs):
-    return format_path(material_properties.material_path, addon_prefs.project_root, addon_prefs.export_relative)
-
-
-def get_proxy_string(proxy_props, addon_prefs):
-    path = format_path(proxy_props.proxy_path, addon_prefs.project_root, addon_prefs.export_relative, True)
-    if len(path) > 0 and path[0] != "\\":
-        path = "\\" + path
-        
-    return f"proxy:{path}.{'%03d' % proxy_props.proxy_index}"
-
-
 def format_path(path, root = "", make_relative = True, strip_extension = False):
     path = utils.replace_slashes(path.strip())
     
@@ -76,6 +65,32 @@ def format_path(path, root = "", make_relative = True, strip_extension = False):
         path = utils.strip_extension(path)
         
     return path
+
+
+def get_texture_string(material_properties, addon_prefs):
+    texture_type = material_properties.texture_type
+    
+    if texture_type == 'TEX':
+        return format_path(utils.abspath(material_properties.texture_path), utils.abspath(addon_prefs.project_root), addon_prefs.export_relative)
+    elif texture_type == 'COLOR':
+        color = material_properties.color_value
+        return "#(argb,8,8,3)color(%.3f,%.3f,%.3f,%.3f,%s)" % (color[0], color[1], color[2], color[3], material_properties.color_type)
+    elif texture_type == 'CUSTOM':
+        return material_properties.color_raw
+    else:
+        return ""
+
+
+def get_material_string(material_properties, addon_prefs):
+    return format_path(utils.abspath(material_properties.material_path), utils.abspath(addon_prefs.project_root), addon_prefs.export_relative)
+
+
+def get_proxy_string(proxy_props, addon_prefs):
+    path = format_path(utils.abspath(proxy_props.proxy_path), utils.abspath(addon_prefs.project_root), addon_prefs.export_relative, True)
+    if len(path) > 0 and path[0] != "\\":
+        path = "\\" + path
+        
+    return "proxy:%s.%03d" % (path, proxy_props.proxy_index)
 
 
 def get_lod_data(operator, context):
@@ -173,18 +188,19 @@ def get_lod_data(operator, context):
     return lod_list
 
 
-def can_export(operator, context):
-    scene = context.scene
-    export_objects = scene.objects
-    
-    if operator.use_selection:
-        export_objects = context.selected_objects
+def get_normals(mesh):
+    normals = {}
+    normals_lookup_dict = {}
+
+    for i, loop in enumerate(mesh.loops):
+        normal = loop.normal.copy().freeze()
         
-    for obj in export_objects:
-        if obj.type == 'MESH' and obj.a3ob_properties_object.is_a3_lod and obj.parent == None and obj.a3ob_properties_object.lod != '30':
-            return True
-            
-    return False
+        if normal not in normals:
+            normals[normal] = len(normals)
+        
+        normals_lookup_dict[i] = normals[normal]
+    
+    return normals.keys(), normals_lookup_dict
 
 
 def get_resolution(obj):
@@ -215,22 +231,23 @@ def write_normal(file, normal):
     file.write(struct.pack('<fff', -normal[0], -normal[2], -normal[1]))
 
 
-def write_face_pseudo_vertextable(file, loop, uv_layer):
-    binary.write_ulong(file,loop.vert.index)
-    binary.write_ulong(file,loop.index)
+def write_face_pseudo_vertextable(file, loop, uv_layer, normals_lookup_dict):
+    binary.write_ulong(file, loop.vert.index)
+    binary.write_ulong(file, normals_lookup_dict[loop.index])
     
     if not uv_layer:
         file.write(struct.pack('<ff', 0, 0))
+        return
     
-    file.write(struct.pack('<ff', loop[uv_layer].uv[0], 1-loop[uv_layer].uv[1]))
+    file.write(struct.pack('<ff', loop[uv_layer].uv[0], 1 - loop[uv_layer].uv[1]))
 
 
-def write_face(file, bm, face, materials, uv_layer):
+def write_face(file, bm, face, materials, uv_layer, normals_lookup_dict):
     count_sides = len(face.loops)
     binary.write_ulong(file, count_sides)
     
     for i in range(count_sides):
-        write_face_pseudo_vertextable(file, face.loops[i], uv_layer)
+        write_face_pseudo_vertextable(file, face.loops[i], uv_layer, normals_lookup_dict)
         
     if count_sides < 4:
         file.write(struct.pack('<4I', 0, 0, 0, 0)) # empty filler for triangles
@@ -390,15 +407,21 @@ def write_tagg_named_properties(file, obj):
 def write_file_header(file, count_lod):
     binary.write_chars(file, "MLOD")
     binary.write_ulong(file, 257)
-    binary.write_ulong(file, count_lod)
 
 
-def write_lod(file, obj, materials, proxies, logger):
+def write_lod(file, obj, materials, proxies, validator, logger):
     logger.level_up()
     
-    for face in obj.data.polygons:
-        if len(face.vertices) > 4:
-            logger.step("N-gons detected -> skipping lod")
+    if lodutils.has_ngons(obj.data):
+        logger.step("N-gons detected -> skipping LOD")
+        logger.step("Name: %s" % lodutils.format_lod_name(int(obj.a3ob_properties_object.lod), obj.a3ob_properties_object.resolution))
+        logger.level_down()
+        return False
+    
+    if validator:
+        if not validator.validate(obj.a3ob_properties_object.lod):
+            logger.step("Failed validation -> skipping LOD (run manual validation for details)")
+            logger.step("Name: %s" % lodutils.format_lod_name(int(obj.a3ob_properties_object.lod), obj.a3ob_properties_object.resolution))
             logger.level_down()
             return False
     
@@ -412,6 +435,8 @@ def write_lod(file, obj, materials, proxies, logger):
     mesh = obj.data
     mesh.calc_normals_split()
     
+    normals, normals_lookup_dict = get_normals(mesh)
+    
     bm = bmesh.new()
     bm.from_mesh(mesh)
     bm.normal_update()
@@ -420,11 +445,11 @@ def write_lod(file, obj, materials, proxies, logger):
     bm.faces.ensure_lookup_table()
     
     count_verts = len(mesh.vertices)
-    count_loops = len(mesh.loops)
+    count_normals = len(normals)
     count_faces = len(mesh.polygons)
     
     binary.write_ulong(file, count_verts)
-    binary.write_ulong(file, count_loops) # number of normals
+    binary.write_ulong(file, count_normals)
     binary.write_ulong(file, count_faces)
     binary.write_ulong(file, 0) # unknown flags/padding
     
@@ -437,17 +462,17 @@ def write_lod(file, obj, materials, proxies, logger):
         
     logger.step("Wrote veritces: %d" % count_verts)
         
-    for loop in mesh.loops:
-        write_normal(file, loop.normal)
+    for normal in normals:
+        write_normal(file, normal)
         
-    logger.step("Wrote vertex normals: %d" % count_loops)
+    logger.step("Wrote vertex normals: %d" % count_normals)
         
     first_uv_layer = None
     if len(bm.loops.layers.uv.values()) > 0: # 1st UV set needs to be written into the face data section too
         first_uv_layer = bm.loops.layers.uv.values()[0]
         
     for face in bm.faces:
-        write_face(file, bm, face, materials, first_uv_layer)
+        write_face(file, bm, face, materials, first_uv_layer, normals_lookup_dict)
         
     logger.step("Wrote faces: %d" % count_faces)
         
@@ -473,7 +498,7 @@ def write_lod(file, obj, materials, proxies, logger):
     binary.write_float(file,get_resolution(obj)) # LOD resolution index
     
     logger.step("Resolution signature: %d" % float(get_resolution(obj)))
-    logger.step("Name: %s" % f"{data.lod_type_names[int(obj.a3ob_properties_object.lod)][0]} {obj.a3ob_properties_object.resolution}")
+    logger.step("Name: %s" % lodutils.format_lod_name(int(obj.a3ob_properties_object.lod), obj.a3ob_properties_object.resolution))
     
     logger.level_down()
     
@@ -495,27 +520,42 @@ def write_file(operator, context, file):
     
     logger.log("Detected %d LOD objects" % count_lod)
     
-    write_file_header(file,count_lod)
+    write_file_header(file, count_lod)
+    lod_count_pos = file.tell()
+    binary.write_ulong(file, count_lod) # temporary placeholder value
     
     logger.level_up()
     
     exported_count = 0
+    validator = None
+    if operator.validate_lods:
+        validator = lodutils.Validator(None, operator.validate_lods_warning_errors, True)
+        
     for i, lod in enumerate(lod_list):
         time_lod_start = time.time()
         logger.step("LOD %d" % i)
         
-        success = write_lod(file, lod[0], lod[2], lod[1], logger)
+        if validator:
+            validator.obj = lod[0]
+            
+        success = write_lod(file, lod[0], lod[2], lod[1], validator, logger)
         if success:
             exported_count += 1
             
         bpy.data.meshes.remove(lod[0].data, do_unlink=True)
         
         logger.log("Done in %f sec" % (time.time() - time_lod_start))
-        wm.progress_update(i+1)
+        wm.progress_update(i + 1)
+    
+    if exported_count == 0:
+        raise errors.P3DError("All LODs had n-gons/failed validation, cannot write P3D with 0 LODs")
+    
+    file.seek(lod_count_pos, 0)
+    binary.write_ulong(file, exported_count) # actual LOD count
         
     logger.level_down()
     logger.step("")
     logger.step("P3D export finished in %f sec" % (time.time() - time_file_start))
     wm.progress_end()
     
-    return count_lod,exported_count
+    return count_lod, exported_count
