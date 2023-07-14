@@ -2,7 +2,7 @@ bl_info = {
     "name": "Arma 3 Object Builder",
     "description": "Collection of tools for editing Arma 3 content",
     "author": "MrClock (present add-on), Hans-Joerg \"Alwarren\" Frieden (original ArmaToolbox add-on)",
-    "version": (0, 3, 3),
+    "version": (0, 3, 4),
     "blender": (2, 90, 0),
     "location": "Object Builder panels in various views",
     "warning": "Work In Progress",
