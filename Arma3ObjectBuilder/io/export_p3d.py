@@ -107,7 +107,8 @@ def get_lod_data(operator, context):
         
         if obj.type != 'MESH' or not obj.a3ob_properties_object.is_a3_lod or obj.parent != None or obj.a3ob_properties_object.lod == '30':
             continue
-            
+        
+        bpy.ops.object.mode_set({"active_object": obj}, mode='OBJECT')
         main_object = duplicate_object(obj)
         
         if operator.apply_modifiers:
@@ -118,7 +119,7 @@ def get_lod_data(operator, context):
         sub_objects = []
         object_proxies = {}
         for i, child in enumerate(children):
-            if obj.type != 'MESH':
+            if child.type != 'MESH':
                 continue
                 
             sub_object = duplicate_object(child)
