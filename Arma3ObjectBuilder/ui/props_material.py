@@ -36,7 +36,7 @@ class A3OB_PT_material(bpy.types.Panel):
         
         layout.prop(material_props, "material_path", text="", icon='MATERIAL')
         layout.separator()
-        layout.prop(material_props, "translucent")
+        layout.prop(material_props, "alpha_sorting_index")
 
 
 classes = (

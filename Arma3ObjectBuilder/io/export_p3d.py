@@ -157,34 +157,37 @@ def get_lod_data(operator, context):
         lod_item.append(object_proxies)
         
         object_materials = {0: ("", "")}
-        translucency = {0: False}
+        alpha_layers = {0: [0, []]} # {material slot index: [alpha index, [bmesh faces]]}
         
         for i, slot in enumerate(main_object.material_slots):
             mat = slot.material
             if mat:
                 object_materials[i] = (get_texture_string(mat.a3ob_properties_material, addon_prefs), get_material_string(mat.a3ob_properties_material, addon_prefs))
-                translucency[i] = mat.a3ob_properties_material.translucent
+                alpha_layers[i] = [mat.a3ob_properties_material.alpha_sorting_index, []]
             else:
                 object_materials[i] = ("", "")
-                translucency[i] = False
+                alpha_layers[i] = [0, []]
                 
         lod_item.append(object_materials)
         lod_list.append(lod_item)
-                
-        bm = bmesh.new()
-        bm.from_mesh(main_object.data)
-        bm.faces.ensure_lookup_table()
         
-        index_offset = len(bm.faces) - 1
-        count_translucent = 0
-        for face in bm.faces:
-            if translucency[face.material_index]:
-                face.index = index_offset + count_translucent
-                count_translucent += 1
-                
-        bm.faces.sort()
-        bm.to_mesh(main_object.data)
-        bm.free()
+        if operator.sort_alpha and len(set([layer[0] for layer in alpha_layers.values()])) > 1:
+            bm = bmesh.new()
+            bm.from_mesh(main_object.data)
+            bm.faces.ensure_lookup_table()
+            
+            for face in bm.faces:
+                alpha_layers[face.material_index][1].append(face)
+            
+            face_index = 0
+            for layer in sorted(alpha_layers.values(), key=lambda x: x[0]):
+                for face in layer[1]:
+                    face.index = face_index
+                    face_index += 1
+                    
+            bm.faces.sort()
+            bm.to_mesh(main_object.data)
+            bm.free()
     
     return lod_list
 
