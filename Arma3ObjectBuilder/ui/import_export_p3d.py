@@ -245,9 +245,9 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         description = "Apply the assigned modifiers to the LOD objects during export",
         default = True
     )
-    sort_alpha: bpy.props.BoolProperty (
-        name = "Sort Alpha Layers",
-        description = "Sort faces in LODs by the alpha layer of the material assigned to them",
+    sort_sections: bpy.props.BoolProperty (
+        name = "Sort Sections",
+        description = "Sort faces in LODs by the assigned materials (prevents fragmentation in the face list, and allows proper sorting of alpha faces)",
         default = True
     )
     validate_lods: bpy.props.BoolProperty (
@@ -341,7 +341,7 @@ class A3OB_PT_export_p3d_meshes(bpy.types.Panel):
         col.prop(operator, "apply_modifiers")
         col.prop(operator, "apply_transforms")
         col.prop(operator, "preserve_normals")
-        col.prop(operator, "sort_alpha")
+        col.prop(operator, "sort_sections")
 
 
 class A3OB_PT_export_p3d_validate(bpy.types.Panel):

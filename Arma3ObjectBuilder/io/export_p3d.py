@@ -157,31 +157,30 @@ def get_lod_data(operator, context):
         lod_item.append(object_proxies)
         
         object_materials = {0: ("", "")}
-        alpha_layers = {0: [0, []]} # {material slot index: [alpha index, [bmesh faces]]}
+        sections = {0: []}
         
         for i, slot in enumerate(main_object.material_slots):
+            sections[i] = []
             mat = slot.material
             if mat:
                 object_materials[i] = (get_texture_string(mat.a3ob_properties_material, addon_prefs), get_material_string(mat.a3ob_properties_material, addon_prefs))
-                alpha_layers[i] = [mat.a3ob_properties_material.alpha_sorting_index, []]
             else:
                 object_materials[i] = ("", "")
-                alpha_layers[i] = [0, []]
                 
         lod_item.append(object_materials)
         lod_list.append(lod_item)
         
-        if operator.sort_alpha and len(set([layer[0] for layer in alpha_layers.values()])) > 1:
+        if operator.sort_sections:
             bm = bmesh.new()
             bm.from_mesh(main_object.data)
             bm.faces.ensure_lookup_table()
             
             for face in bm.faces:
-                alpha_layers[face.material_index][1].append(face)
+                sections[face.material_index].append(face)
             
             face_index = 0
-            for layer in sorted(alpha_layers.values(), key=lambda x: x[0]):
-                for face in layer[1]:
+            for section in sections.values():
+                for face in section:
                     face.index = face_index
                     face_index += 1
                     

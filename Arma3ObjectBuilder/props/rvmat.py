@@ -46,13 +46,6 @@ class A3OB_PG_properties_material(bpy.types.PropertyGroup):
         subtype = 'FILE_PATH',
         default = ""
     )
-    alpha_sorting_index: bpy.props.IntProperty (
-        name = "Alpha Layer",
-        description = "Index of alpha layer (0: behind everything , max (in model): in front of everything)",
-        default = 0,
-        min = 0,
-        max = 100
-    )
     # hidden_selection: bpy.props.StringProperty (
         # name = "Create Selection",
         # description = "Name of the selection to create for the material (leave empty to not create selection)",
