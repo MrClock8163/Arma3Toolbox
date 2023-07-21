@@ -190,6 +190,14 @@ class A3OB_PT_object_mesh(bpy.types.Panel):
         obj = context.object
         return obj and obj.type == 'MESH' and not obj.a3ob_properties_object_proxy.is_a3_proxy
         
+    def draw_header(self, context):
+        if not utils.get_addon_preferences(context).show_info_links:
+            return
+            
+        layout = self.layout
+        row = layout.row(align=True)
+        row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/lod"
+        
     def draw(self, context):
         obj = context.object
         object_props = obj.a3ob_properties_object
@@ -290,6 +298,14 @@ class A3OB_PT_object_dtm(bpy.types.Panel):
     def poll(cls, context):
         obj = context.object
         return obj and obj.type == 'MESH' and not obj.a3ob_properties_object_proxy.is_a3_proxy
+        
+    def draw_header(self, context):
+        if not utils.get_addon_preferences(context).show_info_links:
+            return
+            
+        layout = self.layout
+        row = layout.row(align=True)
+        row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/raster-dtm"
         
     def draw(self, context):
         obj = context.object

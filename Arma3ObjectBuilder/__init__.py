@@ -80,8 +80,8 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         subtype = 'DIR_PATH'
     )
     show_info_links: bpy.props.BoolProperty (
-        name = "Show Tool Help Links",
-        description = "Display links to the addon documentation in the headers of tool panels",
+        name = "Show Help Links",
+        description = "Display links to the addon documentation in the headers of panels",
         default = True
     )
     preserve_faulty_output: bpy.props.BoolProperty (

@@ -1,5 +1,7 @@
 import bpy
 
+from ..utilities import generic as utils
+
 
 class A3OB_PT_material(bpy.types.Panel):
     bl_region_type = 'WINDOW'
@@ -11,6 +13,14 @@ class A3OB_PT_material(bpy.types.Panel):
     def poll(cls, context):
         mat = context.material
         return mat
+        
+    def draw_header(self, context):
+        if not utils.get_addon_preferences(context).show_info_links:
+            return
+            
+        layout = self.layout
+        row = layout.row(align=True)
+        row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/material"
         
     def draw(self, context):
         material = context.material
