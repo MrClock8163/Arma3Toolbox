@@ -102,7 +102,7 @@ def get_lod_data(operator, context):
         export_objects = context.selected_objects
     
     lod_list = []
-    for obj in export_objects:
+    for obj in [obj for obj in export_objects if obj.visible_get()]:
         lod_item = []
         
         if obj.type != 'MESH' or not obj.a3ob_properties_object.is_a3_lod or obj.parent != None or obj.a3ob_properties_object.lod == '30':
