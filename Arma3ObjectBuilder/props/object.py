@@ -66,7 +66,7 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
         description = "Resolution or index value of LOD object",
         default = 1,
         min = 0,
-        soft_max = 10000,
+        soft_max = 1000,
         step = 1,
         update = lod_name_update
     )
