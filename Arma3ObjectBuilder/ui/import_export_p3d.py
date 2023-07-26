@@ -235,6 +235,11 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         description = "Export only selected objects",
         default = False
     )
+    visible_only: bpy.props.BoolProperty (
+        name = "Visible",
+        description = "Only export visible LOD objects (necessary, only shown for indication)",
+        default = True
+    )
     apply_transforms: bpy.props.BoolProperty (
         name = "Apply Transforms",
         description = "Apply space transformations to the exported model data",
@@ -314,6 +319,9 @@ class A3OB_PT_export_p3d_include(bpy.types.Panel):
         
         col = layout.column(heading="Limit To", align=True)
         col.prop(operator, "use_selection")
+        row_visible = col.row(align=True)
+        row_visible.prop(operator, "visible_only")
+        row_visible.enabled = False
 
 
 class A3OB_PT_export_p3d_meshes(bpy.types.Panel):
