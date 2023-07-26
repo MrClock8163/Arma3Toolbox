@@ -265,6 +265,14 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
         obj = context.object
         return obj and obj.type == 'MESH' and obj.a3ob_properties_object_proxy.is_a3_proxy and not obj.a3ob_properties_object.is_a3_lod
         
+    def draw_header(self, context):
+        if not utils.get_addon_preferences(context).show_info_links:
+            return
+            
+        layout = self.layout
+        row = layout.row(align=True)
+        row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/proxy"
+        
     def draw(self, context):
         obj = context.object
         object_props = obj.a3ob_properties_object_proxy
