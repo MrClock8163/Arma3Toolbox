@@ -137,3 +137,21 @@ def abspath(path):
         return path
     
     return os.path.abspath(bpy.path.abspath(path))
+
+
+preview_collection = bpy.utils.previews.new()
+
+
+def get_icon(name):
+    return preview_collection[name].icon_id
+
+
+def register_icons():
+    icons_dir = os.path.join(os.path.dirname(__file__), "..\icons")
+    for filename in os.listdir(icons_dir):
+        preview_collection.load(os.path.splitext(os.path.basename(filename))[0], os.path.join(icons_dir, filename), 'IMAGE')
+    
+
+def unregister_icons():
+    for icon in preview_collection:
+        bpy.utils.previews.remove(icon)

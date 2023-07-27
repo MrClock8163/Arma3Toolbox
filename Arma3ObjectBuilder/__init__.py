@@ -35,7 +35,7 @@ if "bpy" in locals():
     importlib.reload(props.object)
     importlib.reload(props.rvmat)
 
-else:    
+else:
     from .ui import import_export_p3d
     from .ui import import_export_rtm
     from .ui import import_export_asc
@@ -142,6 +142,7 @@ classes = (
 
 def register():
     from bpy.utils import register_class
+    from .utilities import generic
         
     print("Registering Arma 3 Object Builder ( '" + __name__ + "' )")
     
@@ -168,13 +169,18 @@ def register():
     tool_weights.register()
     tool_utilities.register()
     
+    generic.register_icons()
+    
     print("Register done")
 
 
 def unregister():
     from bpy.utils import unregister_class
+    from .utilities import generic
 
     print("Unregistering Arma 3 Object Builder ( '" + __name__ + "' )")
+    
+    generic.unregister_icons()
     
     for cls in reversed(classes):
         unregister_class(cls)
