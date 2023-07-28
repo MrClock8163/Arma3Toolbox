@@ -82,16 +82,12 @@ def strip_extension(path):
     return os.path.splitext(path)[0]
 
 
-def get_addon_preferences(context = None):
-    if not context:
-        context = bpy.context
-        
-    name = __name__.split(".")[0]
-    return context.preferences.addons[name].preferences
+def get_addon_preferences():
+    return bpy.context.preferences.addons["Arma3ObjectBuilder"].preferences
 
 
-def get_common_proxies(context):
-    prefs = get_addon_preferences(context)
+def get_common_proxies():
+    prefs = get_addon_preferences()
     custom_path = abspath(prefs.custom_data)
     proxies = data.common_proxies
     
@@ -111,8 +107,8 @@ def get_common_proxies(context):
     return {**proxies, **custom_proxies}
 
 
-def get_common_namedprops(context):
-    prefs = get_addon_preferences(context)
+def get_common_namedprops():
+    prefs = get_addon_preferences()
     custom_path = abspath(prefs.custom_data)
     namedprops = data.common_namedprops
     

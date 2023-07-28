@@ -94,7 +94,7 @@ def get_proxy_string(proxy_props, addon_prefs):
 
 
 def get_lod_data(operator, context):
-    addon_prefs = utils.get_addon_preferences(context)
+    addon_prefs = utils.get_addon_preferences()
     scene = context.scene
     export_objects = scene.objects
     

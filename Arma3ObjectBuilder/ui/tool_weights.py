@@ -16,12 +16,12 @@ class A3OB_OT_weights_load_cfgskeletons(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         filepath = utils.abspath(context.window_manager.a3ob_weights.filepath)
-        exepath = os.path.join(utils.abspath(utils.get_addon_preferences(context).a3_tools), "cfgconvert/cfgconvert.exe")
+        exepath = os.path.join(utils.abspath(utils.get_addon_preferences().a3_tools), "cfgconvert/cfgconvert.exe")
         return os.path.isfile(exepath) and filepath != "" and os.path.isfile(filepath) and os.path.splitext(filepath)[1].lower() == ".cfg"
         
     def execute(self, context):
         wm_props = context.window_manager.a3ob_weights
-        exepath = os.path.join(utils.abspath(utils.get_addon_preferences(context).a3_tools), "cfgconvert/cfgconvert.exe")
+        exepath = os.path.join(utils.abspath(utils.get_addon_preferences().a3_tools), "cfgconvert/cfgconvert.exe")
         
         wm_props.skeletons.clear()
         
@@ -235,7 +235,7 @@ class A3OB_PT_weights(bpy.types.Panel):
         return True
         
     def draw_header(self, context):
-        if not utils.get_addon_preferences(context).show_info_links:
+        if not utils.get_addon_preferences().show_info_links:
             return
             
         layout = self.layout

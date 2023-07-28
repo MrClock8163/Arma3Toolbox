@@ -33,7 +33,7 @@ class A3OB_PT_hitpoints(bpy.types.Panel):
         return True
         
     def draw_header(self, context):
-        if not utils.get_addon_preferences(context).show_info_links:
+        if not utils.get_addon_preferences().show_info_links:
             return
             
         layout = self.layout

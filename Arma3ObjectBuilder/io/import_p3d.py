@@ -577,7 +577,7 @@ def read_file(operator, context, file, first_lod_only = False):
     
     logger.level_up()
     
-    addon_prefs = utils.get_addon_preferences(context)
+    addon_prefs = utils.get_addon_preferences()
     for i in range(count_lod):
         time_lod_start = time.time()
         logger.step("LOD %d" % i)

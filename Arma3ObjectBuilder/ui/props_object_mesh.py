@@ -44,7 +44,7 @@ class A3OB_OT_proxy_common(bpy.types.Operator):
         wm = context.window_manager
         wm.a3ob_proxy_common.clear()
         
-        common_proxies = utils.get_common_proxies(context)
+        common_proxies = utils.get_common_proxies()
         for proxy in common_proxies:
             item = wm.a3ob_proxy_common.add()
             item.name = proxy
@@ -139,7 +139,7 @@ class A3OB_OT_namedprops_common(bpy.types.Operator):
         wm = context.window_manager
         wm.a3ob_namedprops_common.clear()
         
-        common_namedprops = utils.get_common_namedprops(context)
+        common_namedprops = utils.get_common_namedprops()
         for prop in common_namedprops:
             item = wm.a3ob_namedprops_common.add()
             item.name = prop
@@ -191,7 +191,7 @@ class A3OB_PT_object_mesh(bpy.types.Panel):
         return obj and obj.type == 'MESH' and not obj.a3ob_properties_object_proxy.is_a3_proxy
         
     def draw_header(self, context):
-        if not utils.get_addon_preferences(context).show_info_links:
+        if not utils.get_addon_preferences().show_info_links:
             return
             
         layout = self.layout
@@ -266,7 +266,7 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
         return obj and obj.type == 'MESH' and obj.a3ob_properties_object_proxy.is_a3_proxy and not obj.a3ob_properties_object.is_a3_lod
         
     def draw_header(self, context):
-        if not utils.get_addon_preferences(context).show_info_links:
+        if not utils.get_addon_preferences().show_info_links:
             return
             
         layout = self.layout
@@ -308,7 +308,7 @@ class A3OB_PT_object_dtm(bpy.types.Panel):
         return obj and obj.type == 'MESH' and not obj.a3ob_properties_object_proxy.is_a3_proxy
         
     def draw_header(self, context):
-        if not utils.get_addon_preferences(context).show_info_links:
+        if not utils.get_addon_preferences().show_info_links:
             return
             
         layout = self.layout
