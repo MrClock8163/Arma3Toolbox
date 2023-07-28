@@ -193,10 +193,10 @@ class A3OB_PT_proxies(bpy.types.Panel):
         layout = self.layout
         
         col_align = layout.column(align=True)
-        col_align.operator("a3ob.proxy_align", icon='CUBE')
-        col_align.operator("a3ob.proxy_align_object", icon='EMPTY_DATA')
-        layout.operator("a3ob.proxy_realign_ocs", icon='ORIENTATION_GLOBAL')
-        layout.operator("a3ob.proxy_extract", icon='IMPORT')
+        col_align.operator("a3ob.proxy_align", icon_value=utils.get_icon("op_proxy_align"))
+        col_align.operator("a3ob.proxy_align_object", icon_value=utils.get_icon("op_proxy_align_object"))
+        layout.operator("a3ob.proxy_realign_ocs", icon_value=utils.get_icon("op_proxy_realign"))
+        layout.operator("a3ob.proxy_extract", icon_value=utils.get_icon("op_proxy_extract"))
 
 
 classes = (

@@ -78,7 +78,7 @@ class A3OB_PT_conversion(bpy.types.Panel):
         
         layout.prop(wm_props, "dynamic_naming")
         layout.prop(wm_props, "cleanup")
-        layout.operator("a3ob.convert_to_a3ob", icon='FILE_REFRESH')
+        layout.operator("a3ob.convert_to_a3ob", icon_value=utils.get_icon("op_convert"))
 
 
 classes = (

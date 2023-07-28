@@ -89,6 +89,15 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         description = "Preserve the .temp files if an export failed (could be useful to attach to a bug report)",
         default = False
     )
+    icon_theme: bpy.props.EnumProperty (
+        name = "Icon Theme",
+        description = "Color theme of custom icons",
+        items = (
+            ('DARK', "Dark", ""),
+            ('LIGHT', "Light", "")
+        ),
+        default = 'DARK'
+    )
     # Paths
     project_root: bpy.props.StringProperty (
         name = "Project Root",
@@ -127,6 +136,8 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
             box.prop(self, "a3_tools", icon='TOOL_SETTINGS')
             box.prop(self, "show_info_links")
             box.prop(self, "preserve_faulty_output")
+            row_theme = box.row(align=True)
+            row_theme.prop(self, "icon_theme", expand=True)
             
         elif self.tabs == 'PATHS':
             box.prop(self, "project_root", icon='DISK_DRIVE')

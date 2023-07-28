@@ -139,19 +139,28 @@ def abspath(path):
     return os.path.abspath(bpy.path.abspath(path))
 
 
-preview_collection = bpy.utils.previews.new()
+# preview_collection = bpy.utils.previews.new()
+preview_collection = {}
 
 
 def get_icon(name):
-    return preview_collection[name].icon_id
+    return preview_collection[get_addon_preferences().icon_theme.lower()][name].icon_id
 
 
 def register_icons():
-    icons_dir = os.path.join(os.path.dirname(__file__), "..\icons")
-    for filename in os.listdir(icons_dir):
-        preview_collection.load(os.path.splitext(os.path.basename(filename))[0], os.path.join(icons_dir, filename), 'IMAGE')
+    themes_dir = os.path.join(os.path.dirname(__file__), "..\icons")
+    for theme in os.listdir(themes_dir):
+        theme_icons = bpy.utils.previews.new()
+        
+        icons_dir = os.path.join(themes_dir, theme)
+        for filename in os.listdir(icons_dir):
+            theme_icons.load(os.path.splitext(os.path.basename(filename))[0].lower(), os.path.join(icons_dir, filename), 'IMAGE')
+        
+        preview_collection[theme.lower()] = theme_icons
     
 
 def unregister_icons():
     for icon in preview_collection:
         bpy.utils.previews.remove(icon)
+    
+    preview_collection.clear()

@@ -67,7 +67,7 @@ class A3OB_PT_keyframes(bpy.types.Panel):
             col.prop(wm_props, "range_step")
             col.prop(wm_props, "range_end")
             
-        layout.operator("a3ob.keyframe_add_list", icon='KEYFRAME_HLT')
+        layout.operator("a3ob.keyframe_add_list", icon_value=utils.get_icon("op_keyframe_add_list"))
 
 
 classes = (

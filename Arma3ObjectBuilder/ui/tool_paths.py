@@ -112,7 +112,7 @@ class A3OB_PT_renaming_paths_bulk(bpy.types.Panel):
         
         col_list.template_list("A3OB_UL_renamable_paths", "A3OB_bulk_rename", wm_props, "path_list", wm_props, "path_list_index")
         row_filter = col_list.row(align=True)
-        row_filter.operator("a3ob.rename_list_refresh", text="", icon='FILE_REFRESH')
+        row_filter.operator("a3ob.rename_list_refresh", text="", icon_value=utils.get_icon("op_refresh"))
         row_filter.prop(wm_props, "source_filter")
         
         if wm_props.path_list_index in range(len(wm_props.path_list)):
@@ -120,7 +120,7 @@ class A3OB_PT_renaming_paths_bulk(bpy.types.Panel):
             col_edit.prop(wm_props.path_list[wm_props.path_list_index], "path", text="")
             col_edit.prop(wm_props, "new_path", text="")
             col_edit.separator()
-            col_edit.operator("a3ob.rename_path_item")
+            col_edit.operator("a3ob.rename_path_item", icon_value=utils.get_icon("op_replace"))
 
 
 class A3OB_PT_renaming_paths_root(bpy.types.Panel):
@@ -142,7 +142,7 @@ class A3OB_PT_renaming_paths_root(bpy.types.Panel):
         row_filter = layout.row(align=True)
         row_filter.prop(wm_props, "source_filter")
         
-        layout.operator("a3ob.rename_path_root")
+        layout.operator("a3ob.rename_path_root", icon_value=utils.get_icon("op_replace"))
 
 
 class A3OB_PT_renaming_vertex_groups(bpy.types.Panel):
@@ -161,7 +161,7 @@ class A3OB_PT_renaming_vertex_groups(bpy.types.Panel):
         col_edit.prop(wm_props, "vgroup_old")
         col_edit.prop(wm_props, "vgroup_new")
         layout.prop(wm_props, "vgroup_match_whole")
-        layout.operator("a3ob.rename_vertex_groups")
+        layout.operator("a3ob.rename_vertex_groups", icon_value=utils.get_icon("op_replace"))
 
 
 classes = (

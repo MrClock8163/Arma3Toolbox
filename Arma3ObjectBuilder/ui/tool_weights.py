@@ -247,7 +247,7 @@ class A3OB_PT_weights(bpy.types.Panel):
         layout = self.layout
         
         layout.prop(wm_props, "filepath", text="Config")
-        layout.operator("a3ob.weights_load_cfgskeletons", icon='FILE_REFRESH')
+        layout.operator("a3ob.weights_load_cfgskeletons", icon_value=utils.get_icon("op_refresh"))
         layout.label(text="Skeletons (%d):" % len(wm_props.skeletons))
         layout.template_list("A3OB_UL_cfgskeletons", "A3OB_cfgskeletons", wm_props, "skeletons", wm_props, "skeletons_index", rows=3)
 
@@ -259,16 +259,16 @@ class A3OB_PT_weights(bpy.types.Panel):
             layout.template_list("A3OB_UL_cfgbones", "A3OB_cfgbones", wm_props, "bones", wm_props, "bones_index", rows=2)
         
         col_select = layout.column(align=True)
-        col_select.operator("a3ob.weights_select_overdetermined", icon='MOD_VERTEX_WEIGHT')
-        col_select.operator("a3ob.weights_select_unnormalized", icon='GROUP_VERTEX')
+        col_select.operator("a3ob.weights_select_overdetermined", icon_value=utils.get_icon("op_weights_select_overdetermined"))
+        col_select.operator("a3ob.weights_select_unnormalized", icon_value=utils.get_icon("op_weights_select_unnormalized"))
         
         col_edit = layout.column(align=True)
-        col_edit.operator("a3ob.weights_prune_overdetermined", icon='REMOVE')
-        col_edit.operator("a3ob.weights_normalize", icon='BRUSH_DATA')
-        col_edit.operator("a3ob.weights_prune", icon='TRASH')
+        col_edit.operator("a3ob.weights_prune_overdetermined", icon_value=utils.get_icon("op_weights_prune_overdetermined"))
+        col_edit.operator("a3ob.weights_normalize", icon_value=utils.get_icon("op_weights_normalize"))
+        col_edit.operator("a3ob.weights_prune", icon_value=utils.get_icon("op_weights_prune"))
         col_edit.prop(wm_props, "prune_threshold")
         
-        layout.operator("a3ob.weights_cleanup", icon='WPAINT_HLT')
+        layout.operator("a3ob.weights_cleanup", icon_value=utils.get_icon("op_weights_cleanup"))
 
 classes = (
     A3OB_OT_weights_load_cfgskeletons,

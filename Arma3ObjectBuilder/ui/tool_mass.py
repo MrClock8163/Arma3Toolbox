@@ -121,14 +121,14 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
         col = layout.column(align=True)        
         if wm_props.source == 'MASS':
             col.prop(wm_props, "mass")
-            col.operator("a3ob.vertex_mass_set")
-            col.operator("a3ob.vertex_mass_distribute")
+            col.operator("a3ob.vertex_mass_set", icon_value=utils.get_icon("op_mass_set"))
+            col.operator("a3ob.vertex_mass_distribute", icon_value=utils.get_icon("op_mass_distribute"))
         elif wm_props.source == 'DENSITY':
             col.prop(wm_props, "density")
-            col.operator("a3ob.vertex_mass_set_density")
+            col.operator("a3ob.vertex_mass_set_density", icon_value=utils.get_icon("op_mass_set_density"))
         
         col.separator()
-        col.operator("a3ob.vertex_mass_clear")
+        col.operator("a3ob.vertex_mass_clear", icon_value=utils.get_icon("op_mass_clear"))
 
 
 classes = (

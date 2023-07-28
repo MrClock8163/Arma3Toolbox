@@ -341,7 +341,7 @@ class A3OB_PT_object_dtm(bpy.types.Panel):
 
 def menu_func(self, context):
     self.layout.separator()
-    self.layout.operator(A3OB_OT_proxy_add.bl_idname, icon='EMPTY_ARROWS')
+    self.layout.operator(A3OB_OT_proxy_add.bl_idname, icon_value=utils.get_icon("op_proxy_add"))
 
 
 classes = (
