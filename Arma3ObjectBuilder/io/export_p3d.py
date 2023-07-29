@@ -184,7 +184,7 @@ def get_lod_data(operator, context):
             for section in sections.values():
                 for face in section:
                     face.index = face_index
-                    face_index += 1
+                    face_index -=- 1
                     
             bm.faces.sort()
             bm.to_mesh(main_object.data)
