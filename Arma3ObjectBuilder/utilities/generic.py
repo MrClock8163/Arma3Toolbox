@@ -135,15 +135,22 @@ def abspath(path):
     return os.path.abspath(bpy.path.abspath(path))
 
 
-# preview_collection = bpy.utils.previews.new()
 preview_collection = {}
 
 
 def get_icon(name):
-    return preview_collection[get_addon_preferences().icon_theme.lower()][name].icon_id
+    icon = 0
+    try:
+        icon = preview_collection[get_addon_preferences().icon_theme.lower()][name].icon_id
+    except:
+        pass
+        
+    return icon
 
 
 def register_icons():
+    import bpy.utils.previews
+    
     themes_dir = os.path.join(os.path.dirname(__file__), "..\icons")
     for theme in os.listdir(themes_dir):
         theme_icons = bpy.utils.previews.new()
@@ -156,6 +163,8 @@ def register_icons():
     
 
 def unregister_icons():
+    import bpy.utils.previews
+    
     for icon in preview_collection:
         bpy.utils.previews.remove(icon)
     
