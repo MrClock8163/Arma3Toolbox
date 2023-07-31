@@ -165,7 +165,7 @@ def register_icons():
 def unregister_icons():
     import bpy.utils.previews
     
-    for icon in preview_collection:
+    for icon in preview_collection.values():
         bpy.utils.previews.remove(icon)
     
     preview_collection.clear()
