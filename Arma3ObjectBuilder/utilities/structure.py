@@ -32,7 +32,7 @@ def find_components(obj, do_convex_hull=False):
     for component_object in components:
         component_id += 1
         
-        bpy.context.view_layer.objects.active = obj
+        bpy.context.view_layer.objects.active = component_object
             
         if len(component_object.data.vertices) < 4: # Ignore proxies
             continue
@@ -50,6 +50,8 @@ def find_components(obj, do_convex_hull=False):
         ctx["active_object"] = obj
         
         bpy.ops.object.join(ctx)
+        
+    bpy.context.view_layer.objects.active = obj
     
     return component_id
 
