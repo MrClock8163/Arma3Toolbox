@@ -1,3 +1,8 @@
+# Writer function to export animation data to the BI RTM file format.
+# Format specification: https://community.bistudio.com/wiki/Rtm_(Animation)_File_Format
+# Largely based on the RTM exporter from the original ArmAToolbox.
+
+
 import struct
 import re
 
@@ -29,7 +34,9 @@ def write_frame(file, obj, bones, phase):
         matrix.transpose()
         write_matrix(file, matrix)
 
-  
+
+# For movement animations, a motion vector is supported. Motion
+# can be calculated from the start and end position of a selected bone.
 def write_motion(context, file, obj, frame_start, frame_end, logger):
     object_props = obj.a3ob_properties_object_armature
     
