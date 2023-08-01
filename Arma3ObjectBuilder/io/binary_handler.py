@@ -47,7 +47,7 @@ def read_double(file):
     return struct.unpack('<d', file.read(8))[0]
     
 def read_char(file, count = 1):
-    chars = struct.unpack('%ds' % file.read(count))[0]
+    chars = struct.unpack('%ds' % count, file.read(count))[0]
     return chars.decode('utf-8')
     
 def read_asciiz(file):

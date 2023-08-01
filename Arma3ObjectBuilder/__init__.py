@@ -4,7 +4,7 @@ bl_info = {
     "author": "MrClock (present add-on), Hans-Joerg \"Alwarren\" Frieden (original ArmaToolbox add-on)",
     "version": (0, 3, 4),
     "blender": (2, 90, 0),
-    "location": "Object Builder panels in various views",
+    "location": "Object Builder panels",
     "warning": "Work In Progress",
     "doc_url": "https://mrcmodding.gitbook.io/arma-3-object-builder/home",
     "tracker_url": "https://github.com/MrClock8163/Arma3ObjectBuilder/issues",
@@ -68,8 +68,8 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         description = "",
         default = 'GENERAL',
         items = (
-            ('GENERAL',"General","General and misc settings",'PREFERENCES',0),
-            ('PATHS',"Paths","File path related settings",'FILE_TICK',1)
+            ('GENERAL', "General", "General and misc settings", 'PREFERENCES', 0),
+            ('PATHS', "Paths", "File path related settings", 'FILE_TICK', 1)
         )
     )
     # General
@@ -93,8 +93,8 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         name = "Icon Theme",
         description = "Color theme of custom icons",
         items = (
-            ('DARK', "Dark", ""),
-            ('LIGHT', "Light", "")
+            ('DARK', "Dark", "Icons with light main color, ideal for dark themes in Blender"),
+            ('LIGHT', "Light", "Icons with dark main color, ideal for light themes in Blender")
         ),
         default = 'DARK'
     )
