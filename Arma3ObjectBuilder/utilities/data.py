@@ -1,3 +1,6 @@
+# Various hard coded data used in I/O and throughout the UI.
+
+
 lod_resolution_position = { # decimal places in normalized format
     0: -1,
     3: 3,
@@ -8,7 +11,9 @@ lod_resolution_position = { # decimal places in normalized format
     30: -1
 }
 
-lod_visuals = (0,1,2,3,18,30)
+
+lod_visuals = (0, 1, 2, 3, 18, 30)
+
 
 lod_type_index = {
     (0.0, 0):   0, # Visual
@@ -44,6 +49,7 @@ lod_type_index = {
     (-1.0, 0):  30 # Unknown
 }
 
+
 lod_type_names = {
     0:  ("Resolution", "Visual resolution"),
     1:  ("View - Gunner", "Gunner first person view"),
@@ -78,6 +84,7 @@ lod_type_names = {
     30: ("Unknown", "Unknown model layer")
 }
 
+
 lod_groups_type = {
     **dict.fromkeys([0, 1, 2, 3, 18], "Visuals"),
     **dict.fromkeys([4, 26, 27, 28], "Shadows"),
@@ -86,6 +93,7 @@ lod_groups_type = {
     **dict.fromkeys([5, 11, 12, 25, 29, 30], "Misc")
 }
 
+
 lod_groups_context = {
     **dict.fromkeys([0], "3rd person"),
     **dict.fromkeys([1, 2, 3, 16, 17, 18, 19, 20, 21, 22, 23, 24, 26, 27, 28], "1st person"),
@@ -93,11 +101,13 @@ lod_groups_context = {
     **dict.fromkeys([5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 25, 29, 30], "Misc")
 }
 
+
 lod_groups = {
     'TYPE': lod_groups_type,
     'CONTEXT': lod_groups_context,
     'NONE': {}
 }
+
 
 # Enum property lists
 enum_texture_types = (
@@ -125,6 +135,7 @@ enum_texture_types = (
     ('MASK', "MASK", "Mask for multimaterial"),
     ('TI', "TI", "Thermal imaging map")
 )
+
 
 enum_lod_types = (
     ('0', "Resolution", "Visual resolutiion"),
@@ -160,25 +171,6 @@ enum_lod_types = (
     ('30', "Unknown", "Unknown model layer")
 )
 
-enum_lod_types_validation = (
-    ('4', "Shadow Volume", "Shadow casting geometry"),
-    ('6', "Geometry", "Object collision geometry and occluders"),
-    ('7', "Geometry Buoyancy", "Buoyant object geometry"),
-    ('8', "Geometry PhysX", "PhysX object collision geometry"),
-    ('14', "View Geometry", "View occlusion for AI"),
-    ('15', "Fire Geometry", "Hitbox geometry"),
-    ('16', "View - Cargo Geometry", "Passenger view collision geometry and occluders"),
-    ('17', "View - Cargo Fire Geometry", "Passenger view hitbox geometry"),
-    ('19', "View - Commander Geometry", "Commander view collision geometry and occluders"),
-    ('20', "View - Commander Fire Geometry", "Commander hitbox geometry"),
-    ('21', "View - Pilot Geometry", "First person collision geometry and occluders"),
-    ('22', "View - Pilot Fire Geometry", "First person hitbox geometry"),
-    ('23', "View - Gunner Geometry", "Gunner collision geometry and occluders"),
-    ('24', "View - Gunner Fire Geometry", "Gunner view hitbox geometry"),
-    ('26', "Shadow Volume - Cargo View", "Passenger view shadow casting geometry"),
-    ('27', "Shadow Volume - Pilot View", "First person view shadow casting geometry"),
-    ('28', "Shadow Volume - Gunner View", "Gunner view shadow casting geometry")
-)
 
 common_namedprops = {
     "autocenter": "0",
@@ -192,6 +184,7 @@ common_namedprops = {
     "map": "house",
     "prefershadowvolume": "1"
 }
+
 
 common_proxies = {
     "Weapon optic": r"P:\a3\data_f\proxies\weapon_slots\top.p3d",

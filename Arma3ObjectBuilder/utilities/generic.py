@@ -1,3 +1,6 @@
+# Utility functions not exclusively related to a specific tool.
+
+
 import math
 import os
 import json

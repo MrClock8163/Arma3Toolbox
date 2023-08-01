@@ -1,3 +1,6 @@
+# File specific exception types to indicate I/O errors.
+
+
 class P3DError(Exception):
     pass
 

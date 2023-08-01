@@ -1,3 +1,7 @@
+# Backend functions mainly used by the P3D I/O, and the LOD
+# validation tool.
+
+
 import re
 
 import bmesh

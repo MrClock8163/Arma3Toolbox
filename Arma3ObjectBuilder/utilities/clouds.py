@@ -1,3 +1,6 @@
+# Hit point cloud generation functions.
+
+
 import bpy
 import bmesh
 from mathutils import Vector
@@ -19,6 +22,10 @@ def validate_references(source, target):
     return source, target
 
 
+# The method is as proposed at https://salaivv.com/2023/04/12/point-inside-outside.
+# If the closest point on the mesh is actually on an edge instead of a face, the
+# method yields false positives. This chances of this *edge* case occurring
+# can be mitigated by bevelling the edges of the mesh.
 def is_inside(obj, point):
     result, closest, normal, _ = obj.closest_point_on_mesh(point)
     
@@ -58,7 +65,9 @@ def generate_hitpoints(operator, context):
         return
     
     source_object = source
-
+    
+    # Edge bevel and triangulation need to applied to the source mesh
+    # in order to mitigate the chances of a false positive occuring.
     if wm_props.triangulate == 'BEFORE':
         modifier_triangulate = source_object.modifiers.new("A3OB_HitPointTris", 'TRIANGULATE')
         
@@ -72,7 +81,8 @@ def generate_hitpoints(operator, context):
     source_object_eval = source_object.evaluated_get(bpy.context.evaluated_depsgraph_get())
 
     bbox = source_object_eval.bound_box
-
+    
+    # Dirty way to find the 2 characteristic points of the bounding box.
     min_x = min(bbox, key=lambda pos: pos[0])[0]
     min_y = min(bbox, key=lambda pos: pos[1])[1]
     min_z = min(bbox, key=lambda pos: pos[2])[2]
@@ -81,13 +91,9 @@ def generate_hitpoints(operator, context):
     max_y = max(bbox, key=lambda pos: pos[1])[1]
     max_z = max(bbox, key=lambda pos: pos[2])[2]
     
-    spacing_x = wm_props.spacing[0]
-    spacing_y = wm_props.spacing[1]
-    spacing_z = wm_props.spacing[2]
-    
-    points_x = calculate_grid(min_x, max_x, spacing_x)
-    points_y = calculate_grid(min_y, max_y, spacing_y)
-    points_z = calculate_grid(min_z, max_z, spacing_z)
+    points_x = calculate_grid(min_x, max_x, wm_props.spacing[0])
+    points_y = calculate_grid(min_y, max_y, wm_props.spacing[1])
+    points_z = calculate_grid(min_z, max_z, wm_props.spacing[2])
 
     bm = bmesh.new()
 

@@ -1,3 +1,6 @@
+# Backend functions of the vertex mass tools.
+
+
 import bpy
 import bmesh
 
@@ -10,6 +13,12 @@ def can_edit_mass(context):
     return len(context.selected_objects) == 1 and obj and obj.type == 'MESH' and obj.mode == 'EDIT' 
 
 
+# Query the sum of the vertex mass of selected vertices.
+# The function is used by the selection mass property of the
+# vertex mass tools. Obviously not ideal to iterate over all
+# vertices frequently, but this is the only working solution,
+# and no issues were observed so far (geometry LOD
+# meshes are relatively simple).
 def get_selection_mass(self):
     mesh = self.data
     
@@ -27,6 +36,10 @@ def get_selection_mass(self):
     return round(mass, 3)
 
 
+# Same efficiency concern applies as above.
+# The sum of the vertex masses is taken for the selected
+# vertices, then the difference of the sum and the target
+# value is distributed equally to the selected vertices.
 def set_selection_mass(self, value):
     mesh = self.data
     bm = bmesh.from_edit_mesh(mesh)
@@ -92,6 +105,10 @@ def clear_selection_masses(obj):
     bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
 
 
+# Volume is calculated as a signed sum of the volume of tetrahedrons
+# formed by the vertices of each triangle face and the object origin.
+# The formula only yields valid results if the mesh is closed, and
+# otherwise manifold.
 def calculate_volume(bm):
     loops = bm.calc_loop_triangles()
     
@@ -103,7 +120,12 @@ def calculate_volume(bm):
         volume += v1.dot(v2.cross(v3)) / 6.0
             
     return volume
-    
+
+
+# The function splits the mesh into loose components, calculates
+# the volume of each component, then distributes and equal weight
+# to the vertices of each component so that:
+# vertex_mass = component_volume * density / count_component_vertices
 def set_selection_mass_density(obj, density):
     utils.force_mode_object()
     
@@ -146,12 +168,4 @@ def set_selection_mass_density(obj, density):
     
     utils.force_mode_edit()
     
-    return contiguous
-
-
-def add_namedprop(obj, key, value):
-    object_props = obj.a3ob_properties_object
-    item = object_props.properties.add()
-    item.name = key
-    item.value = value
-    object_props.property_index = len(object_props.properties) - 1    
+    return contiguous  

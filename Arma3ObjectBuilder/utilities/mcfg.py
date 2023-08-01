@@ -1,3 +1,6 @@
+# Backend functions of the weight painting tools.
+
+
 import os
 import tempfile
 import subprocess
@@ -24,6 +27,10 @@ class Bone():
         return "\"%s\"" % self.name
 
 
+# The model.cfg reading is dependent on the import_rap module,
+# so the model configs first needs to be rapified by the Arma 3 Tools.
+# Binary reading is far more reliable, and less messy than trying to
+# parse either the raw config syntax, or the XML output of cfgconvert.
 def cfgconvert(filepath, exepath):
     current_dir = os.getcwd()
     
@@ -45,6 +52,8 @@ def cfgconvert(filepath, exepath):
     
     return destfile.name
 
+
+# Derapify the previously converted model.cfg.
 def read_mcfg(filepath, exepath):
     temppath = cfgconvert(filepath, exepath)
     
@@ -58,6 +67,9 @@ def read_mcfg(filepath, exepath):
     return data
 
 
+# Since the config syntax supports class inheritance, as well as
+# some additional annoying ways to combine skeletons in model.cfg files,
+# the inheritance tree has to be traversed to query properties.
 def get_prop_compiled(mcfg, classname, propname):
     entry = mcfg.body.find(classname)
     if not entry or entry.type != rap.Cfg.EntryType.CLASS:
@@ -73,6 +85,8 @@ def get_prop_compiled(mcfg, classname, propname):
     return get_prop_compiled(mcfg, entry.body.inherits, propname)
 
 
+# Like properties, bones can be inherited from other skeletons with the
+# skeletonInherit property, so the inheritance tree has to traversed again.
 def get_bones_compiled(mcfg, skeleton_name):
     cfg_skeletons = mcfg.body.find("CfgSkeletons")
     output = []
@@ -130,6 +144,9 @@ def get_skeletons(mcfg):
     return []
 
 
+# It's easier to prepare a list of the vertex group indices that
+# correspond to bones defined in the model.cfg, than to try matching
+# everything by name every time.
 def get_bone_group_indices(obj, cfgbones):
     cfgbones_names = [item.name.lower() for item in cfgbones]    
     return [group.index for group in obj.vertex_groups if group.name.lower() in cfgbones_names]
@@ -206,6 +223,10 @@ def select_vertices_overdetermined(obj, bone_indices):
     bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
 
 
+# If a vertex has overdetermined weighting (more than 3 bones affecting it),
+# we might want to prune the excess bones. For each vertex of the mesh,
+# the weights of bone selections are summed up, and the groups are sorted.
+# Only the groups with the top 3 influence sum are left, rest are removed.
 def prune_overdetermined(obj, bone_indices):
     mesh = obj.data
     bm = bmesh.from_edit_mesh(mesh)
@@ -240,6 +261,8 @@ def prune_overdetermined(obj, bone_indices):
     return pruned
 
 
+# Weights are summed for every group for every vertex. Then all groups
+# are removed, and only those readded that are above the threshold.
 def prune_weights(obj, threshold):
     mesh = obj.data
     bm = bmesh.from_edit_mesh(mesh)

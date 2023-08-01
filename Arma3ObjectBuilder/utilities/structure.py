@@ -1,3 +1,6 @@
+# Backend functions of the utility functions.
+
+
 import re
 
 import bpy
@@ -54,32 +57,12 @@ def find_components(obj, do_convex_hull=False):
 def convex_hull():
     utils.force_mode_edit()
     
-    bpy.ops.mesh.select_mode(type="EDGE")
+    bpy.ops.mesh.select_mode(type='EDGE')
     bpy.ops.mesh.select_all(action='SELECT')
     bpy.ops.mesh.convex_hull()
     bpy.ops.mesh.select_all(action='DESELECT')
     bpy.ops.mesh.reveal()
-    bpy.ops.object.mode_set(mode='OBJECT')    
-
-
-def component_convex_hull(): # DEPRECATED
-    utils.force_mode_edit()
-    
-    bpy.ops.mesh.select_mode(type="VERT")
-    bpy.ops.mesh.select_all(action='DESELECT')
-    
-    obj = bpy.context.selected_objects[0]
-    obj.vertex_groups.active_index = 0
-    for i,group in enumerate(obj.vertex_groups):
-        if not re.match("component\d+", group.name, re.IGNORECASE):
-            continue
-                
-        bpy.ops.mesh.select_all(action='DESELECT')
-        obj.vertex_groups.active_index = i
-        bpy.ops.object.vertex_group_select()
-        bpy.ops.mesh.convex_hull()
-        
-    bpy.ops.mesh.select_all(action='DESELECT')
+    bpy.ops.object.mode_set(mode='OBJECT')
 
 
 def check_closed():

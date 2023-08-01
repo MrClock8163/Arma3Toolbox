@@ -1,3 +1,7 @@
+# Functions to handle conversion from the ArmAToolbox style
+# setup and object properties, to the Arma3ObjectBuilder style.
+
+
 import math
 import re
 
