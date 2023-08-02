@@ -77,7 +77,7 @@ class A3OB_OT_find_a3_tools(bpy.types.Operator):
         try:
             key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"software\bohemia interactive\arma 3 tools")
             value, _type = winreg.QueryValueEx(key, "path")
-            prefs = context.preferences.addons[__name__].preferences
+            prefs = context.preferences.addons["Arma3ObjectBuilder"].preferences
             prefs.a3_tools = value
             
         except Exception:
