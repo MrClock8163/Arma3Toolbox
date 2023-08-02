@@ -57,8 +57,34 @@ else:
     from .props import rvmat
 
 
+import winreg
+
 import bpy
 
+
+class A3OB_OT_find_a3_tools(bpy.types.Operator):
+    """Find the Arma 3 Tools installation through the registry"""
+    
+    bl_idname = "a3ob.find_a3_tools"
+    bl_label = "Find Arma 3 Tools"
+    bl_options = {'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    def execute(self, context):
+        try:
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"software\bohemia interactive\arma 3 tools")
+            value, _type = winreg.QueryValueEx(key, "path")
+            prefs = context.preferences.addons[__name__].preferences
+            prefs.a3_tools = value
+            
+        except Exception:
+            self.report({'ERROR'}, "The Arma 3 Tools installation could not be found, it has to be set manually")
+        
+        return {'FINISHED'}
+            
 
 class A3OB_AT_preferences(bpy.types.AddonPreferences):
     bl_idname = __name__
@@ -133,7 +159,9 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         box.use_property_decorate = False
         
         if self.tabs == 'GENERAL':
-            box.prop(self, "a3_tools", icon='TOOL_SETTINGS')
+            row_a3_tools = box.row(align=True)
+            row_a3_tools.prop(self, "a3_tools", icon='TOOL_SETTINGS')
+            row_a3_tools.operator("a3ob.find_a3_tools", text="", icon='VIEWZOOM')
             box.prop(self, "show_info_links")
             box.prop(self, "preserve_faulty_output")
             row_theme = box.row(align=True)
@@ -147,7 +175,8 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
 
 
 classes = (
-    A3OB_AT_preferences,
+    A3OB_OT_find_a3_tools,
+    A3OB_AT_preferences
 )
 
 
