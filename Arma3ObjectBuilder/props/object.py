@@ -3,7 +3,7 @@ import os
 import bpy
 
 from ..utilities import generic as utils
-from ..utilities import properties as proputils
+from ..utilities import masses as massutils
 from ..utilities import lod as lodutils
 from ..utilities import data
 
@@ -243,8 +243,8 @@ def register():
         soft_max = 100000,
         precision = 3,
         unit = 'MASS',
-        get = proputils.get_selection_mass,
-        set = proputils.set_selection_mass
+        get = massutils.get_selection_mass,
+        set = massutils.set_selection_mass
     )
     
     print("\t" + "Properties: object")

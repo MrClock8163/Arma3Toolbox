@@ -1,7 +1,7 @@
 import bpy
 
 from ..utilities import generic as utils
-from ..utilities import properties as proputils
+from ..utilities import masses as massutils
 
 
 class A3OB_OT_vertex_mass_set(bpy.types.Operator):
@@ -13,12 +13,12 @@ class A3OB_OT_vertex_mass_set(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return proputils.can_edit_mass(context) and context.window_manager.a3ob_mass_editor.source == 'MASS'
+        return massutils.can_edit_mass(context) and context.window_manager.a3ob_mass_editor.source == 'MASS'
         
     def execute(self, context):
         obj = context.active_object
         wm = context.window_manager
-        proputils.set_selection_mass_each(obj, wm.a3ob_mass_editor.mass)
+        massutils.set_selection_mass_each(obj, wm.a3ob_mass_editor.mass)
         return {'FINISHED'}
 
 
@@ -31,12 +31,12 @@ class A3OB_OT_vertex_mass_distribute(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return proputils.can_edit_mass(context) and context.window_manager.a3ob_mass_editor.source == 'MASS'
+        return massutils.can_edit_mass(context) and context.window_manager.a3ob_mass_editor.source == 'MASS'
         
     def execute(self, context):
         obj = context.active_object
         wm = context.window_manager
-        proputils.set_selection_mass_distribute(obj, wm.a3ob_mass_editor.mass)
+        massutils.set_selection_mass_distribute(obj, wm.a3ob_mass_editor.mass)
         return {'FINISHED'}
 
 
@@ -49,12 +49,12 @@ class A3OB_OT_vertex_mass_set_density(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return proputils.can_edit_mass(context) and context.window_manager.a3ob_mass_editor.source == 'DENSITY'
+        return massutils.can_edit_mass(context) and context.window_manager.a3ob_mass_editor.source == 'DENSITY'
         
     def execute(self, context):
         obj = context.active_object
         wm = context.window_manager
-        contiguous = proputils.set_selection_mass_density(obj, wm.a3ob_mass_editor.density)
+        contiguous = massutils.set_selection_mass_density(obj, wm.a3ob_mass_editor.density)
         if not contiguous:
             self.report({'WARNING'}, "Mesh is not contiguous, volume calculation gives unreliable result")
         
@@ -70,11 +70,11 @@ class A3OB_OT_vertex_mass_clear(bpy.types.Operator):
     
     @classmethod
     def poll(cls,context):
-        return proputils.can_edit_mass(context)
+        return massutils.can_edit_mass(context)
         
     def execute(self, context):
         obj = context.active_object
-        proputils.clear_selection_masses(obj)
+        massutils.clear_selection_masses(obj)
         return {'FINISHED'}
 
 
@@ -99,7 +99,7 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
         
     def draw(self, context):
         layout = self.layout
-        if not proputils.can_edit_mass(context):
+        if not massutils.can_edit_mass(context):
             layout.label(text="Only available in Edit Mode")
             layout.enabled = False
             return 
