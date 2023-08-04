@@ -45,6 +45,33 @@ class A3OB_PG_common_proxy(bpy.types.PropertyGroup):
     )
 
 
+class A3OB_PG_mass_editor_stats(bpy.types.PropertyGroup):
+    mass_max: bpy.props.FloatProperty (
+        name = "Max Vertex Mass",
+        description = "Highest vertex mass value on the mesh",
+        default = -1,
+        min = -1
+    )
+    mass_min: bpy.props.FloatProperty (
+        name = "Min Vertex Mass",
+        description = "Lowest vertex mass value on the mesh",
+        default = -1,
+        min = -1
+    )
+    mass_avg: bpy.props.FloatProperty (
+        name = "Average Vertex Mass",
+        description = "Average vertex mass value on the mesh",
+        default = -1,
+        min = -1
+    )
+    count_loose: bpy.props.IntProperty (
+        name = "Loose Components",
+        description = "Number of loose components in the mesh",
+        default = -1,
+        min = -1
+    )
+
+
 class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
     enabled: bpy.props.BoolProperty (
         name = "Enable Vertex Mass Tools",
@@ -136,6 +163,9 @@ class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
         name = "Vertex Color Layer",
         description = "What vertex color layer to use/create for visualization",
         default = "Vertex Masses"
+    )
+    stats: bpy.props.PointerProperty (
+        type = A3OB_PG_mass_editor_stats
     )
 
 
@@ -531,6 +561,7 @@ class A3OB_PG_weights(bpy.types.PropertyGroup):
 
 classes = (
     A3OB_PG_common_proxy,
+    A3OB_PG_mass_editor_stats,
     A3OB_PG_mass_editor,
     A3OB_PG_hitpoint_generator,
     A3OB_PG_validation,

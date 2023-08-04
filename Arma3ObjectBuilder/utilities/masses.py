@@ -2,8 +2,10 @@
 
 
 import numpy as np
+import math
 
 import bpy
+import bpy_extras.mesh_utils as meshutils
 import bmesh
 from mathutils import Vector
 
@@ -218,7 +220,6 @@ def visualize_mass(obj, wm_props):
     obj.update_from_editmode()
     mesh = obj.data
     bm = bmesh.from_edit_mesh(mesh)
-    # bm.from_mesh(mesh)
     bm.verts.ensure_lookup_table()
     
     layer = bm.verts.layers.float.get("a3ob_mass")
@@ -257,6 +258,27 @@ def visualize_mass(obj, wm_props):
             loop[color_layer] = vcolors[loop.vert.index]
 
     
-    bmesh.update_edit_mesh(mesh)
-    # bm.to_mesh(mesh)
+    bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
+
+
+def refresh_stats(obj, wm_props):
+    obj.update_from_editmode()
+    mesh = obj.data
+    bm = bmesh.from_edit_mesh(mesh)
+    bm.verts.ensure_lookup_table()
+    
+    
+    mesh.calc_loop_triangles()
+    wm_props.stats.count_loose = len(meshutils.mesh_linked_triangles(mesh))
+    
+    layer = bm.verts.layers.float.get("a3ob_mass")
+    if not layer:
+        layer = bm.verts.layers.float.new("a3ob_mass")
+    
+    values = [vert[layer] for vert in bm.verts]
+    
+    wm_props.stats.mass_min = min(values)
+    wm_props.stats.mass_avg = math.fsum(values) / len(values)
+    wm_props.stats.mass_max = max(values)
+    
     # bm.free()

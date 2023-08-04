@@ -98,6 +98,26 @@ class A3OB_OT_vertex_mass_visualize(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class A3OB_OT_vertex_mass_stats_refresh(bpy.types.Operator):
+    """Refresh vertex mass stats"""
+    
+    bl_idname = "a3ob.vertex_mass_stats_refresh"
+    bl_label = "Refresh Stats"
+    bl_options = {'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        return massutils.can_edit_mass(context)
+    
+    def execute(self, context):
+        obj = context.active_object
+        wm_props = context.window_manager.a3ob_mass_editor
+        
+        massutils.refresh_stats(obj, wm_props)
+        
+        return {'FINISHED'}
+
+
 class A3OB_PT_vertex_mass(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
@@ -182,7 +202,18 @@ class A3OB_PT_vertex_mass_analyze(bpy.types.Panel):
         row_method = layout.row(align=True)
         row_method.prop(wm_props, "method", text="Method", expand=True)
         
-        layout.operator("a3ob.vertex_mass_visualize")
+        layout.operator("a3ob.vertex_mass_visualize", icon_value=utils.get_icon("op_visualize"))
+        
+        layout.label(text="Stats:")
+        box_stats = layout.box()
+        box_stats.enabled = False
+        box_stats.prop(wm_props.stats, "mass_min", text="Min")
+        box_stats.prop(wm_props.stats, "mass_avg", text="Average")
+        box_stats.prop(wm_props.stats, "mass_max", text="Max")
+        box_stats.prop(wm_props.stats, "count_loose")
+        
+        layout.operator("a3ob.vertex_mass_stats_refresh", text="Refresh", icon_value=utils.get_icon("op_refresh"))
+        
 
 
 classes = (
@@ -192,7 +223,8 @@ classes = (
     A3OB_OT_vertex_mass_distribute,
     A3OB_OT_vertex_mass_set_density,
     A3OB_OT_vertex_mass_clear,
-    A3OB_OT_vertex_mass_visualize
+    A3OB_OT_vertex_mass_visualize,
+    A3OB_OT_vertex_mass_stats_refresh
 )
 
 
