@@ -1,8 +1,11 @@
 # Backend functions of the vertex mass tools.
 
 
+import numpy as np
+
 import bpy
 import bmesh
+from mathutils import Vector
 
 from . import generic as utils
 from . import lod as lodutils
@@ -33,7 +36,7 @@ def get_selection_mass(self):
         if vertex.select:
             mass += vertex[layer]
         
-    return round(mass, 3)
+    return mass
 
 
 # Same efficiency concern applies as above.
@@ -57,7 +60,7 @@ def set_selection_mass(self, value):
     correction = diff / len(verts)
     
     for vertex in verts:
-        vertex[layer] = round(vertex[layer] + correction, 3)
+        vertex[layer] = vertex[layer] + correction
         
     bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
 
@@ -168,4 +171,92 @@ def set_selection_mass_density(obj, density):
     
     utils.force_mode_edit()
     
-    return contiguous  
+    return contiguous
+
+
+def generate_factors_vertex(bm, layer):
+    values = np.asarray([vert[layer] for vert in bm.verts])
+    values /= np.max(values)
+    
+    return values
+
+
+def generate_factors_component(mesh, bm, layer):
+    lookup, component_count = utils.get_components(mesh)
+    
+    masses = {i: [] for i in range(component_count)}
+    
+    for vert in bm.verts:
+        comp_id = lookup[vert.index]
+        
+        masses[comp_id].append(vert[layer])
+
+    masses.update({id: np.sum(masses[id]) for id in masses})
+
+    coef = 1 / max(masses.values())
+    masses.update({id: masses[id] * coef for id in masses})
+
+    values = [masses.get(lookup.get(vert.index, None), 0) for vert in bm.verts]
+    
+    return values
+
+
+def interpolate_colors(factors, stops, colorramp):
+    bins = np.digitize(factors, stops)
+    vcolors = {}
+    
+    for i, item in enumerate(factors):
+        color1 = colorramp[bins[i]]
+        color2 = colorramp[bins[i] + 1]
+        rate = item - stops[bins[i] - 1]
+        vcolors[i] = color1.lerp(color2, rate)
+    
+    return vcolors
+
+
+def visualize_mass(obj, wm_props):
+    obj.update_from_editmode()
+    mesh = obj.data
+    bm = bmesh.from_edit_mesh(mesh)
+    # bm.from_mesh(mesh)
+    bm.verts.ensure_lookup_table()
+    
+    layer = bm.verts.layers.float.get("a3ob_mass")
+    if not layer:
+        layer = bm.verts.layers.float.new("a3ob_mass")
+    
+    colorramp = [
+        Vector(wm_props.color_0),
+        Vector(wm_props.color_0),
+        Vector(wm_props.color_1),
+        Vector(wm_props.color_2),
+        Vector(wm_props.color_3),
+        Vector(wm_props.color_4),
+        Vector(wm_props.color_5),
+        Vector(wm_props.color_5)
+    ]
+    
+    stops = [0, 0.001, 0.25, 0.5, 0.75, 1]
+    
+    vcolors = {}
+    factors = []
+    
+    if wm_props.method == 'VERT':
+        factors = generate_factors_vertex(bm, layer)
+    elif wm_props.method == 'COMP':
+        factors = generate_factors_component(mesh, bm, layer)
+    
+    vcolors = interpolate_colors(factors, stops, colorramp)
+    
+    color_layer = bm.loops.layers.color.get(wm_props.color_layer_name)
+    if not color_layer:
+        color_layer = bm.loops.layers.color.new(wm_props.color_layer_name)
+
+    for face in bm.faces:
+        for loop in face.loops:
+            loop[color_layer] = vcolors[loop.vert.index]
+
+    
+    bmesh.update_edit_mesh(mesh)
+    # bm.to_mesh(mesh)
+    # bm.free()

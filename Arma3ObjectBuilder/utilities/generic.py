@@ -6,6 +6,7 @@ import os
 import json
 
 import bpy
+import bpy_extras.mesh_utils as meshutils
 
 from . import data
 
@@ -22,6 +23,19 @@ def show_info_box(message, title = "", icon = 'INFO'):
         self.layout.label(text=message)
         
     bpy.context.window_manager.popup_menu(draw, title=title, icon=icon)
+
+
+def get_components(mesh):
+    mesh.calc_loop_triangles()
+    components = meshutils.mesh_linked_triangles(mesh)
+    component_lookup = {}
+
+    for id, comp in enumerate(components):
+        for tri in comp:
+            for vert in tri.vertices:
+                component_lookup[vert] = id
+    
+    return component_lookup, id + 1
 
 
 def normalize_float(number, precision = 4):

@@ -78,6 +78,26 @@ class A3OB_OT_vertex_mass_clear(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class A3OB_OT_vertex_mass_visualize(bpy.types.Operator):
+    """Generate vertex color layer to visualize mass distribution"""
+    
+    bl_idname = "a3ob.vertex_mass_visualize"
+    bl_label = "Visualize"
+    bl_options = {'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        return massutils.can_edit_mass(context)
+    
+    def execute(self, context):
+        obj = context.active_object
+        wm_props = context.window_manager.a3ob_mass_editor
+        
+        massutils.visualize_mass(obj, wm_props)
+        
+        return {'FINISHED'}
+
+
 class A3OB_PT_vertex_mass(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
@@ -131,12 +151,48 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
         col.operator("a3ob.vertex_mass_clear", icon_value=utils.get_icon("op_mass_clear"))
 
 
+class A3OB_PT_vertex_mass_analyze(bpy.types.Panel):
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "Object Builder"
+    bl_label = "Analyze"
+    bl_parent_id = "A3OB_PT_vertex_mass"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    @classmethod
+    def poll(cls, context):
+        return massutils.can_edit_mass(context)
+    
+    def draw(self, context):
+        layout = self.layout
+        wm_props = context.window_manager.a3ob_mass_editor
+        
+        layout.label(text="Empty Color:")
+        layout.prop(wm_props, "color_0", text="")
+        
+        layout.label(text="Color Ramp:")
+        row_colors = layout.row(align=True)
+        row_colors.prop(wm_props, "color_1", text="")
+        row_colors.prop(wm_props, "color_2", text="")
+        row_colors.prop(wm_props, "color_3", text="")
+        row_colors.prop(wm_props, "color_4", text="")
+        row_colors.prop(wm_props, "color_5", text="")
+        
+        layout.prop(wm_props, "color_layer_name", text="Layer")
+        row_method = layout.row(align=True)
+        row_method.prop(wm_props, "method", text="Method", expand=True)
+        
+        layout.operator("a3ob.vertex_mass_visualize")
+
+
 classes = (
     A3OB_PT_vertex_mass,
+    A3OB_PT_vertex_mass_analyze,
     A3OB_OT_vertex_mass_set,
     A3OB_OT_vertex_mass_distribute,
     A3OB_OT_vertex_mass_set_density,
-    A3OB_OT_vertex_mass_clear
+    A3OB_OT_vertex_mass_clear,
+    A3OB_OT_vertex_mass_visualize
 )
 
 

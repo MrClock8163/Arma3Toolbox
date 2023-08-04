@@ -81,6 +81,62 @@ class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
         step = 10,
         precision = 3
     )
+    method: bpy.props.EnumProperty (
+        name = "Visualization Method",
+        description = "",
+        items = (
+            ('VERT', "Vertex", "Show per vertex mass"),
+            ('COMP', "Component", "Show per component mass")
+        ),
+        default = 'COMP'
+    )
+    color_0: bpy.props.FloatVectorProperty (
+        name = "Color 1",
+        description = "",
+        size = 4,
+        subtype = 'COLOR',
+        default = (0, 0, 0, 1)
+    )
+    color_1: bpy.props.FloatVectorProperty (
+        name = "Color 2",
+        description = "",
+        size = 4,
+        subtype = 'COLOR',
+        default = (0, 0, 1, 1)
+    )
+    color_2: bpy.props.FloatVectorProperty (
+        name = "Color 3",
+        description = "",
+        size = 4,
+        subtype = 'COLOR',
+        default = (0, 1, 1, 1)
+    )
+    color_3: bpy.props.FloatVectorProperty (
+        name = "Color 4",
+        description = "",
+        size = 4,
+        subtype = 'COLOR',
+        default = (0, 1, 0, 1)
+    )
+    color_4: bpy.props.FloatVectorProperty (
+        name = "Color 5",
+        description = "",
+        size = 4,
+        subtype = 'COLOR',
+        default = (1, 1, 0, 1)
+    )
+    color_5: bpy.props.FloatVectorProperty (
+        name = "Color 6",
+        description = "",
+        size = 4,
+        subtype = 'COLOR',
+        default = (1, 0, 0, 1)
+    )
+    color_layer_name: bpy.props.StringProperty (
+        name = "Vertex Color Layer",
+        description = "What vertex color layer to use/create for visualization",
+        default = "Vertex Masses"
+    )
 
 
 class A3OB_PG_hitpoint_generator(bpy.types.PropertyGroup):
