@@ -114,17 +114,15 @@ def clear_selection_masses(obj):
 # formed by the vertices of each triangle face and the object origin.
 # The formula only yields valid results if the mesh is closed, and
 # otherwise manifold.
-def calculate_volume(bm):
-    loops = bm.calc_loop_triangles()
-    
-    volume = 0
-    for face in loops:
-        v1 = face[0].vert.co
-        v2 = face[1].vert.co
-        v3 = face[2].vert.co
-        volume += v1.dot(v2.cross(v3)) / 6.0
+def calculate_volume(mesh, component):    
+    volumes = []
+    for face in component:
+        v1 = mesh.vertices[face.vertices[0]].co
+        v2 = mesh.vertices[face.vertices[1]].co
+        v3 = mesh.vertices[face.vertices[2]].co
+        volumes.append(v1.dot(v2.cross(v3)) / 6.0)
             
-    return volume
+    return math.fsum(volumes)
 
 
 # The function splits the mesh into loose components, calculates
@@ -132,46 +130,34 @@ def calculate_volume(bm):
 # to the vertices of each component so that:
 # vertex_mass = component_volume * density / count_component_vertices
 def set_selection_mass_density(obj, density):
-    utils.force_mode_object()
+    obj.update_from_editmode()
+    mesh = obj.data
     
-    bpy.ops.mesh.separate(type='LOOSE')
+    lookup, components = utils.get_components(mesh)
+    data = {i: [0, 0.0, 0.0] for i in range(len(components))} # [vertex count, volume, mass per vertex]
+    for i in lookup:
+        data[lookup[i]][0] += 1
     
-    components = bpy.context.selected_objects
+    for id, item in enumerate(components):
+        data[id][1] = calculate_volume(mesh, item)
     
-    for component_object in components:
-        if len(component_object.data.polygons) == 0:
-            continue
-            
-        bm = bmesh.new()
-        bm.from_mesh(component_object.data)
+    for id in data:
+        item = data[id]
+        item[2] = item[1] * density / item[0]
+    
+    bm = bmesh.from_edit_mesh(mesh)
+    bm.verts.ensure_lookup_table()
+    
+    layer = bm.verts.layers.float.get("a3ob_mass")
+    if not layer:
+        layer = bm.verts.layers.float.new("a3ob_mass")
         
-        volume = calculate_volume(bm)
-        vertex_mass = volume * density / len(bm.verts)
-        
-        layer = bm.verts.layers.float.get("a3ob_mass")
-        if not layer:
-            layer = bm.verts.layers.float.new("a3ob_mass")
-            
-        for vertex in bm.verts:
-            vertex[layer] = vertex_mass
-            
-        bm.to_mesh(component_object.data)
-        bm.free()
+    for vert in bm.verts:
+        vert[layer] = data[lookup[vert.index]][2]
     
-    if len(components) > 1:
-        ctx = bpy.context.copy()
-        ctx["selected_objects"] = components
-        ctx["selected_editable_objects"] = components
-        ctx["active_object"] = obj
-        
-        bpy.ops.object.join(ctx)
-        
-    bm = bmesh.new()
-    bm.from_mesh(obj.data)
-    contiguous = lodutils.is_contiguous_mesh(bm)
-    bm.free()
+    contiguous = lodutils.Validator.is_contiguous_mesh(bm)
     
-    utils.force_mode_edit()
+    bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
     
     return contiguous
 
