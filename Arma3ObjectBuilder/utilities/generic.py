@@ -35,12 +35,17 @@ def get_components(mesh):
             for vert in tri.vertices:
                 component_lookup[vert] = id
     
-    return component_lookup, id + 1
+    loose = [vert.index for vert in mesh.vertices if component_lookup.get(vert.index, None) is None]
+    count_components = len(components)
+    component_lookup.update({id: count_components + i for i, id in enumerate(loose)})
+    components.extend([[] for i in range(len(loose))])
+    
+    return component_lookup, components
 
 
 def normalize_float(number, precision = 4):
     if number == 0:
-        return 0.0,1
+        return 0.0, 1
     
     base10 = math.log10(abs(number))
     exponent = abs(math.floor(base10))

@@ -177,26 +177,29 @@ def set_selection_mass_density(obj, density):
 
 
 def generate_factors_vertex(bm, layer):
-    values = np.asarray([vert[layer] for vert in bm.verts])
-    values /= np.max(values)
+    values = [vert[layer] for vert in bm.verts]
+    coef = max(values)
+    values = [mass / coef for mass in values]
     
     return values
 
 
 def generate_factors_component(mesh, bm, layer):
-    lookup, component_count = utils.get_components(mesh)
+    lookup, components = utils.get_components(mesh)
     
-    masses = {i: [] for i in range(component_count)}
+    masses = {i: [] for i in range(len(components))}
     
     for vert in bm.verts:
         comp_id = lookup[vert.index]
         
         masses[comp_id].append(vert[layer])
 
-    masses.update({id: np.sum(masses[id]) for id in masses})
-
-    coef = 1 / max(masses.values())
-    masses.update({id: masses[id] * coef for id in masses})
+    masses.update({id: sum(masses[id]) for id in masses})
+    
+    coef = max(masses.values())
+    if coef == 0:
+        coef = 1
+    masses.update({id: masses[id] / coef for id in masses})
 
     values = [masses.get(lookup.get(vert.index, None), 0) for vert in bm.verts]
     
