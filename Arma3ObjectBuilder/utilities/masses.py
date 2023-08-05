@@ -179,6 +179,8 @@ def set_selection_mass_density(obj, density):
 def generate_factors_vertex(bm, layer):
     values = [vert[layer] for vert in bm.verts]
     coef = max(values)
+    if coef == 0:
+        coef = 1
     values = [mass / coef for mass in values]
     
     return values
@@ -213,7 +215,7 @@ def interpolate_colors(factors, stops, colorramp):
     for i, item in enumerate(factors):
         color1 = colorramp[bins[i]]
         color2 = colorramp[bins[i] + 1]
-        rate = item - stops[bins[i] - 1]
+        rate = (item - stops[bins[i] - 1]) / (stops[bins[i]] - stops[bins[i] - 1])
         vcolors[i] = color1.lerp(color2, rate)
     
     return vcolors
@@ -240,7 +242,7 @@ def visualize_mass(obj, wm_props):
         Vector(wm_props.color_5)
     ]
     
-    stops = [0, 0.001, 0.25, 0.5, 0.75, 1]
+    stops = [0, 0.001, 0.25, 0.5, 0.75, 1, 100]
     
     vcolors = {}
     factors = []
