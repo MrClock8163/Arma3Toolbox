@@ -455,7 +455,7 @@ def write_lod(file, obj, materials, proxies, validator, logger):
     
     # The P3D format cannot store n-gons, so the export must
     # skip LODs with such faces.
-    if lodutils.has_ngons(obj.data):
+    if lodutils.Validator.has_ngons(obj.data):
         logger.step("N-gons detected -> skipping LOD")
         logger.step("Name: %s" % lodutils.format_lod_name(int(obj.a3ob_properties_object.lod), obj.a3ob_properties_object.resolution))
         logger.level_down()
