@@ -9,18 +9,34 @@ import bmesh
 from . import generic as utils
 
 
-def find_components(obj, do_convex_hull=False):
+def find_components(obj):
+    obj.update_from_editmode()
+    mesh = obj.data
+    
+    for group in obj.vertex_groups:
+        if re.match("component\d+", group.name, re.IGNORECASE):
+            obj.vertex_groups.remove(group)
+    
+    lookup, components = utils.get_components(mesh)
+    
+    verts = {i: [] for i in range(len(components))}
+    for id in lookup:
+        verts[lookup[id]].append(id)
+    
+    for component in verts:
+        group = obj.vertex_groups.new(name="Component%02d" % (component + 1))
+        group.add(verts[component], 1, 'REPLACE')
+    
+    return component + 1
+
+
+def component_convex_hull(obj):
     utils.force_mode_object()
     
     # Remove pre-existing component selections
-    existing_component_groups = []
     for group in obj.vertex_groups:
         if re.match("component\d+", group.name, re.IGNORECASE):
-            existing_component_groups.append(group.name)
-    
-    for group in existing_component_groups:
-        bpy.ops.object.vertex_group_set_active(group=group)
-        bpy.ops.object.vertex_group_remove()
+            obj.vertex_groups.remove(group)
     
     # Split mesh
     bpy.ops.mesh.separate(type='LOOSE')
@@ -37,8 +53,7 @@ def find_components(obj, do_convex_hull=False):
         if len(component_object.data.vertices) < 4: # Ignore proxies
             continue
         
-        if do_convex_hull:
-            convex_hull()
+        convex_hull()
             
         group = component_object.vertex_groups.new(name=("Component%02d" % component_id))
         group.add([vert.index for vert in component_object.data.vertices], 1, 'REPLACE')
@@ -70,7 +85,7 @@ def convex_hull():
 def check_closed():
     utils.force_mode_edit()
     
-    bpy.ops.mesh.select_mode(type="EDGE")
+    bpy.ops.mesh.select_mode(type='EDGE')
     bpy.ops.mesh.select_non_manifold()
 
 
@@ -93,21 +108,21 @@ def check_convexity():
                 count_concave += 1
             
     bm.to_mesh(obj.data)
-        
-    bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.mesh.select_mode(type="EDGE")
     
     return obj.name, count_concave
 
 
 def cleanup_vertex_groups(obj):
+    obj.update_from_editmode()
+    
     removed = 0
     used_groups = {}
     for vert in obj.data.vertices:
         for group in vert.groups:
             group_index = group.group
-            if group_index not in used_groups:
-                used_groups[group_index] = obj.vertex_groups[group_index]
+            used_groups[group_index] = obj.vertex_groups[group_index]
+    
+    print(used_groups)
 
     for group in obj.vertex_groups:
         if group not in used_groups.values():
@@ -118,6 +133,9 @@ def cleanup_vertex_groups(obj):
 
 
 def redefine_vertex_group(obj):
+    obj.update_from_editmode()
+    mesh = obj.data
+    
     group = obj.vertex_groups.active
     if group is None:
         return
@@ -125,6 +143,15 @@ def redefine_vertex_group(obj):
     group_name = group.name
     
     obj.vertex_groups.remove(group)
-    obj.vertex_groups.new(name=group_name)
+    new_group = obj.vertex_groups.new(name=group_name)
     
-    bpy.ops.object.vertex_group_assign()
+    bm = bmesh.from_edit_mesh(mesh)
+    bm.verts.ensure_lookup_table()
+    bm.verts.layers.deform.verify()
+    deform = bm.verts.layers.deform.active
+    
+    for vert in bm.verts:
+        if vert.select:
+            vert[deform][new_group.index] = 1
+    
+    bmesh.update_edit_mesh(mesh)
