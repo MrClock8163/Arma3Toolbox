@@ -69,7 +69,7 @@ class A3OB_OT_vertex_mass_clear(bpy.types.Operator):
     bl_options = {'UNDO'}
     
     @classmethod
-    def poll(cls,context):
+    def poll(cls, context):
         return massutils.can_edit_mass(context)
         
     def execute(self, context):
@@ -133,27 +133,21 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
         row = self.layout.row(align=True)
         if utils.get_addon_preferences().show_info_links:
             row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/vertex-mass-editing"
-            row.separator()
-            
-        row.prop(context.window_manager.a3ob_mass_editor, "enabled", text="")
         
     def draw(self, context):
         layout = self.layout
-        if not massutils.can_edit_mass(context):
-            layout.label(text="Only available in Edit Mode")
-            layout.enabled = False
-            return 
         
         wm_props = context.window_manager.a3ob_mass_editor
-        
-        if not wm_props.enabled:
-            layout.label(text="The tools are currently disabled")
-            layout.enabled = False
-            return 
-        
         obj = context.active_object
         
-        layout.prop(obj, "a3ob_selection_mass")
+        layout.prop(context.window_manager.a3ob_mass_editor, "enabled", text="Live Editing", toggle=True)
+        row_dynamic = layout.row(align=True)
+        if not massutils.can_edit_mass(context) or not wm_props.enabled:
+            row_dynamic.label(text="Live Editing is unavailable")
+            row_dynamic.enabled = False
+        else:
+            row_dynamic.prop(obj, "a3ob_selection_mass")
+        
         layout.separator()
         layout.label(text="Overwrite Mass:")
         layout.prop(wm_props, "source", expand=True)
@@ -181,7 +175,7 @@ class A3OB_PT_vertex_mass_analyze(bpy.types.Panel):
     
     @classmethod
     def poll(cls, context):
-        return massutils.can_edit_mass(context)
+        return True
     
     def draw(self, context):
         layout = self.layout

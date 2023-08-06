@@ -27,18 +27,15 @@ def can_edit_mass(context):
 def get_selection_mass(self):
     mesh = self.data
     
-    if mesh.vertex_layers_float.get("a3ob_mass") is None:
+    if not mesh.vertex_layers_float.get("a3ob_mass"):
         return 0
     
     bm = bmesh.from_edit_mesh(mesh)
     layer = bm.verts.layers.float.get("a3ob_mass")
     
-    mass = 0
-    for vertex in bm.verts:
-        if vertex.select:
-            mass += vertex[layer]
+    mass = [vertex[layer] for vertex in bm.verts if vertex.select]
         
-    return mass
+    return math.fsum(mass)
 
 
 # Same efficiency concern applies as above.
@@ -62,7 +59,7 @@ def set_selection_mass(self, value):
     correction = diff / len(verts)
     
     for vertex in verts:
-        vertex[layer] = vertex[layer] + correction
+        vertex[layer] += correction
         
     bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
 
