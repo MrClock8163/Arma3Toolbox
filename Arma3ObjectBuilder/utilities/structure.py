@@ -132,18 +132,13 @@ def cleanup_vertex_groups(obj):
     return removed
 
 
-def redefine_vertex_group(obj):
+def redefine_vertex_group(obj, weight):
     obj.update_from_editmode()
     mesh = obj.data
     
     group = obj.vertex_groups.active
     if group is None:
         return
-    
-    group_name = group.name
-    
-    obj.vertex_groups.remove(group)
-    new_group = obj.vertex_groups.new(name=group_name)
     
     bm = bmesh.from_edit_mesh(mesh)
     bm.verts.ensure_lookup_table()
@@ -152,6 +147,8 @@ def redefine_vertex_group(obj):
     
     for vert in bm.verts:
         if vert.select:
-            vert[deform][new_group.index] = 1
-    
+            vert[deform][group.index] = weight
+        elif group.index in vert[deform]:
+            del vert[deform][group.index]
+        
     bmesh.update_edit_mesh(mesh)

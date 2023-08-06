@@ -244,7 +244,7 @@ class A3OB_OT_redefine_vertex_group(bpy.types.Operator):
         
     def execute(self, context):
         obj = context.active_object
-        structutils.redefine_vertex_group(obj)
+        structutils.redefine_vertex_group(obj, context.scene.tool_settings.vertex_group_weight)
         return {'FINISHED'}
 
 
