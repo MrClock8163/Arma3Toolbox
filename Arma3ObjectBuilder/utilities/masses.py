@@ -159,14 +159,30 @@ def set_selection_mass_density(obj, density):
     return contiguous
 
 
+# Linear conversion of non-zero factor values to [0.001; 1] range.
+# 0 is reserved for actual zero values.
+def scale_factors(values):
+    values_array = np.array(values)
+    values_nonzero = values_array[np.nonzero(values_array)]
+    if not len(values_nonzero):
+        return values
+        
+    values_min = np.min(values_nonzero)
+    values_max = np.max(values_nonzero)
+    values_range = values_max - values_min
+    
+    if values_range == 0:
+        return [mass / values_max for mass in values]
+    
+    coef = 0.999 / values_range
+    
+    return [max((mass - values_min) * coef + 0.001, 0) for mass in values]
+
+
 def generate_factors_vertex(bm, layer):
     values = [vert[layer] for vert in bm.verts]
-    coef = max(values)
-    if coef == 0:
-        coef = 1
-    values = [mass / coef for mass in values]
     
-    return values
+    return scale_factors(values)
 
 
 def generate_factors_component(mesh, bm, layer):
@@ -180,15 +196,10 @@ def generate_factors_component(mesh, bm, layer):
         masses[comp_id].append(vert[layer])
 
     masses.update({id: sum(masses[id]) for id in masses})
-    
-    coef = max(masses.values())
-    if coef == 0:
-        coef = 1
-    masses.update({id: masses[id] / coef for id in masses})
 
     values = [masses.get(lookup.get(vert.index, None), 0) for vert in bm.verts]
     
-    return values
+    return scale_factors(values)
 
 
 def interpolate_colors(factors, stops, colorramp):
@@ -268,5 +279,3 @@ def refresh_stats(obj, wm_props):
     wm_props.stats.mass_min = min(values)
     wm_props.stats.mass_avg = math.fsum(values) / len(values)
     wm_props.stats.mass_max = max(values)
-    
-    # bm.free()
