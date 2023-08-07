@@ -118,50 +118,50 @@ class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
         default = 'COMP'
     )
     color_0: bpy.props.FloatVectorProperty (
-        name = "Color 1",
-        description = "",
+        name = "NULL Color",
+        description = "Color used where no vertex mass is defined",
         size = 4,
         subtype = 'COLOR',
         default = (0, 0, 0, 1)
     )
     color_1: bpy.props.FloatVectorProperty (
-        name = "Color 2",
-        description = "",
+        name = "Color 1",
+        description = "1st element of the color ramp",
         size = 4,
         subtype = 'COLOR',
         default = (0, 0, 1, 1)
     )
     color_2: bpy.props.FloatVectorProperty (
-        name = "Color 3",
-        description = "",
+        name = "Color 2",
+        description = "2nd element of the color ramp",
         size = 4,
         subtype = 'COLOR',
         default = (0, 1, 1, 1)
     )
     color_3: bpy.props.FloatVectorProperty (
-        name = "Color 4",
-        description = "",
+        name = "Color 3",
+        description = "3rd element of the color ramp",
         size = 4,
         subtype = 'COLOR',
         default = (0, 1, 0, 1)
     )
     color_4: bpy.props.FloatVectorProperty (
-        name = "Color 5",
-        description = "",
+        name = "Color 4",
+        description = "4th element of the color ramp",
         size = 4,
         subtype = 'COLOR',
         default = (1, 1, 0, 1)
     )
     color_5: bpy.props.FloatVectorProperty (
-        name = "Color 6",
-        description = "",
+        name = "Color 5",
+        description = "5th element of the color ramp",
         size = 4,
         subtype = 'COLOR',
         default = (1, 0, 0, 1)
     )
     color_layer_name: bpy.props.StringProperty (
         name = "Vertex Color Layer",
-        description = "What vertex color layer to use/create for visualization",
+        description = "Name of the vertex color layer to use/create for visualization",
         default = "Vertex Masses"
     )
     stats: bpy.props.PointerProperty (

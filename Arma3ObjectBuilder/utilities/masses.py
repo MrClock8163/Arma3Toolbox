@@ -257,7 +257,7 @@ def refresh_stats(obj, wm_props):
     
     
     mesh.calc_loop_triangles()
-    wm_props.stats.count_loose = len(meshutils.mesh_linked_triangles(mesh))
+    wm_props.stats.count_loose = len(utils.get_components(mesh)[1])
     
     layer = bm.verts.layers.float.get("a3ob_mass")
     if not layer:
