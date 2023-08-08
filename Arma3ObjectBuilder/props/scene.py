@@ -605,7 +605,7 @@ def register():
     bpy.types.Scene.a3ob_colors = bpy.props.PointerProperty(type=A3OB_PG_colors)
     bpy.types.Scene.a3ob_weights = bpy.props.PointerProperty(type=A3OB_PG_weights)
     
-    print("\t" + "Properties: window manager")
+    print("\t" + "Properties: scene")
     
     
 def unregister():
@@ -625,4 +625,4 @@ def unregister():
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
     
-    print("\t" + "Properties: window manager")
+    print("\t" + "Properties: scene")

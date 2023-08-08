@@ -33,7 +33,7 @@ if "bpy" in locals():
     importlib.reload(ui.tool_weights)
     importlib.reload(props.scene)
     importlib.reload(props.object)
-    importlib.reload(props.rvmat)
+    importlib.reload(props.material)
 
 else:
     from .ui import import_export_p3d
@@ -54,7 +54,7 @@ else:
     from .ui import tool_weights
     from .props import scene
     from .props import object
-    from .props import rvmat
+    from .props import material
 
 
 import winreg
@@ -190,7 +190,7 @@ def register():
         register_class(cls)
         
     object.register()
-    rvmat.register()
+    material.register()
     scene.register()
     import_export_p3d.register()
     import_export_rtm.register()
@@ -242,7 +242,7 @@ def unregister():
     import_export_rtm.unregister()
     import_export_p3d.unregister()
     scene.unregister()
-    rvmat.unregister()
+    material.unregister()
     object.unregister()
     
     print("Unregister done")
