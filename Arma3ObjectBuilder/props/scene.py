@@ -64,6 +64,12 @@ class A3OB_PG_mass_editor_stats(bpy.types.PropertyGroup):
         default = -1,
         min = -1
     )
+    mass_sum: bpy.props.FloatProperty (
+        name = "Total Mass",
+        description = "Total vertex/component mass on the mesh",
+        default = -1,
+        min = -1
+    )
     count_item: bpy.props.IntProperty (
         name = "Count",
         description = "Number of vertices/components in the mesh",

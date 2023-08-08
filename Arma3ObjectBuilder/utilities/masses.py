@@ -181,7 +181,7 @@ def scale_factors(values):
 
 def generate_factors_vertex(bm, layer):
     values = [vert[layer] for vert in bm.verts]
-    stats = (0, 0, 0, len(values))
+    stats = (0, 0, 0, 0, len(values))
     
     values_array = np.array(values)
     values_nonzero = values_array[np.nonzero(values_array)]
@@ -189,8 +189,9 @@ def generate_factors_vertex(bm, layer):
     if len(values_nonzero):
         values_min = np.min(values_nonzero)
         values_max = np.max(values_nonzero)
-        values_avg = math.fsum(values_nonzero) / len(values_nonzero)
-        stats = (values_min, values_avg, values_max, len(values))
+        values_sum = math.fsum(values_nonzero)
+        values_avg = values_sum / len(values_nonzero)
+        stats = (values_min, values_avg, values_max, values_sum, len(values))
     
     return scale_factors(values), stats
 
@@ -208,7 +209,7 @@ def generate_factors_component(mesh, bm, layer):
     masses.update({id: math.fsum(masses[id]) for id in masses})
 
     values = [masses.get(lookup.get(vert.index, None), 0) for vert in bm.verts]
-    stats = (0, 0, 0, len(masses))
+    stats = (0, 0, 0, 0, len(masses))
     
     values_array = np.array([masses[id] for id in masses])
     values_nonzero = values_array[np.nonzero(values_array)]
@@ -216,8 +217,9 @@ def generate_factors_component(mesh, bm, layer):
     if len(values_nonzero):
         values_min = np.min(values_nonzero)
         values_max = np.max(values_nonzero)
-        values_avg = math.fsum(masses.values()) / len(masses)
-        stats = (values_min, values_avg, values_max, len(masses))
+        values_sum = math.fsum(masses.values())
+        values_avg = values_sum / len(masses)
+        stats = (values_min, values_avg, values_max, values_sum, len(masses))
     
     return scale_factors(values), stats
 
@@ -283,6 +285,7 @@ def visualize_mass(obj, scene_props):
     scene_props.stats.mass_min = stats[0]
     scene_props.stats.mass_avg = stats[1]
     scene_props.stats.mass_max = stats[2]
-    scene_props.stats.count_item = stats[3]
+    scene_props.stats.mass_sum = stats[3]
+    scene_props.stats.count_item = stats[4]
 
     bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)

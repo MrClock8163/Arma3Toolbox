@@ -192,7 +192,8 @@ class A3OB_PT_vertex_mass_analyze(bpy.types.Panel):
         col_stats.prop(scene_props.stats, "mass_min", text="Min")
         col_stats.prop(scene_props.stats, "mass_avg", text="Average")
         col_stats.prop(scene_props.stats, "mass_max", text="Max")
-        col_stats.prop(scene_props.stats, "count_item")        
+        col_stats.prop(scene_props.stats, "mass_sum", text="Total")
+        col_stats.prop(scene_props.stats, "count_item")
 
 
 classes = (
