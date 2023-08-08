@@ -181,8 +181,18 @@ def scale_factors(values):
 
 def generate_factors_vertex(bm, layer):
     values = [vert[layer] for vert in bm.verts]
+    stats = (0, 0, 0, len(values))
     
-    return scale_factors(values)
+    values_array = np.array(values)
+    values_nonzero = values_array[np.nonzero(values_array)]
+    
+    if len(values_nonzero):
+        values_min = np.min(values_nonzero)
+        values_max = np.max(values_nonzero)
+        values_avg = math.fsum(values_nonzero) / len(values_nonzero)
+        stats = (values_min, values_avg, values_max, len(values))
+    
+    return scale_factors(values), stats
 
 
 def generate_factors_component(mesh, bm, layer):
@@ -195,11 +205,21 @@ def generate_factors_component(mesh, bm, layer):
         
         masses[comp_id].append(vert[layer])
 
-    masses.update({id: sum(masses[id]) for id in masses})
+    masses.update({id: math.fsum(masses[id]) for id in masses})
 
     values = [masses.get(lookup.get(vert.index, None), 0) for vert in bm.verts]
+    stats = (0, 0, 0, len(masses))
     
-    return scale_factors(values)
+    values_array = np.array([masses[id] for id in masses])
+    values_nonzero = values_array[np.nonzero(values_array)]
+    
+    if len(values_nonzero):
+        values_min = np.min(values_nonzero)
+        values_max = np.max(values_nonzero)
+        values_avg = math.fsum(masses.values()) / len(masses)
+        stats = (values_min, values_avg, values_max, len(masses))
+    
+    return scale_factors(values), stats
 
 
 def interpolate_colors(factors, stops, colorramp):
@@ -221,6 +241,9 @@ def visualize_mass(obj, wm_props):
     bm = bmesh.from_edit_mesh(mesh)
     bm.verts.ensure_lookup_table()
     
+    if not len(bm.verts):
+        return
+    
     layer = bm.verts.layers.float.get("a3ob_mass")
     if not layer:
         layer = bm.verts.layers.float.new("a3ob_mass")
@@ -240,11 +263,12 @@ def visualize_mass(obj, wm_props):
     
     vcolors = {}
     factors = []
+    stats = ()
     
     if wm_props.method == 'VERT':
-        factors = generate_factors_vertex(bm, layer)
+        factors, stats = generate_factors_vertex(bm, layer)
     elif wm_props.method == 'COMP':
-        factors = generate_factors_component(mesh, bm, layer)
+        factors, stats = generate_factors_component(mesh, bm, layer)
     
     vcolors = interpolate_colors(factors, stops, colorramp)
     
@@ -255,27 +279,10 @@ def visualize_mass(obj, wm_props):
     for face in bm.faces:
         for loop in face.loops:
             loop[color_layer] = vcolors[loop.vert.index]
-
     
+    wm_props.stats.mass_min = stats[0]
+    wm_props.stats.mass_avg = stats[1]
+    wm_props.stats.mass_max = stats[2]
+    wm_props.stats.count_item = stats[3]
+
     bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
-
-
-def refresh_stats(obj, wm_props):
-    obj.update_from_editmode()
-    mesh = obj.data
-    bm = bmesh.from_edit_mesh(mesh)
-    bm.verts.ensure_lookup_table()
-    
-    
-    mesh.calc_loop_triangles()
-    wm_props.stats.count_loose = len(utils.get_components(mesh)[1])
-    
-    layer = bm.verts.layers.float.get("a3ob_mass")
-    if not layer:
-        layer = bm.verts.layers.float.new("a3ob_mass")
-    
-    values = [vert[layer] for vert in bm.verts]
-    
-    wm_props.stats.mass_min = min(values)
-    wm_props.stats.mass_avg = math.fsum(values) / len(values)
-    wm_props.stats.mass_max = max(values)
