@@ -31,7 +31,7 @@ if "bpy" in locals():
     importlib.reload(ui.tool_paths)
     importlib.reload(ui.tool_color)
     importlib.reload(ui.tool_weights)
-    importlib.reload(props.windowmanager)
+    importlib.reload(props.scene)
     importlib.reload(props.object)
     importlib.reload(props.rvmat)
 
@@ -52,7 +52,7 @@ else:
     from .ui import tool_paths
     from .ui import tool_color
     from .ui import tool_weights
-    from .props import windowmanager
+    from .props import scene
     from .props import object
     from .props import rvmat
 
@@ -191,7 +191,7 @@ def register():
         
     object.register()
     rvmat.register()
-    windowmanager.register()
+    scene.register()
     import_export_p3d.register()
     import_export_rtm.register()
     import_export_asc.register()
@@ -241,12 +241,8 @@ def unregister():
     import_export_asc.unregister()
     import_export_rtm.unregister()
     import_export_p3d.unregister()
-    windowmanager.unregister()
+    scene.unregister()
     rvmat.unregister()
     object.unregister()
     
     print("Unregister done")
-    
-    
-if __name__ == "__main__":
-    register()

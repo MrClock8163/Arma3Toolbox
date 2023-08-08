@@ -41,37 +41,37 @@ class A3OB_OT_proxy_common(bpy.types.Operator):
         return obj and obj.type == 'MESH' and obj.a3ob_properties_object_proxy.is_a3_proxy
     
     def invoke(self, context, event):
-        wm = context.window_manager
-        wm.a3ob_proxy_common.clear()
+        scene = context.scene
+        scene.a3ob_proxy_common.clear()
         
         common_proxies = utils.get_common_proxies()
         for proxy in common_proxies:
-            item = wm.a3ob_proxy_common.add()
+            item = scene.a3ob_proxy_common.add()
             item.name = proxy
             item.path = utils.replace_slashes(common_proxies[proxy])
         
-        wm.a3ob_proxy_common_index = 0
+        scene.a3ob_proxy_common_index = 0
         
         return context.window_manager.invoke_props_dialog(self)
     
     def draw(self, context):
-        wm = context.window_manager
+        scene = context.scene
         layout = self.layout
-        layout.template_list("A3OB_UL_common_proxies", "A3OB_proxies_common", context.window_manager, "a3ob_proxy_common", context.window_manager, "a3ob_proxy_common_index")
+        layout.template_list("A3OB_UL_common_proxies", "A3OB_proxies_common", scene, "a3ob_proxy_common", scene, "a3ob_proxy_common_index")
         
-        selectionIndex = wm.a3ob_proxy_common_index
-        if selectionIndex in range(len(wm.a3ob_proxy_common)):
+        selectionIndex = scene.a3ob_proxy_common_index
+        if selectionIndex in range(len(scene.a3ob_proxy_common)):
             row = layout.row()
-            item = wm.a3ob_proxy_common[selectionIndex]
+            item = scene.a3ob_proxy_common[selectionIndex]
             row.prop(item, "path", text="")
             row.enabled = False
     
     def execute(self, context):
         obj = context.object
-        wm = context.window_manager
+        scene = context.scene
         
-        if len(wm.a3ob_proxy_common) > 0 and wm.a3ob_proxy_common_index in range(len(wm.a3ob_proxy_common)):
-            new_item = wm.a3ob_proxy_common[wm.a3ob_proxy_common_index]
+        if len(scene.a3ob_proxy_common) > 0 and scene.a3ob_proxy_common_index in range(len(scene.a3ob_proxy_common)):
+            new_item = scene.a3ob_proxy_common[scene.a3ob_proxy_common_index]
             obj.a3ob_properties_object_proxy.proxy_path = new_item.path
             
         return {'FINISHED'}
@@ -136,29 +136,30 @@ class A3OB_OT_namedprops_common(bpy.types.Operator):
         return context.object
     
     def invoke(self, context, event):
-        wm = context.window_manager
-        wm.a3ob_namedprops_common.clear()
+        scene = context.scene
+        scene.a3ob_namedprops_common.clear()
         
         common_namedprops = utils.get_common_namedprops()
         for prop in common_namedprops:
-            item = wm.a3ob_namedprops_common.add()
+            item = scene.a3ob_namedprops_common.add()
             item.name = prop
             item.value = common_namedprops[prop]
         
-        wm.a3ob_namedprops_common_index = 0
+        scene.a3ob_namedprops_common_index = 0
         
         return context.window_manager.invoke_props_dialog(self)
     
     def draw(self, context):
+        scene = context.scene
         layout = self.layout
-        layout.template_list("A3OB_UL_namedprops", "A3OB_namedprops_common", context.window_manager, "a3ob_namedprops_common", context.window_manager, "a3ob_namedprops_common_index")
+        layout.template_list("A3OB_UL_namedprops", "A3OB_namedprops_common", scene, "a3ob_namedprops_common", scene, "a3ob_namedprops_common_index")
 
     def execute(self, context):
         obj = context.object
-        wm = context.window_manager
+        scene = context.scene
         
-        if len(wm.a3ob_namedprops_common) > 0 and wm.a3ob_namedprops_common_index in range(len(wm.a3ob_namedprops_common)):
-            new_item = wm.a3ob_namedprops_common[wm.a3ob_namedprops_common_index]
+        if len(scene.a3ob_namedprops_common) > 0 and scene.a3ob_namedprops_common_index in range(len(scene.a3ob_namedprops_common)):
+            new_item = scene.a3ob_namedprops_common[scene.a3ob_namedprops_common_index]
             object_props = obj.a3ob_properties_object
             item = object_props.properties.add()
             item.name = new_item.name

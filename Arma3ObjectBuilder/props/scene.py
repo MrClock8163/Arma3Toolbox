@@ -592,35 +592,35 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
         
-    bpy.types.WindowManager.a3ob_proxy_common = bpy.props.CollectionProperty(type=A3OB_PG_common_proxy)
-    bpy.types.WindowManager.a3ob_proxy_common_index = bpy.props.IntProperty(name="Selection Index", default = -1)
-    bpy.types.WindowManager.a3ob_namedprops_common = bpy.props.CollectionProperty(type=objectprops.A3OB_PG_properties_named_property)
-    bpy.types.WindowManager.a3ob_namedprops_common_index = bpy.props.IntProperty(name="Selection Index", default = -1)
-    bpy.types.WindowManager.a3ob_mass_editor = bpy.props.PointerProperty(type=A3OB_PG_mass_editor)
-    bpy.types.WindowManager.a3ob_hitpoint_generator = bpy.props.PointerProperty(type=A3OB_PG_hitpoint_generator)
-    bpy.types.WindowManager.a3ob_validation = bpy.props.PointerProperty(type=A3OB_PG_validation)
-    bpy.types.WindowManager.a3ob_keyframes = bpy.props.PointerProperty(type=A3OB_PG_keyframes)
-    bpy.types.WindowManager.a3ob_conversion = bpy.props.PointerProperty(type=A3OB_PG_conversion)
-    bpy.types.WindowManager.a3ob_renaming = bpy.props.PointerProperty(type=A3OB_PG_renaming)
-    bpy.types.WindowManager.a3ob_colors = bpy.props.PointerProperty(type=A3OB_PG_colors)
-    bpy.types.WindowManager.a3ob_weights = bpy.props.PointerProperty(type=A3OB_PG_weights)
+    bpy.types.Scene.a3ob_proxy_common = bpy.props.CollectionProperty(type=A3OB_PG_common_proxy)
+    bpy.types.Scene.a3ob_proxy_common_index = bpy.props.IntProperty(name="Selection Index", default = -1)
+    bpy.types.Scene.a3ob_namedprops_common = bpy.props.CollectionProperty(type=objectprops.A3OB_PG_properties_named_property)
+    bpy.types.Scene.a3ob_namedprops_common_index = bpy.props.IntProperty(name="Selection Index", default = -1)
+    bpy.types.Scene.a3ob_mass_editor = bpy.props.PointerProperty(type=A3OB_PG_mass_editor)
+    bpy.types.Scene.a3ob_hitpoint_generator = bpy.props.PointerProperty(type=A3OB_PG_hitpoint_generator)
+    bpy.types.Scene.a3ob_validation = bpy.props.PointerProperty(type=A3OB_PG_validation)
+    bpy.types.Scene.a3ob_keyframes = bpy.props.PointerProperty(type=A3OB_PG_keyframes)
+    bpy.types.Scene.a3ob_conversion = bpy.props.PointerProperty(type=A3OB_PG_conversion)
+    bpy.types.Scene.a3ob_renaming = bpy.props.PointerProperty(type=A3OB_PG_renaming)
+    bpy.types.Scene.a3ob_colors = bpy.props.PointerProperty(type=A3OB_PG_colors)
+    bpy.types.Scene.a3ob_weights = bpy.props.PointerProperty(type=A3OB_PG_weights)
     
     print("\t" + "Properties: window manager")
     
     
 def unregister():
-    del bpy.types.WindowManager.a3ob_weights
-    del bpy.types.WindowManager.a3ob_colors
-    del bpy.types.WindowManager.a3ob_renaming
-    del bpy.types.WindowManager.a3ob_conversion
-    del bpy.types.WindowManager.a3ob_validation
-    del bpy.types.WindowManager.a3ob_keyframes
-    del bpy.types.WindowManager.a3ob_hitpoint_generator
-    del bpy.types.WindowManager.a3ob_mass_editor
-    del bpy.types.WindowManager.a3ob_namedprops_common_index
-    del bpy.types.WindowManager.a3ob_namedprops_common
-    del bpy.types.WindowManager.a3ob_proxy_common_index
-    del bpy.types.WindowManager.a3ob_proxy_common
+    del bpy.types.Scene.a3ob_weights
+    del bpy.types.Scene.a3ob_colors
+    del bpy.types.Scene.a3ob_renaming
+    del bpy.types.Scene.a3ob_conversion
+    del bpy.types.Scene.a3ob_validation
+    del bpy.types.Scene.a3ob_keyframes
+    del bpy.types.Scene.a3ob_hitpoint_generator
+    del bpy.types.Scene.a3ob_mass_editor
+    del bpy.types.Scene.a3ob_namedprops_common_index
+    del bpy.types.Scene.a3ob_namedprops_common
+    del bpy.types.Scene.a3ob_proxy_common_index
+    del bpy.types.Scene.a3ob_proxy_common
     
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

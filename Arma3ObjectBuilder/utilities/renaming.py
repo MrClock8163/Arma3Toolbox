@@ -7,21 +7,21 @@ import bpy
 
 
 def refresh_rename_list(context):
-    wm_props = context.window_manager.a3ob_renaming
-    wm_props.path_list.clear()
+    scene_props = context.scene.a3ob_renaming
+    scene_props.path_list.clear()
     
     path_list = []
-    if 'TEX' in wm_props.source_filter or 'RVMAT' in wm_props.source_filter:
+    if 'TEX' in scene_props.source_filter or 'RVMAT' in scene_props.source_filter:
         for mat in bpy.data.materials:
             mat_props = mat.a3ob_properties_material
-            if 'TEX' in wm_props.source_filter:
+            if 'TEX' in scene_props.source_filter:
                 path_list.append(mat_props.texture_path)
                 path_list.append(mat_props.color_raw)
                 
-            if 'RVMAT' in wm_props.source_filter:
+            if 'RVMAT' in scene_props.source_filter:
                 path_list.append(mat_props.material_path)
                 
-    if 'PROXY' in wm_props.source_filter:
+    if 'PROXY' in scene_props.source_filter:
         for obj in bpy.data.objects:
             if not obj.a3ob_properties_object_proxy.is_a3_proxy:
                 continue
@@ -35,16 +35,16 @@ def refresh_rename_list(context):
     path_list = list(path_set)
     
     for path in path_list:
-        new_item = wm_props.path_list.add()
+        new_item = scene_props.path_list.add()
         new_item.path = path
 
 
 def rename_path(context):
-    wm_props = context.window_manager.a3ob_renaming
+    scene_props = context.scene.a3ob_renaming
     
-    path_old = wm_props.path_list[wm_props.path_list_index].path
-    path_new = wm_props.new_path
-    source_filter = wm_props.source_filter
+    path_old = scene_props.path_list[scene_props.path_list_index].path
+    path_new = scene_props.new_path
+    source_filter = scene_props.source_filter
     
     print(path_old, path_new)
     
@@ -83,11 +83,11 @@ def replace_root(path, root_old, root_new):
 
 
 def rename_root(context):
-    wm_props = context.window_manager.a3ob_renaming
+    scene_props = context.scene.a3ob_renaming
     
-    root_old = wm_props.root_old
-    root_new = wm_props.root_new
-    source_filter = wm_props.source_filter
+    root_old = scene_props.root_old
+    root_new = scene_props.root_new
+    source_filter = scene_props.source_filter
     
     if 'TEX' in source_filter or 'RVMAT' in source_filter:
         for mat in bpy.data.materials:
@@ -110,10 +110,10 @@ def rename_root(context):
 
 
 def rename_vertex_groups(context):
-    wm_props = context.window_manager.a3ob_renaming
-    name_old = wm_props.vgroup_old
-    name_new = wm_props.vgroup_new
-    match_whole = wm_props.vgroup_match_whole
+    scene_props = context.scene.a3ob_renaming
+    name_old = scene_props.vgroup_old
+    name_new = scene_props.vgroup_new
+    match_whole = scene_props.vgroup_match_whole
     objects = context.selected_objects
     
     if not match_whole:

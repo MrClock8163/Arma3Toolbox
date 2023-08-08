@@ -235,7 +235,7 @@ def interpolate_colors(factors, stops, colorramp):
     return vcolors
 
 
-def visualize_mass(obj, wm_props):
+def visualize_mass(obj, scene_props):
     obj.update_from_editmode()
     mesh = obj.data
     bm = bmesh.from_edit_mesh(mesh)
@@ -249,14 +249,14 @@ def visualize_mass(obj, wm_props):
         layer = bm.verts.layers.float.new("a3ob_mass")
     
     colorramp = [
-        Vector(wm_props.color_0),
-        Vector(wm_props.color_0),
-        Vector(wm_props.color_1),
-        Vector(wm_props.color_2),
-        Vector(wm_props.color_3),
-        Vector(wm_props.color_4),
-        Vector(wm_props.color_5),
-        Vector(wm_props.color_5)
+        Vector(scene_props.color_0),
+        Vector(scene_props.color_0),
+        Vector(scene_props.color_1),
+        Vector(scene_props.color_2),
+        Vector(scene_props.color_3),
+        Vector(scene_props.color_4),
+        Vector(scene_props.color_5),
+        Vector(scene_props.color_5)
     ]
     
     stops = [0, 0.001, 0.25, 0.5, 0.75, 1, 100]
@@ -265,24 +265,24 @@ def visualize_mass(obj, wm_props):
     factors = []
     stats = ()
     
-    if wm_props.method == 'VERT':
+    if scene_props.method == 'VERT':
         factors, stats = generate_factors_vertex(bm, layer)
-    elif wm_props.method == 'COMP':
+    elif scene_props.method == 'COMP':
         factors, stats = generate_factors_component(mesh, bm, layer)
     
     vcolors = interpolate_colors(factors, stops, colorramp)
     
-    color_layer = bm.loops.layers.color.get(wm_props.color_layer_name)
+    color_layer = bm.loops.layers.color.get(scene_props.color_layer_name)
     if not color_layer:
-        color_layer = bm.loops.layers.color.new(wm_props.color_layer_name)
+        color_layer = bm.loops.layers.color.new(scene_props.color_layer_name)
 
     for face in bm.faces:
         for loop in face.loops:
             loop[color_layer] = vcolors[loop.vert.index]
     
-    wm_props.stats.mass_min = stats[0]
-    wm_props.stats.mass_avg = stats[1]
-    wm_props.stats.mass_max = stats[2]
-    wm_props.stats.count_item = stats[3]
+    scene_props.stats.mass_min = stats[0]
+    scene_props.stats.mass_avg = stats[1]
+    scene_props.stats.mass_max = stats[2]
+    scene_props.stats.count_item = stats[3]
 
     bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)

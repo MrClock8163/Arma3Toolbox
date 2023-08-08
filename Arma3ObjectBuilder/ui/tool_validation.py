@@ -13,23 +13,23 @@ class A3OB_OT_validate_lod(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        wm_props = context.window_manager.a3ob_validation
+        scene_props = context.scene.a3ob_validation
         obj = context.active_object
-        return obj and obj.type == 'MESH' and (not wm_props.detect or obj.a3ob_properties_object.is_a3_lod)
+        return obj and obj.type == 'MESH' and (not scene_props.detect or obj.a3ob_properties_object.is_a3_lod)
         
     def execute(self, context):
-        wm_props = context.window_manager.a3ob_validation
+        scene_props = context.scene.a3ob_validation
         obj = context.active_object
         
-        if wm_props.detect:
+        if scene_props.detect:
             try:
-                wm_props.lod = obj.a3ob_properties_object.lod
+                scene_props.lod = obj.a3ob_properties_object.lod
             except:
                 self.report({'INFO'}, "No validation rules for detected LOD type")
                 return {'FINISHED'}
         
-        validator = lodutils.Validator(obj, wm_props.warning_errors)
-        valid = validator.validate(wm_props.lod)
+        validator = lodutils.Validator(obj, scene_props.warning_errors)
+        valid = validator.validate(scene_props.lod)
         if valid:
             self.report({'INFO'}, "Validation succeeded")
         else:
@@ -59,15 +59,14 @@ class A3OB_PT_validation(bpy.types.Panel):
         
     def draw(self, context):
         layout = self.layout
-        wm = context.window_manager
-        wm_props = wm.a3ob_validation
+        scene_props = context.scene.a3ob_validation
         
-        layout.prop(wm_props, "detect")
+        layout.prop(scene_props, "detect")
         row_type = layout.row()
-        row_type.prop(wm_props, "lod")
-        if wm_props.detect:
+        row_type.prop(scene_props, "lod")
+        if scene_props.detect:
             row_type.enabled = False
-        layout.prop(wm_props, "warning_errors")
+        layout.prop(scene_props, "warning_errors")
             
         layout.separator()
         layout.operator("a3ob.validate_for_lod", text="Validate", icon_value=utils.get_icon("op_validate"))

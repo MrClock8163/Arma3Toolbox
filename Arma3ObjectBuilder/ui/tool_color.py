@@ -24,43 +24,43 @@ class A3OB_PT_colors(bpy.types.Panel):
         
     def draw(self, context):
         layout = self.layout
-        wm_props = context.window_manager.a3ob_colors
+        scene_props = context.scene.a3ob_colors
         
         layout.label(text="Input:")
         
         row_input_type = layout.row(align=True)
-        row_input_type.prop(wm_props, "input_type", expand=True)
+        row_input_type.prop(scene_props, "input_type", expand=True)
         
         col_input = layout.column(align=True)
-        if wm_props.input_type == 'S8':
-            col_input.prop(wm_props, "input_red_int")
-            col_input.prop(wm_props, "input_green_int")
-            col_input.prop(wm_props, "input_blue_int")
+        if scene_props.input_type == 'S8':
+            col_input.prop(scene_props, "input_red_int")
+            col_input.prop(scene_props, "input_green_int")
+            col_input.prop(scene_props, "input_blue_int")
         else:
-            col_input.prop(wm_props, "input_red_float")
-            col_input.prop(wm_props, "input_green_float")
-            col_input.prop(wm_props, "input_blue_float")
+            col_input.prop(scene_props, "input_red_float")
+            col_input.prop(scene_props, "input_green_float")
+            col_input.prop(scene_props, "input_blue_float")
             
         layout.label(text="Output:")
             
         row_output_type = layout.row(align=True)
-        row_output_type.prop(wm_props, "output_type", expand=True)
+        row_output_type.prop(scene_props, "output_type", expand=True)
         
         col_output = layout.column(align=True)
         
-        if wm_props.output_type == 'S8':
-            col_output.prop(wm_props, "output_red_int")
-            col_output.prop(wm_props, "output_green_int")
-            col_output.prop(wm_props, "output_blue_int")
+        if scene_props.output_type == 'S8':
+            col_output.prop(scene_props, "output_red_int")
+            col_output.prop(scene_props, "output_green_int")
+            col_output.prop(scene_props, "output_blue_int")
         else:
-            col_output.prop(wm_props, "output_red_float")
-            col_output.prop(wm_props, "output_green_float")
-            col_output.prop(wm_props, "output_blue_float")
+            col_output.prop(scene_props, "output_red_float")
+            col_output.prop(scene_props, "output_green_float")
+            col_output.prop(scene_props, "output_blue_float")
         
-        if wm_props.output_type in {'S8', 'S'}:
-            layout.prop(wm_props, "output_srgb", text="")
+        if scene_props.output_type in {'S8', 'S'}:
+            layout.prop(scene_props, "output_srgb", text="")
         else:
-            layout.prop(wm_props, "output_linear", text="")
+            layout.prop(scene_props, "output_linear", text="")
 
 
 classes = (
