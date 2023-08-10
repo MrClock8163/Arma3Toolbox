@@ -1,3 +1,7 @@
+# Simple logger class to provide console based feedback
+# for I/O and other complex operations.
+
+
 class ProcessLogger():
     
     def __init__(self, startIndent = 0):

@@ -10,8 +10,8 @@ class A3OB_MT_object_builder_topo(bpy.types.Menu):
     bl_label = "Topology"
     
     def draw(self, context):
-        self.layout.operator(A3OB_OT_check_closed.bl_idname)
-        self.layout.operator(A3OB_OT_find_components.bl_idname)
+        self.layout.operator("a3ob.find_non_closed")
+        self.layout.operator("a3ob.find_components")
 
 
 class A3OB_MT_object_builder_convexity(bpy.types.Menu):
@@ -20,9 +20,9 @@ class A3OB_MT_object_builder_convexity(bpy.types.Menu):
     bl_label = "Convexity"
     
     def draw(self, context):
-        self.layout.operator(A3OB_OT_check_convexity.bl_idname)
-        self.layout.operator(A3OB_OT_convex_hull.bl_idname)
-        self.layout.operator(A3OB_OT_component_convex_hull.bl_idname)
+        self.layout.operator("a3ob.find_non_convexities")
+        self.layout.operator("a3ob.convex_hull")
+        self.layout.operator("a3ob.component_convex_hull")
 
 
 class A3OB_MT_object_builder_faces(bpy.types.Menu):
@@ -31,8 +31,9 @@ class A3OB_MT_object_builder_faces(bpy.types.Menu):
     bl_label = "Faces"
     
     def draw(self, context):
-        self.layout.operator(A3OB_OT_sort_faces.bl_idname)
-        self.layout.operator(A3OB_OT_recalculate_normals.bl_idname)
+        self.layout.operator("a3ob.move_top")
+        self.layout.operator("a3ob.move_bottom")
+        self.layout.operator("a3ob.recalculate_normals")
 
 
 class A3OB_MT_object_builder_misc(bpy.types.Menu):
@@ -41,7 +42,7 @@ class A3OB_MT_object_builder_misc(bpy.types.Menu):
     bl_label = "Misc"
     
     def draw(self, context):
-        self.layout.operator(A3OB_OT_cleanup_vertex_groups.bl_idname)
+        self.layout.operator("a3ob.vertex_groups_cleanup")
 
 
 class A3OB_MT_object_builder(bpy.types.Menu):
@@ -69,6 +70,9 @@ class A3OB_OT_check_convexity(bpy.types.Operator):
     
     def execute(self, context):
         name, concaves = structutils.check_convexity()
+        
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_mode(type='EDGE')
         
         if concaves > 0:
             self.report({'WARNING'}, "%s has %d concave edge(s)" % (name, concaves))
@@ -126,7 +130,7 @@ class A3OB_OT_component_convex_hull(bpy.types.Operator):
     def execute(self,context):
         mode = bpy.context.object.mode
         obj = context.active_object
-        count_components = structutils.find_components(obj, True)
+        count_components = structutils.component_convex_hull(obj)
         bpy.ops.object.mode_set(mode=mode)
         self.report({'INFO'}, "Created %d component(s) in %s" % (count_components, obj.name))
         return {'FINISHED'}
@@ -152,11 +156,11 @@ class A3OB_OT_find_components(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class A3OB_OT_sort_faces(bpy.types.Operator):
-    """Sort selected faces to the end of the face list (relative order of selected faces is maintained)"""
+class A3OB_OT_move_top(bpy.types.Operator):
+    """Move selected faces to top of face list (relative order of selected faces is maintained)"""
     
-    bl_label = "Sort"
-    bl_idname = "a3ob.sort_faces"
+    bl_label = "Move Top"
+    bl_idname = "a3ob.move_top"
     
     @classmethod
     def poll(cls, context):
@@ -165,6 +169,22 @@ class A3OB_OT_sort_faces(bpy.types.Operator):
     
     def execute(self, context):
         bpy.ops.mesh.sort_elements(type='SELECTED', elements={'FACE'}, reverse=True)
+        return {'FINISHED'}
+
+
+class A3OB_OT_move_bottom(bpy.types.Operator):
+    """Move selected faces to bottom of face list (relative order of selected faces is maintained)"""
+    
+    bl_label = "Move Bottom"
+    bl_idname = "a3ob.move_bottom"
+    
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        return obj and len(context.selected_objects) == 1 and obj.type == 'MESH' and obj.mode == 'EDIT'
+    
+    def execute(self, context):
+        bpy.ops.mesh.sort_elements(type='SELECTED', elements={'FACE'})
         return {'FINISHED'}
 
 
@@ -224,7 +244,7 @@ class A3OB_OT_redefine_vertex_group(bpy.types.Operator):
         
     def execute(self, context):
         obj = context.active_object
-        structutils.redefine_vertex_group(obj)
+        structutils.redefine_vertex_group(obj, context.scene.tool_settings.vertex_group_weight)
         return {'FINISHED'}
 
 
@@ -234,7 +254,8 @@ classes = (
     A3OB_OT_convex_hull,
     A3OB_OT_component_convex_hull,
     A3OB_OT_find_components,
-    A3OB_OT_sort_faces,
+    A3OB_OT_move_top,
+    A3OB_OT_move_bottom,
     A3OB_OT_recalculate_normals,
     A3OB_OT_cleanup_vertex_groups,
     A3OB_OT_redefine_vertex_group,

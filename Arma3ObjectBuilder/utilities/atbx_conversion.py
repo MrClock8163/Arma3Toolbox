@@ -1,3 +1,7 @@
+# Functions to handle conversion from the ArmAToolbox style
+# setup and object properties, to the Arma3ObjectBuilder style.
+
+
 import math
 import re
 
@@ -60,11 +64,11 @@ def convert_materials_item(material, cleanup):
     elif texture_type == 'Color':
         a3ob_props.texture_type = 'COLOR'
         try:
-            a3ob_props.color_type = a3ob_props.colorType
+            a3ob_props.color_type = atbx_props.colorType
         except:
             pass
         
-        a3ob_props.color_value = (*a3ob_props.colorValue, 1.0)
+        a3ob_props.color_value = (*atbx_props.colorValue, 1.0)
     elif texture_type == 'Custom':
         a3ob_props.texture_type = 'CUSTOM'
         a3ob_props.color_raw = atbx_props.colorString
@@ -75,7 +79,7 @@ def convert_materials_item(material, cleanup):
         atbx_props.texType = 'Texture'
         atbx_props.texture = ""
         atbx_props.colorString = ""
-        a3ob_props.colorValue = (1.0, 1.0, 1.0)
+        atbx_props.colorValue = (1.0, 1.0, 1.0)
         atbx_props.rvMat = ""
 
 

@@ -41,37 +41,37 @@ class A3OB_OT_proxy_common(bpy.types.Operator):
         return obj and obj.type == 'MESH' and obj.a3ob_properties_object_proxy.is_a3_proxy
     
     def invoke(self, context, event):
-        wm = context.window_manager
-        wm.a3ob_proxy_common.clear()
+        scene = context.scene
+        scene.a3ob_proxy_common.clear()
         
-        common_proxies = utils.get_common_proxies(context)
+        common_proxies = utils.get_common_proxies()
         for proxy in common_proxies:
-            item = wm.a3ob_proxy_common.add()
+            item = scene.a3ob_proxy_common.add()
             item.name = proxy
             item.path = utils.replace_slashes(common_proxies[proxy])
         
-        wm.a3ob_proxy_common_index = 0
+        scene.a3ob_proxy_common_index = 0
         
         return context.window_manager.invoke_props_dialog(self)
     
     def draw(self, context):
-        wm = context.window_manager
+        scene = context.scene
         layout = self.layout
-        layout.template_list("A3OB_UL_common_proxies", "A3OB_proxies_common", context.window_manager, "a3ob_proxy_common", context.window_manager, "a3ob_proxy_common_index")
+        layout.template_list("A3OB_UL_common_proxies", "A3OB_proxies_common", scene, "a3ob_proxy_common", scene, "a3ob_proxy_common_index")
         
-        selectionIndex = wm.a3ob_proxy_common_index
-        if selectionIndex in range(len(wm.a3ob_proxy_common)):
+        selectionIndex = scene.a3ob_proxy_common_index
+        if selectionIndex in range(len(scene.a3ob_proxy_common)):
             row = layout.row()
-            item = wm.a3ob_proxy_common[selectionIndex]
+            item = scene.a3ob_proxy_common[selectionIndex]
             row.prop(item, "path", text="")
             row.enabled = False
     
     def execute(self, context):
         obj = context.object
-        wm = context.window_manager
+        scene = context.scene
         
-        if len(wm.a3ob_proxy_common) > 0 and wm.a3ob_proxy_common_index in range(len(wm.a3ob_proxy_common)):
-            new_item = wm.a3ob_proxy_common[wm.a3ob_proxy_common_index]
+        if len(scene.a3ob_proxy_common) > 0 and scene.a3ob_proxy_common_index in range(len(scene.a3ob_proxy_common)):
+            new_item = scene.a3ob_proxy_common[scene.a3ob_proxy_common_index]
             obj.a3ob_properties_object_proxy.proxy_path = new_item.path
             
         return {'FINISHED'}
@@ -136,29 +136,30 @@ class A3OB_OT_namedprops_common(bpy.types.Operator):
         return context.object
     
     def invoke(self, context, event):
-        wm = context.window_manager
-        wm.a3ob_namedprops_common.clear()
+        scene = context.scene
+        scene.a3ob_namedprops_common.clear()
         
-        common_namedprops = utils.get_common_namedprops(context)
+        common_namedprops = utils.get_common_namedprops()
         for prop in common_namedprops:
-            item = wm.a3ob_namedprops_common.add()
+            item = scene.a3ob_namedprops_common.add()
             item.name = prop
             item.value = common_namedprops[prop]
         
-        wm.a3ob_namedprops_common_index = 0
+        scene.a3ob_namedprops_common_index = 0
         
         return context.window_manager.invoke_props_dialog(self)
     
     def draw(self, context):
+        scene = context.scene
         layout = self.layout
-        layout.template_list("A3OB_UL_namedprops", "A3OB_namedprops_common", context.window_manager, "a3ob_namedprops_common", context.window_manager, "a3ob_namedprops_common_index")
+        layout.template_list("A3OB_UL_namedprops", "A3OB_namedprops_common", scene, "a3ob_namedprops_common", scene, "a3ob_namedprops_common_index")
 
     def execute(self, context):
         obj = context.object
-        wm = context.window_manager
+        scene = context.scene
         
-        if len(wm.a3ob_namedprops_common) > 0 and wm.a3ob_namedprops_common_index in range(len(wm.a3ob_namedprops_common)):
-            new_item = wm.a3ob_namedprops_common[wm.a3ob_namedprops_common_index]
+        if len(scene.a3ob_namedprops_common) > 0 and scene.a3ob_namedprops_common_index in range(len(scene.a3ob_namedprops_common)):
+            new_item = scene.a3ob_namedprops_common[scene.a3ob_namedprops_common_index]
             object_props = obj.a3ob_properties_object
             item = object_props.properties.add()
             item.name = new_item.name
@@ -189,6 +190,14 @@ class A3OB_PT_object_mesh(bpy.types.Panel):
     def poll(cls, context):
         obj = context.object
         return obj and obj.type == 'MESH' and not obj.a3ob_properties_object_proxy.is_a3_proxy
+        
+    def draw_header(self, context):
+        if not utils.get_addon_preferences().show_info_links:
+            return
+            
+        layout = self.layout
+        row = layout.row(align=True)
+        row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/lod"
         
     def draw(self, context):
         obj = context.object
@@ -257,6 +266,14 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
         obj = context.object
         return obj and obj.type == 'MESH' and obj.a3ob_properties_object_proxy.is_a3_proxy and not obj.a3ob_properties_object.is_a3_lod
         
+    def draw_header(self, context):
+        if not utils.get_addon_preferences().show_info_links:
+            return
+            
+        layout = self.layout
+        row = layout.row(align=True)
+        row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/proxy"
+        
     def draw(self, context):
         obj = context.object
         object_props = obj.a3ob_properties_object_proxy
@@ -291,6 +308,14 @@ class A3OB_PT_object_dtm(bpy.types.Panel):
         obj = context.object
         return obj and obj.type == 'MESH' and not obj.a3ob_properties_object_proxy.is_a3_proxy
         
+    def draw_header(self, context):
+        if not utils.get_addon_preferences().show_info_links:
+            return
+            
+        layout = self.layout
+        row = layout.row(align=True)
+        row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/raster-dtm"
+        
     def draw(self, context):
         obj = context.object
         object_props = obj.a3ob_properties_object_dtm
@@ -317,7 +342,7 @@ class A3OB_PT_object_dtm(bpy.types.Panel):
 
 def menu_func(self, context):
     self.layout.separator()
-    self.layout.operator(A3OB_OT_proxy_add.bl_idname, icon='EMPTY_ARROWS')
+    self.layout.operator(A3OB_OT_proxy_add.bl_idname, icon_value=utils.get_icon("op_proxy_add"))
 
 
 classes = (
@@ -341,7 +366,7 @@ def register():
         
     bpy.types.VIEW3D_MT_add.append(menu_func)
     
-    print("\t" + "UI: mesh")
+    print("\t" + "UI: mesh properties")
 
 
 def unregister():
@@ -350,4 +375,4 @@ def unregister():
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
     
-    print("\t" + "UI: mesh")
+    print("\t" + "UI: mesh properties")

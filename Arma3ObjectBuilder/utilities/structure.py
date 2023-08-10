@@ -1,3 +1,6 @@
+# Backend functions of the utility functions.
+
+
 import re
 
 import bpy
@@ -6,18 +9,34 @@ import bmesh
 from . import generic as utils
 
 
-def find_components(obj, do_convex_hull=False):
+def find_components(obj):
+    obj.update_from_editmode()
+    mesh = obj.data
+    
+    for group in obj.vertex_groups:
+        if re.match("component\d+", group.name, re.IGNORECASE):
+            obj.vertex_groups.remove(group)
+    
+    lookup, components = utils.get_components(mesh)
+    
+    verts = {i: [] for i in range(len(components))}
+    for id in lookup:
+        verts[lookup[id]].append(id)
+    
+    for component in verts:
+        group = obj.vertex_groups.new(name="Component%02d" % (component + 1))
+        group.add(verts[component], 1, 'REPLACE')
+    
+    return component + 1
+
+
+def component_convex_hull(obj):
     utils.force_mode_object()
     
     # Remove pre-existing component selections
-    existing_component_groups = []
     for group in obj.vertex_groups:
         if re.match("component\d+", group.name, re.IGNORECASE):
-            existing_component_groups.append(group.name)
-    
-    for group in existing_component_groups:
-        bpy.ops.object.vertex_group_set_active(group=group)
-        bpy.ops.object.vertex_group_remove()
+            obj.vertex_groups.remove(group)
     
     # Split mesh
     bpy.ops.mesh.separate(type='LOOSE')
@@ -29,13 +48,12 @@ def find_components(obj, do_convex_hull=False):
     for component_object in components:
         component_id += 1
         
-        bpy.context.view_layer.objects.active = obj
+        bpy.context.view_layer.objects.active = component_object
             
         if len(component_object.data.vertices) < 4: # Ignore proxies
             continue
         
-        if do_convex_hull:
-            convex_hull()
+        convex_hull()
             
         group = component_object.vertex_groups.new(name=("Component%02d" % component_id))
         group.add([vert.index for vert in component_object.data.vertices], 1, 'REPLACE')
@@ -47,6 +65,8 @@ def find_components(obj, do_convex_hull=False):
         ctx["active_object"] = obj
         
         bpy.ops.object.join(ctx)
+        
+    bpy.context.view_layer.objects.active = obj
     
     return component_id
 
@@ -54,38 +74,18 @@ def find_components(obj, do_convex_hull=False):
 def convex_hull():
     utils.force_mode_edit()
     
-    bpy.ops.mesh.select_mode(type="EDGE")
+    bpy.ops.mesh.select_mode(type='EDGE')
     bpy.ops.mesh.select_all(action='SELECT')
     bpy.ops.mesh.convex_hull()
     bpy.ops.mesh.select_all(action='DESELECT')
     bpy.ops.mesh.reveal()
-    bpy.ops.object.mode_set(mode='OBJECT')    
-
-
-def component_convex_hull(): # DEPRECATED
-    utils.force_mode_edit()
-    
-    bpy.ops.mesh.select_mode(type="VERT")
-    bpy.ops.mesh.select_all(action='DESELECT')
-    
-    obj = bpy.context.selected_objects[0]
-    obj.vertex_groups.active_index = 0
-    for i,group in enumerate(obj.vertex_groups):
-        if not re.match("component\d+", group.name, re.IGNORECASE):
-            continue
-                
-        bpy.ops.mesh.select_all(action='DESELECT')
-        obj.vertex_groups.active_index = i
-        bpy.ops.object.vertex_group_select()
-        bpy.ops.mesh.convex_hull()
-        
-    bpy.ops.mesh.select_all(action='DESELECT')
+    bpy.ops.object.mode_set(mode='OBJECT')
 
 
 def check_closed():
     utils.force_mode_edit()
     
-    bpy.ops.mesh.select_mode(type="EDGE")
+    bpy.ops.mesh.select_mode(type='EDGE')
     bpy.ops.mesh.select_non_manifold()
 
 
@@ -108,21 +108,19 @@ def check_convexity():
                 count_concave += 1
             
     bm.to_mesh(obj.data)
-        
-    bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.mesh.select_mode(type="EDGE")
     
     return obj.name, count_concave
 
 
 def cleanup_vertex_groups(obj):
+    obj.update_from_editmode()
+    
     removed = 0
     used_groups = {}
     for vert in obj.data.vertices:
         for group in vert.groups:
             group_index = group.group
-            if group_index not in used_groups:
-                used_groups[group_index] = obj.vertex_groups[group_index]
+            used_groups[group_index] = obj.vertex_groups[group_index]
 
     for group in obj.vertex_groups:
         if group not in used_groups.values():
@@ -132,14 +130,23 @@ def cleanup_vertex_groups(obj):
     return removed
 
 
-def redefine_vertex_group(obj):
+def redefine_vertex_group(obj, weight):
+    obj.update_from_editmode()
+    mesh = obj.data
+    
     group = obj.vertex_groups.active
     if group is None:
         return
     
-    group_name = group.name
+    bm = bmesh.from_edit_mesh(mesh)
+    bm.verts.ensure_lookup_table()
+    bm.verts.layers.deform.verify()
+    deform = bm.verts.layers.deform.active
     
-    obj.vertex_groups.remove(group)
-    obj.vertex_groups.new(name=group_name)
-    
-    bpy.ops.object.vertex_group_assign()
+    for vert in bm.verts:
+        if vert.select:
+            vert[deform][group.index] = weight
+        elif group.index in vert[deform]:
+            del vert[deform][group.index]
+        
+    bmesh.update_edit_mesh(mesh)

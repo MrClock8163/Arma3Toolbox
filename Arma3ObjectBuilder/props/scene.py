@@ -45,6 +45,39 @@ class A3OB_PG_common_proxy(bpy.types.PropertyGroup):
     )
 
 
+class A3OB_PG_mass_editor_stats(bpy.types.PropertyGroup):
+    mass_max: bpy.props.FloatProperty (
+        name = "Max Mass",
+        description = "Highest vertex/component mass value on the mesh",
+        default = -1,
+        min = -1
+    )
+    mass_min: bpy.props.FloatProperty (
+        name = "Min Mass",
+        description = "Lowest non-zero vertex/component mass value on the mesh",
+        default = -1,
+        min = -1
+    )
+    mass_avg: bpy.props.FloatProperty (
+        name = "Average Mass",
+        description = "Average non-zero vertex/component mass value on the mesh",
+        default = -1,
+        min = -1
+    )
+    mass_sum: bpy.props.FloatProperty (
+        name = "Total Mass",
+        description = "Total vertex/component mass on the mesh",
+        default = -1,
+        min = -1
+    )
+    count_item: bpy.props.IntProperty (
+        name = "Count",
+        description = "Number of vertices/components in the mesh",
+        default = -1,
+        min = -1
+    )
+
+
 class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
     enabled: bpy.props.BoolProperty (
         name = "Enable Vertex Mass Tools",
@@ -80,6 +113,77 @@ class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
         soft_max = 100000,
         step = 10,
         precision = 3
+    )
+    method: bpy.props.EnumProperty (
+        name = "Visualization Method",
+        description = "",
+        items = (
+            ('VERT', "Vertex", "Show per vertex mass"),
+            ('COMP', "Component", "Show per component mass")
+        ),
+        default = 'COMP'
+    )
+    color_0: bpy.props.FloatVectorProperty (
+        name = "NULL Color",
+        description = "Color used where no vertex mass is defined",
+        size = 4,
+        subtype = 'COLOR',
+        default = (0, 0, 0, 1),
+        min = 0,
+        max = 1
+    )
+    color_1: bpy.props.FloatVectorProperty (
+        name = "Color 1",
+        description = "1st element of the color ramp",
+        size = 4,
+        subtype = 'COLOR',
+        default = (0, 0, 1, 1),
+        min = 0,
+        max = 1
+    )
+    color_2: bpy.props.FloatVectorProperty (
+        name = "Color 2",
+        description = "2nd element of the color ramp",
+        size = 4,
+        subtype = 'COLOR',
+        default = (0, 1, 1, 1),
+        min = 0,
+        max = 1
+    )
+    color_3: bpy.props.FloatVectorProperty (
+        name = "Color 3",
+        description = "3rd element of the color ramp",
+        size = 4,
+        subtype = 'COLOR',
+        default = (0, 1, 0, 1),
+        min = 0,
+        max = 1
+    )
+    color_4: bpy.props.FloatVectorProperty (
+        name = "Color 4",
+        description = "4th element of the color ramp",
+        size = 4,
+        subtype = 'COLOR',
+        default = (1, 1, 0, 1),
+        min = 0,
+        max = 1
+    )
+    color_5: bpy.props.FloatVectorProperty (
+        name = "Color 5",
+        description = "5th element of the color ramp",
+        size = 4,
+        subtype = 'COLOR',
+        default = (1, 0, 0, 1),
+        min = 0,
+        max = 1
+    )
+    color_layer_name: bpy.props.StringProperty (
+        name = "Vertex Color Layer",
+        description = "Name of the vertex color layer to use/create for visualization",
+        default = "Vertex Masses"
+    )
+    stats: bpy.props.PointerProperty (
+        type = A3OB_PG_mass_editor_stats
     )
 
 
@@ -475,6 +579,7 @@ class A3OB_PG_weights(bpy.types.PropertyGroup):
 
 classes = (
     A3OB_PG_common_proxy,
+    A3OB_PG_mass_editor_stats,
     A3OB_PG_mass_editor,
     A3OB_PG_hitpoint_generator,
     A3OB_PG_validation,
@@ -493,37 +598,37 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
         
-    bpy.types.WindowManager.a3ob_proxy_common = bpy.props.CollectionProperty(type=A3OB_PG_common_proxy)
-    bpy.types.WindowManager.a3ob_proxy_common_index = bpy.props.IntProperty(name="Selection Index", default = -1)
-    bpy.types.WindowManager.a3ob_namedprops_common = bpy.props.CollectionProperty(type=objectprops.A3OB_PG_properties_named_property)
-    bpy.types.WindowManager.a3ob_namedprops_common_index = bpy.props.IntProperty(name="Selection Index", default = -1)
-    bpy.types.WindowManager.a3ob_mass_editor = bpy.props.PointerProperty(type=A3OB_PG_mass_editor)
-    bpy.types.WindowManager.a3ob_hitpoint_generator = bpy.props.PointerProperty(type=A3OB_PG_hitpoint_generator)
-    bpy.types.WindowManager.a3ob_validation = bpy.props.PointerProperty(type=A3OB_PG_validation)
-    bpy.types.WindowManager.a3ob_keyframes = bpy.props.PointerProperty(type=A3OB_PG_keyframes)
-    bpy.types.WindowManager.a3ob_conversion = bpy.props.PointerProperty(type=A3OB_PG_conversion)
-    bpy.types.WindowManager.a3ob_renaming = bpy.props.PointerProperty(type=A3OB_PG_renaming)
-    bpy.types.WindowManager.a3ob_colors = bpy.props.PointerProperty(type=A3OB_PG_colors)
-    bpy.types.WindowManager.a3ob_weights = bpy.props.PointerProperty(type=A3OB_PG_weights)
+    bpy.types.Scene.a3ob_proxy_common = bpy.props.CollectionProperty(type=A3OB_PG_common_proxy)
+    bpy.types.Scene.a3ob_proxy_common_index = bpy.props.IntProperty(name="Selection Index", default = -1)
+    bpy.types.Scene.a3ob_namedprops_common = bpy.props.CollectionProperty(type=objectprops.A3OB_PG_properties_named_property)
+    bpy.types.Scene.a3ob_namedprops_common_index = bpy.props.IntProperty(name="Selection Index", default = -1)
+    bpy.types.Scene.a3ob_mass_editor = bpy.props.PointerProperty(type=A3OB_PG_mass_editor)
+    bpy.types.Scene.a3ob_hitpoint_generator = bpy.props.PointerProperty(type=A3OB_PG_hitpoint_generator)
+    bpy.types.Scene.a3ob_validation = bpy.props.PointerProperty(type=A3OB_PG_validation)
+    bpy.types.Scene.a3ob_keyframes = bpy.props.PointerProperty(type=A3OB_PG_keyframes)
+    bpy.types.Scene.a3ob_conversion = bpy.props.PointerProperty(type=A3OB_PG_conversion)
+    bpy.types.Scene.a3ob_renaming = bpy.props.PointerProperty(type=A3OB_PG_renaming)
+    bpy.types.Scene.a3ob_colors = bpy.props.PointerProperty(type=A3OB_PG_colors)
+    bpy.types.Scene.a3ob_weights = bpy.props.PointerProperty(type=A3OB_PG_weights)
     
-    print("\t" + "Properties: window manager")
+    print("\t" + "Properties: scene")
     
     
 def unregister():
-    del bpy.types.WindowManager.a3ob_weights
-    del bpy.types.WindowManager.a3ob_colors
-    del bpy.types.WindowManager.a3ob_renaming
-    del bpy.types.WindowManager.a3ob_conversion
-    del bpy.types.WindowManager.a3ob_validation
-    del bpy.types.WindowManager.a3ob_keyframes
-    del bpy.types.WindowManager.a3ob_hitpoint_generator
-    del bpy.types.WindowManager.a3ob_mass_editor
-    del bpy.types.WindowManager.a3ob_namedprops_common_index
-    del bpy.types.WindowManager.a3ob_namedprops_common
-    del bpy.types.WindowManager.a3ob_proxy_common_index
-    del bpy.types.WindowManager.a3ob_proxy_common
+    del bpy.types.Scene.a3ob_weights
+    del bpy.types.Scene.a3ob_colors
+    del bpy.types.Scene.a3ob_renaming
+    del bpy.types.Scene.a3ob_conversion
+    del bpy.types.Scene.a3ob_validation
+    del bpy.types.Scene.a3ob_keyframes
+    del bpy.types.Scene.a3ob_hitpoint_generator
+    del bpy.types.Scene.a3ob_mass_editor
+    del bpy.types.Scene.a3ob_namedprops_common_index
+    del bpy.types.Scene.a3ob_namedprops_common
+    del bpy.types.Scene.a3ob_proxy_common_index
+    del bpy.types.Scene.a3ob_proxy_common
     
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
     
-    print("\t" + "Properties: window manager")
+    print("\t" + "Properties: scene")

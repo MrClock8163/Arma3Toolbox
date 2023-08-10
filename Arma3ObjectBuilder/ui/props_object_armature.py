@@ -1,5 +1,7 @@
 import bpy
 
+from ..utilities import generic as utils
+
 
 class A3OB_OT_keyframe_add(bpy.types.Operator):
     """Add current keyframe to list of RTM frames"""
@@ -88,6 +90,14 @@ class A3OB_PT_object_armature(bpy.types.Panel):
         obj = context.object
         return obj and obj.type == 'ARMATURE'
         
+    def draw_header(self, context):
+        if not utils.get_addon_preferences().show_info_links:
+            return
+            
+        layout = self.layout
+        row = layout.row(align=True)
+        row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/rtm"
+        
     def draw(self, context):
         obj = context.object
         object_props = obj.a3ob_properties_object_armature
@@ -173,11 +183,11 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     
-    print("\t" + "UI: armature")
+    print("\t" + "UI: armature properties")
 
 
 def unregister():    
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
     
-    print("\t" + "UI: armature")
+    print("\t" + "UI: armature properties")

@@ -14,22 +14,22 @@ class A3OB_OT_keyframe_add_list(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.active_object
-        return obj and obj.type == 'ARMATURE' and len(obj.pose.bones) > 0 and (context.window_manager.a3ob_keyframes.mode == 'RANGE' or obj.animation_data and obj.animation_data.action)
+        return obj and obj.type == 'ARMATURE' and len(obj.pose.bones) > 0 and (context.scene.a3ob_keyframes.mode == 'RANGE' or obj.animation_data and obj.animation_data.action)
         
     def execute(self, context):
         obj = context.active_object
         object_props = obj.a3ob_properties_object_armature
-        wm_props = context.window_manager.a3ob_keyframes
+        scene_props = context.scene.a3ob_keyframes
         
-        if wm_props.clear:
+        if scene_props.clear:
             object_props.frames.clear()
             object_props.frames_index = -1
             
-        if wm_props.mode == 'TIMELINE':
+        if scene_props.mode == 'TIMELINE':
             count_frames = frameutils.add_frame_timeline(obj)
             self.report({'INFO'}, "Added %d frame(s) to RTM" % count_frames)
-        elif wm_props.mode == 'RANGE':
-            count_frames = frameutils.add_frame_range(obj, wm_props)
+        elif scene_props.mode == 'RANGE':
+            count_frames = frameutils.add_frame_range(obj, scene_props)
             self.report({'INFO'}, "Added %d frame(s) to RTM" % count_frames)
         
         return {'FINISHED'}
@@ -47,7 +47,7 @@ class A3OB_PT_keyframes(bpy.types.Panel):
         return True
         
     def draw_header(self, context):
-        if not utils.get_addon_preferences(context).show_info_links:
+        if not utils.get_addon_preferences().show_info_links:
             return
             
         layout = self.layout
@@ -55,19 +55,19 @@ class A3OB_PT_keyframes(bpy.types.Panel):
         row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/rtm-frames"
         
     def draw(self, context):
-        wm_props = context.window_manager.a3ob_keyframes
+        scene_props = context.scene.a3ob_keyframes
         layout = self.layout
         
-        layout.prop(wm_props, "clear")
-        layout.prop(wm_props, "mode", text="From", expand=True)
+        layout.prop(scene_props, "clear")
+        layout.prop(scene_props, "mode", text="From", expand=True)
         
-        if wm_props.mode == 'RANGE':
+        if scene_props.mode == 'RANGE':
             col = layout.column(align=True)
-            col.prop(wm_props, "range_start")
-            col.prop(wm_props, "range_step")
-            col.prop(wm_props, "range_end")
+            col.prop(scene_props, "range_start")
+            col.prop(scene_props, "range_step")
+            col.prop(scene_props, "range_end")
             
-        layout.operator("a3ob.keyframe_add_list", icon='KEYFRAME_HLT')
+        layout.operator("a3ob.keyframe_add_list", icon_value=utils.get_icon("op_keyframe_add_list"))
 
 
 classes = (

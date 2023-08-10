@@ -1,3 +1,9 @@
+# Writer functions to export multiple meshed as LODs
+# to the BI MLOD P3D format. Format specifications can
+# be found on the community wiki (although not withoug errors):
+# https://community.bistudio.com/wiki/P3D_File_Format_-_MLOD
+
+
 import time
 import struct
 
@@ -12,6 +18,8 @@ from ..utilities import errors
 from ..utilities.logger import ProcessLogger
 
 
+# Simple check to not even start the export if there are
+# no LOD objects in the scene.
 def can_export(operator, context):
     scene = context.scene
     export_objects = scene.objects
@@ -20,7 +28,7 @@ def can_export(operator, context):
         export_objects = context.selected_objects
         
     for obj in export_objects:
-        if obj.type == 'MESH' and obj.a3ob_properties_object.is_a3_lod and obj.parent == None and obj.a3ob_properties_object.lod != '30':
+        if (not operator.visible_only or obj.visible_get()) and  obj.type == 'MESH' and obj.a3ob_properties_object.is_a3_lod and obj.parent == None and obj.a3ob_properties_object.lod != '30':
             return True
             
     return False
@@ -32,7 +40,8 @@ def duplicate_object(obj):
     return new_object
 
 
-# may be worth looking into bpy.ops.object.convert(target='MESH') instead to reduce operator calls
+# May be worth looking into bpy.ops.object.convert(target='MESH')
+# instead to reduce operator calls.
 def apply_modifiers(obj, context):
     ctx = context.copy()
     ctx["object"] = obj
@@ -93,8 +102,13 @@ def get_proxy_string(proxy_props, addon_prefs):
     return "proxy:%s.%03d" % (path, proxy_props.proxy_index)
 
 
+# Huge monolith function to prepare the LOD objects for export.
+# Returns the merged LOD objects, the proxy lookup dictionaries,
+# and the material lookup dictionries for each LOD.
+# 
+# [(LOD object 1, proxies 1, materials 1), (LOD object 2, ...)...]
 def get_lod_data(operator, context):
-    addon_prefs = utils.get_addon_preferences(context)
+    addon_prefs = utils.get_addon_preferences()
     scene = context.scene
     export_objects = scene.objects
     
@@ -102,12 +116,19 @@ def get_lod_data(operator, context):
         export_objects = context.selected_objects
     
     lod_list = []
-    for obj in export_objects:
+    for obj in [obj for obj in export_objects if not operator.visible_only or obj.visible_get()]:
         lod_item = []
         
         if obj.type != 'MESH' or not obj.a3ob_properties_object.is_a3_lod or obj.parent != None or obj.a3ob_properties_object.lod == '30':
             continue
-            
+        
+        # Some operator polls fail later if an object is in edit mode.
+        if not obj.mode == 'OBJECT':
+            bpy.ops.object.mode_set({"active_object": obj}, mode='OBJECT')
+        
+        # Objects must be duplicated in the background in order to perform the merge
+        # and other destructive operations without changing the working object.
+        # The duplicates are cleaned up after export.
         main_object = duplicate_object(obj)
         
         if operator.apply_modifiers:
@@ -118,10 +139,14 @@ def get_lod_data(operator, context):
         sub_objects = []
         object_proxies = {}
         for i, child in enumerate(children):
-            if obj.type != 'MESH':
+            if child.type != 'MESH':
                 continue
                 
             sub_object = duplicate_object(child)
+            
+            # Blender has a 63 character length limit on vertex group names,
+            # so the proxy paths can't be written to the group name directly,
+            # a placeholder name must be used, and added to a lookup dictionary.
             object_props = sub_object.a3ob_properties_object_proxy
             if object_props.is_a3_proxy:
                 placeholder = "@proxy_%04d" % i
@@ -155,39 +180,52 @@ def get_lod_data(operator, context):
         lod_item.append(main_object)
         lod_item.append(object_proxies)
         
+        # The mesh faces are linked to materials through the material slot index
+        # so it's best to create a lookup dictionary for materials.
         object_materials = {0: ("", "")}
-        translucency = {0: False}
+        sections = {0: []}
         
         for i, slot in enumerate(main_object.material_slots):
+            sections[i] = []
             mat = slot.material
             if mat:
                 object_materials[i] = (get_texture_string(mat.a3ob_properties_material, addon_prefs), get_material_string(mat.a3ob_properties_material, addon_prefs))
-                translucency[i] = mat.a3ob_properties_material.translucent
             else:
                 object_materials[i] = ("", "")
-                translucency[i] = False
                 
         lod_item.append(object_materials)
         lod_list.append(lod_item)
-                
-        bm = bmesh.new()
-        bm.from_mesh(main_object.data)
-        bm.faces.ensure_lookup_table()
         
-        index_offset = len(bm.faces) - 1
-        count_translucent = 0
-        for face in bm.faces:
-            if translucency[face.material_index]:
-                face.index = index_offset + count_translucent
-                count_translucent += 1
-                
-        bm.faces.sort()
-        bm.to_mesh(main_object.data)
-        bm.free()
+        # Sections are important for in-game performace, and should be sorted during export
+        # to avoid any unnecessary duplication. Some info about sections can be found on the
+        # community wiki: https://community.bistudio.com/wiki/Section_Count
+        # Some corrections: https://mrcmodding.gitbook.io/home/documents/sections
+        if operator.sort_sections:
+            bm = bmesh.new()
+            bm.from_mesh(main_object.data)
+            bm.faces.ensure_lookup_table()
+            
+            for face in bm.faces:
+                sections[face.material_index].append(face)
+            
+            face_index = 0
+            for section in sections.values():
+                for face in section:
+                    face.index = face_index
+                    face_index -=- 1
+                    
+            bm.faces.sort()
+            bm.to_mesh(main_object.data)
+            bm.free()
     
     return lod_list
 
 
+# The P3D stores vertex normals, which by the nature of vertex normals
+# can be as many as 3 * count_faces, well exceeding the number of 
+# vertices. Since the normals are written to a datablock separate from
+# the faces, and later referenced by index, redundancy (and thus file size)
+# can be reduced with a lookup dictionary.
 def get_normals(mesh):
     normals = {}
     normals_lookup_dict = {}
@@ -208,6 +246,7 @@ def get_resolution(obj):
     return lodutils.get_lod_signature(int(object_props.lod), object_props.resolution)
 
 
+# Selection weights are stored as bytes, and need to transformed.
 def encode_selection_weight(weight):
     if weight == 0:
         return 0
@@ -323,6 +362,8 @@ def write_tagg_mass(file, bm, count_verts):
 def write_tagg_selections_item(file, name, count_vert, count_face, vertices, faces, proxies):
     real_name = name
     
+    # If the vertex group is a proxy placeholder, we need to replace
+    # the name with the path from the lookup dictionary.
     if name.strip().startswith("@proxy"):
         try:
             real_name = proxies[name]
@@ -412,7 +453,9 @@ def write_file_header(file, count_lod):
 def write_lod(file, obj, materials, proxies, validator, logger):
     logger.level_up()
     
-    if lodutils.has_ngons(obj.data):
+    # The P3D format cannot store n-gons, so the export must
+    # skip LODs with such faces.
+    if lodutils.Validator.has_ngons(obj.data):
         logger.step("N-gons detected -> skipping LOD")
         logger.step("Name: %s" % lodutils.format_lod_name(int(obj.a3ob_properties_object.lod), obj.a3ob_properties_object.resolution))
         logger.level_down()
@@ -428,9 +471,6 @@ def write_lod(file, obj, materials, proxies, validator, logger):
     binary.write_chars(file, "P3DM")
     binary.write_ulong(file, 0x1c)
     binary.write_ulong(file, 0x100)
-    
-    if obj.mode == 'EDIT':
-        obj.update_from_editmode()
         
     mesh = obj.data
     mesh.calc_normals_split()
@@ -453,9 +493,9 @@ def write_lod(file, obj, materials, proxies, validator, logger):
     binary.write_ulong(file, count_faces)
     binary.write_ulong(file, 0) # unknown flags/padding
     
-    vertex_flag = 33554432
+    vertex_flag = 33554432 # set vertices to fixed normals
     if obj.a3ob_properties_object.normals_flag == 'AVG':
-        vertex_flag = 0
+        vertex_flag = 0 # leave vertices with average recalculation
     
     for vert in bm.verts:
         write_vertex(file, vert.co, vertex_flag)
@@ -495,7 +535,7 @@ def write_lod(file, obj, materials, proxies, validator, logger):
     binary.write_byte(file, 1)
     binary.write_asciiz(file, "#EndOfFile#") # EOF signature
     binary.write_ulong(file, 0)
-    binary.write_float(file,get_resolution(obj)) # LOD resolution index
+    binary.write_float(file, get_resolution(obj)) # LOD resolution index
     
     logger.step("Resolution signature: %d" % float(get_resolution(obj)))
     logger.step("Name: %s" % lodutils.format_lod_name(int(obj.a3ob_properties_object.lod), obj.a3ob_properties_object.resolution))
@@ -514,7 +554,7 @@ def write_file(operator, context, file):
     time_file_start = time.time()
     
     lod_list = get_lod_data(operator, context)
-    lod_list.sort(key=lambda lod: get_resolution(lod[0]))
+    lod_list.sort(key=lambda lod: get_resolution(lod[0])) # export LODs in order of resolution signature
     
     count_lod = len(lod_list)
     

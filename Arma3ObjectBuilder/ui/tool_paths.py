@@ -30,8 +30,8 @@ class A3OB_OT_rename_path_item(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        wm_props = context.window_manager.a3ob_renaming
-        return wm_props.path_list_index in range(len(wm_props.path_list))
+        scene_props = context.scene.a3ob_renaming
+        return scene_props.path_list_index in range(len(scene_props.path_list))
         
     def execute(self, context):
         renameutils.rename_path(context)
@@ -47,8 +47,8 @@ class A3OB_OT_rename_path_root(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        wm_props = context.window_manager.a3ob_renaming
-        return wm_props.root_old.strip() != ""
+        scene_props = context.scene.a3ob_renaming
+        return scene_props.root_old.strip() != ""
         
     def execute(self, context):
         renameutils.rename_root(context)
@@ -64,8 +64,8 @@ class A3OB_OT_rename_vertex_groups(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        wm_props = context.window_manager.a3ob_renaming
-        return wm_props.vgroup_old.strip() != "" and wm_props.vgroup_new.strip() != "" and len(context.selected_objects) > 0
+        scene_props = context.scene.a3ob_renaming
+        return scene_props.vgroup_old.strip() != "" and scene_props.vgroup_new.strip() != "" and len(context.selected_objects) > 0
         
     def execute(self, context):
         renameutils.rename_vertex_groups(context)
@@ -80,7 +80,7 @@ class A3OB_PT_renaming(bpy.types.Panel):
     bl_options = {'DEFAULT_CLOSED'}
     
     def draw_header(self, context):
-        if not utils.get_addon_preferences(context).show_info_links:
+        if not utils.get_addon_preferences().show_info_links:
             return
             
         layout = self.layout
@@ -106,21 +106,21 @@ class A3OB_PT_renaming_paths_bulk(bpy.types.Panel):
     
     def draw(self, context):
         layout = self.layout
-        wm_props = context.window_manager.a3ob_renaming
+        scene_props = context.scene.a3ob_renaming
         
         col_list = layout.column(align=True)
         
-        col_list.template_list("A3OB_UL_renamable_paths", "A3OB_bulk_rename", wm_props, "path_list", wm_props, "path_list_index")
+        col_list.template_list("A3OB_UL_renamable_paths", "A3OB_bulk_rename", scene_props, "path_list", scene_props, "path_list_index")
         row_filter = col_list.row(align=True)
-        row_filter.operator("a3ob.rename_list_refresh", text="", icon='FILE_REFRESH')
-        row_filter.prop(wm_props, "source_filter")
+        row_filter.operator("a3ob.rename_list_refresh", text="", icon_value=utils.get_icon("op_refresh"))
+        row_filter.prop(scene_props, "source_filter")
         
-        if wm_props.path_list_index in range(len(wm_props.path_list)):
+        if scene_props.path_list_index in range(len(scene_props.path_list)):
             col_edit = layout.column(align=True)
-            col_edit.prop(wm_props.path_list[wm_props.path_list_index], "path", text="")
-            col_edit.prop(wm_props, "new_path", text="")
+            col_edit.prop(scene_props.path_list[scene_props.path_list_index], "path", text="")
+            col_edit.prop(scene_props, "new_path", text="")
             col_edit.separator()
-            col_edit.operator("a3ob.rename_path_item")
+            col_edit.operator("a3ob.rename_path_item", icon_value=utils.get_icon("op_replace"))
 
 
 class A3OB_PT_renaming_paths_root(bpy.types.Panel):
@@ -133,16 +133,16 @@ class A3OB_PT_renaming_paths_root(bpy.types.Panel):
     
     def draw(self, context):
         layout = self.layout
-        wm_props = context.window_manager.a3ob_renaming
+        scene_props = context.scene.a3ob_renaming
         
         col_edit = layout.column(align=True)
-        col_edit.prop(wm_props, "root_old")
-        col_edit.prop(wm_props, "root_new")
+        col_edit.prop(scene_props, "root_old")
+        col_edit.prop(scene_props, "root_new")
         
         row_filter = layout.row(align=True)
-        row_filter.prop(wm_props, "source_filter")
+        row_filter.prop(scene_props, "source_filter")
         
-        layout.operator("a3ob.rename_path_root")
+        layout.operator("a3ob.rename_path_root", icon_value=utils.get_icon("op_replace"))
 
 
 class A3OB_PT_renaming_vertex_groups(bpy.types.Panel):
@@ -155,13 +155,13 @@ class A3OB_PT_renaming_vertex_groups(bpy.types.Panel):
     
     def draw(self, context):
         layout = self.layout
-        wm_props = context.window_manager.a3ob_renaming
+        scene_props = context.scene.a3ob_renaming
         
         col_edit = layout.column(align=True)
-        col_edit.prop(wm_props, "vgroup_old")
-        col_edit.prop(wm_props, "vgroup_new")
-        layout.prop(wm_props, "vgroup_match_whole")
-        layout.operator("a3ob.rename_vertex_groups")
+        col_edit.prop(scene_props, "vgroup_old")
+        col_edit.prop(scene_props, "vgroup_new")
+        layout.prop(scene_props, "vgroup_match_whole")
+        layout.operator("a3ob.rename_vertex_groups", icon_value=utils.get_icon("op_replace"))
 
 
 classes = (

@@ -1,8 +1,12 @@
+# Utility functions not exclusively related to a specific tool.
+
+
 import math
 import os
 import json
 
 import bpy
+import bpy_extras.mesh_utils as meshutils
 
 from . import data
 
@@ -21,9 +25,27 @@ def show_info_box(message, title = "", icon = 'INFO'):
     bpy.context.window_manager.popup_menu(draw, title=title, icon=icon)
 
 
+def get_components(mesh):
+    mesh.calc_loop_triangles()
+    components = meshutils.mesh_linked_triangles(mesh)
+    component_lookup = {}
+
+    for id, comp in enumerate(components):
+        for tri in comp:
+            for vert in tri.vertices:
+                component_lookup[vert] = id
+    
+    loose = [vert.index for vert in mesh.vertices if component_lookup.get(vert.index, None) is None]
+    count_components = len(components)
+    component_lookup.update({id: count_components + i for i, id in enumerate(loose)})
+    components.extend([[] for i in range(len(loose))])
+    
+    return component_lookup, components
+
+
 def normalize_float(number, precision = 4):
     if number == 0:
-        return 0.0,1
+        return 0.0, 1
     
     base10 = math.log10(abs(number))
     exponent = abs(math.floor(base10))
@@ -82,16 +104,12 @@ def strip_extension(path):
     return os.path.splitext(path)[0]
 
 
-def get_addon_preferences(context = None):
-    if not context:
-        context = bpy.context
-        
-    name = __name__.split(".")[0]
-    return context.preferences.addons[name].preferences
+def get_addon_preferences():
+    return bpy.context.preferences.addons["Arma3ObjectBuilder"].preferences
 
 
-def get_common_proxies(context):
-    prefs = get_addon_preferences(context)
+def get_common_proxies():
+    prefs = get_addon_preferences()
     custom_path = abspath(prefs.custom_data)
     proxies = data.common_proxies
     
@@ -111,8 +129,8 @@ def get_common_proxies(context):
     return {**proxies, **custom_proxies}
 
 
-def get_common_namedprops(context):
-    prefs = get_addon_preferences(context)
+def get_common_namedprops():
+    prefs = get_addon_preferences()
     custom_path = abspath(prefs.custom_data)
     namedprops = data.common_namedprops
     
@@ -137,3 +155,39 @@ def abspath(path):
         return path
     
     return os.path.abspath(bpy.path.abspath(path))
+
+
+preview_collection = {}
+
+
+def get_icon(name):
+    icon = 0
+    try:
+        icon = preview_collection[get_addon_preferences().icon_theme.lower()][name].icon_id
+    except:
+        pass
+        
+    return icon
+
+
+def register_icons():
+    import bpy.utils.previews
+    
+    themes_dir = os.path.join(os.path.dirname(__file__), "..\icons")
+    for theme in os.listdir(themes_dir):
+        theme_icons = bpy.utils.previews.new()
+        
+        icons_dir = os.path.join(themes_dir, theme)
+        for filename in os.listdir(icons_dir):
+            theme_icons.load(os.path.splitext(os.path.basename(filename))[0].lower(), os.path.join(icons_dir, filename), 'IMAGE')
+        
+        preview_collection[theme.lower()] = theme_icons
+    
+
+def unregister_icons():
+    import bpy.utils.previews
+    
+    for icon in preview_collection.values():
+        bpy.utils.previews.remove(icon)
+    
+    preview_collection.clear()

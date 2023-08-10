@@ -18,16 +18,16 @@ class A3OB_OT_convert_to_a3ob(bpy.types.Operator):
         return True
         
     def execute(self, context):
-        wm_props = context.window_manager.a3ob_conversion
+        scene_props = context.scene.a3ob_conversion
         object_pool = []
-        if wm_props.use_selection:
+        if scene_props.use_selection:
             object_pool = context.selected_objects
         else:
             object_pool = context.scene.objects
             
-        objects_LOD = [obj for obj in object_pool if obj.visible_get() and obj.type == 'MESH' and 'MESH' in wm_props.types and obj.armaObjProps.isArmaObject]
-        objects_DTM = [obj for obj in object_pool if obj.visible_get() and obj.type == 'MESH' and 'DTM' in wm_props.types and obj.armaHFProps.isHeightfield]
-        objects_armature = [obj for obj in object_pool if obj.visible_get() and obj.type == 'ARMATURE' and 'ARMATURE' in wm_props.types and obj.armaObjProps.isArmaObject]
+        objects_LOD = [obj for obj in object_pool if obj.visible_get() and obj.type == 'MESH' and 'MESH' in scene_props.types and obj.armaObjProps.isArmaObject]
+        objects_DTM = [obj for obj in object_pool if obj.visible_get() and obj.type == 'MESH' and 'DTM' in scene_props.types and obj.armaHFProps.isHeightfield]
+        objects_armature = [obj for obj in object_pool if obj.visible_get() and obj.type == 'ARMATURE' and 'ARMATURE' in scene_props.types and obj.armaObjProps.isArmaObject]
         objects = [objects_LOD, objects_DTM, objects_armature]
         
         for category in objects:
@@ -38,7 +38,7 @@ class A3OB_OT_convert_to_a3ob(bpy.types.Operator):
         
         try:
             bpy.ops.object.select_all(action='DESELECT')
-            convertutils.convert_objects(objects, wm_props.dynamic_naming, wm_props.cleanup)
+            convertutils.convert_objects(objects, scene_props.dynamic_naming, scene_props.cleanup)
             self.report({'INFO'}, "Finished setup conversion (check the logs in the system console)")
         except Exception as ex:
             self.report({'ERROR'}, "%s (check the system console)" % str(ex))
@@ -59,7 +59,7 @@ class A3OB_PT_conversion(bpy.types.Panel):
         return True
         
     def draw_header(self, context):
-        if not utils.get_addon_preferences(context).show_info_links:
+        if not utils.get_addon_preferences().show_info_links:
             return
             
         layout = self.layout
@@ -68,17 +68,17 @@ class A3OB_PT_conversion(bpy.types.Panel):
         
     def draw(self, context):
         layout = self.layout
-        wm_props = context.window_manager.a3ob_conversion
+        scene_props = context.scene.a3ob_conversion
         
         col = layout.column(heading="Limit To", align=True)
         col.use_property_split = True
         col.use_property_decorate = False
-        col.prop(wm_props, "use_selection")
-        col.prop(wm_props, "types", text=" ")
+        col.prop(scene_props, "use_selection")
+        col.prop(scene_props, "types", text=" ")
         
-        layout.prop(wm_props, "dynamic_naming")
-        layout.prop(wm_props, "cleanup")
-        layout.operator("a3ob.convert_to_a3ob", icon='FILE_REFRESH')
+        layout.prop(scene_props, "dynamic_naming")
+        layout.prop(scene_props, "cleanup")
+        layout.operator("a3ob.convert_to_a3ob", icon_value=utils.get_icon("op_convert"))
 
 
 classes = (

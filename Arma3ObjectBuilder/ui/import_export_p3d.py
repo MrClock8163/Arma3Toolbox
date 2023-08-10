@@ -235,6 +235,11 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         description = "Export only selected objects",
         default = False
     )
+    visible_only: bpy.props.BoolProperty (
+        name = "Visible",
+        description = "Only export visible LOD objects (necessary, only shown for indication)",
+        default = True
+    )
     apply_transforms: bpy.props.BoolProperty (
         name = "Apply Transforms",
         description = "Apply space transformations to the exported model data",
@@ -243,6 +248,11 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     apply_modifiers: bpy.props.BoolProperty (
         name = "Apply Modifiers",
         description = "Apply the assigned modifiers to the LOD objects during export",
+        default = True
+    )
+    sort_sections: bpy.props.BoolProperty (
+        name = "Sort Sections",
+        description = "Sort faces in LODs by the assigned materials (prevents fragmentation in the face list, and allows proper sorting of alpha faces)",
         default = True
     )
     validate_lods: bpy.props.BoolProperty (
@@ -278,7 +288,7 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                     os.remove(self.filepath)
                     
                 os.rename(temppath, os.path.splitext(temppath)[0])
-            elif not success and not utils.get_addon_preferences(context).preserve_faulty_output:
+            elif not success and not utils.get_addon_preferences().preserve_faulty_output:
                 os.remove(temppath)
                 
         else:
@@ -309,6 +319,9 @@ class A3OB_PT_export_p3d_include(bpy.types.Panel):
         
         col = layout.column(heading="Limit To", align=True)
         col.prop(operator, "use_selection")
+        row_visible = col.row(align=True)
+        row_visible.prop(operator, "visible_only")
+        row_visible.enabled = False
 
 
 class A3OB_PT_export_p3d_meshes(bpy.types.Panel):
@@ -336,6 +349,7 @@ class A3OB_PT_export_p3d_meshes(bpy.types.Panel):
         col.prop(operator, "apply_modifiers")
         col.prop(operator, "apply_transforms")
         col.prop(operator, "preserve_normals")
+        col.prop(operator, "sort_sections")
 
 
 class A3OB_PT_export_p3d_validate(bpy.types.Panel):

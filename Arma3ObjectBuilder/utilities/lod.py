@@ -1,3 +1,7 @@
+# Backend functions mainly used by the P3D I/O, and the LOD
+# validation tool.
+
+
 import re
 
 import bmesh
@@ -53,43 +57,6 @@ def format_lod_name(index, resolution):
         return "%s %d" % (get_lod_name(index), resolution)
         
     return get_lod_name(index)
-    
-    
-# def is_contiguous_mesh(bm):
-    # for edge in bm.edges:
-        # if not edge.is_contiguous:
-            # return False
-            
-    # return True
-    
-
-# def is_triangulated(bm):
-    # for face in bm.faces:
-        # if len(face.verts) > 3:
-            # return False
-            
-    # return True
-
-
-def has_ngons(mesh):
-    for face in mesh.polygons:
-        if len(face.vertices) > 4:
-            return True
-    
-    return False
-
-
-# def is_all_sharp(bm):
-    # for edge in bm.edges:
-        # smooths = [not face.smooth for face in edge.link_faces]
-        
-        # if sum(smooths) > 0:
-            # continue
-                    
-        # if edge.smooth:
-            # return False
-    
-    # return True
 
     
 class Validator():    

@@ -1,3 +1,8 @@
+# Writer functions to export a single DEM mesh to the ASCII
+# Esri GRID raster format, for use in terrain creation.
+# https://en.wikipedia.org/wiki/Esri_grid
+
+
 import math
 
 import bpy
@@ -5,6 +10,8 @@ import bpy
 from ..utilities.logger import ProcessLogger
 
 
+# The exporter only supports square rasters,
+# so the resolution must be checked before export.
 def valid_resolution(operator, context, obj):
     if operator.apply_modifiers:
         obj = obj.evaluated_get(context.evaluated_depsgraph_get())
@@ -41,6 +48,9 @@ def write_header(file, cellsize, easting, northing, centered, resolution, nodata
     logger.level_down()
 
 
+# The order of vertices in a mesh is virtually random
+# so they need to be sorted along the Y and then X axes
+# before export.
 def sort_points(mesh, resolution, logger):
     points = [vertex.co for vertex in mesh.vertices]
     points.sort(reverse=True, key=lambda vert: vert[1])

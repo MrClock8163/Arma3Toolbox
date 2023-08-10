@@ -1,14 +1,17 @@
+# Backend functions of the rtm tool.
+
+
 import bpy
 
 
-def get_range(wm_props):
-    return list(range(wm_props.range_start, wm_props.range_end + 1, wm_props.range_step))
+def get_range(scene_props):
+    return list(range(scene_props.range_start, scene_props.range_end + 1, scene_props.range_step))
 
 
-def add_frame_range(obj, wm_props):
+def add_frame_range(obj, scene_props):
     object_props = obj.a3ob_properties_object_armature
     frames_current = [frame.index for frame in object_props.frames]
-    frames = get_range(wm_props)
+    frames = get_range(scene_props)
     frames.sort()
     
     for frame in frames:

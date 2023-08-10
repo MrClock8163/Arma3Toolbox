@@ -13,8 +13,8 @@ class A3OB_OT_hitpoints_generate(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        wm_props = context.window_manager.a3ob_hitpoint_generator
-        return wm_props.source and (wm_props.source != wm_props.target) and wm_props.source.type == 'MESH' and (not wm_props.target or wm_props.target.type == 'MESH')
+        scene_props = context.scene.a3ob_hitpoint_generator
+        return scene_props.source and (scene_props.source != scene_props.target) and scene_props.source.type == 'MESH' and (not scene_props.target or scene_props.target.type == 'MESH')
         
     def execute(self, context):        
         cloudutils.generate_hitpoints(self, context)
@@ -33,7 +33,7 @@ class A3OB_PT_hitpoints(bpy.types.Panel):
         return True
         
     def draw_header(self, context):
-        if not utils.get_addon_preferences(context).show_info_links:
+        if not utils.get_addon_preferences().show_info_links:
             return
             
         layout = self.layout
@@ -41,34 +41,34 @@ class A3OB_PT_hitpoints(bpy.types.Panel):
         row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/hit-point-cloud"
         
     def draw(self, context):
-        wm_props = context.window_manager.a3ob_hitpoint_generator
+        scene_props = context.scene.a3ob_hitpoint_generator
         scene = context.scene
         
         # SUPER hacky way to get rid of the object if it's only retained in memory because of this property
-        if wm_props.source or wm_props.target:
-            cloudutils.validate_references(wm_props.source, wm_props.target)
+        if scene_props.source or scene_props.target:
+            cloudutils.validate_references(scene_props.source, scene_props.target)
         
         layout = self.layout
         
-        layout.prop_search(wm_props, "source", scene, "objects")
-        layout.prop_search(wm_props, "target", scene, "objects")
+        layout.prop_search(scene_props, "source", scene, "objects")
+        layout.prop_search(scene_props, "target", scene, "objects")
         
         col = layout.column(align=True)
-        col.prop(wm_props,"spacing")
+        col.prop(scene_props,"spacing")
         
         col_bevel = layout.column(align=True, heading="Bevel:")
-        col_bevel.prop(wm_props, "bevel_offset", text="Offset")
-        col_bevel.prop(wm_props, "bevel_segments", text="Segments")
+        col_bevel.prop(scene_props, "bevel_offset", text="Offset")
+        col_bevel.prop(scene_props, "bevel_segments", text="Segments")
         col_bevel.separator()
         row_triangulate = col_bevel.row(align=True)
         row_triangulate.use_property_split = True
         row_triangulate.use_property_decorate = False
-        row_triangulate.prop(wm_props, "triangulate", text="Triangulate", expand=True)
+        row_triangulate.prop(scene_props, "triangulate", text="Triangulate", expand=True)
         
         col_selection = layout.column(align=True, heading="Selection:")
-        col_selection.prop(wm_props, "selection", text="", icon='MESH_DATA')
+        col_selection.prop(scene_props, "selection", text="", icon='MESH_DATA')
         
-        layout.operator("a3ob.hitpoints_generate", text="Generate", icon='LIGHTPROBE_GRID')
+        layout.operator("a3ob.hitpoints_generate", text="Generate", icon_value=utils.get_icon("op_hitpoints_generate"))
 
 
 classes = (

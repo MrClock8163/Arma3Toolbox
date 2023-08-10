@@ -1,3 +1,8 @@
+# Reader functions to import a single DEM mesh from the ASCII
+# Esri GRID raster format.
+# https://en.wikipedia.org/wiki/Esri_grid
+
+
 import bpy
 
 from ..utilities.logger import ProcessLogger

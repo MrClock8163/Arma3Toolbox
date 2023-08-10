@@ -1,3 +1,9 @@
+# Reader functions to import multiple LODs as meshes
+# from the BI MLOD P3D format. Format specifications can
+# be found on the community wiki (although not withoug errors):
+# https://community.bistudio.com/wiki/P3D_File_Format_-_MLOD
+
+
 import struct
 import math
 import re
@@ -50,7 +56,7 @@ def read_face_pseudo_vertextable(file):
 
 def read_face(file):
     count_sides = binary.read_ulong(file)
-    vertex_tables = [read_face_pseudo_vertextable(file) for i in range(count_sides)] # should instead return the individual lists to avoid unecessary data
+    vertex_tables = [read_face_pseudo_vertextable(file) for i in range(count_sides)]
     
     if count_sides < 4:
         file.read(16) # dump null bytes
@@ -62,6 +68,8 @@ def read_face(file):
     return vertex_tables, texture, material
 
 
+# Selection weights need to be transformed to float representation
+# from byte representation.
 def decode_selection_weight(weight):
     if weight == 0:
         return 0.0
@@ -76,6 +84,7 @@ def decode_selection_weight(weight):
     return value
 
 
+# Attempt to restore absolute paths to the set project root (P drive by default).
 def get_file_path(path, addon_prefs, extension = ""):
     path = utils.replace_slashes(path.strip().lower())
     
@@ -91,15 +100,15 @@ def get_file_path(path, addon_prefs, extension = ""):
     if addon_prefs.import_absolute:
         root = utils.abspath(addon_prefs.project_root).lower()
         if not path.startswith(root):
-            absPath = os.path.join(root, path)
-            if os.path.exists(absPath):
-                return absPath
+            abs_path = os.path.join(root, path)
+            if os.path.exists(abs_path):
+                return abs_path
     
     return path
 
 
 # It's not guaranteed that a LOD has a #UVSet# TAGG section, so the UVs embedded into
-# the face data should not be discarded
+# the face data should not be discarded.
 def process_embedded_uv(bm, face_data_dict):
     uv_layer = bm.loops.layers.uv.new("UVSet 0")
     
@@ -112,6 +121,10 @@ def process_embedded_uv(bm, face_data_dict):
                     break
 
 
+# Reads and processed the contents of the TAGG section of a LOD.
+# Returns the list of selection names, and dictionary of named properties
+# as those need to be set on the object itself, not the bmesh, and the
+# proxies will have to be post processed.
 def process_taggs(file, bm, additional_data, count_verts, count_faces, logger):
     count = 0
     named_selections = []
@@ -265,6 +278,9 @@ def renormalize_vertex_normals(normals_dict):
     return normals_dict
 
 
+# To preserve the shading, vertex normals need to be set as
+# custom split normals on the mesh. The normals are set on
+# the loops.
 def process_normals(mesh, face_data_dict, normals_dict):
     loop_normals = []
     for face in mesh.polygons:
@@ -281,6 +297,7 @@ def process_normals(mesh, face_data_dict, normals_dict):
     mesh.normals_split_custom_set(loop_normals)
 
 
+# Create collections and put each LOD in the appropriate one.
 def group_lod_data(lod_objects, groupby = 'TYPE'):    
     collections = {}
     group_dict = data.lod_groups[groupby]
@@ -312,7 +329,9 @@ def build_collections(lod_objects, operator, root_collection):
             root_collection.children.link(group)
 
 
-def transform_proxy(obj): # Align the object coordinate system with the proxy directions
+# Align the object coordinate system with the proxy coordinates.
+# https://mrcmodding.gitbook.io/home/documents/proxy-coordinates
+def transform_proxy(obj):
     rotation_matrix = proxyutils.get_transform_rotation(obj)
     obj.data.transform(rotation_matrix)
     obj.matrix_world @= rotation_matrix.inverted()
@@ -324,6 +343,9 @@ def transform_proxy(obj): # Align the object coordinate system with the proxy di
     obj.data.update()
 
 
+# Proxy triangles need to be post processed after the LOD meshes are imported.
+# The triangles are separeted from the LOD objects and parented to them,
+# and the proxy paths are set in the proxy object properties.
 def process_proxies(lod_data, operator, material_dict, dynamic_naming, addon_prefs):
     regex_proxy = "proxy:(.*)\.(\d{3})"
     regex_proxy_placeholder = "@proxy_(\d{4})"
@@ -360,7 +382,7 @@ def process_proxies(lod_data, operator, material_dict, dynamic_naming, addon_pre
                 proxy_obj.a3ob_properties_object_proxy.dynamic_naming = dynamic_naming
                 
                 transform_proxy(proxy_obj)
-                structutils.cleanup_vertex_groups(proxy_obj)
+                structutils.cleanup_vertex_groups(proxy_obj) # need to remove the unused groups leftover from the separation
                 
                 for group in proxy_obj.vertex_groups:
                     name = group.name
@@ -435,7 +457,7 @@ def read_lod(context, file, material_dict, additional_data, dynamic_naming, logg
     #
     # Split normals apparently also set up hard edges where necessary,
     # but due to a seemingly Blender specific phenomenon, random sharp
-    # edges tend to appear where the loop vertices on both edges of an edge
+    # edges tend to appear where the loop vertices on both ends of an edge
     # have split normals. To combat this, the normals have to be processed
     # before the #SharpEdges# TAGG, so that the sharp edges get cleaned up
     # by the TAGG processing.
@@ -455,9 +477,9 @@ def read_lod(context, file, material_dict, additional_data, dynamic_naming, logg
     process_embedded_uv(bm, face_data_dict)
     logger.step("Added embedded UVSet 0")
     
-    taggSignature = read_signature(file)
-    if taggSignature != "TAGG":
-        raise errors.P3DError("Invalid TAGG section signature: %s" % taggSignature)
+    tagg_signature = read_signature(file)
+    if tagg_signature != "TAGG":
+        raise errors.P3DError("Invalid TAGG section signature: %s" % tagg_signature)
     
     named_selections, named_properties = process_taggs(file, bm, additional_data, count_verts, count_faces, logger)
     
@@ -538,7 +560,7 @@ def read_lod(context, file, material_dict, additional_data, dynamic_naming, logg
 
 
 def read_file(operator, context, file, first_lod_only = False):
-    # If something is left selected in the scene, the proxy separation trips up with the operators
+    # If something is left selected in the scene, the proxy separation trips up with the operators.
     for obj in bpy.context.selected_objects:
         obj.select_set(False)
         
@@ -577,7 +599,7 @@ def read_file(operator, context, file, first_lod_only = False):
     
     logger.level_up()
     
-    addon_prefs = utils.get_addon_preferences(context)
+    addon_prefs = utils.get_addon_preferences()
     for i in range(count_lod):
         time_lod_start = time.time()
         logger.step("LOD %d" % i)

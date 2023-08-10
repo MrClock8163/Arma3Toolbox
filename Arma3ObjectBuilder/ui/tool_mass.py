@@ -1,7 +1,7 @@
 import bpy
 
 from ..utilities import generic as utils
-from ..utilities import properties as proputils
+from ..utilities import masses as massutils
 
 
 class A3OB_OT_vertex_mass_set(bpy.types.Operator):
@@ -13,12 +13,12 @@ class A3OB_OT_vertex_mass_set(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return proputils.can_edit_mass(context) and context.window_manager.a3ob_mass_editor.source == 'MASS'
+        return massutils.can_edit_mass(context) and context.scene.a3ob_mass_editor.source == 'MASS'
         
     def execute(self, context):
         obj = context.active_object
-        wm = context.window_manager
-        proputils.set_selection_mass_each(obj, wm.a3ob_mass_editor.mass)
+        scene = context.scene
+        massutils.set_selection_mass_each(obj, scene.a3ob_mass_editor.mass)
         return {'FINISHED'}
 
 
@@ -31,12 +31,12 @@ class A3OB_OT_vertex_mass_distribute(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return proputils.can_edit_mass(context) and context.window_manager.a3ob_mass_editor.source == 'MASS'
+        return massutils.can_edit_mass(context) and context.scene.a3ob_mass_editor.source == 'MASS'
         
     def execute(self, context):
         obj = context.active_object
-        wm = context.window_manager
-        proputils.set_selection_mass_distribute(obj, wm.a3ob_mass_editor.mass)
+        scene = context.scene
+        massutils.set_selection_mass_distribute(obj, scene.a3ob_mass_editor.mass)
         return {'FINISHED'}
 
 
@@ -49,12 +49,12 @@ class A3OB_OT_vertex_mass_set_density(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return proputils.can_edit_mass(context) and context.window_manager.a3ob_mass_editor.source == 'DENSITY'
+        return massutils.can_edit_mass(context) and context.scene.a3ob_mass_editor.source == 'DENSITY'
         
     def execute(self, context):
         obj = context.active_object
-        wm = context.window_manager
-        contiguous = proputils.set_selection_mass_density(obj, wm.a3ob_mass_editor.density)
+        scene = context.scene
+        contiguous = massutils.set_selection_mass_density(obj, scene.a3ob_mass_editor.density)
         if not contiguous:
             self.report({'WARNING'}, "Mesh is not contiguous, volume calculation gives unreliable result")
         
@@ -69,12 +69,32 @@ class A3OB_OT_vertex_mass_clear(bpy.types.Operator):
     bl_options = {'UNDO'}
     
     @classmethod
-    def poll(cls,context):
-        return proputils.can_edit_mass(context)
+    def poll(cls, context):
+        return massutils.can_edit_mass(context)
         
     def execute(self, context):
         obj = context.active_object
-        proputils.clear_selection_masses(obj)
+        massutils.clear_selection_masses(obj)
+        return {'FINISHED'}
+
+
+class A3OB_OT_vertex_mass_visualize(bpy.types.Operator):
+    """Generate vertex color layer to visualize mass distribution"""
+    
+    bl_idname = "a3ob.vertex_mass_visualize"
+    bl_label = "Visualize"
+    bl_options = {'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        return massutils.can_edit_mass(context)
+    
+    def execute(self, context):
+        obj = context.active_object
+        scene_props = context.scene.a3ob_mass_editor
+        
+        massutils.visualize_mass(obj, scene_props)
+        
         return {'FINISHED'}
 
 
@@ -91,52 +111,99 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
         
     def draw_header(self, context):
         row = self.layout.row(align=True)
-        if utils.get_addon_preferences(context).show_info_links:
+        if utils.get_addon_preferences().show_info_links:
             row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/vertex-mass-editing"
-            row.separator()
-            
-        row.prop(context.window_manager.a3ob_mass_editor, "enabled", text="")
         
     def draw(self, context):
         layout = self.layout
-        if not proputils.can_edit_mass(context):
-            layout.label(text="Only available in Edit Mode")
-            layout.enabled = False
-            return 
         
-        wm_props = context.window_manager.a3ob_mass_editor
-        
-        if not wm_props.enabled:
-            layout.label(text="The tools are currently disabled")
-            layout.enabled = False
-            return 
-        
+        scene_props = context.scene.a3ob_mass_editor
         obj = context.active_object
         
-        layout.prop(obj, "a3ob_selection_mass")
+        layout.prop(scene_props, "enabled", text="Live Editing", toggle=True)
+        row_dynamic = layout.row(align=True)
+        if not massutils.can_edit_mass(context) or not scene_props.enabled:
+            row_dynamic.label(text="Live Editing is unavailable")
+            row_dynamic.enabled = False
+        else:
+            row_dynamic.prop(obj, "a3ob_selection_mass")
+        
         layout.separator()
         layout.label(text="Overwrite Mass:")
-        layout.prop(wm_props, "source", expand=True)
+        layout.prop(scene_props, "source", expand=True)
         
         col = layout.column(align=True)        
-        if wm_props.source == 'MASS':
-            col.prop(wm_props, "mass")
-            col.operator("a3ob.vertex_mass_set")
-            col.operator("a3ob.vertex_mass_distribute")
-        elif wm_props.source == 'DENSITY':
-            col.prop(wm_props, "density")
-            col.operator("a3ob.vertex_mass_set_density")
+        if scene_props.source == 'MASS':
+            col.prop(scene_props, "mass")
+            col.operator("a3ob.vertex_mass_set", icon_value=utils.get_icon("op_mass_set"))
+            col.operator("a3ob.vertex_mass_distribute", icon_value=utils.get_icon("op_mass_distribute"))
+        elif scene_props.source == 'DENSITY':
+            col.prop(scene_props, "density")
+            col.operator("a3ob.vertex_mass_set_density", icon_value=utils.get_icon("op_mass_set_density"))
         
         col.separator()
-        col.operator("a3ob.vertex_mass_clear")
+        col.operator("a3ob.vertex_mass_clear", icon_value=utils.get_icon("op_mass_clear"))
+
+
+class A3OB_PT_vertex_mass_analyze(bpy.types.Panel):
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "Object Builder"
+    bl_label = "Analyze"
+    bl_parent_id = "A3OB_PT_vertex_mass"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    def draw(self, context):
+        layout = self.layout
+        scene_props = context.scene.a3ob_mass_editor
+        
+        layout.label(text="Empty Color:")
+        layout.prop(scene_props, "color_0", text="")
+        
+        layout.label(text="Color Ramp:")
+        row_colors = layout.row(align=True)
+        row_colors.prop(scene_props, "color_1", text="")
+        row_colors.prop(scene_props, "color_2", text="")
+        row_colors.prop(scene_props, "color_3", text="")
+        row_colors.prop(scene_props, "color_4", text="")
+        row_colors.prop(scene_props, "color_5", text="")
+        
+        row_stops = layout.row(align=True)
+        row_stops.enabled = False
+        row_stops.label(text="%.0f" % scene_props.stats.mass_min)
+        row_stops.label(text="%.0f" % (scene_props.stats.mass_min * 0.75 + scene_props.stats.mass_max * 0.25))
+        row_stops.label(text="%.0f" % (scene_props.stats.mass_min * 0.5 + scene_props.stats.mass_max * 0.5))
+        row_stops.label(text="%.0f" % (scene_props.stats.mass_min * 0.25 + scene_props.stats.mass_max * 0.75))
+        row_stops.label(text="%.0f" % scene_props.stats.mass_max)
+        
+        layout.prop(scene_props, "color_layer_name", text="Layer")
+        row_method = layout.row(align=True)
+        row_method.prop(scene_props, "method", text="Method", expand=True)
+        
+        layout.operator("a3ob.vertex_mass_visualize", icon_value=utils.get_icon("op_visualize"))
+        
+        layout.label(text="Stats:")
+        col_stats = layout.column(align=True)
+        col_stats.enabled = False
+        col_stats.prop(scene_props.stats, "mass_min", text="Min")
+        col_stats.prop(scene_props.stats, "mass_avg", text="Average")
+        col_stats.prop(scene_props.stats, "mass_max", text="Max")
+        col_stats.prop(scene_props.stats, "mass_sum", text="Total")
+        col_stats.prop(scene_props.stats, "count_item")
 
 
 classes = (
     A3OB_PT_vertex_mass,
+    A3OB_PT_vertex_mass_analyze,
     A3OB_OT_vertex_mass_set,
     A3OB_OT_vertex_mass_distribute,
     A3OB_OT_vertex_mass_set_density,
-    A3OB_OT_vertex_mass_clear
+    A3OB_OT_vertex_mass_clear,
+    A3OB_OT_vertex_mass_visualize
 )
 
 

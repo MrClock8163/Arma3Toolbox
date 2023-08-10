@@ -44,7 +44,7 @@ class A3OB_OP_import_asc(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 os.remove(self.filepath)
                 
             os.rename(temppath, os.path.splitext(temppath)[0])
-        elif not success and not utils.get_addon_preferences(context).preserve_faulty_output:
+        elif not success and not utils.get_addon_preferences().preserve_faulty_output:
             os.remove(temppath)
         
         return {'FINISHED'}

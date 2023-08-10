@@ -1,3 +1,7 @@
+# Utility functions for proxy transformations,
+# and proxy creation.
+
+
 import math
 
 import bpy
@@ -15,10 +19,11 @@ def find_axis_vertices(mesh):
     return verts[0][0], verts[1][0], verts[2][0]
 
 
+# https://mrcmodding.gitbook.io/home/documents/proxy-coordinates
 def get_transform_rotation(obj):
     vert_center, vert_y, vert_z = find_axis_vertices(obj.data)
     
-    y = (vert_y.co - vert_center.co).normalized() # appers to squish the proxy triangle if it's not a perfect right triangle
+    y = (vert_y.co - vert_center.co).normalized()
     z = (vert_z.co - vert_center.co).normalized()
     x = y.cross(z).normalized()
     z = x.cross(y).normalized()

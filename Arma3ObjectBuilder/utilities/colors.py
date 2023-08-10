@@ -1,3 +1,7 @@
+# Coversion functions to convert between 8-bit sRGB, decimal sRGB and linear RGB.
+# https://entropymine.com/imageworsener/srgbformula/
+# https://en.wikipedia.org/wiki/SRGB
+
 
 def is_valid_value(value, input_type):
     if input_type == 'S8':
@@ -9,17 +13,20 @@ def is_valid_value(value, input_type):
     if input_type == 'L':
         return value >= 0.0 and value <= 1.0
 
+
 def srgb8_to_srgb8(value):
     if not is_valid_value(value, 'S8'):
         return -1
     
     return value
 
+
 def srgb_to_srgb(value):
     if not is_valid_value(value, 'S'):
         return -1
     
     return value
+
 
 def linear_to_linear(value):
     if not is_valid_value(value, 'L'):

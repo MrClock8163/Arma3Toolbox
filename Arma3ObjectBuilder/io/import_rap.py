@@ -1,9 +1,14 @@
+# Reader function to import data from rapified files.
+# Format specifications: https://community.bistudio.com/wiki/raP_File_Format_-_Elite
+
+
 from enum import Enum
 
 from . import binary_handler as binary
 from ..utilities import errors
 
 
+# Internal data structure to store the read data.
 class Cfg():
     class EntryType(Enum):
         CLASS = 0
@@ -26,7 +31,7 @@ class Cfg():
             self.name = ""
             self.value = 0
         
-        def __repr__(self):
+        def __str__(self):
             return "%s = %s" % (self.name, self.value)
 
     class ClassBody():    
@@ -35,7 +40,7 @@ class Cfg():
             self.entry_count = 0
             self.entries = []
         
-        def __repr__(self):
+        def __str__(self):
             return "Inherits: %s" % (self.inherits if self.inherits != "" else "nothing")
         
         def find(self, name):
@@ -59,7 +64,7 @@ class Cfg():
             self.body_offset = 0
             self.body = Cfg.ClassBody()
         
-        def __repr__(self):
+        def __str__(self):
             if self.body:
                 return "class %s {%d}" % (self.name, self.body.entry_count)
             return "class %s {...}" % self.name
@@ -78,7 +83,7 @@ class Cfg():
             self.name = ""
             self.value = ""
         
-        def __repr__(self):
+        def __str__(self):
             if self.name != "":
                 return "%s = \"%s\";" % (self.name, self.value)
             return "\"%s\"" % self.value
@@ -90,7 +95,7 @@ class Cfg():
             self.name = ""
             self.value = 0.0
         
-        def __repr__(self):
+        def __str__(self):
             if self.name != "":
                 return "%s = %f;" % (self.name, self.value)
             return "%f" % self.value
@@ -102,7 +107,7 @@ class Cfg():
             self.name = ""
             self.value = 0
         
-        def __repr__(self):
+        def __str__(self):
             if self.name != "":
                 return "%s = %d;" % (self.name, self.value)
             return "%d" % self.value
@@ -114,7 +119,7 @@ class Cfg():
             self.name = ""
             self.value = ""
         
-        def __repr__(self):
+        def __str__(self):
             if self.name != "":
                 return "%s = ""%s"";" % (self.name, self.value)
             return "\"%s\"" % self.value
@@ -137,7 +142,7 @@ class Cfg():
             self.body = Cfg.ArrayBody()
             self.flag = None
         
-        def __repr__(self):
+        def __str__(self):
             if self.body:
                 return "%s[] = {%d};" % (self.name, self.body.element_count)
             return "%s[] = {...};" % self.name
@@ -149,7 +154,7 @@ class Cfg():
             self.name = ""
             self.value = ""
         
-        def __repr__(self):
+        def __str__(self):
             return "class %s;" % self.name
 
     class Delete():
@@ -159,7 +164,7 @@ class Cfg():
             self.name = ""
             self.value = ""
         
-        def __repr__(self):
+        def __str__(self):
             return "delete %s;" % self.name
 
     class Root():
