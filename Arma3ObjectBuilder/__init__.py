@@ -14,47 +14,13 @@ bl_info = {
 
 if "bpy" in locals():
     import importlib
-
-    importlib.reload(ui.import_export_p3d)
-    importlib.reload(ui.import_export_rtm)
-    importlib.reload(ui.import_export_asc)
-    importlib.reload(ui.tool_utilities)
-    importlib.reload(ui.tool_mass)
-    importlib.reload(ui.props_material)
-    importlib.reload(ui.props_object_mesh)
-    importlib.reload(ui.props_object_armature)
-    importlib.reload(ui.tool_hitpoint)
-    importlib.reload(ui.tool_validation)
-    importlib.reload(ui.tool_proxies)
-    importlib.reload(ui.tool_rtm)
-    importlib.reload(ui.tool_conversion)
-    importlib.reload(ui.tool_paths)
-    importlib.reload(ui.tool_color)
-    importlib.reload(ui.tool_weights)
-    importlib.reload(props.scene)
-    importlib.reload(props.object)
-    importlib.reload(props.material)
+    
+    importlib.reload(props)
+    importlib.reload(ui)
 
 else:
-    from .ui import import_export_p3d
-    from .ui import import_export_rtm
-    from .ui import import_export_asc
-    from .ui import tool_utilities
-    from .ui import tool_mass
-    from .ui import props_material
-    from .ui import props_object_mesh
-    from .ui import props_object_armature
-    from .ui import tool_hitpoint
-    from .ui import tool_validation
-    from .ui import tool_proxies
-    from .ui import tool_rtm
-    from .ui import tool_conversion
-    from .ui import tool_paths
-    from .ui import tool_color
-    from .ui import tool_weights
-    from .props import scene
-    from .props import object
-    from .props import material
+    from . import props
+    from . import ui
 
 
 import winreg
@@ -84,7 +50,7 @@ class A3OB_OT_find_a3_tools(bpy.types.Operator):
             self.report({'ERROR'}, "The Arma 3 Tools installation could not be found, it has to be set manually")
         
         return {'FINISHED'}
-            
+
 
 class A3OB_AT_preferences(bpy.types.AddonPreferences):
     bl_idname = __name__
@@ -180,6 +146,29 @@ classes = (
 )
 
 
+modules = (
+    props.object,
+    props.material,
+    props.scene,
+    ui.props_object_mesh,
+    ui.props_object_armature,
+    ui.props_material,
+    ui.import_export_p3d,
+    ui.import_export_rtm,
+    ui.import_export_asc,
+    ui.tool_mass,
+    ui.tool_hitpoint,
+    ui.tool_paths,
+    ui.tool_proxies,
+    ui.tool_validation,
+    ui.tool_rtm,
+    ui.tool_conversion,
+    ui.tool_color,
+    ui.tool_weights,
+    ui.tool_utilities
+)
+
+
 def register():
     from bpy.utils import register_class
     from .utilities import generic
@@ -188,26 +177,9 @@ def register():
     
     for cls in classes:
         register_class(cls)
-        
-    object.register()
-    material.register()
-    scene.register()
-    import_export_p3d.register()
-    import_export_rtm.register()
-    import_export_asc.register()
-    props_object_mesh.register()
-    props_object_armature.register()
-    props_material.register()
-    tool_mass.register()
-    tool_hitpoint.register()
-    tool_paths.register()
-    tool_proxies.register()
-    tool_validation.register()
-    tool_rtm.register()
-    tool_conversion.register()
-    tool_color.register()
-    tool_weights.register()
-    tool_utilities.register()
+    
+    for mod in modules:
+        mod.register()
     
     generic.register_icons()
     
@@ -222,27 +194,10 @@ def unregister():
     
     generic.unregister_icons()
     
+    for mod in reversed(modules):
+        mod.unregister()
+    
     for cls in reversed(classes):
         unregister_class(cls)
-
-    tool_utilities.unregister()
-    tool_weights.unregister()
-    tool_color.unregister()
-    tool_conversion.unregister()
-    tool_rtm.unregister()
-    tool_validation.unregister()
-    tool_proxies.unregister()
-    tool_paths.unregister()
-    tool_hitpoint.unregister()
-    tool_mass.unregister()
-    props_material.unregister()
-    props_object_armature.unregister()
-    props_object_mesh.unregister()
-    import_export_asc.unregister()
-    import_export_rtm.unregister()
-    import_export_p3d.unregister()
-    scene.unregister()
-    material.unregister()
-    object.unregister()
     
     print("Unregister done")

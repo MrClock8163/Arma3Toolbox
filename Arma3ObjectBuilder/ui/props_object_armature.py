@@ -183,11 +183,11 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     
-    print("\t" + "UI: armature")
+    print("\t" + "UI: armature properties")
 
 
 def unregister():    
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
     
-    print("\t" + "UI: armature")
+    print("\t" + "UI: armature properties")
