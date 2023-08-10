@@ -7,13 +7,13 @@ While **Object Builder** bares some modelling functionality, it's by no means ad
 Because of this, the need arose to create an alternative, and so Alwarren developed the [**ArmAToolbox**](https://github.com/AlwarrenSidh/ArmAToolbox),
 which makes it possible to import and export animation and model files for **Arma 3**.
 
-This project's goal is to build a new, more modern add-on based the ideas of the original **ArmAToolbox**, which has been in use by modders for many years.
+This project's goal is to build a new, more modern add-on based on the ideas of the original **ArmAToolbox**, which has been in use by modders for many years.
 Since it's release, the code base of the **ArmAToolbox** became quite cluttered with unused code and broken features (eg.: due to **Blender** API changes).
 This project aims to correct this, and bring elements of the workflow more in-line with the design of **Blender**, while also creating new tools to further aid mod development.
 
 ## Origins
 The project is originally a fork of Alwarren's repository, but in reality, instead of consisting of smaller changes to be merged into the main repository,
-it turned into a full rewrite of the add-on. Eventually, this repository will be detached from Alwarren's work to avoid confusion, and the **ArmAToolbox** code base removed.
+it turned into a full rewrite of the add-on.
 
 Excerpt from the ArmAToolbox readme:
 ```
