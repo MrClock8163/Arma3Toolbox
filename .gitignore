@@ -1,11 +1,4 @@
-.vscode/settings.json
-ATbx.code-workspace
-.vscode/tasks.json
-copy.bat
-.vscode
-__pycache__
-ArmaToolbox.zip
-Arma3ObjectBuilder*.zip
 ArmaToolbox
 *.blend1
 *.bat
+*.zip
