@@ -1,5 +1,34 @@
 # Changelog
 
+## [v1.0.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v1.0.0)
+
+### Added:
+- Move Bottom utility function
+- Sort Sections option in P3D export
+- custom UI icons (for dark and light UI themes)
+- Find Arma 3 Tools function in add-on preferences
+- Analyze sub-panel with mass distribution visualization function in Vertex Mass Editing tool panel
+
+### Changed:
+- Sort function was renamed to Move Top
+- help links are now displayed on property panels as well
+- P3D export now only processes visible LOD objects
+- multiple functions were updated to not split-merge the meshes and use internal functions instead (eg.: Find Components, Mass From Density etc.)
+- Redefine Vertex Group now modifies the existing group instead of removing and recreating it
+- Vertex Mass Editing panel items are now always visible
+- tool panel properties are now saved in blend files and are persistent across sessions
+
+### Fixed:
+- P3D export would fail if a LOD object was in edit mode
+- P3D export would fail if a LOD object had a non-mesh child object
+- setup conversion would fail with materials using procedural colors
+- proxy tools panel would throw exception if no object was active in the scene
+- documentation link would not show up in add-on preferences in newer Blender versions
+- Component Convex Hull would not actually perform convex hull on all components
+
+### Removed:
+- Translucent option in material properties
+
 ## [v0.3.4](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v0.3.4)
 
 ### Added:
