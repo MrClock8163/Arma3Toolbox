@@ -14,7 +14,7 @@ from ..utilities.logger import ProcessLogger
 
 
 def write_bone(file, name):
-    file.write(struct.pack('<32s', name.encode('ASCII')))
+    file.write(struct.pack('<32s', name.lower().encode('ASCII')))
 
 
 def write_matrix(file, matrix):
