@@ -5,6 +5,7 @@ import bpy
 import bpy_extras
 
 from ..io import export_rtm
+from ..utilities import generic as utils
 
 
 class A3OB_OP_export_rtm(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
