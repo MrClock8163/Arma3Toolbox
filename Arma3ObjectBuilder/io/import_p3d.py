@@ -282,7 +282,8 @@ def renormalize_vertex_normals(normals_dict):
 # custom split normals on the mesh. The normals are set on
 # the loops.
 def process_normals(mesh, face_data_dict, normals_dict):
-    loop_normals = []
+    loop_normals = {}
+    
     for face in mesh.polygons:
         vertex_tables = face_data_dict[face.index][0]
         
@@ -292,9 +293,15 @@ def process_normals(mesh, face_data_dict, normals_dict):
             
             for table in vertex_tables:
                 if table[0] == vertex_index:
-                    loop_normals.insert(i, normals_dict[table[1]])   
+                    loop_normals[i] = normals_dict[table[1]]
+                    break
     
-    mesh.normals_split_custom_set(loop_normals)
+    if len(mesh.loops) != len(loop_normals.values()):
+        return False
+    
+    mesh.normals_split_custom_set(list(loop_normals.values()))
+    
+    return True
 
 
 # Create collections and put each LOD in the appropriate one.
@@ -442,7 +449,7 @@ def read_lod(context, file, material_dict, additional_data, dynamic_naming, logg
         new_face = read_face(file)
         faces.append([i[0] for i in new_face[0]])
         face_data_dict[i] = new_face
-        
+    
     logger.step("Read faces: %d" % count_faces)
     
     # Construct mesh
@@ -463,8 +470,10 @@ def read_lod(context, file, material_dict, additional_data, dynamic_naming, logg
     # by the TAGG processing.
     if 'NORMALS' in additional_data:
         normals_dict = renormalize_vertex_normals(normals_dict)
-        process_normals(mesh, face_data_dict, normals_dict)
-        logger.step("Applied split normals")
+        if process_normals(mesh, face_data_dict, normals_dict):
+            logger.step("Applied split normals")
+        else:
+            logger.step("!!! Could not apply split normals !!!")
         
     # Read TAGGs
     bm = bmesh.new()
