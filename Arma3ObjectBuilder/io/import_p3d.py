@@ -280,26 +280,15 @@ def renormalize_vertex_normals(normals_dict):
 
 # To preserve the shading, vertex normals need to be set as
 # custom split normals on the mesh. The normals are set on
-# the loops.
+# the loops. Loops are in continuous order, so it's enough
+# to just iterate through the face data from the P3D.
 def process_normals(mesh, face_data_dict, normals_dict):
-    loop_normals = {}
+    loop_normals = [normals_dict[table[1]] for face in face_data_dict.values() for table in face[0]]
     
-    for face in mesh.polygons:
-        vertex_tables = face_data_dict[face.index][0]
-        
-        for i in face.loop_indices:
-            loop = mesh.loops[i]
-            vertex_index = loop.vertex_index
-            
-            for table in vertex_tables:
-                if table[0] == vertex_index:
-                    loop_normals[i] = normals_dict[table[1]]
-                    break
-    
-    if len(mesh.loops) != len(loop_normals.values()):
+    if len(mesh.loops) != len(loop_normals):
         return False
     
-    mesh.normals_split_custom_set(list(loop_normals.values()))
+    mesh.normals_split_custom_set(loop_normals)
     
     return True
 
