@@ -487,7 +487,7 @@ def read_lod(context, file, material_dict, additional_data, dynamic_naming, logg
     
     # Create object
     lod_index, lod_resolution = lodutils.get_lod_id(lod_resolution_signature)
-    lod_name = lodutils.format_lod_name(lod_index,lod_resolution)
+    lod_name = lodutils.format_lod_name(lod_index, lod_resolution)
     logger.step("Name: %s" % lod_name)
     
     mesh.use_auto_smooth = True
