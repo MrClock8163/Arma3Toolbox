@@ -79,6 +79,10 @@ class A3OB_PG_outliner_lod(bpy.types.PropertyGroup):
 
 
 class A3OB_PG_outliner(bpy.types.PropertyGroup):
+    show_hidden: bpy.props.BoolProperty (
+        name = "Show Hidden Objects",
+        default = False
+    )
     lods: bpy.props.CollectionProperty (
         type = A3OB_PG_outliner_lod
     )
