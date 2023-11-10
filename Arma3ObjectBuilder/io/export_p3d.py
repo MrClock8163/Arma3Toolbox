@@ -500,7 +500,7 @@ def write_lod(file, obj, materials, proxies, validator, logger):
     for vert in bm.verts:
         write_vertex(file, vert.co, vertex_flag)
         
-    logger.step("Wrote veritces: %d" % count_verts)
+    logger.step("Wrote vertices: %d" % count_verts)
         
     for normal in normals:
         write_normal(file, normal)
