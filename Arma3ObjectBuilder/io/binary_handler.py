@@ -48,7 +48,7 @@ def read_double(file):
     
 def read_char(file, count = 1):
     chars = struct.unpack('%ds' % count, file.read(count))[0]
-    return chars.decode('utf-8')
+    return chars.decode('ascii')
     
 def read_asciiz(file):
     res = b''
@@ -60,7 +60,7 @@ def read_asciiz(file):
             
         res += a
     
-    return res.decode("utf-8")
+    return res.decode('ascii')
     
 def write_byte(file, value):
     file.write(struct.pack('B',value))
@@ -90,7 +90,7 @@ def write_double(file, value):
     file.write(struct.pack('<d', value))
     
 def write_chars(file, values):
-    file.write(struct.pack('<%ds' % len(values), values.encode('ASCII')))
+    file.write(struct.pack('<%ds' % len(values), values.encode('ascii')))
     
 def write_asciiz(file, value):
-    file.write(struct.pack('<%ds' % (len(value)+1), value.encode('ASCII')))
+    file.write(struct.pack('<%ds' % (len(value)+1), value.encode('ascii')))
