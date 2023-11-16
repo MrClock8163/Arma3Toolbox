@@ -7,6 +7,7 @@ import bpy
 import bmesh
 
 from . import generic as utils
+from . import compat as computils
 
 
 def find_components(obj):
@@ -64,7 +65,7 @@ def component_convex_hull(obj):
         ctx["selected_editable_objects"] = components
         ctx["active_object"] = obj
         
-        bpy.ops.object.join(ctx)
+        computils.call_operator_ctx(bpy.ops.object.join, ctx)
         
     bpy.context.view_layer.objects.active = obj
     
