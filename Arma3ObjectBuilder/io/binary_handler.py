@@ -63,7 +63,7 @@ def read_asciiz(file):
     return res.decode('ascii')
     
 def write_byte(file, value):
-    file.write(struct.pack('B',value))
+    file.write(struct.pack('B', value))
     
 def write_bytes(file, values):
     file.write(struct.pack('%dB' % len(values), *values))
@@ -93,4 +93,4 @@ def write_chars(file, values):
     file.write(struct.pack('<%ds' % len(values), values.encode('ascii')))
     
 def write_asciiz(file, value):
-    file.write(struct.pack('<%ds' % (len(value)+1), value.encode('ascii')))
+    file.write(struct.pack('<%ds' % (len(value) + 1), value.encode('ascii')))
