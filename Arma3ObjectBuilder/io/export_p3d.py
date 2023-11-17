@@ -44,8 +44,8 @@ def duplicate_object(obj):
 # May be worth looking into bpy.ops.object.convert(target='MESH')
 # instead to reduce operator calls.
 def apply_modifiers(obj, context):
-    ctx = context.copy()
-    ctx["object"] = obj
+    ctx = {"object": obj}
+    # ctx["object"] = obj
     
     for m in obj.modifiers:
         try:
@@ -56,11 +56,14 @@ def apply_modifiers(obj, context):
 
 
 def merge_objects(main_object, sub_objects, context):
-    # ctx = context.copy()
-    ctx = {}
-    ctx["active_object"] = main_object
-    ctx["selected_objects"] = (sub_objects + [main_object])
-    ctx["selected_editable_objects"] = (sub_objects + [main_object])
+    ctx = {
+        "active_object": main_object,
+        "selected_objects": (sub_objects + [main_object]),
+        "selected_editable_objects": (sub_objects + [main_object])
+    }
+    # ctx["active_object"] = main_object
+    # ctx["selected_objects"] = (sub_objects + [main_object])
+    # ctx["selected_editable_objects"] = (sub_objects + [main_object])
     
     computils.call_operator_ctx(bpy.ops.object.join, ctx)
 
@@ -167,15 +170,23 @@ def get_lod_data(operator, context):
             bpy.data.meshes.remove(obj.data, do_unlink=True)
         
         if operator.apply_transforms:
-            computils.call_operator_ctx(bpy.ops.object.transform_apply, {"active_object": main_object, "selected_editable_objects": [main_object]}, location = True, scale = True, rotation = True)
+            ctx = {
+                "active_object": main_object,
+                "selected_editable_objects": [main_object]
+            }
+            computils.call_operator_ctx(bpy.ops.object.transform_apply, ctx, location = True, scale = True, rotation = True)
         
         if operator.validate_meshes:
             main_object.data.validate(clean_customdata=False)
             
         if not operator.preserve_normals:
-            ctx = context.copy()
-            ctx["active_object"] = main_object
-            ctx["object"] = main_object
+            # ctx = context.copy()
+            ctx = {
+                "active_object": main_object,
+                "object": main_object
+            }
+            # ctx["active_object"] = main_object
+            # ctx["object"] = main_object
             
             computils.call_operator_ctx(bpy.ops.mesh.customdata_custom_splitnormals_clear, ctx)
         
