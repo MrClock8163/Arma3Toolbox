@@ -16,7 +16,7 @@ class A3OB_OT_proxy_realign_ocs(bpy.types.Operator):
     
     bl_idname = "a3ob.proxy_realign_ocs"
     bl_label = "Realign Coordinate System"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -35,7 +35,7 @@ class A3OB_OT_proxy_align(bpy.types.Operator):
     
     bl_idname = "a3ob.proxy_align"
     bl_label = "Align To Object"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -65,7 +65,7 @@ class A3OB_OT_proxy_align_object(bpy.types.Operator):
     
     bl_idname = "a3ob.proxy_align_object"
     bl_label = "Align To Proxy"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -95,7 +95,7 @@ class A3OB_OT_proxy_extract(bpy.types.Operator):
     
     bl_idname = "a3ob.proxy_extract"
     bl_label = "Extract Proxy"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     enclose: bpy.props.BoolProperty (
         default = False
@@ -177,7 +177,7 @@ class A3OB_OT_proxy_copy(bpy.types.Operator):
     
     bl_idname = "a3ob.proxy_copy"
     bl_label = "Copy Proxy"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):

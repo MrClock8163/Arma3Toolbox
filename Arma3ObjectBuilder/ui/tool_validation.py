@@ -9,7 +9,7 @@ class A3OB_OT_validate_lod(bpy.types.Operator):
     
     bl_idname = "a3ob.validate_for_lod"
     bl_label = "Validate LOD"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):

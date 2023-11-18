@@ -11,7 +11,7 @@ class A3OB_OT_convert_to_a3ob(bpy.types.Operator):
     
     bl_idname = "a3ob.convert_to_a3ob"
     bl_label = "Convert Setup"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):

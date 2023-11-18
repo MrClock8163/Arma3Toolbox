@@ -11,7 +11,7 @@ class A3OB_OT_weights_load_cfgskeletons(bpy.types.Operator):
     
     bl_idname = "a3ob.weights_load_cfgskeletons"
     bl_label = "Load/Reload CfgSkeletons"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -47,7 +47,7 @@ class A3OB_OT_weights_select_unnormalized(bpy.types.Operator):
     
     bl_idname = "a3ob.weights_select_unnormalized"
     bl_label = "Select Unnormalized"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -71,7 +71,7 @@ class A3OB_OT_weights_select_overdetermined(bpy.types.Operator):
     
     bl_idname = "a3ob.weights_select_overdetermined"
     bl_label = "Select Overdetermined"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -95,7 +95,7 @@ class A3OB_OT_weights_normalize(bpy.types.Operator):
     
     bl_idname = "a3ob.weights_normalize"
     bl_label = "Normalize Weights"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -121,7 +121,7 @@ class A3OB_OT_weights_prune_overdetermined(bpy.types.Operator):
     
     bl_idname = "a3ob.weights_prune_overdetermined"
     bl_label = "Prune Overdetermined"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -147,7 +147,7 @@ class A3OB_OT_weights_prune(bpy.types.Operator):
     
     bl_idname = "a3ob.weights_prune"
     bl_label = "Prune Selections"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -169,7 +169,7 @@ class A3OB_OT_weights_cleanup(bpy.types.Operator):
     
     bl_idname = "a3ob.weights_cleanup"
     bl_label = "General Cleanup"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):

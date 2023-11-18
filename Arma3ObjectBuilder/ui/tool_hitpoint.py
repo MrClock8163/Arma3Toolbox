@@ -9,7 +9,7 @@ class A3OB_OT_hitpoints_generate(bpy.types.Operator):
     
     bl_idname = "a3ob.hitpoints_generate"
     bl_label = "Generate Hit Point Cloud"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):

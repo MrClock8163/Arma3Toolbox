@@ -35,7 +35,7 @@ class A3OB_OT_select_object(bpy.types.Operator):
     
     bl_idname = "a3ob.select_object"
     bl_label = "Select Object"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     object_name: bpy.props.StringProperty (
         name = "Object Name"

@@ -33,7 +33,7 @@ class A3OB_OT_find_a3_tools(bpy.types.Operator):
     
     bl_idname = "a3ob.find_a3_tools"
     bl_label = "Find Arma 3 Tools"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):

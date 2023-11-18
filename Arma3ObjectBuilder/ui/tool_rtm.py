@@ -9,7 +9,7 @@ class A3OB_OT_keyframe_add_list(bpy.types.Operator):
     
     bl_idname = "a3ob.keyframe_add_list"
     bl_label = "Add Frames"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):

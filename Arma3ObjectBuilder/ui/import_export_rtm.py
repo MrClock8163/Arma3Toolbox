@@ -13,7 +13,7 @@ class A3OB_OP_export_rtm(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     
     bl_idname = "a3ob.export_rtm"
     bl_label = "Export RTM"
-    bl_options = {'UNDO', 'PRESET'}
+    bl_options = {'REGISTER', 'UNDO', 'PRESET'}
     filename_ext = ".rtm"
     
     filter_glob: bpy.props.StringProperty (

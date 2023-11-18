@@ -12,7 +12,7 @@ class A3OB_OP_import_asc(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     
     bl_idname = "a3ob.import_asc"
     bl_label = "Import ASC"
-    bl_options = {'UNDO', 'PRESET'}
+    bl_options = {'REGISTER', 'UNDO', 'PRESET'}
     filename_ext = ".asc"
     
     filter_glob: bpy.props.StringProperty (
@@ -54,7 +54,7 @@ class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     """Export DTM as Esri ASCII grid"""
     bl_idname = "a3ob.export_asc"
     bl_label = "Export ASC"
-    bl_options = {'UNDO', 'PRESET'}
+    bl_options = {'REGISTER', 'UNDO', 'PRESET'}
     filename_ext = ".asc"
     
     filter_glob: bpy.props.StringProperty (

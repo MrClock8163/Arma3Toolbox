@@ -10,7 +10,7 @@ class A3OB_OT_proxy_add(bpy.types.Operator):
     
     bl_idname = "a3ob.proxy_add"
     bl_label = "Arma 3 proxy"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -32,7 +32,7 @@ class A3OB_OT_proxy_common(bpy.types.Operator):
     
     bl_idname = "a3ob.proxy_common"
     bl_label = "Common Proxy"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -82,7 +82,7 @@ class A3OB_OT_namedprops_add(bpy.types.Operator):
     
     bl_idname = "a3ob.namedprops_add"
     bl_label = "Add Named Property"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -104,7 +104,7 @@ class A3OB_OT_namedprops_remove(bpy.types.Operator):
     
     bl_idname = "a3ob.namedprops_remove"
     bl_label = "Remove Named Property"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):

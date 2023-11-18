@@ -9,7 +9,7 @@ class A3OB_OT_vertex_mass_set(bpy.types.Operator):
     
     bl_idname = "a3ob.vertex_mass_set"
     bl_label = "Set Mass On Each"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -27,7 +27,7 @@ class A3OB_OT_vertex_mass_distribute(bpy.types.Operator):
     
     bl_idname = "a3ob.vertex_mass_distribute"
     bl_label = "Distribute Mass"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -45,7 +45,7 @@ class A3OB_OT_vertex_mass_set_density(bpy.types.Operator):
     
     bl_idname = "a3ob.vertex_mass_set_density"
     bl_label = "Mass From Density"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -66,7 +66,7 @@ class A3OB_OT_vertex_mass_clear(bpy.types.Operator):
     
     bl_idname = "a3ob.vertex_mass_clear"
     bl_label = "Clear Masses"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -83,7 +83,7 @@ class A3OB_OT_vertex_mass_visualize(bpy.types.Operator):
     
     bl_idname = "a3ob.vertex_mass_visualize"
     bl_label = "Visualize"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):

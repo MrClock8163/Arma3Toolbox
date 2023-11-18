@@ -14,7 +14,7 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     
     bl_idname = "a3ob.import_p3d"
     bl_label = "Import P3D"
-    bl_options = {'UNDO', 'PRESET'}
+    bl_options = {'REGISTER', 'UNDO', 'PRESET'}
     filename_ext = ".p3d"
     
     filter_glob: bpy.props.StringProperty (
@@ -213,7 +213,7 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     
     bl_idname = "a3ob.export_p3d"
     bl_label = "Export P3D"
-    bl_options = {'UNDO', 'PRESET'}
+    bl_options = {'REGISTER', 'UNDO', 'PRESET'}
     filename_ext = ".p3d"
     
     filter_glob: bpy.props.StringProperty (

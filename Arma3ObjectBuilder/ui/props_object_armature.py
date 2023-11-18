@@ -8,7 +8,7 @@ class A3OB_OT_keyframe_add(bpy.types.Operator):
     
     bl_idname = "a3ob.keyframe_add"
     bl_label = "Add Keyframe"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -34,7 +34,7 @@ class A3OB_OT_keyframe_remove(bpy.types.Operator):
     
     bl_idname = "a3ob.keyframe_remove"
     bl_label = "Remove Keyframe"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -60,7 +60,7 @@ class A3OB_OT_keyframe_clear(bpy.types.Operator):
     
     bl_idname = "a3ob.keyframe_clear"
     bl_label = "Clear Keyframes"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):

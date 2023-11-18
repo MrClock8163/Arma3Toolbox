@@ -9,7 +9,7 @@ class A3OB_OT_rename_list_refresh(bpy.types.Operator):
     
     bl_idname = "a3ob.rename_list_refresh"
     bl_label = "Refresh List"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -26,7 +26,7 @@ class A3OB_OT_rename_path_item(bpy.types.Operator):
     
     bl_idname = "a3ob.rename_path_item"
     bl_label = "Replace Path"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -43,7 +43,7 @@ class A3OB_OT_rename_path_root(bpy.types.Operator):
     
     bl_idname = "a3ob.rename_path_root"
     bl_label = "Replace Root"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -60,7 +60,7 @@ class A3OB_OT_rename_vertex_groups(bpy.types.Operator):
     
     bl_idname = "a3ob.rename_vertex_groups"
     bl_label = "Rename Groups"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
