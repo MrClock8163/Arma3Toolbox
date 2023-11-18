@@ -27,11 +27,11 @@ def can_edit_mass(context):
 def get_selection_mass(self):
     mesh = self.data
     
-    if not mesh.vertex_layers_float.get("a3ob_mass"):
-        return 0
-    
     bm = bmesh.from_edit_mesh(mesh)
     layer = bm.verts.layers.float.get("a3ob_mass")
+    
+    if not layer:
+        return 0
     
     mass = [vertex[layer] for vertex in bm.verts if vertex.select]
         
@@ -97,12 +97,11 @@ def set_selection_mass_distribute(obj, value):
 def clear_selection_masses(obj):
     mesh = obj.data
     
-    layer = mesh.vertex_layers_float.get("a3ob_mass")
-    if layer is None:
-        return 
-    
     bm = bmesh.from_edit_mesh(mesh)
     layer = bm.verts.layers.float.get("a3ob_mass")
+    if not layer:
+        return
+    
     bm.verts.layers.float.remove(layer)
     bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
 
