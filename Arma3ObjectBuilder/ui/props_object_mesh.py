@@ -331,7 +331,6 @@ class A3OB_PT_object_dtm(bpy.types.Panel):
         if object_props.cellsize_source == 'MANUAL':
             col_cellsize.prop(object_props, "cellsize", text=" ")
         
-        # layout.prop(object_props, "cellsize")
         col_origin = layout.column(align=True)
         row_origin = col_origin.row(align=True)
         row_origin.prop(object_props, "origin", text="Reference Point", expand=True)
