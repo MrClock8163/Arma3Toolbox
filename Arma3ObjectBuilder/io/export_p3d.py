@@ -13,6 +13,7 @@ import bmesh
 from . import binary_handler as binary
 from ..utilities import generic as utils
 from ..utilities import lod as lodutils
+from ..utilities import compat as computils
 from ..utilities import data
 from ..utilities import errors
 from ..utilities.logger import ProcessLogger
@@ -43,24 +44,23 @@ def duplicate_object(obj):
 # May be worth looking into bpy.ops.object.convert(target='MESH')
 # instead to reduce operator calls.
 def apply_modifiers(obj, context):
-    ctx = context.copy()
-    ctx["object"] = obj
+    ctx = {"object": obj}
     
     for m in obj.modifiers:
         try:
             ctx["modifier"] = m
-            bpy.ops.object.modifier_apply(ctx, modifier=m.name)
+            computils.call_operator_ctx(bpy.ops.object.modifier_apply, ctx, modifier= m.name)
         except:
             obj.modifiers.remove(m)
 
 
 def merge_objects(main_object, sub_objects, context):
-    ctx = context.copy()
-    ctx["active_object"] = main_object
-    ctx["selected_objects"] = (sub_objects + [main_object])
-    ctx["selected_editable_objects"] = (sub_objects + [main_object])
-    
-    bpy.ops.object.join(ctx)
+    ctx = {
+        "active_object": main_object,
+        "selected_objects": (sub_objects + [main_object]),
+        "selected_editable_objects": (sub_objects + [main_object])
+    }
+    computils.call_operator_ctx(bpy.ops.object.join, ctx)
 
 
 def format_path(path, root = "", make_relative = True, strip_extension = False):
@@ -124,7 +124,7 @@ def get_lod_data(operator, context):
         
         # Some operator polls fail later if an object is in edit mode.
         if not obj.mode == 'OBJECT':
-            bpy.ops.object.mode_set({"active_object": obj}, mode='OBJECT')
+            computils.call_operator_ctx(bpy.ops.object.mode_set, {"active_object": obj}, mode='OBJECT')
         
         # Objects must be duplicated in the background in order to perform the merge
         # and other destructive operations without changing the working object.
@@ -165,17 +165,21 @@ def get_lod_data(operator, context):
             bpy.data.meshes.remove(obj.data, do_unlink=True)
         
         if operator.apply_transforms:
-            bpy.ops.object.transform_apply({"active_object": main_object, "selected_editable_objects": [main_object]}, location = True, scale = True, rotation = True)
+            ctx = {
+                "active_object": main_object,
+                "selected_editable_objects": [main_object]
+            }
+            computils.call_operator_ctx(bpy.ops.object.transform_apply, ctx, location = True, scale = True, rotation = True)
         
         if operator.validate_meshes:
             main_object.data.validate(clean_customdata=False)
             
         if not operator.preserve_normals:
-            ctx = context.copy()
-            ctx["active_object"] = main_object
-            ctx["object"] = main_object
-            
-            bpy.ops.mesh.customdata_custom_splitnormals_clear(ctx)
+            ctx = {
+                "active_object": main_object,
+                "object": main_object
+            }
+            computils.call_operator_ctx(bpy.ops.mesh.customdata_custom_splitnormals_clear, ctx)
         
         lod_item.append(main_object)
         lod_item.append(object_proxies)

@@ -7,6 +7,7 @@ import bpy
 import bmesh
 
 from . import generic as utils
+from . import compat as computils
 
 
 def find_components(obj):
@@ -58,13 +59,13 @@ def component_convex_hull(obj):
         group = component_object.vertex_groups.new(name=("Component%02d" % component_id))
         group.add([vert.index for vert in component_object.data.vertices], 1, 'REPLACE')
         
-    if len(components) > 0:
-        ctx = bpy.context.copy()
-        ctx["selected_objects"] = components
-        ctx["selected_editable_objects"] = components
-        ctx["active_object"] = obj
-        
-        bpy.ops.object.join(ctx)
+    if len(components) > 0:        
+        ctx = {
+            "selected_objects": components,
+            "selected_editable_objects": components,
+            "active_object": obj
+        }
+        computils.call_operator_ctx(bpy.ops.object.join, ctx)
         
     bpy.context.view_layer.objects.active = obj
     
@@ -76,7 +77,7 @@ def convex_hull():
     
     bpy.ops.mesh.select_mode(type='EDGE')
     bpy.ops.mesh.select_all(action='SELECT')
-    bpy.ops.mesh.convex_hull()
+    bpy.ops.mesh.convex_hull(join_triangles=False)
     bpy.ops.mesh.select_all(action='DESELECT')
     bpy.ops.mesh.reveal()
     bpy.ops.object.mode_set(mode='OBJECT')

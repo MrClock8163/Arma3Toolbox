@@ -17,6 +17,7 @@ import mathutils
 from . import binary_handler as binary
 from ..utilities import generic as utils
 from ..utilities import lod as lodutils
+from ..utilities import compat as computils
 from ..utilities import proxy as proxyutils
 from ..utilities import structure as structutils
 from ..utilities import data
@@ -357,7 +358,7 @@ def process_proxies(lod_data, operator, material_dict, dynamic_naming, addon_pre
                 continue
                 
             obj.vertex_groups.active = group
-            bpy.ops.object.vertex_group_select()
+            computils.call_operator_ctx(bpy.ops.object.vertex_group_select)
             
             try:
                 bpy.ops.mesh.separate(type='SELECTED')
@@ -370,7 +371,7 @@ def process_proxies(lod_data, operator, material_dict, dynamic_naming, addon_pre
         proxy_objects = [proxy for proxy in bpy.context.selected_objects if proxy != obj]
         
         if operator.proxy_action == 'CLEAR':
-            bpy.ops.object.delete({"selected_objects": proxy_objects})
+            computils.call_operator_ctx(bpy.ops.object.delete, {"selected_objects": proxy_objects})
             
         elif operator.proxy_action == 'SEPARATE':
             for proxy_obj in proxy_objects:
@@ -527,7 +528,7 @@ def read_lod(context, file, material_dict, additional_data, dynamic_naming, logg
         
     # Cleanup split normals if they are not needed
     if 'NORMALS' in additional_data and lod_index not in data.lod_visuals: 
-        bpy.ops.mesh.customdata_custom_splitnormals_clear({"active_object": obj, "object": obj})
+        computils.call_operator_ctx(bpy.ops.mesh.customdata_custom_splitnormals_clear, {"active_object": obj, "object": obj})
         
     # Add vertex group names to object
     #
