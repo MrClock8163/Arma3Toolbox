@@ -86,10 +86,10 @@ class A3OB_OT_namedprops_add(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return True
+        return bool(context.object)
         
     def execute(self, context):
-        obj = context.active_object
+        obj = context.object
         object_props = obj.a3ob_properties_object
         item = object_props.properties.add()
         item.name = "New property"
@@ -108,11 +108,11 @@ class A3OB_OT_namedprops_remove(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        obj = context.active_object
+        obj = context.object
         return obj and obj.a3ob_properties_object.property_index != -1
         
     def execute(self, context):
-        obj = context.active_object
+        obj = context.object
         object_props = obj.a3ob_properties_object
         index = object_props.property_index
         if index != -1:
@@ -133,7 +133,7 @@ class A3OB_OT_namedprops_common(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return context.object
+        return bool(context.object)
     
     def invoke(self, context, event):
         scene = context.scene
