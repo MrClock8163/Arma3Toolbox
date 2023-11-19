@@ -130,6 +130,7 @@ class A3OB_OT_namedprops_common(bpy.types.Operator):
     
     bl_label = "Common Named Property"
     bl_idname = "a3ob.namedprops_common"
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -169,12 +170,136 @@ class A3OB_OT_namedprops_common(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class A3OB_OT_flags_vertex_add(bpy.types.Operator):
+    """Add a vertex flag group"""
+    
+    bl_label = "Add Vertex Flag Group"
+    bl_idname = "a3ob.flags_vertex_add"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        return bool(context.object)
+    
+    def execute(self, context):
+        obj = context.object
+        object_props = obj.a3ob_properties_object
+        item = object_props.flags_vertex.add()
+        item.name = "New Flag Group"
+        object_props.flags_vertex_index = len(object_props.flags_vertex) - 1
+        
+        return {'FINISHED'}
+
+
+class A3OB_OT_flags_vertex_remove(bpy.types.Operator):
+    """Remove selected vertex flag group"""
+    
+    bl_idname = "a3ob.flags_vertex_remove"
+    bl_label = "Remove Vertex Flag Group"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        obj = context.object
+        return obj and obj.a3ob_properties_object.flags_vertex_index != -1
+        
+    def execute(self, context):
+        obj = context.object
+        object_props = obj.a3ob_properties_object
+        index = object_props.flags_vertex_index
+        if index != -1:
+            object_props.flags_vertex.remove(index)
+            if len(object_props.flags_vertex) == 0:
+                object_props.flags_vertex_index = -1
+            elif index > len(object_props.flags_vertex) - 1:
+                object_props.flags_vertex_index = len(object_props.flags_vertex) - 1            
+        
+        return {'FINISHED'}
+
+
+class A3OB_OT_flags_vertex_assign(bpy.types.Operator):
+    """Assign selection to vertex flag group"""
+    
+    bl_label = "Assign"
+    bl_idname = "a3ob.flags_vertex_assign"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        obj = context.object
+        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and obj.a3ob_properties_object.flags_vertex_index in range(len(obj.a3ob_properties_object.flags_vertex))
+    
+    def execute(self, context):
+        # obj = context.object
+        # object_props = obj.a3ob_properties_object
+        # item = object_props.flags_vertex.add()
+        # item.name = "New Flag Group"
+        # object_props.flags_vertex_index = len(object_props.flags_vertex) - 1
+        
+        return {'FINISHED'}
+
+
+class A3OB_OT_flags_vertex_select(bpy.types.Operator):
+    """Select by vertex flag group"""
+    
+    bl_label = "Select"
+    bl_idname = "a3ob.flags_vertex_select"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        obj = context.object
+        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and obj.a3ob_properties_object.flags_vertex_index in range(len(obj.a3ob_properties_object.flags_vertex))
+    
+    def execute(self, context):
+        # obj = context.object
+        # object_props = obj.a3ob_properties_object
+        # item = object_props.flags_vertex.add()
+        # item.name = "New Flag Group"
+        # object_props.flags_vertex_index = len(object_props.flags_vertex) - 1
+        
+        return {'FINISHED'}
+
+
+class A3OB_OT_flags_vertex_deselect(bpy.types.Operator):
+    """Deselect by vertex flag group"""
+    
+    bl_label = "Deselect"
+    bl_idname = "a3ob.flags_vertex_deselect"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        obj = context.object
+        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and obj.a3ob_properties_object.flags_vertex_index in range(len(obj.a3ob_properties_object.flags_vertex))
+    
+    def execute(self, context):
+        # obj = context.object
+        # object_props = obj.a3ob_properties_object
+        # item = object_props.flags_vertex.add()
+        # item.name = "New Flag Group"
+        # object_props.flags_vertex_index = len(object_props.flags_vertex) - 1
+        
+        return {'FINISHED'}
+
+
 class A3OB_UL_namedprops(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         layout.label(text="%s = %s" % (item.name, item.value))
 
 
 class A3OB_UL_common_proxies(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        layout.label(text=item.name)
+
+
+class A3OB_UL_flags_vertex(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        layout.label(text=item.name)
+        layout.label(text=("%08x" % item.get_flag()))
+
+
+class A3OB_UL_flags_face(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         layout.label(text=item.name)
 
@@ -226,6 +351,7 @@ class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
     bl_label = "Named Properties"
     bl_context = "data"
     bl_parent_id = "A3OB_PT_object_mesh"
+    bl_options = {'DEFAULT_CLOSED'}
     
     @classmethod
     def poll(cls, context):
@@ -252,6 +378,75 @@ class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
         col_operators.operator("a3ob.namedprops_remove", text="", icon='REMOVE')
         col_operators.separator()
         col_operators.operator("a3ob.namedprops_common", icon='PASTEDOWN', text="")
+
+
+class A3OB_PT_object_mesh_flags_vertex(bpy.types.Panel):
+    bl_region_type = 'WINDOW'
+    bl_space_type = 'PROPERTIES'
+    bl_label = "Vertex Flag Groups"
+    bl_context = "data"
+    bl_parent_id = "A3OB_PT_object_mesh"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    @classmethod
+    def poll(cls, context):
+        obj = context.object
+        return obj and obj.type == 'MESH' and obj.a3ob_properties_object.is_a3_lod and not obj.a3ob_properties_object_proxy.is_a3_proxy
+    
+    def draw(self, context):
+        obj = context.object
+        object_props = obj.a3ob_properties_object
+        
+        layout = self.layout
+        row = layout.row()
+        col_list = row.column()
+        col_list.template_list("A3OB_UL_flags_vertex", "A3OB_flags_vertex", object_props, "flags_vertex", object_props, "flags_vertex_index")
+        
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        
+        if object_props.flags_vertex_index in range(len(object_props.flags_vertex)):
+            if obj.mode == 'EDIT':
+                row_operators = layout.row(align=True)
+                row_operators.operator("a3ob.flags_vertex_assign")
+                row_operators.operator("a3ob.flags_vertex_select")
+                row_operators.operator("a3ob.flags_vertex_deselect")
+            
+            prop = object_props.flags_vertex[object_props.flags_vertex_index]
+            layout.prop(prop, "name")
+            layout.prop(prop, "surface")
+            layout.prop(prop, "fog")
+            layout.prop(prop, "decal")
+            layout.prop(prop, "lighting")
+            layout.prop(prop, "normals")
+            layout.prop(prop, "hidden")
+            
+        col_operators = row.column(align=True)
+        col_operators.operator("a3ob.flags_vertex_add", text="", icon='ADD')
+        col_operators.operator("a3ob.flags_vertex_remove", text="", icon='REMOVE')
+
+
+class A3OB_PT_object_mesh_flags_face(bpy.types.Panel):
+    bl_region_type = 'WINDOW'
+    bl_space_type = 'PROPERTIES'
+    bl_label = "Face Flag Groups"
+    bl_context = "data"
+    bl_parent_id = "A3OB_PT_object_mesh"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    @classmethod
+    def poll(cls, context):
+        obj = context.object
+        return obj and obj.type == 'MESH' and obj.a3ob_properties_object.is_a3_lod and not obj.a3ob_properties_object_proxy.is_a3_proxy
+    
+    def draw(self, context):
+        obj = context.object
+        object_props = obj.a3ob_properties_object
+        
+        layout = self.layout
+        row = layout.row()
+        col_list = row.column()
+        col_list.template_list("A3OB_UL_flags_face", "A3OB_flags_face", object_props, "flags_face", object_props, "flags_face_index")
 
 
 class A3OB_PT_object_proxy(bpy.types.Panel):
@@ -350,10 +545,19 @@ classes = (
     A3OB_OT_namedprops_add,
     A3OB_OT_namedprops_remove,
     A3OB_OT_namedprops_common,
+    A3OB_OT_flags_vertex_add,
+    A3OB_OT_flags_vertex_remove,
+    A3OB_OT_flags_vertex_assign,
+    A3OB_OT_flags_vertex_select,
+    A3OB_OT_flags_vertex_deselect,
     A3OB_UL_namedprops,
     A3OB_UL_common_proxies,
+    A3OB_UL_flags_vertex,
+    A3OB_UL_flags_face,
     A3OB_PT_object_mesh,
     A3OB_PT_object_mesh_namedprops,
+    A3OB_PT_object_mesh_flags_vertex,
+    A3OB_PT_object_mesh_flags_face,
     A3OB_PT_object_proxy,
     A3OB_PT_object_dtm
 )

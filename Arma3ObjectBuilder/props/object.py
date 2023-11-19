@@ -36,6 +36,10 @@ def lod_name_update(self, context):
     obj.data.name = name
 
 
+def flag_get(self):
+    return self.get_flag()
+
+
 class A3OB_PG_properties_named_property(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty (
         name = "Name",
@@ -45,6 +49,135 @@ class A3OB_PG_properties_named_property(bpy.types.PropertyGroup):
         name = "Value",
         description = "Property value"
     )
+
+
+class A3OB_PG_properties_flag_vertex(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty (
+        name = "Name",
+        description = "Name of the vertex flag group",
+        default = ""
+    )
+    surface: bpy.props.EnumProperty (
+        name = "Surface",
+        description = "",
+        items = (
+            ('NORMAL', "Normal", "", 0x00000000),
+            ('SURFACE_ON', "On Surface", "", 0x00000001),
+            ('SURFACE_ABOVE', "Above Surface", "", 0x00000002),
+            ('SURFACE_UNDER', "Under Surface", "", 0x00000004),
+            ('KEEP_HEIGHT', "Keep Height", "", 0x00000008)
+        ),
+        default = 'NORMAL'
+    )
+    fog: bpy.props.EnumProperty (
+        name = "Fog",
+        description = "",
+        items = (
+            ('NORMAL', "Normal", "", 0x00000000),
+            ('SKY', "Sky", "", 0x00002000),
+            ('NONE', "None", "", 0x00001000)
+        ),
+        default = 'NORMAL'
+    )
+    decal: bpy.props.EnumProperty (
+        name = "Decal",
+        description = "",
+        items = (
+            ('NORMAL', "Normal", "", 0x00000000),
+            ('DECAL', "Decal", "", 0x00000100)
+        ),
+        default = 'NORMAL'
+    )
+    lighting: bpy.props.EnumProperty (
+        name = "Lighting",
+        description = "",
+        items = (
+            ('NORMAL', "Normal", "", 0x00000000),
+            ('SHINING', "Shining", "", 0x00000010),
+            ('SHADOW', "Always in Shadow", "", 0x00000020),
+            ('LIGHTED_HALF', "Half Lighted", "", 0x00000080),
+            ('LIGHTED_FULL', "Fully Lighted", "", 0x00000040),
+        ),
+        default = 'NORMAL'
+    )
+    normals: bpy.props.EnumProperty (
+        name = "Normals",
+        description = "Weighted average calculation mode",
+        items = (
+            ('AREA', "Face Dimension", "", 0x00000000),
+            ('ANGLE', "Impedance Angle", "", 0x04000000),
+            ('FIXED', "Fixed", "", 0x02000000),
+        ),
+        default = 'FIXED'
+    )
+    hidden: bpy.props.BoolProperty (
+        name = "Hidden Vertex",
+        description = "",
+        default = False # True: 0x00000000 False: 0x01000000
+    )
+    
+    def get_flag(self):
+        flag = 0
+        flag += data.flags_vertex[self.surface]
+        flag += data.flags_vertex[self.fog]
+        flag += data.flags_vertex[self.decal]
+        flag += data.flags_vertex[self.lighting]
+        flag += data.flags_vertex[self.normals]
+        
+        if self.hidden:
+            flag += data.flags_vertex['HIDDEN']
+        
+        # print(hex(flag))
+        
+        return flag
+        
+
+
+class A3OB_PG_properties_flag_face(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty (
+        name = "Name",
+        description = "Name of the face flag group",
+        default = ""
+    )
+    lighting: bpy.props.EnumProperty (
+        name = "Lighting & Shadows",
+        description = "",
+        items = (
+            ('NORMAL', "Normal", "", 0x00000000),
+            ('BOTH', "Both Sides", "", 0x00000020),
+            ('POSITION', "Position", "", 0x00000080),
+            ('FLAT', "Flat", "", 0x00100000),
+            ('REVERSED', "Reversed", "", 0x00200000)
+        ),
+        default = 'NORMAL'
+    )
+    zbias: bpy.props.EnumProperty (
+        name = "Z Bias",
+        description = "",
+        items = (
+            ('NONE', "None", "", 0x00000000),
+            ('LOW', "Low", "", 0x00000100),
+            ('MIDDLE', "Middle", "", 0x00000200),
+            ('HIGH', "High", "", 0x00000300)
+        )
+    )
+    shadow: bpy.props.BoolProperty (
+        name = "Enable Shadow",
+        description = "",
+        default = True # True: 0x00000000 False: 0x00000010
+    )
+    
+    def get_flag(self):
+        flag = 0
+        flag += data.flags_face[self.lighting]
+        flag += data.flags_face[self.zbias]
+        
+        if not self.shadow:
+            flag += data.flags_face['NO_SHADOW']
+        
+        # print(hex(flag))
+        
+        return flag
 
 
 class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
@@ -95,6 +228,26 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
             
         ),
         default = 'FIX'
+    )
+    flags_vertex: bpy.props.CollectionProperty (
+        name = "Vertex Flag Groups",
+        description = "Vertex flag groups used in the LOD",
+        type = A3OB_PG_properties_flag_vertex
+    )
+    flags_vertex_index: bpy.props.IntProperty (
+        name = "Vertex Flag Group Index",
+        description = "Index of the currently selected vertex flag group",
+        default = -1
+    )
+    flags_face: bpy.props.CollectionProperty (
+        name = "Face Flag Groups",
+        description = "Face flag groups used in the LOD",
+        type = A3OB_PG_properties_flag_face
+    )
+    flags_face_index: bpy.props.IntProperty (
+        name = "Face Flag Group Index",
+        description = "Index of the currently selected face flag group",
+        default = -1
     )
 
 
@@ -217,6 +370,8 @@ class A3OB_PG_properties_object_armature(bpy.types.PropertyGroup):
 
 classes = (
     A3OB_PG_properties_named_property,
+    A3OB_PG_properties_flag_vertex,
+    A3OB_PG_properties_flag_face,
     A3OB_PG_properties_object_mesh,
     A3OB_PG_properties_object_proxy,
     A3OB_PG_properties_object_dtm,
