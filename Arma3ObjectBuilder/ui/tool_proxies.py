@@ -233,6 +233,58 @@ class A3OB_OT_proxy_copy(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class A3OB_OT_proxy_copy_all(bpy.types.Operator):
+    """Copy all proxies from a LOD object to another"""
+    
+    bl_idname = "a3ob.proxy_copy_all"
+    bl_label = "Copy Proxies"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    keep_transform: bpy.props.BoolProperty(
+        name = "Keep Transformation",
+        description = "Keep the visual world space transformations",
+        default = True
+    )
+    
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        selected = [item for item in context.selected_objects if item.type == 'MESH' and item.mode == 'OBJECT' and item != obj]
+        
+        return obj and obj.type == 'MESH' and obj.mode == 'OBJECT' and len(selected) == 1
+    
+    def execute(self, context):
+        target = context.active_object
+        source = [item for item in context.selected_objects if item.type == 'MESH' and item.mode == 'OBJECT' and item != target][0]
+        proxies = [item for item in source.children if item.type == 'MESH' and item.a3ob_properties_object_proxy.is_a3_proxy]
+        
+        for item in proxies:
+            new_proxy = item.copy()
+            new_proxy.data = item.data.copy()
+            target.users_collection[0].objects.link(new_proxy)
+            ctx = {
+                "selected_editable_objects": [new_proxy]
+            }
+            if self.keep_transform:
+                computils.call_operator_ctx(bpy.ops.object.parent_clear, ctx, type='CLEAR_KEEP_TRANSFORM')
+                ctx.update({
+                    "active_object": target,
+                    "selected_objects": [target, new_proxy],
+                    "selected_editable_objects": [target, new_proxy]
+                })
+                computils.call_operator_ctx(bpy.ops.object.parent_set, ctx, type='OBJECT', keep_transform=True)
+            else:
+                computils.call_operator_ctx(bpy.ops.object.parent_clear, ctx)
+                ctx.update({
+                    "active_object": target,
+                    "selected_objects": [target, new_proxy],
+                    "selected_editable_objects": [target, new_proxy]
+                })
+                computils.call_operator_ctx(bpy.ops.object.parent_set, ctx, type='OBJECT')
+        
+        return {'FINISHED'}
+
+
 class A3OB_OT_proxy_transfer(bpy.types.Operator):
     """Transfer proxies to a different LOD object"""
     
@@ -311,6 +363,7 @@ class A3OB_PT_proxies(bpy.types.Panel):
         layout.operator("a3ob.proxy_extract", icon_value=utils.get_icon("op_proxy_extract"))
         col_move = layout.column(align=True)
         col_move.operator("a3ob.proxy_copy", icon_value=utils.get_icon("op_proxy_copy"))
+        col_move.operator("a3ob.proxy_copy_all", icon_value=utils.get_icon("op_proxy_copy_all"))
         col_move.operator("a3ob.proxy_transfer", icon_value=utils.get_icon("op_proxy_transfer"))
 
 
@@ -328,6 +381,7 @@ classes = (
     A3OB_OT_proxy_realign_ocs,
     A3OB_OT_proxy_extract,
     A3OB_OT_proxy_copy,
+    A3OB_OT_proxy_copy_all,
     A3OB_OT_proxy_transfer,
     A3OB_PT_proxies,
     A3OB_UL_lod_objects_selector
