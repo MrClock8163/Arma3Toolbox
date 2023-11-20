@@ -27,13 +27,25 @@ def lod_name_update(self, context):
         return
         
     obj = self.id_data
-    object_props = obj.a3ob_properties_object
-    if not object_props.is_a3_lod:
-        return
+    object_props = obj.a3ob_properties_objec
     
     name = "LOD: %s" % lodutils.format_lod_name(int(object_props.lod), object_props.resolution)
     obj.name = name
     obj.data.name = name
+
+
+def lod_props_update(self, context):
+    obj = self.id_data
+    object_props = obj.a3ob_properties_object
+    if not object_props.is_a3_lod:
+        return
+    
+    if len(object_props.flags_vertex) < 1:
+        new_group = object_props.flags_vertex.add()
+        new_group.name = "Default"
+        object_props.flags_vertex_index = 0
+    
+    lod_name_update(self, context)
 
 
 def flag_get(self):
@@ -185,14 +197,14 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
         name = "Arma 3 LOD",
         description = "This object is a LOD for an Arma 3 P3D",
         default = False,
-        update = lod_name_update
+        update = lod_props_update
     )
     lod: bpy.props.EnumProperty (
         name = "LOD Type",
         description = "Type of LOD",
         items = data.enum_lod_types,
         default = '0',
-        update = lod_name_update
+        update = lod_props_update
     )
     resolution: bpy.props.IntProperty (
         name = "Resolution/Index",
@@ -201,7 +213,7 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
         min = 0,
         soft_max = 1000,
         step = 1,
-        update = lod_name_update
+        update = lod_props_update
     )
     properties: bpy.props.CollectionProperty (
         name = "Named Properties",
@@ -217,7 +229,7 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
         name = "Dynamic Object Naming",
         description = "Object and object data names are automatically constructed and updated from the properties",
         default = True,
-        update = lod_name_update
+        update = lod_props_update
     )
     normals_flag: bpy.props.EnumProperty (
         name = "Vertex Normals Flag",

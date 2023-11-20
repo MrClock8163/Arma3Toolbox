@@ -3,6 +3,7 @@ import bpy
 from ..utilities import generic as utils
 from ..utilities import data
 from ..utilities import proxy as proxyutils
+from ..utilities import flags as flagutils
 
 
 class A3OB_OT_proxy_add(bpy.types.Operator):
@@ -86,7 +87,8 @@ class A3OB_OT_namedprops_add(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return bool(context.object)
+        obj = context.object
+        return obj and obj.type == 'MESH'
         
     def execute(self, context):
         obj = context.object
@@ -109,7 +111,7 @@ class A3OB_OT_namedprops_remove(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.a3ob_properties_object.property_index != -1
+        return obj and obj.type == 'MESH' and obj.a3ob_properties_object.property_index != -1
         
     def execute(self, context):
         obj = context.object
@@ -134,7 +136,8 @@ class A3OB_OT_namedprops_common(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return bool(context.object)
+        obj = context.object
+        return obj and obj.type == 'MESH'
     
     def invoke(self, context, event):
         scene = context.scene
@@ -179,7 +182,8 @@ class A3OB_OT_flags_vertex_add(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return bool(context.object)
+        obj = context.object
+        return obj and obj.type == 'MESH'
     
     def execute(self, context):
         obj = context.object
@@ -201,7 +205,7 @@ class A3OB_OT_flags_vertex_remove(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.a3ob_properties_object.flags_vertex_index != -1
+        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and obj.a3ob_properties_object.flags_vertex_index > 0
         
     def execute(self, context):
         obj = context.object
@@ -213,6 +217,8 @@ class A3OB_OT_flags_vertex_remove(bpy.types.Operator):
                 object_props.flags_vertex_index = -1
             elif index > len(object_props.flags_vertex) - 1:
                 object_props.flags_vertex_index = len(object_props.flags_vertex) - 1            
+        
+            flagutils.remove_group(obj, index)
         
         return {'FINISHED'}
 
@@ -230,11 +236,9 @@ class A3OB_OT_flags_vertex_assign(bpy.types.Operator):
         return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and obj.a3ob_properties_object.flags_vertex_index in range(len(obj.a3ob_properties_object.flags_vertex))
     
     def execute(self, context):
-        # obj = context.object
-        # object_props = obj.a3ob_properties_object
-        # item = object_props.flags_vertex.add()
-        # item.name = "New Flag Group"
-        # object_props.flags_vertex_index = len(object_props.flags_vertex) - 1
+        obj = context.object
+        object_props = obj.a3ob_properties_object
+        flagutils.assign_group(obj, object_props.flags_vertex_index)
         
         return {'FINISHED'}
 
@@ -252,11 +256,10 @@ class A3OB_OT_flags_vertex_select(bpy.types.Operator):
         return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and obj.a3ob_properties_object.flags_vertex_index in range(len(obj.a3ob_properties_object.flags_vertex))
     
     def execute(self, context):
-        # obj = context.object
-        # object_props = obj.a3ob_properties_object
-        # item = object_props.flags_vertex.add()
-        # item.name = "New Flag Group"
-        # object_props.flags_vertex_index = len(object_props.flags_vertex) - 1
+        obj = context.object
+        object_props = obj.a3ob_properties_object
+        flagutils.select_group(obj, object_props.flags_vertex_index)
+        bpy.ops.mesh.select_mode(type='VERT')
         
         return {'FINISHED'}
 
@@ -274,11 +277,10 @@ class A3OB_OT_flags_vertex_deselect(bpy.types.Operator):
         return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and obj.a3ob_properties_object.flags_vertex_index in range(len(obj.a3ob_properties_object.flags_vertex))
     
     def execute(self, context):
-        # obj = context.object
-        # object_props = obj.a3ob_properties_object
-        # item = object_props.flags_vertex.add()
-        # item.name = "New Flag Group"
-        # object_props.flags_vertex_index = len(object_props.flags_vertex) - 1
+        obj = context.object
+        object_props = obj.a3ob_properties_object
+        flagutils.select_group(obj, object_props.flags_vertex_index, False)
+        bpy.ops.mesh.select_mode(type='VERT')
         
         return {'FINISHED'}
 
