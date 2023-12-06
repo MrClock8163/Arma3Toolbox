@@ -1,5 +1,8 @@
+import re
+
 import bpy
 
+from ..utilities import generic as utils
 from ..utilities import data
 
 
@@ -51,7 +54,34 @@ class A3OB_PG_properties_material(bpy.types.PropertyGroup):
         # description = "Name of the selection to create for the material (leave empty to not create selection)",
         # default = ""
     # )
-
+    
+    def from_p3d(self, texture, material):
+        regex_procedural = "#\(.*?\)\w+\(.*?\)"
+        regex_procedural_color = "#\(argb,\d+,\d+,\d+\)color\((\d+.?\d*),(\d+.?\d*),(\d+.?\d*),(\d+.?\d*),([a-zA-Z]+)\)"
+        
+        if re.match(regex_procedural, texture):
+            texture = texture.replace(" ", "") # remove spaces to simplify regex parsing
+            tex = re.match(regex_procedural_color, texture)
+            if tex:
+                self.texture_type = 'COLOR'
+                data = tex.groups()
+                
+                try:
+                    self.color_type = data[4].upper()
+                    self.color_value = (float(data[0]), float(data[1]), float(data[2]), float(data[3]))
+                except:
+                    self.texture_type = 'CUSTOM'
+                    self.color_raw = texture
+                
+            else:
+                self.texture_type = 'CUSTOM'
+                self.color_raw = texture
+            
+        else:
+            self.texture_path = utils.restore_absolute(texture)
+        
+        self.material_path = utils.restore_absolute(material)
+        
 
 classes = (
     A3OB_PG_properties_material,

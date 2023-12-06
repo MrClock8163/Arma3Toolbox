@@ -4,7 +4,7 @@
 # https://community.bistudio.com/wiki/P3D_File_Format_-_MLOD
 
 
-import struct
+# import struct
 import math
 import re
 import time
@@ -14,616 +14,316 @@ import bpy
 import bmesh
 import mathutils
 
-from . import binary_handler as binary
+# from . import binary_handler as binary
+from . import data_p3d as p3d
 from ..utilities import generic as utils
 from ..utilities import lod as lodutils
 from ..utilities import compat as computils
 from ..utilities import proxy as proxyutils
+from ..utilities import flags as flagutils
 from ..utilities import structure as structutils
 from ..utilities import data
 from ..utilities import errors
 from ..utilities.logger import ProcessLogger
 
 
-def read_signature(file):
-    return binary.read_char(file, 4)
+def read_lod(context, file, material_dict, additional_data, dynamic_naming, logger, addon_prefs):
+    return
 
 
-def read_file_header(file):
-    signature = read_signature(file)
-    if signature != "MLOD":
-        raise errors.P3DError("Invalid MLOD signature: %s" % signature)
-        
-    version = binary.read_ulong(file)
-    count_lod = binary.read_ulong(file)
-    
-    return version, count_lod
+def categorize_lods(operator, context, mlod):
+    categories = {}
+    lods = []
 
-
-def read_vertex(file):
-    x, y, z = struct.unpack('<fff', file.read(12))
-    file.read(4) # dump vertex flags
-    return x, z, y
-
-
-def read_normal(file):
-    x, y, z = struct.unpack('<fff', file.read(12))
-    return -x, -z, -y
-
-
-def read_face_pseudo_vertextable(file):
-    return struct.unpack('<IIff', file.read(16)) # point_id, normal_id, u ,v
-
-
-def read_face(file):
-    count_sides = binary.read_ulong(file)
-    vertex_tables = [read_face_pseudo_vertextable(file) for i in range(count_sides)]
-    
-    if count_sides < 4:
-        file.read(16) # dump null bytes
-        
-    file.read(4) # dump face flags
-    texture = binary.read_asciiz(file)
-    material = binary.read_asciiz(file)
-    
-    return vertex_tables, texture, material
-
-
-# Selection weights need to be transformed to float representation
-# from byte representation.
-def decode_selection_weight(weight):
-    if weight == 0:
-        return 0.0
-    elif weight == 1:
-        return 1.0
-        
-    value = (256 - weight) / 255
-    
-    if value > 1:
-        return 0
-        
-    return value
-
-
-# Attempt to restore absolute paths to the set project root (P drive by default).
-def get_file_path(path, addon_prefs, extension = ""):
-    path = utils.replace_slashes(path.strip().lower())
-    
-    if not addon_prefs.import_absolute:
-        return path
-    
-    if path == "":
-        return ""
-    
-    if os.path.splitext(path)[1].lower() != extension:
-        path += extension
-    
-    if addon_prefs.import_absolute:
-        root = utils.abspath(addon_prefs.project_root).lower()
-        if not path.startswith(root):
-            abs_path = os.path.join(root, path)
-            if os.path.exists(abs_path):
-                return abs_path
-    
-    return path
-
-
-# It's not guaranteed that a LOD has a #UVSet# TAGG section, so the UVs embedded into
-# the face data should not be discarded.
-def process_embedded_uv(bm, face_data_dict):
-    uv_layer = bm.loops.layers.uv.new("UVSet 0")
-    
-    for face in bm.faces:
-        data = face_data_dict[face.index][0]
-        for loop in face.loops:
-            for table in data:
-                if table[0] == loop.vert.index:
-                    loop[uv_layer].uv = (table[2], 1 - table[3])
-                    break
-
-
-# Reads and processed the contents of the TAGG section of a LOD.
-# Returns the list of selection names, and dictionary of named properties
-# as those need to be set on the object itself, not the bmesh, and the
-# proxies will have to be post processed.
-def process_taggs(file, bm, additional_data, count_verts, count_faces, logger):
-    count = 0
-    named_selections = []
-    named_properties = {}
-    
-    while True:
-        file.read(1)
-        tagg_name = binary.read_asciiz(file)
-        tagg_length = binary.read_ulong(file)
-        
-        # EOF
-        if tagg_name == "#EndOfFile#":
-            if tagg_length != 0:
-                raise errors.P3DError("Invalid EOF")
-            break
-            
-        # Sharps
-        elif tagg_name == "#SharpEdges#":
-            sharp_edges = []
-            
-            for i in range(int(tagg_length / (4 * 2))):
-                point1_id = binary.read_ulong(file)
-                point2_id = binary.read_ulong(file)
-                
-                if point1_id != point2_id:
-                    edge = bm.edges.get([bm.verts[point1_id], bm.verts[point2_id]])
-                    if edge is not None:
-                        sharp_edges.append(edge)
-            
-            for edge in bm.edges:
-                edge.smooth = edge not in sharp_edges
-        
-        # Property
-        elif tagg_name == "#Property#" and 'PROPS' in additional_data:
-            if tagg_length != 128:
-                raise errors.P3DError("Invalid named property length: %d" % tagg_length)
-                
-            key = binary.read_char(file, 64)
-            value = binary.read_char(file, 64)
-            
-            if key not in named_properties:
-                named_properties[key] = value
-        
-        # Mass
-        elif tagg_name == "#Mass#" and 'MASS' in additional_data:
-            massLayer = bm.verts.layers.float.new("a3ob_mass") # create new BMesh layer to store mass data
-            for i in range(count_verts):
-                mass = binary.read_float(file)
-                bm.verts[i][massLayer] = mass
-            
-        # UV
-        elif tagg_name == "#UVSet#" and 'UV' in additional_data:
-            uv_id = binary.read_ulong(file)
-            uv_layer = bm.loops.layers.uv.get("UVSet %d" % uv_id)
-            if not uv_layer:
-                uv_layer = bm.loops.layers.uv.new("UVSet %d" % uv_id)
-            
-            for face in bm.faces:
-                for loop in face.loops:
-                    loop[uv_layer].uv = (binary.read_float(file), 1-binary.read_float(file))
-            
-            
-        # Named selections
-        elif not re.match("#.*#",tagg_name) and 'SELECTIONS' in additional_data:
-            bm.verts.layers.deform.verify()
-            named_selections.append(tagg_name)
-            deform = bm.verts.layers.deform.active
-            
-            for i in range(count_verts):
-                b = binary.read_byte(file)
-                weight = decode_selection_weight(b)
-                if b != 0:
-                    bm.verts[i][deform][len(named_selections) - 1] = weight
-                
-            file.read(count_faces) # dump face selection data
-            
-        else:
-            file.read(tagg_length) # dump all other TAGGs
-            
-        count += 1
-            
-    logger.step("Read TAGGs: %d" % count)
-            
-    return named_selections, named_properties
-
-
-def process_materials(mesh, face_data_dict, material_dict, addon_prefs):
-    blender_material_indices = {} # needed because otherwise materials and textures with same names, but in different folders may cause issues
-    regex_procedural = "#\(.*?\)\w+\(.*?\)"
-    regex_procedural_color = "#\(\s*argb\s*,\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)color\(\s*(\d+.?\d*)\s*,\s*(\d+.?\d*)\s*,\s*(\d+.?\d*)\s*,\s*(\d+.?\d*)\s*,([a-zA-Z]+)\)"
-    
-    for i in range(len(face_data_dict)):
-        face_data = face_data_dict[i]
-        texture_name = face_data[1].strip()
-        material_name = face_data[2].strip()
-        
-        blender_material = None
-        if (texture_name, material_name) in material_dict:
-            blender_material = material_dict[(texture_name, material_name)]
-        else:
-            blender_material = bpy.data.materials.new("P3D: %s :: %s" % (os.path.basename(texture_name), os.path.basename(material_name)))
-            material_props = blender_material.a3ob_properties_material
-                
-            if re.match(regex_procedural, texture_name):
-                tex = re.match(regex_procedural_color, texture_name)
-                if tex:
-                    material_props.texture_type = 'COLOR'
-                    groups = tex.groups()
-                    
-                    try:
-                        material_props.color_type = groups[4].upper()
-                        material_props.color_value = (float(groups[0]), float(groups[1]), float(groups[2]), float(groups[3]))
-                    except:
-                        material_props.texture_type = 'CUSTOM'
-                        material_props.color_raw = texture_name
-                        
-                else:
-                    material_props.texture_type = 'CUSTOM'
-                    material_props.color_raw = texture_name
-            else:
-                material_props.texture_path = get_file_path(texture_name, addon_prefs)
-            
-            material_props.material_path = get_file_path(material_name, addon_prefs)
-            material_dict[(texture_name, material_name)] = blender_material
-            
-        if blender_material.name not in mesh.materials:
-            mesh.materials.append(blender_material)
-            blender_material_indices[blender_material] = len(mesh.materials) - 1
-
-        material_index = blender_material_indices[blender_material]
-            
-        mesh.polygons[i].material_index = material_index
-        
-    return material_dict
-
-
-# The 32-bit floats written to the P3D may have lost
-# their normalization due to the precision loss, and
-# this would cause blender to produce weird results.
-def renormalize_vertex_normals(normals_dict):
-    for i in normals_dict:
-        normal = normals_dict[i]
-        length = math.sqrt(normal[0]**2 + normal[1]**2 + normal[2]**2)
-        
-        if length == 0:
-            continue
-            
-        coef = 1 / length
-        normals_dict[i] = (normal[0] * coef, normal[1] * coef, normal[2] * coef)
-    
-    return normals_dict
-
-
-# To preserve the shading, vertex normals need to be set as
-# custom split normals on the mesh. The normals are set on
-# the loops. Loops are in continuous order, so it's enough
-# to just iterate through the face data from the P3D.
-def process_normals(mesh, face_data_dict, normals_dict):
-    loop_normals = [normals_dict[table[1]] for face in face_data_dict.values() for table in face[0]]
-    
-    if len(mesh.loops) != len(loop_normals):
-        return False
-    
-    mesh.normals_split_custom_set(loop_normals)
-    
-    return True
-
-
-# Create collections and put each LOD in the appropriate one.
-def group_lod_data(lod_objects, groupby = 'TYPE'):    
-    collections = {}
-    group_dict = data.lod_groups[groupby]
-    
-    for obj, resolution, _ in lod_objects:
-        lod_index, _ = lodutils.get_lod_id(resolution)
-        group_name = group_dict[lod_index]
-        
-        if group_name not in collections:
-            collections[group_name] = bpy.data.collections.new(name=group_name)
-            
-        collections[group_name].objects.link(obj)
-            
-    return collections
-
-
-def build_collections(lod_objects, operator, root_collection):
+    root = context.scene.collection
     if operator.enclose:
-        root_collection = bpy.data.collections.new(name=os.path.basename(operator.filepath))
-        bpy.context.scene.collection.children.link(root_collection)
+        root = bpy.data.collections.new(name=os.path.basename(operator.filepath))
+        bpy.context.scene.collection.children.link(root)
     
     if operator.groupby == 'NONE':
-        for item in lod_objects:
-            root_collection.objects.link(item[0])
+        categories["None"] = [0, root]
+        lods = [[*lodutils.get_lod_id(lod.resolution), 0] for lod in mlod.lods]
+
     else:
-        colls = group_lod_data(lod_objects, operator.groupby)
+        for lod in mlod.lods:
+            lod_index, lod_resolution = lodutils.get_lod_id(lod.resolution)
+            group_dict = data.lod_groups[operator.groupby]
+            group_name = group_dict[lod_index]
+
+            if group_name not in categories:
+                new_category = bpy.data.collections.new(name=group_name)
+                root.children.link(new_category)
+                categories[group_name] = [len(categories), new_category]
             
-        for group in colls.values():
-            root_collection.children.link(group)
+            lods.append([lod_index, lod_resolution, categories[group_name][0]])
+
+    return [cat[1] for cat in categories.values()], lods
 
 
-# Align the object coordinate system with the proxy coordinates.
-# https://mrcmodding.gitbook.io/home/documents/proxy-coordinates
-def transform_proxy(obj):
-    rotation_matrix = proxyutils.get_transform_rotation(obj)
-    obj.data.transform(rotation_matrix)
-    obj.matrix_world @= rotation_matrix.inverted()
+def create_blender_materials(lookup):
+    materials = []
     
-    translate = mathutils.Matrix.Translation(-proxyutils.find_axis_vertices(obj.data)[0].co)
-    obj.data.transform(translate)
-    obj.matrix_world @= translate.inverted()
-    
-    obj.data.update()
-
-
-# Proxy triangles need to be post processed after the LOD meshes are imported.
-# The triangles are separeted from the LOD objects and parented to them,
-# and the proxy paths are set in the proxy object properties.
-def process_proxies(lod_data, operator, material_dict, dynamic_naming, addon_prefs):
-    regex_proxy = "proxy:(.*)\.(\d{3})"
-    regex_proxy_placeholder = "@proxy_(\d{4})"
-    
-    for obj, _, proxy_selections_dict in lod_data:
-        bpy.context.view_layer.objects.active = obj
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.select_all(action='DESELECT')
-        
-        for group in obj.vertex_groups:
-            selection = group.name
-            if not re.match(regex_proxy_placeholder, selection):
-                continue
-                
-            obj.vertex_groups.active = group
-            computils.call_operator_ctx(bpy.ops.object.vertex_group_select)
+    for texture, material in lookup.keys():
+        material_name = "P3D: %s :: %s" % (os.path.basename(texture), os.path.basename(material))
+        if texture == "" and material == "":
+            material_name = "P3D: no material"
             
-            try:
-                bpy.ops.mesh.separate(type='SELECTED')
-                obj.vertex_groups.remove(group)
-            except:
-                pass
+        new_mat = bpy.data.materials.new(material_name)
+        new_mat.a3ob_properties_material.from_p3d(texture.strip(), material.strip())
+        materials.append(new_mat)
+        
+    return materials
+
+
+def process_normals(mesh, lod):
+    loop_normals = lod.loop_normals()
+    
+    if len(mesh.loops) == len(loop_normals):
+        mesh.normals_split_custom_set(loop_normals)
+
+
+def process_sharps(bm, lod):
+    data = None
+    for tagg in lod.taggs:
+        if tagg.name == "#SharpEdges#":
+            data = tagg.data
+            break
+    
+    if not data:
+        return
+    
+    for edge in bm.edges:
+        edge.smooth = True
+    
+    for item in data.edges:
+        edge = bm.edges.get([bm.verts[item[0]], bm.verts[item[1]]])
+        if edge:
+            edge.smooth = False
+
+
+def process_uvsets(bm, lod):
+    uvsets = lod.uvsets()
+        
+    for idx in uvsets:
+        uvs = uvsets[idx]
+        layer_name = "UVSet %d" % idx
+        layer = bm.loops.layers.uv.get(layer_name)
+        if not layer:
+            layer = bm.loops.layers.uv.new(layer_name) 
+        
+        for face in bm.faces:
+            for loop in face.loops:
+                loop[layer].uv = uvs[loop.index]
+
+
+def process_selections(bm, lod):
+    bm.verts.layers.deform.verify()
+    layer = bm.verts.layers.deform.active
+    
+    selection_names = []
+    for tagg in lod.taggs:
+        if tagg.name[0] == tagg.name[-1] == "#":
+            continue
+        
+        selection_idx = len(selection_names)
+        weights = tagg.data.weight_verts
+        for idx in weights:
+            bm.verts[idx][layer][selection_idx] = weights[idx]
+        
+        selection_names.append(tagg.name)
+    
+    return selection_names
+
+
+def process_materials(mesh, bm, lod, materials, materials_lookup):
+    face_indices, material_indices = lod.get_sections(materials_lookup)
+    
+    for i, idx in enumerate(face_indices):
+        bm.faces[i].material_index = idx
+    
+    for idx in material_indices:
+        mesh.materials.append(materials[idx])
+
+
+def process_mass(bm, lod):
+    data = None
+    for tagg in lod.taggs:
+        if tagg.name == "#Mass#":
+            data = tagg.data
+    
+    if not data:
+        return
+    
+    layer = bm.verts.layers.float.new("a3ob_mass")
+    for vert in bm.verts:
+        vert[layer] = data.masses[vert.index]
+
+
+def process_properties(obj, lod):
+    for tagg in lod.taggs:
+        if tagg.name != "#Property#":
+            continue
+        
+        new_prop = obj.a3ob_properties_object.properties.add()
+        new_prop.name = tagg.data.key
+        new_prop.value = tagg.data.value
+
+
+def process_flag_groups_vertex(obj, bm, lod):
+    groups, values = lod.flag_groups_vertex()
+
+    layer = flagutils.get_layer_flags_vertex(bm)
+    for vert in bm.verts:
+        vert[layer] = values[vert.index]
+    
+    for i, grp in enumerate(groups):
+        new_group = obj.a3ob_properties_object.flags_vertex.add()
+        new_group.name = ("Group %d" % i if i > 0 else "Default")
+        new_group.set_flag(grp)
+
+
+def process_flag_groups_face(obj, bm, lod):
+    groups, values = lod.flag_groups_face()
+
+    layer = flagutils.get_layer_flags_face(bm)
+    for face in bm.faces:
+        face[layer] = values[face.index]
+    
+    for i, grp in enumerate(groups):
+        new_group = obj.a3ob_properties_object.flags_face.add()
+        new_group.name = ("Group %d" % i if i > 0 else "Default")
+        new_group.set_flag(grp)
+
+
+def process_proxies(operator, obj, proxy_lookup):
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='DESELECT')
+
+    for key in proxy_lookup:
+        vgroup = obj.vertex_groups.get(key)
+        if not vgroup:
+            continue
             
-        bpy.ops.object.mode_set(mode='OBJECT')
+        obj.vertex_groups.active = vgroup
+        computils.call_operator_ctx(bpy.ops.object.vertex_group_select)
+
+        try:
+            bpy.ops.mesh.separate(type='SELECTED')
+            obj.vertex_groups.remove(vgroup)
+        except:
+            pass
+
+    bpy.ops.object.mode_set(mode='OBJECT')
         
-        proxy_objects = [proxy for proxy in bpy.context.selected_objects if proxy != obj]
-        
-        if operator.proxy_action == 'CLEAR':
-            computils.call_operator_ctx(bpy.ops.object.delete, {"selected_objects": proxy_objects})
-            
-        elif operator.proxy_action == 'SEPARATE':
-            for proxy_obj in proxy_objects:
-                proxy_obj.a3ob_properties_object.is_a3_lod = False
-                proxy_obj.a3ob_properties_object_proxy.dynamic_naming = dynamic_naming
-                
-                transform_proxy(proxy_obj)
-                structutils.cleanup_vertex_groups(proxy_obj) # need to remove the unused groups leftover from the separation
-                
-                for group in proxy_obj.vertex_groups:
-                    name = group.name
-                    
-                    if name not in proxy_selections_dict:
-                        continue
-                    
-                    proxy_data = re.match(regex_proxy, proxy_selections_dict[name])
-                    proxy_obj.vertex_groups.remove(group)
-                    proxy_data_groups = proxy_data.groups()
-                    proxy_obj.a3ob_properties_object_proxy.proxy_path = get_file_path(proxy_data_groups[0], addon_prefs, ".p3d")
-                    proxy_obj.a3ob_properties_object_proxy.proxy_index = int(proxy_data_groups[1])
-                
-                proxy_obj.a3ob_properties_object_proxy.is_a3_proxy = True
-                proxy_obj.data.materials.clear()
-                proxy_obj.data.materials.append(material_dict[("", "")])
-                proxy_obj.parent = obj
-                
-        bpy.ops.object.select_all(action='DESELECT')
+    proxy_objects = [proxy for proxy in bpy.context.selected_objects if proxy != obj]
+    
+    if operator.proxy_action == 'CLEAR':
+        computils.call_operator_ctx(bpy.ops.object.delete, {"selected_objects": proxy_objects})
 
 
-def read_lod(context, file, material_dict, additional_data, dynamic_naming, logger, addon_prefs):
-    logger.level_up()
-
-    # Read LOD header
-    signature = read_signature(file)
-    if signature != "P3DM":
-        raise errors.P3DError("Unsupported LOD signature: %s" % signature)
-        
-    version_major = binary.read_ulong(file)
-    version_minor = binary.read_ulong(file)
-    
-    if version_major != 0x1c or version_minor != 0x100:
-        raise errors.P3DError("Unsupported LOD version: %d.%d" % (version_major, version_minor))
-        
-    logger.step("Type: P3DM")
-    logger.step("Version: %d.%d" % (version_major, version_minor))
-                
-    count_verts = binary.read_ulong(file)
-    count_normals = binary.read_ulong(file)
-    count_faces = binary.read_ulong(file)
-    
-    file.read(4) # dump unknown flag byte
-    
-    # Read vertex table
-    vertices = [read_vertex(file) for i in range(count_verts)]
-    logger.step("Read vertices: %d" % count_verts)
-    
-    # Read vertex normal table
-    normals_dict = {i: read_normal(file) for i in range(count_normals)}
-    logger.step("Read vertex normals: %d" % count_normals)
-    
-    # Read faces
-    faces = []
-    face_data_dict = {}
-    for i in range(count_faces):
-        new_face = read_face(file)
-        faces.append([i[0] for i in new_face[0]])
-        face_data_dict[i] = new_face
-    
-    logger.step("Read faces: %d" % count_faces)
-    
-    # Construct mesh
-    mesh = bpy.data.meshes.new("Temp LOD")
-    mesh.from_pydata(vertices, [], faces) # from_pydata is both faster than BMesh and does not break when fed invalid geometry
-    mesh.update(calc_edges=True)
-    
-    for face in mesh.polygons:
-        face.use_smooth = True
-    
-    # Apply split normals
-    #
-    # Split normals apparently also set up hard edges where necessary,
-    # but due to a seemingly Blender specific phenomenon, random sharp
-    # edges tend to appear where the loop vertices on both ends of an edge
-    # have split normals. To combat this, the normals have to be processed
-    # before the #SharpEdges# TAGG, so that the sharp edges get cleaned up
-    # by the TAGG processing.
-    if 'NORMALS' in additional_data:
-        normals_dict = renormalize_vertex_normals(normals_dict)
-        if process_normals(mesh, face_data_dict, normals_dict):
-            logger.step("Applied split normals")
-        else:
-            logger.step("!!! Could not apply split normals !!!")
-        
-    # Read TAGGs
-    bm = bmesh.new()
-    bm.from_mesh(mesh)
-    bm.verts.ensure_lookup_table()
-    bm.edges.ensure_lookup_table()
-    bm.faces.ensure_lookup_table()
-    
-    # Embedded UV set
-    process_embedded_uv(bm, face_data_dict)
-    logger.step("Added embedded UVSet 0")
-    
-    tagg_signature = read_signature(file)
-    if tagg_signature != "TAGG":
-        raise errors.P3DError("Invalid TAGG section signature: %s" % tagg_signature)
-    
-    named_selections, named_properties = process_taggs(file, bm, additional_data, count_verts, count_faces, logger)
-    
-    # EOF
-    lod_resolution_signature = binary.read_float(file)
-    logger.step("Resolution signature: %d" % lod_resolution_signature)
-    
-    # Create object
-    lod_index, lod_resolution = lodutils.get_lod_id(lod_resolution_signature)
+def process_lod(operator, context, lod, additional_data, materials, materials_lookup, categories, lod_links):
+    lod_index = lod_links[0]
+    lod_resolution = lod_links[1]
     lod_name = lodutils.format_lod_name(lod_index, lod_resolution)
-    logger.step("Name: %s" % lod_name)
     
+    mesh = bpy.data.meshes.new(lod_name)
     mesh.use_auto_smooth = True
     mesh.auto_smooth_angle = math.radians(180)
-    mesh.name = lod_name
-    obj = bpy.data.objects.new(lod_name, mesh)
     
-    # Setup LOD property
+    mesh.from_pydata(*lod.pydata())
+    mesh.update(calc_edges=True)
+    
+    obj = bpy.data.objects.new(lod_name, mesh)
+
+    # Setup LOD properties
     object_props = obj.a3ob_properties_object
-    object_props.dynamic_naming = dynamic_naming
+    object_props.dynamic_naming = operator.dynamic_naming
     try:
         object_props.lod = str(lod_index)
     except:
         object_props.lod = "30"
         
     object_props.resolution = lod_resolution
-    object_props.is_a3_lod = True
+
     
-    # Add named properties
-    for key in named_properties:
-        item = object_props.properties.add()
-        item.name = key
-        item.value = named_properties[key]
+    for face in mesh.polygons:
+        face.use_smooth = True
     
-    if len(named_properties) > 0:
-        logger.step("Added named properties: %d" % len(named_properties))
+    if 'NORMALS' in additional_data:
+        process_normals(mesh, lod)
     
-    # Push to Mesh data
+    # Process TAGGs
+    bm = bmesh.new()
+    bm.from_mesh(mesh)
+    bm.verts.ensure_lookup_table()
+    bm.edges.ensure_lookup_table()
+    bm.faces.ensure_lookup_table()
+    
+    process_sharps(bm, lod)
+    
+    if 'UV' in additional_data:
+        process_uvsets(bm, lod)
+    
+    selection_names = []
+    proxy_lookup = {}
+    if 'SELECTIONS' in additional_data:
+        proxy_lookup = lod.proxies_to_placeholders()
+        selection_names = process_selections(bm, lod)
+    
+    if 'MATERIALS' in additional_data:
+        process_materials(mesh, bm, lod, materials, materials_lookup)
+    
+    if 'MASS' in additional_data:
+        process_mass(bm, lod)
+    
+    process_properties(obj, lod)
+    process_flag_groups_vertex(obj, bm, lod)
+    process_flag_groups_face(obj, bm, lod)
+        
+    for name in selection_names:
+        obj.vertex_groups.new(name=name)
+
     bm.normal_update()
     bm.to_mesh(mesh)
     bm.free()
-    
-    # Create materials
-    if 'MATERIALS' in additional_data:
-        material_dict = process_materials(mesh, face_data_dict, material_dict, addon_prefs)
-        logger.step("Assigned materials")
-        
-    # Cleanup split normals if they are not needed
-    if 'NORMALS' in additional_data and lod_index not in data.lod_visuals: 
-        computils.call_operator_ctx(bpy.ops.mesh.customdata_custom_splitnormals_clear, {"active_object": obj, "object": obj})
-        
-    # Add vertex group names to object
-    #
-    # Blender only allows vertex group names to have up to 63 characters.
-    # Since proxy selection names (file paths) are often longer than that,
-    # they have to be replaced by formatted placeholders and later looked up
-    # from a dictionary when needed.
-    regex_proxy = "proxy:(.*)\.(\d{3})"
-    proxy_selections_dict = {}
-    proxy_index = 0
-    for name in named_selections:
-        if re.match(regex_proxy, name):
-            group_name = "@proxy_%04d" % proxy_index
-            proxy_selections_dict[group_name] = name
-            name = group_name
-            proxy_index += 1
-            
-        obj.vertex_groups.new(name=name)
-    
-    if len(proxy_selections_dict) > 0:
-        logger.step("Added proxy name place holders: %d" % len(proxy_selections_dict))
-        
-    if len(named_selections) > 0:
-        logger.step("Added named selections: %d" % len(named_selections))
-    
-    logger.level_down()
-    return obj, lod_resolution_signature, material_dict, proxy_selections_dict
+
+    object_props.is_a3_lod = True
+    collection = categories[lod_links[2]]
+    collection.objects.link(obj)
+
+    if operator.proxy_action != 'NOTHING' and 'SELECTIONS' in additional_data:
+        process_proxies(operator, obj, proxy_lookup)
 
 
 def read_file(operator, context, file, first_lod_only = False):
-    # If something is left selected in the scene, the proxy separation trips up with the operators.
     for obj in bpy.context.selected_objects:
         obj.select_set(False)
         
     context.view_layer.objects.active = None
-    
-    wm = context.window_manager
-    wm.progress_begin(0, 1000)
-    logger = ProcessLogger()
-    logger.step("P3D import from %s" % operator.filepath)
-    
+
     time_file_start = time.time()
+    
+    mlod = p3d.P3D_MLOD.read(file, first_lod_only)
+    categories, lod_links = categorize_lods(operator, context, mlod)
+
+    # print(categories, lod_links)
+    
+    # return mlod.lods
 
     additional_data = set()
     if operator.additional_data_allowed:
         additional_data = operator.additional_data
     
-    version, count_lod = read_file_header(file)
-    
-    logger.log("File version: %d" % version)
-    logger.log("Number of LODs: %d" % count_lod)
-    
-    if first_lod_only and count_lod > 1:
-        logger.log("Importing 1st LOD only")
-        count_lod = 1
-    
-    if version != 257:
-        raise errors.P3DError("Unsupported file version: %d" % version)
-    
-    lod_data = []
-    
-    material_dict = None
+    materials = None
+    materials_lookup = None
     if 'MATERIALS' in additional_data:
-        material_dict = {
-            ("", ""): bpy.data.materials.get("P3D: no material", bpy.data.materials.new("P3D: no material"))
-        }
+        materials_lookup = mlod.get_materials()
+        materials = create_blender_materials(materials_lookup)
     
-    logger.level_up()
+    for i, lod in enumerate(mlod.lods):
+        process_lod(operator, context, lod, additional_data, materials, materials_lookup, categories, lod_links[i])
     
-    addon_prefs = utils.get_addon_preferences()
-    for i in range(count_lod):
-        time_lod_start = time.time()
-        logger.step("LOD %d" % i)
-        
-        lod_object, lod_resolution, material_dict, proxy_selections_dict = read_lod(context, file, material_dict, additional_data, operator.dynamic_naming, logger, addon_prefs)
-
-        if operator.validate_meshes:
-            lod_object.data.validate(clean_customdata=False)
-        
-        lod_data.append((lod_object, lod_resolution, proxy_selections_dict))
-        
-        logger.log("Done in %f sec" % (time.time() - time_lod_start))
-        wm.progress_update(i + 1)
-        
-    logger.level_down()
+    print("P3D Import finished in %f sec" % (time.time() - time_file_start))
     
-    root_collection = context.scene.collection
-    build_collections(lod_data, operator, root_collection)
-    
-    # Set up proxies
-    if operator.proxy_action != 'NOTHING' and 'SELECTIONS' in additional_data:
-        process_proxies(lod_data, operator, material_dict, operator.dynamic_naming, addon_prefs)
-               
-    logger.step("")
-    logger.step("P3D Import finished in %f sec" % (time.time() - time_file_start))
-    wm.progress_end()
-    
-    return lod_data
+    return mlod.lods

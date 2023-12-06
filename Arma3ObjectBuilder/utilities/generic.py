@@ -25,6 +25,21 @@ def show_info_box(message, title = "", icon = 'INFO'):
     bpy.context.window_manager.popup_menu(draw, title=title, icon=icon)
 
 
+def abspath(path):
+    if not path.startswith("//"):
+        return path
+    
+    return os.path.abspath(bpy.path.abspath(path))
+
+
+def strip_extension(path):
+    return os.path.splitext(path)[0]
+
+
+def get_addon_preferences():
+    return bpy.context.preferences.addons["Arma3ObjectBuilder"].preferences
+
+
 def get_components(mesh):
     mesh.calc_loop_triangles()
     components = meshutils.mesh_linked_triangles(mesh)
@@ -86,6 +101,29 @@ def replace_slashes(path):
     return path.replace("/", "\\")
 
 
+# Attempt to restore absolute paths to the set project root (P drive by default).
+def restore_absolute(path, extension = ""):
+    path = replace_slashes(path.strip().lower())
+    addon_prefs = get_addon_preferences()
+    
+    if not addon_prefs.import_absolute:
+        return path
+    
+    if path == "":
+        return ""
+    
+    if os.path.splitext(path)[1].lower() != extension:
+        path += extension
+    
+    root = abspath(addon_prefs.project_root).lower()
+    if not path.startswith(root):
+        abs_path = os.path.join(root, path)
+        if os.path.exists(abs_path):
+            return abs_path
+    
+    return path
+
+
 def make_relative(path, root):
     path = path.lower()
     root = root.lower()
@@ -98,14 +136,6 @@ def make_relative(path, root):
        path = os.path.relpath(path, drive)
     
     return path
-
-
-def strip_extension(path):
-    return os.path.splitext(path)[0]
-
-
-def get_addon_preferences():
-    return bpy.context.preferences.addons["Arma3ObjectBuilder"].preferences
 
 
 def get_common_proxies():
@@ -148,13 +178,6 @@ def get_common_namedprops():
         pass
         
     return {**namedprops, **custom_namedprops}
-
-
-def abspath(path):
-    if not path.startswith("//"):
-        return path
-    
-    return os.path.abspath(bpy.path.abspath(path))
 
 
 preview_collection = {}

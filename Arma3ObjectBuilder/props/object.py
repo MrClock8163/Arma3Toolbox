@@ -27,7 +27,7 @@ def lod_name_update(self, context):
         return
         
     obj = self.id_data
-    object_props = obj.a3ob_properties_objec
+    object_props = obj.a3ob_properties_object
     
     name = "LOD: %s" % lodutils.format_lod_name(int(object_props.lod), object_props.resolution)
     obj.name = name
@@ -40,10 +40,16 @@ def lod_props_update(self, context):
     if not object_props.is_a3_lod:
         return
     
-    if len(object_props.flags_vertex) < 1:
+    if len(object_props.flags_vertex) == 0:
         new_group = object_props.flags_vertex.add()
         new_group.name = "Default"
+        new_group.normals = 'FIXED'
         object_props.flags_vertex_index = 0
+    
+    if len(object_props.flags_face) == 0:
+        new_group = object_props.flags_face.add()
+        new_group.name = "Default"
+        object_props.flags_face_index = 0
     
     lod_name_update(self, context)
 
@@ -120,7 +126,7 @@ class A3OB_PG_properties_flag_vertex(bpy.types.PropertyGroup):
             ('ANGLE', "Impedance Angle", "", 0x04000000),
             ('FIXED', "Fixed", "", 0x02000000),
         ),
-        default = 'FIXED'
+        default = 'AREA'
     )
     hidden: bpy.props.BoolProperty (
         name = "Hidden Vertex",
@@ -130,19 +136,47 @@ class A3OB_PG_properties_flag_vertex(bpy.types.PropertyGroup):
     
     def get_flag(self):
         flag = 0
-        flag += data.flags_vertex[self.surface]
-        flag += data.flags_vertex[self.fog]
-        flag += data.flags_vertex[self.decal]
-        flag += data.flags_vertex[self.lighting]
-        flag += data.flags_vertex[self.normals]
+        flag += data.flags_vertex_surface[self.surface]
+        flag += data.flags_vertex_fog[self.fog]
+        flag += data.flags_vertex_decal[self.decal]
+        flag += data.flags_vertex_lighting[self.lighting]
+        flag += data.flags_vertex_normals[self.normals]
         
         if self.hidden:
-            flag += data.flags_vertex['HIDDEN']
-        
-        # print(hex(flag))
+            flag += data.flag_vertex_hidden
         
         return flag
+    
+    def set_flag(self, value):
+        # print("Setting flag:", value)
         
+        for name in data.flags_vertex_surface:
+            if value & data.flags_vertex_surface[name]:
+                self.surface = name
+                break
+                
+        for name in data.flags_vertex_fog:
+            if value & data.flags_vertex_fog[name]:
+                self.fog = name
+                break
+                
+        for name in data.flags_vertex_lighting:
+            if value & data.flags_vertex_lighting[name]:
+                self.lighting = name
+                break
+                
+        for name in data.flags_vertex_decal:
+            if value & data.flags_vertex_decal[name]:
+                self.decal = name
+                break
+                
+        for name in data.flags_vertex_normals:
+            if value & data.flags_vertex_normals[name]:
+                self.normals = name
+                break
+        
+        if value & data.flag_vertex_hidden:
+            self.hidden = True
 
 
 class A3OB_PG_properties_flag_face(bpy.types.PropertyGroup):
@@ -178,18 +212,41 @@ class A3OB_PG_properties_flag_face(bpy.types.PropertyGroup):
         description = "",
         default = True # True: 0x00000000 False: 0x00000010
     )
+    merging: bpy.props.BoolProperty (
+        name = "Enable Texture Merging",
+        description = "",
+        default = True # True: 0x00000000 False: 0x01000000
+    )
     
     def get_flag(self):
         flag = 0
-        flag += data.flags_face[self.lighting]
-        flag += data.flags_face[self.zbias]
+        flag += data.flags_face_lighting[self.lighting]
+        flag += data.flags_face_zbias[self.zbias]
         
         if not self.shadow:
-            flag += data.flags_face['NO_SHADOW']
+            flag += data.flag_face_noshadow
         
-        # print(hex(flag))
+        if not self.merging:
+            flag += data.flag_face_merging
         
         return flag
+
+    def set_flag(self, value):
+        for name in data.flags_face_lighting:
+            if value & data.flags_face_lighting[name]:
+                self.lighting = name
+                break
+
+        for name in data.flags_face_zbias:
+            if value & data.flags_face_zbias[name]:
+                self.zbias = name
+                break
+        
+        if value & data.flag_face_noshadow:
+            self.shadow = False
+        
+        if value & data.flag_face_merging:
+            self.merging = False
 
 
 class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
