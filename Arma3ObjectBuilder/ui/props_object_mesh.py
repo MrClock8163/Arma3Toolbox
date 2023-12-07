@@ -534,24 +534,24 @@ class A3OB_PT_object_mesh_flags_vertex(bpy.types.Panel):
     
     def draw(self, context):
         obj = context.object
-        object_props = obj.a3ob_properties_object
+        flag_props = obj.a3ob_properties_object_flags
         
         layout = self.layout
         row = layout.row()
         col_list = row.column()
-        col_list.template_list("A3OB_UL_flags_vertex", "A3OB_flags_vertex", object_props, "flags_vertex", object_props, "flags_vertex_index")
+        col_list.template_list("A3OB_UL_flags_vertex", "A3OB_flags_vertex", flag_props, "vertex", flag_props, "vertex_index")
         
         layout.use_property_split = True
         layout.use_property_decorate = False
         
-        if object_props.flags_vertex_index in range(len(object_props.flags_vertex)):
+        if flag_props.vertex_index in range(len(flag_props.vertex)):
             if obj.mode == 'EDIT':
                 row_operators = layout.row(align=True)
                 row_operators.operator("a3ob.flags_vertex_assign")
                 row_operators.operator("a3ob.flags_vertex_select")
                 row_operators.operator("a3ob.flags_vertex_deselect")
             
-            prop = object_props.flags_vertex[object_props.flags_vertex_index]
+            prop = flag_props.vertex[flag_props.vertex_index]
             layout.prop(prop, "name")
             layout.prop(prop, "surface")
             layout.prop(prop, "fog")
@@ -580,24 +580,24 @@ class A3OB_PT_object_mesh_flags_face(bpy.types.Panel):
     
     def draw(self, context):
         obj = context.object
-        object_props = obj.a3ob_properties_object
+        flag_props = obj.a3ob_properties_object_flags
         
         layout = self.layout
         row = layout.row()
         col_list = row.column()
-        col_list.template_list("A3OB_UL_flags_face", "A3OB_flags_face", object_props, "flags_face", object_props, "flags_face_index")
+        col_list.template_list("A3OB_UL_flags_face", "A3OB_flags_face", flag_props, "face", flag_props, "face_index")
         
         layout.use_property_split = True
         layout.use_property_decorate = False
         
-        if object_props.flags_face_index in range(len(object_props.flags_face)):
+        if flag_props.face_index in range(len(flag_props.face)):
             if obj.mode == 'EDIT':
                 row_operators = layout.row(align=True)
                 row_operators.operator("a3ob.flags_face_assign")
                 row_operators.operator("a3ob.flags_face_select")
                 row_operators.operator("a3ob.flags_face_deselect")
             
-            prop = object_props.flags_face[object_props.flags_face_index]
+            prop = flag_props.face[flag_props.face_index]
             layout.prop(prop, "name")
             layout.prop(prop, "lighting")
             layout.prop(prop, "zbias")
