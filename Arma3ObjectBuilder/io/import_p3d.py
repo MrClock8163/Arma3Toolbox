@@ -177,7 +177,7 @@ def process_flag_groups_vertex(obj, bm, lod):
         vert[layer] = values[vert.index]
     
     for i, grp in enumerate(groups):
-        new_group = obj.a3ob_properties_object.flags_vertex.add()
+        new_group = obj.a3ob_properties_object_flags.vertex.add()
         new_group.name = ("Group %d" % i if i > 0 else "Default")
         new_group.set_flag(grp)
 
@@ -190,7 +190,7 @@ def process_flag_groups_face(obj, bm, lod):
         face[layer] = values[face.index]
     
     for i, grp in enumerate(groups):
-        new_group = obj.a3ob_properties_object.flags_face.add()
+        new_group = obj.a3ob_properties_object_flags.face.add()
         new_group.name = ("Group %d" % i if i > 0 else "Default")
         new_group.set_flag(grp)
 
@@ -253,6 +253,18 @@ def process_proxies(operator, obj, proxy_lookup, empty_material):
             proxy_obj.vertex_groups.remove(vgroup)
             proxy_obj.a3ob_properties_object_proxy.proxy_path = utils.restore_absolute(path, ".p3d")
             proxy_obj.a3ob_properties_object_proxy.proxy_index = index
+
+            proxy_obj.a3ob_properties_object_flags.vertex.clear()
+            proxy_obj.a3ob_properties_object_flags.face.clear()
+
+            bm = bmesh.new()
+            bm.from_mesh(proxy_obj.data)
+
+            flagutils.clear_layer_flags_vertex(bm)
+            flagutils.clear_layer_flags_face(bm)
+
+            bm.to_mesh(proxy_obj.data)
+            bm.free()
 
             proxy_obj.a3ob_properties_object_proxy.is_a3_proxy = True
             proxy_obj.data.materials.clear()
@@ -331,7 +343,7 @@ def process_lod(operator, context, lod, additional_data, materials, materials_lo
 
     if operator.proxy_action != 'NOTHING' and 'SELECTIONS' in additional_data:
         process_proxies(operator, obj, proxy_lookup, materials[0])
-        
+
     object_props.is_a3_lod = True
 
 

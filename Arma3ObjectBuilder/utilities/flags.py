@@ -18,6 +18,22 @@ def get_layer_flags_face(bm):
     return layer
 
 
+def clear_layer_flags_vertex(bm):
+    layer = bm.verts.layers.int.get("a3ob_flags_vertex")
+    if not layer:
+        return
+
+    bm.verts.layers.int.remove(layer)
+
+
+def clear_layer_flags_face(bm):
+    layer = bm.faces.layers.int.get("a3ob_flags_face")
+    if not layer:
+        return
+
+    bm.faces.layers.int.remove(layer)
+
+
 def remove_group_vertex(obj, group_id):
     mesh = obj.data
     bm = bmesh.from_edit_mesh(mesh)
