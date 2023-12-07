@@ -86,8 +86,8 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     def execute(self, context):        
         with open(self.filepath, "rb") as file:
             try:
-                lod_data = import_p3d.read_file(self, context, file, self.first_lod_only)
-                self.report({'INFO'}, "Succesfully imported %d LODs (check the logs in the system console)" % len(lod_data))
+                lod_objects = import_p3d.read_file(self, context, file)
+                self.report({'INFO'}, "Succesfully imported %d LODs (check the logs in the system console)" % len(lod_objects))
             except struct.error as ex:
                 self.report({'ERROR'}, "Unexpected EndOfFile (check the system console)")
                 traceback.print_exc()

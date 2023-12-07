@@ -4,6 +4,7 @@ import re
 
 # import binary_handler as binary
 from . import binary_handler as binary
+from ..utilities import errors
 
 
 class P3D_TAGG_DataEmpty():
@@ -212,11 +213,17 @@ class P3D_TAGG():
         
         
         if output.name == "#EndOfFile#":
+            if length != 0:
+                raise errors.P3DError("Invalid EOF")
+            
             output.data = P3D_TAGG_DataEmpty.read(file, length)
             output.active = False
         elif output.name == "#SharpEdges#":
             output.data = P3D_TAGG_DataSharpEdges.read(file, length)
         elif output.name == "#Property#":
+            if length != 128:
+                raise errors.P3DError("Invalid name property length: %d" % length)
+            
             output.data = P3D_TAGG_DataProperty.read(file)
         elif output.name == "#Mass#":
             output.data = P3D_TAGG_DataMass.read(file, count_verts)
@@ -303,10 +310,18 @@ class P3D_LOD():
 
     @classmethod
     def read(cls, file):
-        output = cls()
 
-        output.signature = binary.read_char(file, 4)
-        output.version = (binary.read_ulong(file), binary.read_ulong(file))
+        signature = binary.read_char(file, 4)
+        if signature != "P3DM":
+            raise errors.P3DError("Unsupported LOD type: %s" % signature)
+        
+        version = (binary.read_ulong(file), binary.read_ulong(file))
+        if version != (0x1c, 0x100):
+            raise errors.P3DError("Unsupported LOD version: %d.%d" % (version[0], version[1]))
+
+        output = cls()
+        output.signature = signature
+        output.version = version
         
         count_verts = binary.read_ulong(file)
         count_normals = binary.read_ulong(file)
@@ -319,7 +334,9 @@ class P3D_LOD():
         output.renormalize_normals()
         output.read_faces(file, count_faces)
 
-        binary.read_char(file, 4) # "TAGG" signature
+        tagg_signature = binary.read_char(file, 4)
+        if tagg_signature != "TAGG":
+            raise errors.P3DError("Invalid TAGG section signature: %s" % tagg_signature)
         
         while True:
             tagg = P3D_TAGG.read(file, count_verts, count_faces)
@@ -476,6 +493,10 @@ class P3D_LOD():
 
         return counter
 
+    # Blender only allows vertex group names to have up to 63 characters.
+    # Since proxy selection names (file paths) are often longer than that,
+    # they have to be replaced by formatted placeholders and later looked up
+    # from a dictionary when needed.
     def proxies_to_placeholders(self):
         regex_proxy = "proxy:(.*)\.(\d{3})"
 
@@ -563,10 +584,19 @@ class P3D_MLOD():
     
     @classmethod
     def read(cls, file, first_lod_only = False):
-        output = cls()
         
-        output.signature = binary.read_char(file, 4)
-        output.version = binary.read_ulong(file)
+        signature = binary.read_char(file, 4)
+        if signature != "MLOD":
+            raise errors.P3DError("Invalid MLOD signature: %s" % signature)
+
+        version = binary.read_ulong(file)
+        if version != 257:
+            raise errors.P3DError("Unsupported MLOD version: %d" % version)
+
+        output = cls()
+        output.signature = signature
+        output.version = version
+
         count_lods = binary.read_ulong(file)
         if first_lod_only:
             count_lods = 1
