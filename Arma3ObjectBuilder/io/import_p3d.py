@@ -195,7 +195,21 @@ def process_flag_groups_face(obj, bm, lod):
         new_group.set_flag(grp)
 
 
-def process_proxies(operator, obj, proxy_lookup):
+# Align the object coordinate system with the proxy coordinates.
+# https://mrcmodding.gitbook.io/home/documents/proxy-coordinates
+def transform_proxy(obj):
+    rotation_matrix = proxyutils.get_transform_rotation(obj)
+    obj.data.transform(rotation_matrix)
+    obj.matrix_world @= rotation_matrix.inverted()
+    
+    translate = mathutils.Matrix.Translation(-proxyutils.find_axis_vertices(obj.data)[0].co)
+    obj.data.transform(translate)
+    obj.matrix_world @= translate.inverted()
+    
+    obj.data.update()
+
+
+def process_proxies(operator, obj, proxy_lookup, empty_material):
     bpy.context.view_layer.objects.active = obj
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_all(action='DESELECT')
@@ -217,9 +231,33 @@ def process_proxies(operator, obj, proxy_lookup):
     bpy.ops.object.mode_set(mode='OBJECT')
         
     proxy_objects = [proxy for proxy in bpy.context.selected_objects if proxy != obj]
+        
+    bpy.ops.object.select_all(action='DESELECT')
     
     if operator.proxy_action == 'CLEAR':
         computils.call_operator_ctx(bpy.ops.object.delete, {"selected_objects": proxy_objects})
+
+    elif operator.proxy_action == 'SEPARATE':
+        for i, proxy_obj in enumerate(proxy_objects):
+            proxy_obj.a3ob_properties_object.is_a3_lod = False
+            proxy_obj.a3ob_properties_object_proxy.dynamic_naming = operator.dynamic_naming
+
+            transform_proxy(proxy_obj)
+            structutils.cleanup_vertex_groups(proxy_obj) # need to remove the unused groups leftover from the separation
+
+            vgroup = proxy_obj.vertex_groups.get("@proxy_%d" % i)
+            if not vgroup:
+                continue
+            
+            path, index = proxy_lookup[vgroup.name]
+            proxy_obj.vertex_groups.remove(vgroup)
+            proxy_obj.a3ob_properties_object_proxy.proxy_path = utils.restore_absolute(path, ".p3d")
+            proxy_obj.a3ob_properties_object_proxy.proxy_index = index
+
+            proxy_obj.a3ob_properties_object_proxy.is_a3_proxy = True
+            proxy_obj.data.materials.clear()
+            proxy_obj.data.materials.append(empty_material)
+            proxy_obj.parent = obj
 
 
 def process_lod(operator, context, lod, additional_data, materials, materials_lookup, categories, lod_links):
@@ -288,12 +326,13 @@ def process_lod(operator, context, lod, additional_data, materials, materials_lo
     bm.to_mesh(mesh)
     bm.free()
 
-    object_props.is_a3_lod = True
     collection = categories[lod_links[2]]
     collection.objects.link(obj)
 
     if operator.proxy_action != 'NOTHING' and 'SELECTIONS' in additional_data:
-        process_proxies(operator, obj, proxy_lookup)
+        process_proxies(operator, obj, proxy_lookup, materials[0])
+        
+    object_props.is_a3_lod = True
 
 
 def read_file(operator, context, file, first_lod_only = False):
