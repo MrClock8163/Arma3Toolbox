@@ -81,7 +81,24 @@ class A3OB_PG_properties_material(bpy.types.PropertyGroup):
             self.texture_path = utils.restore_absolute(texture)
         
         self.material_path = utils.restore_absolute(material)
+    
+    def to_p3d(self):
+        addon_prefs = utils.get_addon_preferences()
+        texture = ""
+        material = ""
+
+        if self.texture_type == 'TEX':
+            texture = utils.format_path(utils.abspath(self.texture_path), utils.abspath(addon_prefs.project_root), addon_prefs.export_relative)
+        elif self.texture_type == 'COLOR':
+            color = self.color_value
+            texture = "#(argb,8,8,3)color(%.3f,%.3f,%.3f,%.3f,%s)" % (color[0], color[1], color[2], color[3], self.color_type)
+        else:
+            texture = self.color_raw
         
+        material = utils.format_path(utils.abspath(self.material_path), utils.abspath(addon_prefs.project_root), addon_prefs.export_relative)
+
+        return texture, material
+
 
 classes = (
     A3OB_PG_properties_material,

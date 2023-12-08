@@ -376,8 +376,8 @@ class P3D_LOD():
             file.write(bytearray(16))
         
         binary.write_ulong(file, face[5])
-        binary.read_asciiz(file, face[3])
-        binary.read_asciiz(file, face[4])
+        binary.write_asciiz(file, face[3])
+        binary.write_asciiz(file, face[4])
     
     def write_faces(self, file):
         for i in self.faces:

@@ -138,6 +138,19 @@ def make_relative(path, root):
     return path
 
 
+def format_path(path, root = "", to_relative = True, extension = True):
+    path = replace_slashes(path.strip())
+    
+    if to_relative:
+        root = replace_slashes(root.strip())
+        path = make_relative(path, root)
+        
+    if not extension:
+        path = strip_extension(path)
+        
+    return path
+
+
 def get_common_proxies():
     prefs = get_addon_preferences()
     custom_path = abspath(prefs.custom_data)

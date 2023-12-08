@@ -358,6 +358,15 @@ class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
         update = proxy_props_update
     )
 
+    def to_p3d(self):
+        addon_prefs = utils.get_addon_preferences()
+
+        path = utils.format_path(utils.abspath(self.proxy_path), utils.abspath(addon_prefs.project_root), addon_prefs.export_relative, True)
+        if len(path) > 0 and path[0] != "\\":
+            path = "\\" + path
+            
+        return "proxy:%s.%03d" % (path, self.proxy_index)
+
 
 class A3OB_PG_properties_object_dtm(bpy.types.PropertyGroup):
     origin: bpy.props.EnumProperty (
