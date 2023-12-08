@@ -121,7 +121,7 @@ def process_uvsets(bm, lod):
     return len(uvsets)
 
 
-def process_selections(obj, bm, lod):
+def process_selections(bm, lod):
     bm.verts.layers.deform.verify()
     layer = bm.verts.layers.deform.active
     
@@ -136,7 +136,6 @@ def process_selections(obj, bm, lod):
             bm.verts[idx][layer][count_selections] = weights[idx]
 
         count_selections += 1
-        obj.vertex_groups.new(name=tagg.name)
         
         selection_names.append(tagg.name)
     
@@ -348,7 +347,7 @@ def process_lod(operator, context, logger, lod, materials, materials_lookup, cat
     proxy_lookup = {}
     if 'SELECTIONS' in operator.additional_data:
         proxy_lookup = lod.proxies_to_placeholders()
-        selection_names = process_selections(obj, bm, lod)
+        selection_names = process_selections(bm, lod)
         logger.log("Added vertex groups: %d" % (len(selection_names)))
     
     if 'MATERIALS' in operator.additional_data:
