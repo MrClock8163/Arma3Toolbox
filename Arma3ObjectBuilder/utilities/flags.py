@@ -2,17 +2,17 @@ import bpy
 import bmesh
 
 
-def get_layer_flags_vertex(bm):
+def get_layer_flags_vertex(bm, create = True):
     layer = bm.verts.layers.int.get("a3ob_flags_vertex")
-    if not layer:
+    if not layer and create:
         layer = bm.verts.layers.int.new("a3ob_flags_vertex")
     
     return layer
 
 
-def get_layer_flags_face(bm):
+def get_layer_flags_face(bm, create = True):
     layer = bm.faces.layers.int.get("a3ob_flags_face")
-    if not layer:
+    if not layer and create:
         layer = bm.faces.layers.int.new("a3ob_flags_face")
     
     return layer

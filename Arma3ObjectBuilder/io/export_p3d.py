@@ -1,16 +1,13 @@
 import time
-import struct
 
 import bpy
 import bmesh
 
-from . import binary_handler as binary
 from . import data_p3d as p3d
 from ..utilities import generic as utils
 from ..utilities import lod as lodutils
 from ..utilities import flags as flagutils
 from ..utilities import compat as computils
-from ..utilities import data
 from ..utilities import errors
 from ..utilities.logger import ProcessLogger
 
@@ -37,13 +34,83 @@ def duplicate_object(obj):
     return new_object
 
 
+# May be worth looking into bpy.ops.object.convert(target='MESH')
+# instead to reduce operator calls.
+def apply_modifiers(obj):
+    ctx = {"object": obj}
+    
+    for m in obj.modifiers:
+        try:
+            ctx["modifier"] = m
+            computils.call_operator_ctx(bpy.ops.object.modifier_apply, ctx, modifier= m.name)
+        except:
+            obj.modifiers.remove(m)
+
+
 def get_resolution(obj):
     object_props = obj.a3ob_properties_object
     return lodutils.get_lod_signature(int(object_props.lod), object_props.resolution)
 
 
+def bake_flags_vertex(obj):
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.verts.ensure_lookup_table()
+
+    flags_vertex = {i: item.get_flag() for i, item in enumerate(obj.a3ob_properties_object_flags.vertex)}
+
+    layer = flagutils.get_layer_flags_vertex(bm, False)
+    if layer:
+        for vert in bm.verts:
+            vert[layer] = flags_vertex[vert[layer]]
+    
+    bm.to_mesh(obj.data)
+    bm.free()
+
+
+def bake_flags_face(obj):
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.faces.ensure_lookup_table()
+
+    flags_face = {i: item.get_flag() for i, item in enumerate(obj.a3ob_properties_object_flags.face)}
+
+    layer = flagutils.get_layer_flags_face(bm, False)
+    if layer:
+        for face in bm.faces:
+            face[layer] = flags_face[face[layer]]
+    
+    bm.to_mesh(obj.data)
+    bm.free()
+
+
+def merge_into_lod(main_object, sub_objects, proxy_objects):
+    proxy_lookup = {}
+    for i, proxy in enumerate(proxy_objects):
+        placeholder = "@proxy_%d" % i
+        utils.create_selection(proxy, placeholder)
+        proxy_lookup[placeholder] = proxy.a3ob_properties_object_proxy.to_placeholder()
+
+    all_objects = sub_objects + proxy_objects + [main_object]
+    for obj in all_objects:
+        bake_flags_face(obj)
+        bake_flags_vertex(obj)
+
+    if len(all_objects) > 1:
+        ctx = {
+            "active_object": main_object,
+            "selected_objects": all_objects,
+            "selected_editable_objects": all_objects
+        }
+        computils.call_operator_ctx(bpy.ops.object.join, ctx)
+    
+    for obj in (sub_objects + proxy_objects):
+        bpy.data.meshes.remove(obj.data, do_unlink=True)
+
+    return proxy_lookup
+
+
 def get_lod_data(operator, context):
-    addon_prefs = utils.get_addon_preferences()
     scene = context.scene
     export_objects = scene.objects
 
@@ -52,30 +119,89 @@ def get_lod_data(operator, context):
 
     lod_list = []
 
-    for obj in [obj for obj in export_objects if not operator.visible_only or obj.visible_get()]:
-        # lod_item = []
-        
+    for obj in [obj for obj in export_objects if not operator.visible_only or obj.visible_get()]:       
         if obj.type != 'MESH' or not obj.a3ob_properties_object.is_a3_lod or obj.parent != None or obj.a3ob_properties_object.lod == '30':
             continue
+            
+        # Some operator polls fail later if an object is in edit mode.
+        if not obj.mode == 'OBJECT':
+            computils.call_operator_ctx(bpy.ops.object.mode_set, {"active_object": obj}, mode='OBJECT')
         
-        lod_list.append(duplicate_object(obj))
+        main_obj = duplicate_object(obj)
+        if operator.apply_modifiers:
+            apply_modifiers(main_obj)
 
+        children = obj.children
+
+        sub_objects = []
+        proxy_objects = []
+        for i, child in enumerate(children):
+            if child.type != 'MESH':
+                continue
+                
+            if not child.mode == 'OBJECT':
+                computils.call_operator_ctx(bpy.ops.object.mode_set, {"active_object": obj}, mode='OBJECT')
+            
+            child_copy = duplicate_object(child)
+
+            if child.a3ob_properties_object_proxy.is_a3_proxy:
+                proxy_objects.append(child_copy)
+            else:
+                sub_objects.append(child_copy)
+        
+        proxy_lookup = merge_into_lod(main_obj, sub_objects, proxy_objects)
+
+        if operator.apply_transforms:
+            ctx = {
+                "active_object": main_obj,
+                "selected_editable_objects": [main_obj]
+            }
+            computils.call_operator_ctx(bpy.ops.object.transform_apply, ctx, location = True, scale = True, rotation = True)
+        
+        if operator.validate_meshes:
+            main_obj.data.validate(clean_customdata=False)
+            
+        if not operator.preserve_normals:
+            ctx = {
+                "active_object": main_obj,
+                "object": main_obj
+            }
+            computils.call_operator_ctx(bpy.ops.mesh.customdata_custom_splitnormals_clear, ctx)
+
+        if operator.sort_sections:
+            sections = {0: []}
+            for slot in main_obj.material_slots:
+                sections[slot.slot_index] = []
+
+            bm = bmesh.new()
+            bm.from_mesh(main_obj.data)
+            bm.faces.ensure_lookup_table()
+
+            for face in bm.faces:
+                sections[face.material_index].append(face)
+            
+            face_index = 0
+            for section in sections.values():
+                for face in section:
+                    face.index = face_index
+                    face_index -=- 1
+
+            bm.faces.sort()
+            bm.to_mesh(main_obj.data)
+            bm.free()
+
+        lod_list.append((main_obj, proxy_lookup))
 
     return lod_list
 
 
-def process_flags_vertex(obj):
-    return {i: flag.get_flag() for i, flag in enumerate(obj.a3ob_properties_object_flags.vertex)}
-
-
-def process_vertices(obj, bm):
-    flag_groups = process_flags_vertex(obj)
+def process_vertices(bm):
     layer = flagutils.get_layer_flags_vertex(bm)
 
     output = {}
 
     for vert in bm.verts:
-        output[vert.index] = (*vert.co, flag_groups.get(vert[layer], 0))
+        output[vert.index] = (*vert.co, vert[layer])
 
     return output
 
@@ -110,14 +236,9 @@ def process_materials(obj):
     return output
 
 
-def process_flags_face(obj):
-    return {i: flag.get_flag() for i, flag in enumerate(obj.a3ob_properties_object_flags.face)}
-
-
 def process_faces(obj, bm, normals_lookup):
     output = {}
     materials = process_materials(obj)
-    flags = process_flags_face(obj)
 
     uv_layer = None
     if len(bm.loops.layers.uv.values()) > 0: # 1st UV set needs to be written into the face data section too
@@ -135,7 +256,7 @@ def process_faces(obj, bm, normals_lookup):
             normals.append(normals_lookup[loop.index])
             uvs.append((loop[uv_layer].uv[0], 1 - loop[uv_layer].uv[1]) if uv_layer else (0, 0))
 
-        output[face.index] = (verts, normals, uvs, *materials[face.material_index], flags.get(face[flag_layer], 0))
+        output[face.index] = (verts, normals, uvs, *materials[face.material_index], face[flag_layer])
 
     return output
 
@@ -193,10 +314,6 @@ def process_tagg_mass(bm, layer):
     return output
 
 
-# def process_tagg_selection_item(obj, bm):
-#     pass
-
-
 def process_taggs_selections(obj, bm):
     output = {}
 
@@ -207,7 +324,6 @@ def process_taggs_selections(obj, bm):
         new_tagg.data.count_verts = len(bm.verts)
         new_tagg.data.count_faces = len(bm.faces)
         output[i] = new_tagg
-
 
     bm.verts.layers.deform.verify()
     layer = bm.verts.layers.deform.active
@@ -251,7 +367,7 @@ def process_taggs(obj, bm):
     return taggs
 
 
-def process_lod(obj):
+def process_lod(obj, proxy_lookup):
     output = p3d.P3D_LOD()
     output.signature = "P3DM"
     output.version = (0x1c, 0x100)
@@ -270,11 +386,13 @@ def process_lod(obj):
     bm.edges.ensure_lookup_table()
     bm.faces.ensure_lookup_table()
 
-    output.verts = process_vertices(obj, bm)
+    output.verts = process_vertices(bm)
     output.faces = process_faces(obj, bm, normals_lookup_dict)
     output.taggs = process_taggs(obj, bm)
 
     bm.free()
+
+    output.placeholders_to_proxies(proxy_lookup)
 
     return output
 
@@ -283,16 +401,17 @@ def write_file(operator, context, file):
     time_file_start = time.time()
 
     lod_list = get_lod_data(operator, context)
-    lod_list.sort(key=lambda lod: get_resolution(lod))
 
     mlod = p3d.P3D_MLOD()
     mlod.version = 257
     mlod.signature = "MLOD"
 
     mlod_lods = []
-    for lod in lod_list:
-        mlod_lods.append(process_lod(lod))
+    for lod, proxy_lookup in lod_list:
+        mlod_lods.append(process_lod(lod, proxy_lookup))
+        bpy.data.meshes.remove(lod.data, do_unlink=True)
     
+    mlod_lods.sort(key=lambda lod: lod.resolution)
     mlod.lods = mlod_lods
 
     mlod.write(file)
