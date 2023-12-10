@@ -288,6 +288,14 @@ def process_faces(obj, bm, normals_lookup):
     return output
 
 
+def is_flat_shaded(bm):
+    for face in bm.faces:
+        if face.smooth:
+            return False
+    
+    return True
+
+
 def process_tagg_sharp(bm):
     output = p3d.P3D_TAGG()
     output.name = "#SharpEdges#"
@@ -296,14 +304,15 @@ def process_tagg_sharp(bm):
     # For ease of use, the edges of flat shaded faces need to be exported as sharp as well.
     # Technically this creates fertile ground for mistakes, maybe it should be only done
     # if the whole mesh is flat shaded.
-    flat_face_edges = set()
-    for face in bm.faces:
-        if not face.smooth:
-            flat_face_edges.update({edge for edge in face.edges})
-    
-    for edge in bm.edges:
-        if not edge.smooth or edge in flat_face_edges:
-            output.data.edges.append((edge.verts[0].index, edge.verts[1].index))
+    if is_flat_shaded(bm):
+        flat_face_edges = set()
+        for face in bm.faces:
+            if not face.smooth:
+                flat_face_edges.update({edge for edge in face.edges if edge.is_contiguous})
+        
+        output.data.edges = [(edge.verts[0].index, edge.verts[1].index) for edge in flat_face_edges]
+    else:
+        output.data.edges = [(edge.verts[0].index, edge.verts[1].index) for edge in bm.edges if not edge.smooth and edge.is_contiguous]
 
     return output
 
