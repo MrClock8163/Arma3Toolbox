@@ -373,7 +373,7 @@ def process_taggs(obj, bm, logger):
 
 
 def process_lod(obj, proxy_lookup, validator, logger):
-    lod_name = lodutils.format_lod_name(int(obj.a3ob_properties_object.lod), obj.a3ob_properties_object.resolution)
+    lod_name = obj.a3ob_properties_object.get_name()
 
     logger.level_up()
     logger.step("Name: %s" % lod_name)

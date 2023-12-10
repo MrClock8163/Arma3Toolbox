@@ -45,7 +45,7 @@ def lod_name_update(self, context):
     obj = self.id_data
     object_props = obj.a3ob_properties_object
     
-    name = "LOD: %s" % lodutils.format_lod_name(int(object_props.lod), object_props.resolution)
+    name = "LOD: %s" % object_props.get_name()
     obj.name = name
     obj.data.name = name
 
@@ -294,6 +294,9 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
         default = True,
         update = lod_props_update
     )
+
+    def get_name(self):
+        return lodutils.format_lod_name(int(self.lod), self.resolution)
 
 
 class A3OB_PG_properties_object_flags(bpy.types.PropertyGroup):
