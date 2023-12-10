@@ -294,16 +294,6 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
         default = True,
         update = lod_props_update
     )
-    normals_flag: bpy.props.EnumProperty (
-        name = "Vertex Normals Flag",
-        description = "Setting flag for normals recalculation",
-        items = (
-            ('FIX', "Fixed", "Vertex normals are fixed, and won't change during recalculation (manual or upon object updates)"),
-            ('AVG', "Average", "Normals are recalculated (manually or automatically upon object updates) as the average of normals of connected faces, weighted by the area of the faces")
-            
-        ),
-        default = 'FIX'
-    )
 
 
 class A3OB_PG_properties_object_flags(bpy.types.PropertyGroup):

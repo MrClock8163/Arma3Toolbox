@@ -455,9 +455,6 @@ class A3OB_PT_object_mesh(bpy.types.Panel):
             layout.prop(object_props, "lod", text="Type")
             if int(object_props.lod) in data.lod_resolution_position.keys():
                 layout.prop(object_props, "resolution")
-            
-            row_normals = layout.row(align=True)
-            row_normals.prop(object_props, "normals_flag", text="Vertex Normals", expand=True)
 
 
 class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
