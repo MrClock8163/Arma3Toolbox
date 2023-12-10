@@ -47,22 +47,24 @@ def apply_modifiers(obj):
             obj.modifiers.remove(m)
 
 
+# Maybe transfer to the object props PG as a method?
 def get_resolution(obj):
     object_props = obj.a3ob_properties_object
     return lodutils.get_lod_signature(int(object_props.lod), object_props.resolution)
 
 
+# In order to simplify merging the LOD parts, and the data access later on, the dereferenced
+# flags need to be written directly into their respective integer bmesh layers.
 def bake_flags_vertex(obj):
     bm = bmesh.new()
     bm.from_mesh(obj.data)
     bm.verts.ensure_lookup_table()
 
-    flags_vertex = {i: item.get_flag() for i, item in enumerate(obj.a3ob_properties_object_flags.vertex)}
-
-    layer = flagutils.get_layer_flags_vertex(bm, False)
+    layer = flagutils.get_layer_flags_vertex(bm)
     if layer:
+        flags_vertex = {i: item.get_flag() for i, item in enumerate(obj.a3ob_properties_object_flags.vertex)}
         for vert in bm.verts:
-            vert[layer] = flags_vertex[vert[layer]]
+            vert[layer] = flags_vertex.get(vert[layer], 0)
     
     bm.to_mesh(obj.data)
     bm.free()
@@ -73,18 +75,17 @@ def bake_flags_face(obj):
     bm.from_mesh(obj.data)
     bm.faces.ensure_lookup_table()
 
-    flags_face = {i: item.get_flag() for i, item in enumerate(obj.a3ob_properties_object_flags.face)}
-
-    layer = flagutils.get_layer_flags_face(bm, False)
+    layer = flagutils.get_layer_flags_face(bm)
     if layer:
+        flags_face = {i: item.get_flag() for i, item in enumerate(obj.a3ob_properties_object_flags.face)}
         for face in bm.faces:
-            face[layer] = flags_face[face[layer]]
+            face[layer] = flags_face.get(face[layer], 0)
     
     bm.to_mesh(obj.data)
     bm.free()
 
 
-def merge_into_lod(main_object, sub_objects, proxy_objects):
+def merge_into_lod(operator, main_object, sub_objects, proxy_objects):
     proxy_lookup = {}
     for i, proxy in enumerate(proxy_objects):
         placeholder = "@proxy_%d" % i
@@ -96,6 +97,9 @@ def merge_into_lod(main_object, sub_objects, proxy_objects):
         bake_flags_face(obj)
         bake_flags_vertex(obj)
 
+        if operator.apply_modifiers:
+            apply_modifiers(obj)
+
     if len(all_objects) > 1:
         ctx = {
             "active_object": main_object,
@@ -104,6 +108,7 @@ def merge_into_lod(main_object, sub_objects, proxy_objects):
         }
         computils.call_operator_ctx(bpy.ops.object.join, ctx)
     
+    # Duplicate cleanup
     for obj in (sub_objects + proxy_objects):
         bpy.data.meshes.remove(obj.data, do_unlink=True)
 
@@ -128,14 +133,10 @@ def get_lod_data(operator, context):
             computils.call_operator_ctx(bpy.ops.object.mode_set, {"active_object": obj}, mode='OBJECT')
         
         main_obj = duplicate_object(obj)
-        if operator.apply_modifiers:
-            apply_modifiers(main_obj)
-
-        children = obj.children
 
         sub_objects = []
         proxy_objects = []
-        for i, child in enumerate(children):
+        for child in obj.children:
             if child.type != 'MESH':
                 continue
                 
@@ -144,12 +145,12 @@ def get_lod_data(operator, context):
             
             child_copy = duplicate_object(child)
 
-            if child.a3ob_properties_object_proxy.is_a3_proxy:
+            if child_copy.a3ob_properties_object_proxy.is_a3_proxy:
                 proxy_objects.append(child_copy)
             else:
                 sub_objects.append(child_copy)
         
-        proxy_lookup = merge_into_lod(main_obj, sub_objects, proxy_objects)
+        proxy_lookup = merge_into_lod(operator, main_obj, sub_objects, proxy_objects)
 
         if operator.apply_transforms:
             ctx = {
@@ -342,9 +343,10 @@ def process_taggs_selections(obj, bm):
     return output.values()
 
 
-def process_taggs(obj, bm):
+def process_taggs(obj, bm, logger):
     object_props = obj.a3ob_properties_object
     taggs = [process_tagg_sharp(bm)]
+    logger.log("Collected sharp edges")
 
     uv_index = 0
     for layer in bm.loops.layers.uv.values():
@@ -352,22 +354,43 @@ def process_taggs(obj, bm):
         uvset.data.id = uv_index
         taggs.append(uvset)
         uv_index += 1
+    logger.log("Collected UV sets")
     
     for prop in object_props.properties:
         taggs.append(process_tagg_property(prop))
-    
+    logger.log("Collected named properties")
+
     if object_props.lod == '6':
         layer = bm.verts.layers.float.get("a3ob_mass")
         if layer:
             taggs.append(process_tagg_mass(bm, layer))
-    
-    taggs.extend(process_taggs_selections(obj, bm))
+            logger.log("Collected vertex masses")
 
+    taggs.extend(process_taggs_selections(obj, bm))
+    logger.log("Collected selections")
 
     return taggs
 
 
-def process_lod(obj, proxy_lookup):
+def process_lod(obj, proxy_lookup, validator, logger):
+    lod_name = lodutils.format_lod_name(int(obj.a3ob_properties_object.lod), obj.a3ob_properties_object.resolution)
+
+    logger.level_up()
+    logger.step("Name: %s" % lod_name)
+    logger.step("Processing data:")
+
+    if lodutils.Validator.has_ngons(obj.data):
+        logger.log("N-gons detected -> skipping LOD")
+        logger.level_down()
+        return None
+
+    if validator:
+        validator.lod = obj
+        if not validator.validate(obj.a3ob_properties_object.lod):
+            logger.log("Failed validation -> skipping LOD (run manual validation for details)")
+            logger.level_down()
+            return None
+
     output = p3d.P3D_LOD()
     output.signature = "P3DM"
     output.version = (0x1c, 0x100)
@@ -378,6 +401,7 @@ def process_lod(obj, proxy_lookup):
 
     normals, normals_lookup_dict = process_normals(mesh)
     output.normals = normals
+    logger.log("Collected vertex normals")
 
     bm = bmesh.new()
     bm.from_mesh(mesh)
@@ -387,35 +411,76 @@ def process_lod(obj, proxy_lookup):
     bm.faces.ensure_lookup_table()
 
     output.verts = process_vertices(bm)
+    logger.log("Collected vertices")
     output.faces = process_faces(obj, bm, normals_lookup_dict)
-    output.taggs = process_taggs(obj, bm)
+    logger.log("Collected faces")
+    output.taggs = process_taggs(obj, bm, logger)
 
     bm.free()
 
     output.placeholders_to_proxies(proxy_lookup)
+    logger.log("Finalized proxy selection names")
+
+    logger.step("File report:")
+    logger.log("Signature: %d" % output.resolution)
+    logger.log("Type: P3DM")
+    logger.log("Version: 28.256")
+    logger.log("Vertices: %d" % len(output.verts))
+    logger.log("Normals: %d" % len(output.normals))
+    logger.log("Faces: %d" % len(output.faces))
+    logger.log("Taggs: %d" % (len(output.taggs) + 1))
+
+    logger.level_down()
 
     return output
 
 
 def write_file(operator, context, file):
+    wm = context.window_manager
+    wm.progress_begin(0, 1000)
+    wm.progress_update(0)
+    
+    validator = None
+    if operator.validate_lods:
+        validator = lodutils.Validator(None, operator.validate_lods_warnings_errors, True)
+    
+    logger = ProcessLogger()
+    logger.step("P3D export to %s" % operator.filepath)
+
     time_file_start = time.time()
 
     lod_list = get_lod_data(operator, context)
+    
+    logger.log("Preprocessing done in %f sec" % (time.time() - time_file_start))
+    logger.log("Detected %d LOD objects" % len(lod_list))
 
     mlod = p3d.P3D_MLOD()
     mlod.version = 257
     mlod.signature = "MLOD"
+    logger.log("File version: %d" % 257)
+
+    logger.log("Processing LOD data:")
+    logger.level_up()
 
     mlod_lods = []
-    for lod, proxy_lookup in lod_list:
-        mlod_lods.append(process_lod(lod, proxy_lookup))
+    for i, (lod, proxy_lookup) in enumerate(lod_list):
+        time_lod_start = time.time()
+        logger.step("LOD %d" % (i + 1))
+
+        new_lod = process_lod(lod, proxy_lookup, validator, logger)
+        if new_lod:
+            mlod_lods.append(new_lod)
         bpy.data.meshes.remove(lod.data, do_unlink=True)
-    
+
+        logger.log("Done in %f sec" % (time.time() - time_lod_start))
+        wm.progress_update(i + 1)
+
     mlod_lods.sort(key=lambda lod: lod.resolution)
     mlod.lods = mlod_lods
 
     mlod.write(file)
-
-    print("P3D export finished in %f sec" % (time.time() - time_file_start))
+    
+    logger.level_down()
+    logger.step("P3D export finished in %f sec" % (time.time() - time_file_start))
 
     return len(lod_list), len(mlod_lods)

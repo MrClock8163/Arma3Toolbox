@@ -618,9 +618,19 @@ class P3D_MLOD():
     def write(self, file):
         binary.write_chars(file, self.signature)
         binary.write_ulong(file, self.version)
-        binary.write_ulong(file, len(self.lods))
-        for lod in self.lods:
-            lod.write(file)
+
+        if len(self.lods) == 0:
+            dummy_lod = P3D_LOD()
+            dummy_lod.resolution = 0
+            dummy_lod.version = (28, 256)
+            dummy_lod.signature = "P3DM"
+
+            binary.write_ulong(file, 1)
+            dummy_lod.write(file)
+        else:
+            binary.write_ulong(file, len(self.lods))
+            for lod in self.lods:
+                lod.write(file)
     
     def write_file(self, filepath):
         with open(filepath, "wb") as file:
