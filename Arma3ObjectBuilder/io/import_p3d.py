@@ -279,7 +279,7 @@ def process_proxies(operator, obj, proxy_lookup, empty_material):
             proxy_obj.parent = obj
 
 
-def process_lod(operator, context, logger, lod, materials, materials_lookup, categories, lod_links):
+def process_lod(operator, logger, lod, materials, materials_lookup, categories, lod_links):
     logger.level_up()
 
     lod_index = lod_links[0]
@@ -433,7 +433,7 @@ def read_file(operator, context, file):
         time_lod_start = time.time()
         logger.step("LOD %d" % (i + 1))
 
-        lod_objects.append(process_lod(operator, context, logger, lod, materials, materials_lookup, categories, lod_links[i]))
+        lod_objects.append(process_lod(operator, logger, lod, materials, materials_lookup, categories, lod_links[i]))
 
         logger.log("Done in %f sec" % (time.time() - time_lod_start))
         wm.progress_update(i + 1)

@@ -265,6 +265,11 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         description = "Treat warnings as errors",
         default = True
     )
+    renumber_components: bpy.props.BoolProperty (
+        name = "Renumber Components",
+        description = "Renumber the \"component##\" selections to make sure they are unique (only use if necessary\neg.: geometry type LODs have sub-objects)",
+        default = False
+    )
     
     def draw(self, context):
         pass
@@ -350,6 +355,7 @@ class A3OB_PT_export_p3d_meshes(bpy.types.Panel):
         col.prop(operator, "apply_transforms")
         col.prop(operator, "preserve_normals")
         col.prop(operator, "sort_sections")
+        col.prop(operator, "renumber_components")
 
 
 class A3OB_PT_export_p3d_validate(bpy.types.Panel):

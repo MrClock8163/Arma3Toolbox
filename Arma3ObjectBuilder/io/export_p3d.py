@@ -48,9 +48,9 @@ def apply_modifiers(obj):
 
 
 # Maybe transfer to the object props PG as a method?
-def get_resolution(obj):
-    object_props = obj.a3ob_properties_object
-    return lodutils.get_lod_signature(int(object_props.lod), object_props.resolution)
+# def get_resolution(obj):
+#     object_props = obj.a3ob_properties_object
+#     return lodutils.get_lod_signature(int(object_props.lod), object_props.resolution)
 
 
 # In order to simplify merging the LOD parts, and the data access later on, the dereferenced
@@ -84,14 +84,22 @@ def bake_flags_face(obj):
     bm.to_mesh(obj.data)
     bm.free()
 
-
+# The sub-objects and proxy object need to be merged into the main LOD object after some
+# preprocessing. The proxy selections need to be created with placeholder names, the flags
+# need to be baked into the respective layers, and the modifiers have to get applied.
 def merge_into_lod(operator, main_object, sub_objects, proxy_objects):
+    # Blender has a 63 character length limit on vertex group names,
+    # so the proxy paths can't be written to the group name directly,
+    # a placeholder name must be used, and added to a lookup dictionary.
     proxy_lookup = {}
     for i, proxy in enumerate(proxy_objects):
         placeholder = "@proxy_%d" % i
         utils.create_selection(proxy, placeholder)
         proxy_lookup[placeholder] = proxy.a3ob_properties_object_proxy.to_placeholder()
 
+    # To simplify the object merging, the face and vertex flags need to be directly written
+    # into their layers. This way the process doesn't have to deal with managing and merging
+    # flag groups on the different component objects.
     all_objects = sub_objects + proxy_objects + [main_object]
     for obj in all_objects:
         bake_flags_face(obj)
@@ -115,6 +123,10 @@ def merge_into_lod(operator, main_object, sub_objects, proxy_objects):
     return proxy_lookup
 
 
+# Huge monolith function to produce the final object and mesh data that can be written to the 
+# P3D file. Merges the sub-objects and proxies into the main objects, applies transformations,
+# runs mesh validation and sorts sections if necessary.
+# [(LOD object 0, proxy lookup 0), (..., ....), ....]
 def get_lod_data(operator, context):
     scene = context.scene
     export_objects = scene.objects
@@ -169,6 +181,10 @@ def get_lod_data(operator, context):
             }
             computils.call_operator_ctx(bpy.ops.mesh.customdata_custom_splitnormals_clear, ctx)
 
+        # Sections are important for in-game performace, and should be sorted during export
+        # to avoid any unnecessary fragmentation. Some info about sections can be found on the
+        # community wiki: https://community.bistudio.com/wiki/Section_Count.
+        # Some corrections: https://mrcmodding.gitbook.io/home/documents/sections.
         if operator.sort_sections:
             sections = {0: []}
             for slot in main_obj.material_slots:
@@ -196,6 +212,8 @@ def get_lod_data(operator, context):
     return lod_list
 
 
+# Produce the vertex dictionary from the bmesh data.
+# {idx 0: (x, y, z, flag), ...: (..., ..., ..., ...), ...}
 def process_vertices(bm):
     layer = flagutils.get_layer_flags_vertex(bm)
 
@@ -206,7 +224,10 @@ def process_vertices(bm):
 
     return output
 
-
+# Produce the unique vertex normal dictionary from the bmesh data, as well as a mapping
+# dictionary.
+# {idx 0: (x, y, z), ...: (..., ..., ...), ....}
+# {loop idx 0: normal idx X, loop idx 1: normal idx Y, ...}
 def process_normals(mesh):
     output = {}
     normals_index = {}
@@ -224,6 +245,8 @@ def process_normals(mesh):
     return output, normals_lookup_dict
 
 
+# Produce material lookup dictionary from the materials assigned to the object.
+# {material 0: (texture, material), ...: (..., ....), ...}
 def process_materials(obj):
     output = {0: ("", "")}
 
@@ -237,8 +260,11 @@ def process_materials(obj):
     return output
 
 
+# Produce the face data dictionary from the obj and  bmesh data.
+# {face 0: ([vert 0, vert 1, vert 2], [normal 0, normal 1, normal 2], [(uv 0 0, uv 0 1), (...), ...], texture, material, flag), ...}
 def process_faces(obj, bm, normals_lookup):
     output = {}
+    # Materials need to be precompiled to speed up the face access.
     materials = process_materials(obj)
 
     uv_layer = None
@@ -267,6 +293,9 @@ def process_tagg_sharp(bm):
     output.name = "#SharpEdges#"
     output.data = p3d.P3D_TAGG_DataSharpEdges()
 
+    # For ease of use, the edges of flat shaded faces need to be exported as sharp as well.
+    # Technically this creates fertile ground for mistakes, maybe it should be only done
+    # if the whole mesh is flat shaded.
     flat_face_edges = set()
     for face in bm.faces:
         if not face.smooth:
@@ -333,6 +362,8 @@ def process_taggs_selections(obj, bm):
         for idx in vert[layer].keys():
             output[idx].data.weight_verts[vert.index] = vert[layer][idx]
     
+    # If all vertices of a face belong to a selection, then the face belongs to the 
+    # selection as well.
     for face in bm.faces:
         indices = [idx for vert in face.verts for idx in vert[layer].keys()]
         unique = set(indices)
@@ -360,6 +391,7 @@ def process_taggs(obj, bm, logger):
         taggs.append(process_tagg_property(prop))
     logger.log("Collected named properties")
 
+    # Vertex mass should only be exported for the Geometry LOD
     if object_props.lod == '6':
         layer = bm.verts.layers.float.get("a3ob_mass")
         if layer:
@@ -372,13 +404,15 @@ def process_taggs(obj, bm, logger):
     return taggs
 
 
-def process_lod(obj, proxy_lookup, validator, logger):
+def process_lod(operator, obj, proxy_lookup, validator, logger):
     lod_name = obj.a3ob_properties_object.get_name()
 
     logger.level_up()
     logger.step("Name: %s" % lod_name)
     logger.step("Processing data:")
 
+    # The P3D format cannot store n-gons, so the export must
+    # skip LODs with such faces.
     if lodutils.Validator.has_ngons(obj.data):
         logger.log("N-gons detected -> skipping LOD")
         logger.level_down()
@@ -394,7 +428,7 @@ def process_lod(obj, proxy_lookup, validator, logger):
     output = p3d.P3D_LOD()
     output.signature = "P3DM"
     output.version = (0x1c, 0x100)
-    output.resolution = get_resolution(obj)
+    output.resolution = obj.a3ob_properties_object.get_signature()
 
     mesh = obj.data
     mesh.calc_normals_split()
@@ -416,8 +450,13 @@ def process_lod(obj, proxy_lookup, validator, logger):
     logger.log("Collected faces")
     output.taggs = process_taggs(obj, bm, logger)
 
+    if operator.renumber_components:
+        output.renumber_components()
+        logger.log("Renumbered component selections")
+
     bm.free()
 
+    # The placeholder proxy selection names must be replaced with the actual names.
     output.placeholders_to_proxies(proxy_lookup)
     logger.log("Finalized proxy selection names")
 
@@ -467,7 +506,7 @@ def write_file(operator, context, file):
         time_lod_start = time.time()
         logger.step("LOD %d" % (i + 1))
 
-        new_lod = process_lod(lod, proxy_lookup, validator, logger)
+        new_lod = process_lod(operator, lod, proxy_lookup, validator, logger)
         if new_lod:
             mlod_lods.append(new_lod)
         bpy.data.meshes.remove(lod.data, do_unlink=True)
@@ -475,6 +514,10 @@ def write_file(operator, context, file):
         logger.log("Done in %f sec" % (time.time() - time_lod_start))
         wm.progress_update(i + 1)
 
+    if len(mlod_lods) == 0:
+        raise errors.P3DError("All LODs had n-gons/failed validation, cannot write P3D with 0 LODs")
+
+    # LODs should be sorted by their resolution signature.
     mlod_lods.sort(key=lambda lod: lod.resolution)
     mlod.lods = mlod_lods
 
