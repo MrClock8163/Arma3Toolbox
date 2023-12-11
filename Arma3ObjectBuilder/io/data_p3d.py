@@ -1,12 +1,19 @@
+# Class structure, read-write methods and conversion functions for handling
+# the MLOD P3D binary data structure. Format specifications
+# can be found on the community wiki (although not withoug errors):
+# https://community.bistudio.com/wiki/P3D_File_Format_-_MLOD
+
+
 import struct
 import math
 import re
 
-# import binary_handler as binary
 from . import binary_handler as binary
 from ..utilities import errors
 
 
+# Generic class to consume unneeded TAGG types (eg.: #Hidden#, #Selected#).
+# The class is needed because the data field of the TAGG object must not be none.
 class P3D_TAGG_DataEmpty():
     @classmethod
     def read(cls, file, length):
@@ -192,7 +199,7 @@ class P3D_TAGG():
     def __init__(self):
         self.active = True
         self.name = ""
-        self.data = None
+        self.data = P3D_TAGG_DataEmpty()
 
     def __repr__(self):
         return self.name
@@ -200,6 +207,8 @@ class P3D_TAGG():
     def __eq__(self, other):        
         return type(other) is type(self) and self.name == other.name
     
+    # Read
+
     @classmethod
     def read(cls, file, count_verts, count_faces):
         output = cls()
@@ -213,7 +222,6 @@ class P3D_TAGG():
             if length != 0:
                 raise errors.P3DError("Invalid EOF")
             
-            output.data = P3D_TAGG_DataEmpty.read(file, length)
             output.active = False
         elif output.name == "#SharpEdges#":
             output.data = P3D_TAGG_DataSharpEdges.read(file, length)
@@ -229,14 +237,14 @@ class P3D_TAGG():
         elif not output.name.startswith("#") and not output.name.endswith("#"):
             output.data = P3D_TAGG_DataSelection.read(file, count_verts, count_faces)
         else:
-            output.data = P3D_TAGG_DataEmpty.read(file, length)
+            # Consume unnedded TAGGs
+            file.read(length)
             output.active = False
         
         return output
     
-    def is_selection(self):
-        return not self.name.startswith("#") and not self.name.endswith("#")
-    
+    # Write
+
     def write(self, file):
         if not self.active:
             return 
@@ -245,20 +253,25 @@ class P3D_TAGG():
         binary.write_asciiz(file, self.name)
         self.data.write(file)
     
+    # Operations
+
     def is_proxy(self):
         if not self.name.startswith("proxy:"):
             return False
         
         regex_proxy = "proxy:.*\.\d{3}"
         return re.match(regex_proxy, self.name)
+    
+    def is_selection(self):
+        return not self.name.startswith("#") and not self.name.endswith("#")
 
 
 class P3D_LOD():
     def __init__(self):
-        self.signature = ""
-        self.version = (-1, -1)
+        self.signature = "P3DM"
+        self.version = (28, 256)
         self.flags = 0x00000000
-        self.resolution = -1
+        self.resolution = 0
 
         self.verts = {}
         self.normals = {}
@@ -342,8 +355,9 @@ class P3D_LOD():
             tagg = P3D_TAGG.read(file, count_verts, count_faces)
             if tagg.name == "#EndOfFile#":
                 break
-
-            output.taggs.append(tagg)
+            
+            if tagg.active:
+                output.taggs.append(tagg)
         
         output.resolution = binary.read_float(file)
         
@@ -409,13 +423,15 @@ class P3D_LOD():
         
         eof = P3D_TAGG()
         eof.name = "#EndOfFile#"
-        eof.data = P3D_TAGG_DataEmpty()
         eof.write(file)
             
         binary.write_float(file, self.resolution)
     
     # Operations
 
+    # The normals are stored as triplets of IEEE-754 32bit floating numbers,
+    # which potentially result in a not normalized vector, which causes issues
+    # in Blender, so the vectors need to be renormalized before usage.
     def renormalize_normals(self):
         for i in self.normals:
             normal = self.normals[i]
@@ -434,10 +450,11 @@ class P3D_LOD():
         return verts, [], faces
     
     def clean_taggs(self):
-        clean_list = [tagg for tagg in self.taggs if tagg.active]
-
-        self.taggs = clean_list
+        self.taggs = [tagg for tagg in self.taggs if tagg.active]
     
+    # Generate lookup dictionary for all unique materials. Primarily called
+    # from the parent MLOD object, so the dictionary is edited in place, not 
+    # returned.
     def get_materials(self, materials = {}):
         for item in self.faces:
             face = self.faces[item]
@@ -447,6 +464,8 @@ class P3D_LOD():
             if (texture, material) not in materials:
                 materials[(texture, material)] = len(materials)
     
+    # Generate the necessary material index for each face, as well
+    # as the indices of the used materials in each material slot.
     def get_sections(self, materials):
         face_indices = []
         material_indices = []
@@ -521,6 +540,9 @@ class P3D_LOD():
 
             tagg.name = "proxy:%s.%03d" % (data[0], data[1])
     
+    # Extract the UVSet 0 embedded into the face data, and return a dictionary
+    # of all UVSets, unique by ID. If UVSet 0 is also found as a TAGG, the TAGG
+    # data takes precedence over the embedded values.
     def uvsets(self):
         sets = {0: [uv for idx in self.faces for uv in self.faces[idx][2]]}
         for tagg in self.taggs:
@@ -531,9 +553,13 @@ class P3D_LOD():
 
         return sets
 
+    # Generate loop normals list that can be directly used by the Blender API
+    # mesh.normals_split_custom_set() function
     def loop_normals(self):
         return [self.normals[item] for face in self.faces.values() for item in face[1]]
     
+    # Collect and group the used vertex flag values for setting up
+    # the flag data layer and flag groups object data.
     def flag_groups_vertex(self):
         groups = {}
         values = {}
@@ -549,6 +575,8 @@ class P3D_LOD():
         
         return list(groups.keys()), values
     
+    # Collect and group the used face flag values for setting up
+    # the flag data layer and flag groups object data.
     def flag_groups_face(self):
         groups = {}
         values = {}
@@ -564,6 +592,7 @@ class P3D_LOD():
 
         return list(groups.keys()), values
     
+    # Change every file path, and selection name to lower case for a uniform output.
     def force_lowercase(self):
         for idx in self.faces:
             face = self.faces[idx]
@@ -578,8 +607,8 @@ class P3D_LOD():
 class P3D_MLOD():
     def __init__(self):
         self.source = ""
-        self.version = None
-        self.signature = ""
+        self.version = 257
+        self.signature = "MLOD"
         
         self.lods = []
     
@@ -636,6 +665,8 @@ class P3D_MLOD():
     def write_file(self, filepath):
         with open(filepath, "wb") as file:
             self.write(file)
+        
+        self.source = filepath
     
     def get_materials(self):
         materials = {("", ""): 0}
@@ -645,6 +676,8 @@ class P3D_MLOD():
 
         return materials
 
+    # Function to ensure uniform format in the output files regardless
+    # of the casing in Blender.
     def force_lowercase(self):
         for lod in self.lods:
             lod.force_lowercase()

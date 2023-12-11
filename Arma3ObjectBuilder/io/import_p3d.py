@@ -1,12 +1,9 @@
-# Reader functions to import multiple LODs as meshes
-# from the BI MLOD P3D format. Format specifications can
-# be found on the community wiki (although not without errors):
-# https://community.bistudio.com/wiki/P3D_File_Format_-_MLOD
+# Processing functions to import multiple LODs as meshes
+# from the MLOD P3D format. The actual file handling is implemented
+# in the data_p3d module.
 
 
-# import struct
 import math
-# import re
 import time
 import os
 
@@ -14,7 +11,6 @@ import bpy
 import bmesh
 import mathutils
 
-# from . import binary_handler as binary
 from . import data_p3d as p3d
 from ..utilities import generic as utils
 from ..utilities import lod as lodutils
@@ -23,12 +19,7 @@ from ..utilities import proxy as proxyutils
 from ..utilities import flags as flagutils
 from ..utilities import structure as structutils
 from ..utilities import data
-# from ..utilities import errors
 from ..utilities.logger import ProcessLogger
-
-
-def read_lod(context, file, material_dict, additional_data, dynamic_naming, logger, addon_prefs):
-    return
 
 
 def categorize_lods(operator, context, mlod):

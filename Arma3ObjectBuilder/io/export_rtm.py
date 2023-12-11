@@ -1,15 +1,12 @@
-# Writer function to export animation data to the BI RTM file format.
-# Format specification: https://community.bistudio.com/wiki/Rtm_(Animation)_File_Format
-# Largely based on the RTM exporter from the original ArmAToolbox.
+# Processing functions to export animation data to the RTM file format.
+# The actual file handling is implemented in the data_rtm module.
 
 
-import struct
 import re
 
 import bpy
 import mathutils
 
-from . import binary_handler as binary
 from . import data_rtm as rtm
 from ..utilities.logger import ProcessLogger
 

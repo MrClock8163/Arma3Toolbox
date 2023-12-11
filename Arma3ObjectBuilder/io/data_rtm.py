@@ -1,6 +1,12 @@
+# Class structure, read-write methods and conversion functions for handling
+# the RTM binary data structure. Format specifications
+# can be found on the community wiki:
+# https://community.bistudio.com/wiki/Rtm_(Animation)_File_Format
+# Largely based on the RTM exporter from the original ArmaToolbox by Alwarren.
+
+
 import struct
 
-# import binary_handler as binary
 from . import binary_handler as binary
 from ..utilities import errors
 
@@ -110,7 +116,12 @@ class RTM_File():
         
         for item in self.frames:
             item.write(file)
-        
+    
+    # While the game engine itself seems to be not case sensitive,
+    # some tools (eg.: animation preview in Object Builder, the preview would
+    # not work if the case of the selection names in the model and the RTM is not
+    # matcing) are. So it's good to have a way to keep everything uniform in the
+    # outputs, regardless of how things are called in Blender.
     def force_lowercase(self):
         self.bones = [bone.lower() for bone in self.bones]
 

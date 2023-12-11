@@ -1,3 +1,8 @@
+# Processing functions to export multiple meshed as LODs
+# to the MLOD P3D format. The actual file handling is implemented
+# in the data_p3d module.
+
+
 import time
 
 import bpy
@@ -435,8 +440,6 @@ def process_lod(operator, obj, proxy_lookup, validator, logger):
             return None
 
     output = p3d.P3D_LOD()
-    output.signature = "P3DM"
-    output.version = (0x1c, 0x100)
     output.resolution = obj.a3ob_properties_object.get_signature()
 
     mesh = obj.data
@@ -497,14 +500,14 @@ def write_file(operator, context, file):
 
     time_file_start = time.time()
 
+    # Gather all exportable LOD objects, duplicate them, and merge their components.
+    # Produce the final mesh data, and proxy lookup table to export for each LOD.
     lod_list = get_lod_data(operator, context)
     
     logger.log("Preprocessing done in %f sec" % (time.time() - time_file_start))
     logger.log("Detected %d LOD objects" % len(lod_list))
 
     mlod = p3d.P3D_MLOD()
-    mlod.version = 257
-    mlod.signature = "MLOD"
     logger.log("File type: MLOD")
     logger.log("File version: %d" % 257)
 

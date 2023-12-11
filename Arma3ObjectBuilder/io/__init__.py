@@ -1,5 +1,6 @@
 from . import binary_handler
 from . import data_p3d
+from . import data_rtm
 from . import export_asc
 from . import export_p3d
 from . import export_rtm
