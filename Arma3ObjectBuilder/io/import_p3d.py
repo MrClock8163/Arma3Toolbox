@@ -238,7 +238,6 @@ def process_proxies(operator, obj, proxy_lookup, empty_material):
     elif operator.proxy_action == 'SEPARATE':
         for i, proxy_obj in enumerate(proxy_objects):
             proxy_obj.a3ob_properties_object.is_a3_lod = False
-            proxy_obj.a3ob_properties_object_proxy.dynamic_naming = operator.dynamic_naming
 
             transform_proxy(proxy_obj)
             structutils.cleanup_vertex_groups(proxy_obj) # need to remove the unused groups leftover from the separation
@@ -268,6 +267,8 @@ def process_proxies(operator, obj, proxy_lookup, empty_material):
             proxy_obj.data.materials.clear()
             proxy_obj.data.materials.append(empty_material)
             proxy_obj.parent = obj
+            proxy_obj.name = proxy_obj.a3ob_properties_object_proxy.get_name()
+            proxy_obj.data.name = proxy_obj.a3ob_properties_object_proxy.get_name()
 
 
 def process_lod(operator, logger, lod, materials, materials_lookup, categories, lod_links):
@@ -302,7 +303,6 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
 
     # Setup LOD properties
     object_props = obj.a3ob_properties_object
-    object_props.dynamic_naming = operator.dynamic_naming
     try:
         object_props.lod = str(lod_index)
     except:

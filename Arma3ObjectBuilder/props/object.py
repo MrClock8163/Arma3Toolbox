@@ -24,38 +24,11 @@ def create_default_flag_groups(self, context):
         flag_props.face_index = 0
 
 
-def proxy_name_update(self, context):
-    if not self.dynamic_naming:
-        return
-        
-    obj = self.id_data
-    name = os.path.basename(os.path.splitext(utils.abspath(self.proxy_path))[0]).strip()
-    if name == "":
-        name = "unknown"
-        
-    name = "proxy: %s %d" % (name, self.proxy_index)
-    obj.name = name
-    obj.data.name = name
-
-
-def lod_name_update(self, context):
-    if not self.dynamic_naming:
-        return
-        
-    obj = self.id_data
-    object_props = obj.a3ob_properties_object
-    
-    name = "LOD: %s" % object_props.get_name()
-    obj.name = name
-    obj.data.name = name
-
-
 def lod_props_update(self, context):
     if not self.is_a3_lod:
         return
     
     create_default_flag_groups(self, context)
-    lod_name_update(self, context)
 
 
 def proxy_props_update(self, context):
@@ -63,7 +36,6 @@ def proxy_props_update(self, context):
         return
     
     create_default_flag_groups(self, context)
-    proxy_name_update(self, context)
 
 
 class A3OB_PG_properties_named_property(bpy.types.PropertyGroup):
@@ -288,12 +260,6 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
         description = "Index of the currently selected named property",
         default = -1
     )
-    dynamic_naming: bpy.props.BoolProperty (
-        name = "Dynamic Object Naming",
-        description = "Object and object data names are automatically constructed and updated from the properties",
-        default = True,
-        update = lod_props_update
-    )
 
     def get_name(self):
         return lodutils.format_lod_name(int(self.lod), self.resolution)
@@ -347,12 +313,6 @@ class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
         max = 999,
         update = proxy_props_update
     )
-    dynamic_naming: bpy.props.BoolProperty (
-        name = "Dynamic Object Naming",
-        description = "Object and object data names are automatically constructed and updated from the properties",
-        default = True,
-        update = proxy_props_update
-    )
     
     def to_placeholder(self):
         addon_prefs = utils.get_addon_preferences()
@@ -362,6 +322,15 @@ class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
             path = "\\" + path
         
         return path, self.proxy_index
+    
+    def get_name(self):
+        name = os.path.basename(os.path.splitext(utils.abspath(self.proxy_path))[0]).strip()
+        if name == "":
+            name = "unknown"
+            
+        name = "proxy: %s %d" % (name, self.proxy_index)
+
+        return name
 
 
 class A3OB_PG_properties_object_dtm(bpy.types.PropertyGroup):

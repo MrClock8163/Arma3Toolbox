@@ -62,20 +62,20 @@ class A3OB_PG_outliner(bpy.types.PropertyGroup):
         name = "Selection Index",
         default = -1
     )
-    proxies: bpy.props.CollectionProperty (
-        type = A3OB_PG_outliner_proxy
-    )
-    proxies_index: bpy.props.IntProperty (
-        name = "Selection Index",
-        default = -1
-    )
-    sub_objects: bpy.props.CollectionProperty (
-        type = A3OB_PG_outliner_sublod
-    )
-    sub_objects_index: bpy.props.IntProperty (
-        name = "Selection Index",
-        default = -1
-    )
+    # proxies: bpy.props.CollectionProperty (
+    #     type = A3OB_PG_outliner_proxy
+    # )
+    # proxies_index: bpy.props.IntProperty (
+    #     name = "Selection Index",
+    #     default = -1
+    # )
+    # sub_objects: bpy.props.CollectionProperty (
+    #     type = A3OB_PG_outliner_sublod
+    # )
+    # sub_objects_index: bpy.props.IntProperty (
+    #     name = "Selection Index",
+    #     default = -1
+    # )
     
 
 
@@ -380,11 +380,6 @@ class A3OB_PG_conversion(bpy.types.PropertyGroup):
         ),
         options = {'ENUM_FLAG'},
         default = {'MESH', 'DTM', 'ARMATURE'}
-    )
-    dynamic_naming: bpy.props.BoolProperty (
-        name = "Dynamic Object Naming",
-        description = "Enable Dynamic Object Naming for LOD and proxy objects",
-        default = True
     )
     cleanup: bpy.props.BoolProperty (
         name = "Cleanup",
