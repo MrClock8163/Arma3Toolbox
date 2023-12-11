@@ -32,50 +32,22 @@ def color_conversion_update(self, context):
         self.output_linear = rgb_out
 
 
-class A3OB_PG_outliner_sublod(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty (
-        name = "Sub-Object Name",
-        default = ""
-    )
-
-
-class A3OB_PG_outliner_proxy(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty (
-        name = "Proxy Object Name",
-        default = ""
-    )
-    path: bpy.props.StringProperty (
-        name = "Proxy Path",
-        default = ""
-    )
-    index: bpy.props.IntProperty (
-        name = "Proxy Index",
-        min = 0,
-        max = 999
-    )
-
-
 class A3OB_PG_outliner_lod(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty (
+    obj: bpy.props.StringProperty (
         name = "Object Name"
     )
-    lod: bpy.props.StringProperty (
+    name: bpy.props.StringProperty (
         name = "LOD Type"
     )
-    # proxies: bpy.props.CollectionProperty (
-        # type = A3OB_PG_outliner_proxy
-    # )
-    # proxies_index: bpy.props.IntProperty (
-        # name = "Selection Index",
-        # default = -1
-    # )
-    # sub_objects: bpy.props.CollectionProperty (
-        # type = A3OB_PG_outliner_sublod
-    # )
-    # sub_objects_index: bpy.props.IntProperty (
-        # name = "Selection Index",
-        # default = -1
-    # )
+    signature: bpy.props.FloatProperty (
+        name = "LOD Signature"
+    )
+    proxy_count: bpy.props.IntProperty (
+        name = "Proxy Count"
+    )
+    subobject_count: bpy.props.IntProperty (
+        name = "Sub-object Count"
+    )
 
 
 class A3OB_PG_outliner(bpy.types.PropertyGroup):
@@ -678,8 +650,6 @@ class A3OB_PG_weights(bpy.types.PropertyGroup):
 
 
 classes = (
-    A3OB_PG_outliner_sublod,
-    A3OB_PG_outliner_proxy,
     A3OB_PG_outliner_lod,
     A3OB_PG_outliner,
     A3OB_PG_common_proxy,

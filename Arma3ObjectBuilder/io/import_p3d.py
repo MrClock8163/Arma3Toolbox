@@ -369,7 +369,7 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
     collection.objects.link(obj)
 
     if operator.validate_meshes:
-        mesh.data.validate(clean_customdata=False)
+        mesh.validate(clean_customdata=False)
 
     if operator.proxy_action != 'NOTHING' and 'SELECTIONS' in operator.additional_data:
         process_proxies(operator, obj, proxy_lookup, materials[0])
