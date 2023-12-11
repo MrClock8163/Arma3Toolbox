@@ -55,7 +55,7 @@ def read_asciiz(file):
     
     while True:
         a = file.read(1)
-        if a == b'\000':
+        if a == b'\x00':
             break
             
         res += a

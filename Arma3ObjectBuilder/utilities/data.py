@@ -1,38 +1,66 @@
 # Various hard coded data used in I/O and throughout the UI.
 
 
-flags_vertex = {
+flags_vertex_surface = {
     'NORMAL': 0x00000000,
     'SURFACE_ON': 0x00000001,
     'SURFACE_ABOVE': 0x00000002,
     'SURFACE_UNDER': 0x00000004,
-    'KEEP_HEIGHT': 0x00000008,
-    'SKY': 0x00002000,
-    'NONE': 0x00001000,
-    'DECAL': 0x00000100,
-    'SHINING': 0x00000010,
-    'SHADOW': 0x00000020,
-    'LIGHTED_HALF': 0x00000080,
-    'LIGHTED_FULL': 0x00000040,
-    'AREA': 0x00000000,
-    'ANGLE': 0x04000000,
-    'FIXED': 0x02000000,
-    'HIDDEN': 0x01000000
+    'KEEP_HEIGHT': 0x00000008
 }
 
 
-flags_face = {
+flags_vertex_fog = {
+    'NORMAL': 0x00000000,
+    'SKY': 0x00002000,
+    'NONE': 0x00001000
+}
+
+
+flags_vertex_decal = {
+    'NORMAL': 0x00000000,
+    'DECAL': 0x00000100
+}
+
+
+flags_vertex_lighting = {
+    'NORMAL': 0x00000000,
+    'SHINING': 0x00000010,
+    'SHADOW': 0x00000020,
+    'LIGHTED_HALF': 0x00000080,
+    'LIGHTED_FULL': 0x00000040
+}
+
+
+flags_vertex_normals = {
+    'AREA': 0x00000000,
+    'ANGLE': 0x04000000,
+    'FIXED': 0x02000000
+}
+
+
+flag_vertex_hidden = 0x01000000
+
+
+flags_face_lighting = {
     'NORMAL': 0x00000000,
     'BOTH': 0x00000020,
     'POSITION': 0x00000080,
     'FLAT': 0x00100000,
-    'REVERSED': 0x00200000,
+    'REVERSED': 0x00200000
+}
+
+
+flags_face_zbias = {
     'NONE': 0x00000000,
     'LOW': 0x00000100,
     'MIDDLE': 0x00000200,
-    'HIGH': 0x00000300,
-    'NO_SHADOW': 0x00000010
+    'HIGH': 0x00000300
 }
+
+
+flag_face_noshadow = 0x00000010
+flag_face_merging = 0x01000000
 
 
 lod_resolution_position = { # decimal places in normalized format

@@ -1,20 +1,18 @@
-# Writer functions to export multiple meshed as LODs
-# to the BI MLOD P3D format. Format specifications can
-# be found on the community wiki (although not withoug errors):
-# https://community.bistudio.com/wiki/P3D_File_Format_-_MLOD
+# Processing functions to export multiple meshed as LODs
+# to the MLOD P3D format. The actual file handling is implemented
+# in the data_p3d module.
 
 
 import time
-import struct
 
 import bpy
 import bmesh
 
-from . import binary_handler as binary
+from . import data_p3d as p3d
 from ..utilities import generic as utils
 from ..utilities import lod as lodutils
+from ..utilities import flags as flagutils
 from ..utilities import compat as computils
-from ..utilities import data
 from ..utilities import errors
 from ..utilities.logger import ProcessLogger
 
@@ -43,7 +41,7 @@ def duplicate_object(obj):
 
 # May be worth looking into bpy.ops.object.convert(target='MESH')
 # instead to reduce operator calls.
-def apply_modifiers(obj, context):
+def apply_modifiers(obj):
     ctx = {"object": obj}
     
     for m in obj.modifiers:
@@ -54,161 +52,153 @@ def apply_modifiers(obj, context):
             obj.modifiers.remove(m)
 
 
-def merge_objects(main_object, sub_objects, context):
-    ctx = {
-        "active_object": main_object,
-        "selected_objects": (sub_objects + [main_object]),
-        "selected_editable_objects": (sub_objects + [main_object])
-    }
-    computils.call_operator_ctx(bpy.ops.object.join, ctx)
+# Maybe transfer to the object props PG as a method?
+# def get_resolution(obj):
+#     object_props = obj.a3ob_properties_object
+#     return lodutils.get_lod_signature(int(object_props.lod), object_props.resolution)
 
 
-def format_path(path, root = "", make_relative = True, strip_extension = False):
-    path = utils.replace_slashes(path.strip())
+# In order to simplify merging the LOD parts, and the data access later on, the dereferenced
+# flags need to be written directly into their respective integer bmesh layers.
+def bake_flags_vertex(obj):
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.verts.ensure_lookup_table()
+
+    layer = flagutils.get_layer_flags_vertex(bm)
+    if layer:
+        flags_vertex = {i: item.get_flag() for i, item in enumerate(obj.a3ob_properties_object_flags.vertex)}
+        for vert in bm.verts:
+            vert[layer] = flags_vertex.get(vert[layer], 0)
     
-    if make_relative:
-        root = utils.replace_slashes(root.strip())
-        path = utils.make_relative(path, root)
-        
-    if strip_extension:
-        path = utils.strip_extension(path)
-        
-    return path
+    bm.to_mesh(obj.data)
+    bm.free()
 
 
-def get_texture_string(material_properties, addon_prefs):
-    texture_type = material_properties.texture_type
+def bake_flags_face(obj):
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.faces.ensure_lookup_table()
+
+    layer = flagutils.get_layer_flags_face(bm)
+    if layer:
+        flags_face = {i: item.get_flag() for i, item in enumerate(obj.a3ob_properties_object_flags.face)}
+        for face in bm.faces:
+            face[layer] = flags_face.get(face[layer], 0)
     
-    if texture_type == 'TEX':
-        return format_path(utils.abspath(material_properties.texture_path), utils.abspath(addon_prefs.project_root), addon_prefs.export_relative)
-    elif texture_type == 'COLOR':
-        color = material_properties.color_value
-        return "#(argb,8,8,3)color(%.3f,%.3f,%.3f,%.3f,%s)" % (color[0], color[1], color[2], color[3], material_properties.color_type)
-    elif texture_type == 'CUSTOM':
-        return material_properties.color_raw
-    else:
-        return ""
+    bm.to_mesh(obj.data)
+    bm.free()
+
+# The sub-objects and proxy object need to be merged into the main LOD object after some
+# preprocessing. The proxy selections need to be created with placeholder names, the flags
+# need to be baked into the respective layers, and the modifiers have to get applied.
+def merge_into_lod(operator, main_object, sub_objects, proxy_objects):
+    # Blender has a 63 character length limit on vertex group names,
+    # so the proxy paths can't be written to the group name directly,
+    # a placeholder name must be used, and added to a lookup dictionary.
+    proxy_lookup = {}
+    for i, proxy in enumerate(proxy_objects):
+        placeholder = "@proxy_%d" % i
+        utils.create_selection(proxy, placeholder)
+        proxy_lookup[placeholder] = proxy.a3ob_properties_object_proxy.to_placeholder()
+
+    # To simplify the object merging, the face and vertex flags need to be directly written
+    # into their layers. This way the process doesn't have to deal with managing and merging
+    # flag groups on the different component objects.
+    all_objects = sub_objects + proxy_objects + [main_object]
+    for obj in all_objects:
+        bake_flags_face(obj)
+        bake_flags_vertex(obj)
+
+        if operator.apply_modifiers:
+            apply_modifiers(obj)
+
+    if len(all_objects) > 1:
+        ctx = {
+            "active_object": main_object,
+            "selected_objects": all_objects,
+            "selected_editable_objects": all_objects
+        }
+        computils.call_operator_ctx(bpy.ops.object.join, ctx)
+    
+    # Duplicate cleanup
+    for obj in (sub_objects + proxy_objects):
+        bpy.data.meshes.remove(obj.data, do_unlink=True)
+
+    return proxy_lookup
 
 
-def get_material_string(material_properties, addon_prefs):
-    return format_path(utils.abspath(material_properties.material_path), utils.abspath(addon_prefs.project_root), addon_prefs.export_relative)
-
-
-def get_proxy_string(proxy_props, addon_prefs):
-    path = format_path(utils.abspath(proxy_props.proxy_path), utils.abspath(addon_prefs.project_root), addon_prefs.export_relative, True)
-    if len(path) > 0 and path[0] != "\\":
-        path = "\\" + path
-        
-    return "proxy:%s.%03d" % (path, proxy_props.proxy_index)
-
-
-# Huge monolith function to prepare the LOD objects for export.
-# Returns the merged LOD objects, the proxy lookup dictionaries,
-# and the material lookup dictionries for each LOD.
-# 
-# [(LOD object 1, proxies 1, materials 1), (LOD object 2, ...)...]
+# Huge monolith function to produce the final object and mesh data that can be written to the 
+# P3D file. Merges the sub-objects and proxies into the main objects, applies transformations,
+# runs mesh validation and sorts sections if necessary.
+# [(LOD object 0, proxy lookup 0), (..., ....), ....]
 def get_lod_data(operator, context):
-    addon_prefs = utils.get_addon_preferences()
     scene = context.scene
     export_objects = scene.objects
-    
+
     if operator.use_selection:
         export_objects = context.selected_objects
-    
+
     lod_list = []
-    for obj in [obj for obj in export_objects if not operator.visible_only or obj.visible_get()]:
-        lod_item = []
-        
+
+    for obj in [obj for obj in export_objects if not operator.visible_only or obj.visible_get()]:       
         if obj.type != 'MESH' or not obj.a3ob_properties_object.is_a3_lod or obj.parent != None or obj.a3ob_properties_object.lod == '30':
             continue
-        
+            
         # Some operator polls fail later if an object is in edit mode.
         if not obj.mode == 'OBJECT':
             computils.call_operator_ctx(bpy.ops.object.mode_set, {"active_object": obj}, mode='OBJECT')
         
-        # Objects must be duplicated in the background in order to perform the merge
-        # and other destructive operations without changing the working object.
-        # The duplicates are cleaned up after export.
-        main_object = duplicate_object(obj)
-        
-        if operator.apply_modifiers:
-            apply_modifiers(main_object, context)
-        
-        children = obj.children
-        
+        main_obj = duplicate_object(obj)
+
         sub_objects = []
-        object_proxies = {}
-        for i, child in enumerate(children):
+        proxy_objects = []
+        for child in obj.children:
             if child.type != 'MESH':
                 continue
                 
-            sub_object = duplicate_object(child)
+            if not child.mode == 'OBJECT':
+                computils.call_operator_ctx(bpy.ops.object.mode_set, {"active_object": obj}, mode='OBJECT')
             
-            # Blender has a 63 character length limit on vertex group names,
-            # so the proxy paths can't be written to the group name directly,
-            # a placeholder name must be used, and added to a lookup dictionary.
-            object_props = sub_object.a3ob_properties_object_proxy
-            if object_props.is_a3_proxy:
-                placeholder = "@proxy_%04d" % i
-                utils.create_selection(sub_object, placeholder)
-                object_proxies[placeholder] = get_proxy_string(object_props, addon_prefs)
-            
-            if operator.apply_modifiers:
-                apply_modifiers(sub_object, context)
-            
-            sub_objects.append(sub_object)
-            
-        if len(sub_objects) > 0:
-            merge_objects(main_object, sub_objects, context)
+            child_copy = duplicate_object(child)
+
+            if child_copy.a3ob_properties_object_proxy.is_a3_proxy:
+                proxy_objects.append(child_copy)
+            else:
+                sub_objects.append(child_copy)
         
-        for obj in sub_objects:
-            bpy.data.meshes.remove(obj.data, do_unlink=True)
-        
+        proxy_lookup = merge_into_lod(operator, main_obj, sub_objects, proxy_objects)
+
         if operator.apply_transforms:
             ctx = {
-                "active_object": main_object,
-                "selected_editable_objects": [main_object]
+                "active_object": main_obj,
+                "selected_editable_objects": [main_obj]
             }
             computils.call_operator_ctx(bpy.ops.object.transform_apply, ctx, location = True, scale = True, rotation = True)
         
         if operator.validate_meshes:
-            main_object.data.validate(clean_customdata=False)
+            main_obj.data.validate(clean_customdata=False)
             
         if not operator.preserve_normals:
             ctx = {
-                "active_object": main_object,
-                "object": main_object
+                "active_object": main_obj,
+                "object": main_obj
             }
             computils.call_operator_ctx(bpy.ops.mesh.customdata_custom_splitnormals_clear, ctx)
-        
-        lod_item.append(main_object)
-        lod_item.append(object_proxies)
-        
-        # The mesh faces are linked to materials through the material slot index
-        # so it's best to create a lookup dictionary for materials.
-        object_materials = {0: ("", "")}
-        sections = {0: []}
-        
-        for i, slot in enumerate(main_object.material_slots):
-            sections[i] = []
-            mat = slot.material
-            if mat:
-                object_materials[i] = (get_texture_string(mat.a3ob_properties_material, addon_prefs), get_material_string(mat.a3ob_properties_material, addon_prefs))
-            else:
-                object_materials[i] = ("", "")
-                
-        lod_item.append(object_materials)
-        lod_list.append(lod_item)
-        
+
         # Sections are important for in-game performace, and should be sorted during export
-        # to avoid any unnecessary duplication. Some info about sections can be found on the
-        # community wiki: https://community.bistudio.com/wiki/Section_Count
-        # Some corrections: https://mrcmodding.gitbook.io/home/documents/sections
+        # to avoid any unnecessary fragmentation. Some info about sections can be found on the
+        # community wiki: https://community.bistudio.com/wiki/Section_Count.
+        # Some corrections: https://mrcmodding.gitbook.io/home/documents/sections.
         if operator.sort_sections:
+            sections = {0: []}
+            for slot in main_obj.material_slots:
+                sections[slot.slot_index] = []
+
             bm = bmesh.new()
-            bm.from_mesh(main_object.data)
+            bm.from_mesh(main_obj.data)
             bm.faces.ensure_lookup_table()
-            
+
             for face in bm.faces:
                 sections[face.material_index].append(face)
             
@@ -217,389 +207,340 @@ def get_lod_data(operator, context):
                 for face in section:
                     face.index = face_index
                     face_index -=- 1
-                    
+
             bm.faces.sort()
-            bm.to_mesh(main_object.data)
+            bm.to_mesh(main_obj.data)
             bm.free()
-    
+
+        lod_list.append((main_obj, proxy_lookup))
+
     return lod_list
 
 
-# The P3D stores vertex normals, which by the nature of vertex normals
-# can be as many as 3 * count_faces, well exceeding the number of 
-# vertices. Since the normals are written to a datablock separate from
-# the faces, and later referenced by index, redundancy (and thus file size)
-# can be reduced with a lookup dictionary.
-def get_normals(mesh):
-    normals = {}
+# Produce the vertex dictionary from the bmesh data.
+# {idx 0: (x, y, z, flag), ...: (..., ..., ..., ...), ...}
+def process_vertices(bm):
+    layer = flagutils.get_layer_flags_vertex(bm)
+
+    output = {}
+
+    for vert in bm.verts:
+        output[vert.index] = (*vert.co, vert[layer])
+
+    return output
+
+# Produce the unique vertex normal dictionary from the bmesh data, as well as a mapping
+# dictionary.
+# {idx 0: (x, y, z), ...: (..., ..., ...), ....}
+# {loop idx 0: normal idx X, loop idx 1: normal idx Y, ...}
+def process_normals(mesh):
+    output = {}
+    normals_index = {}
     normals_lookup_dict = {}
 
     for i, loop in enumerate(mesh.loops):
         normal = loop.normal.copy().freeze()
         
-        if normal not in normals:
-            normals[normal] = len(normals)
+        if normal not in normals_index:
+            normals_index[normal] = len(normals_index)
+            output[len(output)] = normal
         
-        normals_lookup_dict[i] = normals[normal]
+        normals_lookup_dict[i] = normals_index[normal]
     
-    return normals.keys(), normals_lookup_dict
+    return output, normals_lookup_dict
 
 
-def get_resolution(obj):
-    object_props = obj.a3ob_properties_object
-    return lodutils.get_lod_signature(int(object_props.lod), object_props.resolution)
+# Produce material lookup dictionary from the materials assigned to the object.
+# {material 0: (texture, material), ...: (..., ....), ...}
+def process_materials(obj):
+    output = {0: ("", "")}
+
+    for i, slot in enumerate(obj.material_slots):
+        mat = slot.material
+        if mat:
+            output[i] = mat.a3ob_properties_material.to_p3d()
+        else:
+            output[i] = ("", "")
+
+    return output
 
 
-# Selection weights are stored as bytes, and need to transformed.
-def encode_selection_weight(weight):
-    if weight == 0:
-        return 0
-    elif weight  == 1:
-        return 1
-        
-    value = round(256 - 255 * weight)
+# Produce the face data dictionary from the obj and  bmesh data.
+# {face 0: ([vert 0, vert 1, vert 2], [normal 0, normal 1, normal 2], [(uv 0 0, uv 0 1), (...), ...], texture, material, flag), ...}
+def process_faces(obj, bm, normals_lookup):
+    output = {}
+    # Materials need to be precompiled to speed up the face access.
+    materials = process_materials(obj)
+
+    uv_layer = None
+    if len(bm.loops.layers.uv.values()) > 0: # 1st UV set needs to be written into the face data section too
+        uv_layer = bm.loops.layers.uv.values()[0]
     
-    if value == 256:
-        return 0
-        
-    return value
-
-
-def write_vertex(file, co, flag = 0):
-    file.write(struct.pack('<fff', co[0], co[2], co[1]))
-    binary.write_ulong(file, flag)
-
-
-def write_normal(file, normal):
-    file.write(struct.pack('<fff', -normal[0], -normal[2], -normal[1]))
-
-
-def write_face_pseudo_vertextable(file, loop, uv_layer, normals_lookup_dict):
-    binary.write_ulong(file, loop.vert.index)
-    binary.write_ulong(file, normals_lookup_dict[loop.index])
-    
-    if not uv_layer:
-        file.write(struct.pack('<ff', 0, 0))
-        return
-    
-    file.write(struct.pack('<ff', loop[uv_layer].uv[0], 1 - loop[uv_layer].uv[1]))
-
-
-def write_face(file, bm, face, materials, uv_layer, normals_lookup_dict):
-    count_sides = len(face.loops)
-    binary.write_ulong(file, count_sides)
-    
-    for i in range(count_sides):
-        write_face_pseudo_vertextable(file, face.loops[i], uv_layer, normals_lookup_dict)
-        
-    if count_sides < 4:
-        file.write(struct.pack('<4I', 0, 0, 0, 0)) # empty filler for triangles
-    
-    material_data = materials[face.material_index]
-    binary.write_ulong(file, 0) # face flags
-    binary.write_asciiz(file, material_data[0]) # texture
-    binary.write_asciiz(file, material_data[1]) # material
-
-
-def write_tagg_sharps_edges(file, bm):
-    binary.write_byte(file, 1)
-    binary.write_asciiz(file, "#SharpEdges#")
-    data_start_pos = file.tell()
-    binary.write_ulong(file, 0) # temporary placeholder value for field length
-    
-    flat_face_edges = set()
+    flag_layer = flagutils.get_layer_flags_face(bm)
     
     for face in bm.faces:
-        if not face.smooth:
-            flat_face_edges.update({edge for edge in face.edges})
+        verts = []
+        normals = []
+        uvs = []
+
+        for loop in face.loops:
+            verts.append(loop.vert.index)
+            normals.append(normals_lookup[loop.index])
+            uvs.append((loop[uv_layer].uv[0], 1 - loop[uv_layer].uv[1]) if uv_layer else (0, 0))
+
+        output[face.index] = [verts, normals, uvs, *materials[face.material_index], face[flag_layer]]
+
+    return output
+
+
+def is_flat_shaded(bm):
+    for face in bm.faces:
+        if face.smooth:
+            return False
     
-    for edge in bm.edges:
-        if not edge.smooth or edge in flat_face_edges:
-            file.write(struct.pack('<II', edge.verts[0].index, edge.verts[1].index))
-
-    data_end_pos = file.tell()
-    file.seek(data_start_pos, 0)
-    binary.write_ulong(file, data_end_pos-data_start_pos-4) # fill in length data
-    file.seek(data_end_pos, 0)
+    return True
 
 
-def write_tagg_uv_sets_item(file, bm, layer, index):
-    binary.write_byte(file, 1)
-    binary.write_asciiz(file, "#UVSet#")
-    data_start_pos = file.tell()
-    binary.write_ulong(file, 0) # temporary placeholder value for field length
-    binary.write_ulong(file, index)
-    
+def process_tagg_sharp(bm):
+    output = p3d.P3D_TAGG()
+    output.name = "#SharpEdges#"
+    output.data = p3d.P3D_TAGG_DataSharpEdges()
+
+    # For ease of use, the edges of flat shaded faces need to be exported as sharp as well.
+    # Technically this creates fertile ground for mistakes, maybe it should be only done
+    # if the whole mesh is flat shaded.
+    if is_flat_shaded(bm):
+        flat_face_edges = set()
+        for face in bm.faces:
+            if not face.smooth:
+                flat_face_edges.update({edge for edge in face.edges if edge.is_contiguous})
+        
+        output.data.edges = [(edge.verts[0].index, edge.verts[1].index) for edge in flat_face_edges]
+    else:
+        output.data.edges = [(edge.verts[0].index, edge.verts[1].index) for edge in bm.edges if not edge.smooth and edge.is_contiguous]
+
+    return output
+
+
+def process_tagg_uvset(bm, layer):
+    output = p3d.P3D_TAGG()
+    output.name = "#UVSet#"
+    output.data = p3d.P3D_TAGG_DataUVSet()
+    uvs = {}
+
     for face in bm.faces:
         for loop in face.loops:
-            file.write(struct.pack('<ff', loop[layer].uv[0], 1-loop[layer].uv[1]))
-        
-    data_end_pos = file.tell()
-    file.seek(data_start_pos, 0)
-    binary.write_ulong(file, data_end_pos-data_start_pos-4) # fill in length data
-    file.seek(data_end_pos, 0)
+            uvs[loop.index] = (loop[layer].uv[0], loop[layer].uv[1])
+
+    output.data.uvs = dict(sorted(uvs.items()))
+
+    return output
 
 
-def write_tagg_uv_sets(file, bm, logger):
-    index = 0
-    for layer in bm.loops.layers.uv.values():
-        write_tagg_uv_sets_item(file, bm, layer, index)
-        index += 1
-        
-    logger.step("Wrote UV sets: %d" % index)
+def process_tagg_property(prop):
+    output = p3d.P3D_TAGG()
+    output.name = "#Property#"
+    output.data = p3d.P3D_TAGG_DataProperty()
+    output.data.key = prop.name
+    output.data.value = prop.value
+
+    return output
 
 
-def write_tagg_mass(file, bm, count_verts):
-    layer = bm.verts.layers.float.get("a3ob_mass")
-    
-    if not layer:
-        return
-        
-    binary.write_byte(file, 1)
-    binary.write_asciiz(file, "#Mass#")
-    binary.write_ulong(file, count_verts*4)
-    
-    for vertex in bm.verts:
-        binary.write_float(file, vertex[layer])
+def process_tagg_mass(bm, layer):
+    output = p3d.P3D_TAGG()
+    output.name = "#Mass#"
+    output.data = p3d.P3D_TAGG_DataMass()
+
+    for vert in bm.verts:
+        output.data.masses[vert.index] = vert[layer]
+
+    return output
 
 
-def write_tagg_selections_item(file, name, count_vert, count_face, vertices, faces, proxies):
-    real_name = name
-    
-    # If the vertex group is a proxy placeholder, we need to replace
-    # the name with the path from the lookup dictionary.
-    if name.strip().startswith("@proxy"):
-        try:
-            real_name = proxies[name]
-        except:
-            pass
-            
-    binary.write_byte(file, 1)
-    binary.write_asciiz(file, real_name)
-    data_start_pos = file.tell()
-    binary.write_ulong(file, 0) # temporary placeholder value for field length
+def process_taggs_selections(obj, bm):
+    output = {}
 
-    bytes_vert = bytearray(count_vert) # array of 0x0 bytes (effective because this way not every vertex has to be iterated)
-    for vertex in vertices:
-        bytes_vert[vertex[0]] = encode_selection_weight(vertex[1])
-        
-    file.write(bytes_vert)
-
-    bytes_face = bytearray(count_face)
-    for face in faces:
-        bytes_face[face] = 1
-        
-    file.write(bytes_face)
-
-    data_end_pos = file.tell()
-    file.seek(data_start_pos, 0)
-    binary.write_ulong(file, data_end_pos-data_start_pos-4) # fill in length data
-    file.seek(data_end_pos, 0)
-
-
-def write_tagg_selections(file, obj, proxies, logger):
-    mesh = obj.data
-    
-    # Build selection database for faster lookup
-    selections_vert = {}
-    selections_face = {}
-    
-    for group in obj.vertex_groups:
-        selections_vert[group.name] = set()
-        selections_face[group.name] = set()
-    
-    for vertex in mesh.vertices:
-        for group in vertex.groups:
-            name = obj.vertex_groups[group.group].name
-            weight = group.weight
-            selections_vert[name].add((vertex.index, weight))
-            
-    for face in mesh.polygons:
-        groups = set([group.group for vertex in face.vertices for group in mesh.vertices[vertex].groups])
-        for group_id in groups:
-            weight = sum([group.weight for vertex in face.vertices for group in mesh.vertices[vertex].groups if group.group == group_id])
-            if weight > 0:
-                name = obj.vertex_groups[group_id].name
-                selections_face[name].add(face.index)
-    
-    count_vert = len(mesh.vertices)
-    count_face = len(mesh.polygons)
-    
     for i, group in enumerate(obj.vertex_groups):
-        name = group.name
-        write_tagg_selections_item(file, name, count_vert, count_face, selections_vert[name], selections_face[name], proxies)
-        
-    logger.step("Wrote named selections: %d" % (i + 1))
+        new_tagg = p3d.P3D_TAGG()
+        new_tagg.name = group.name
+        new_tagg.data = p3d.P3D_TAGG_DataSelection()
+        new_tagg.data.count_verts = len(bm.verts)
+        new_tagg.data.count_faces = len(bm.faces)
+        output[i] = new_tagg
 
+    bm.verts.layers.deform.verify()
+    layer = bm.verts.layers.deform.active
 
-def write_tagg_named_properties_item(file, key, value):
-    binary.write_byte(file, 1)
-    binary.write_asciiz(file, "#Property#")
-    binary.write_ulong(file, 128)
-    file.write(struct.pack('<64s', key.encode('ASCII')))
-    file.write(struct.pack('<64s', value.encode('ASCII')))
-
-
-def write_tagg_named_properties(file, obj):
-    object_props = obj.a3ob_properties_object
-    written_props = set()
-    for prop in object_props.properties:
-        if prop.name not in written_props:
-            written_props.add(prop.name)
-            write_tagg_named_properties_item(file, prop.name, prop.value)
-
-
-def write_file_header(file, count_lod):
-    binary.write_chars(file, "MLOD")
-    binary.write_ulong(file, 257)
-
-
-def write_lod(file, obj, materials, proxies, validator, logger):
-    logger.level_up()
+    for vert in bm.verts:
+        for idx in vert[layer].keys():
+            output[idx].data.weight_verts[vert.index] = vert[layer][idx]
     
+    # If all vertices of a face belong to a selection, then the face belongs to the 
+    # selection as well.
+    for face in bm.faces:
+        indices = [idx for vert in face.verts for idx in vert[layer].keys()]
+        unique = set(indices)
+        for idx in unique:
+            if indices.count(idx) == len(face.loops):
+                output[idx].data.weight_faces[face.index] = 1
+
+    return output.values()
+
+
+def process_taggs(obj, bm, logger):
+    object_props = obj.a3ob_properties_object
+    taggs = [process_tagg_sharp(bm)]
+    logger.log("Collected sharp edges")
+
+    uv_index = 0
+    for layer in bm.loops.layers.uv.values():
+        uvset = process_tagg_uvset(bm, layer)
+        uvset.data.id = uv_index
+        taggs.append(uvset)
+        uv_index += 1
+    logger.log("Collected UV sets")
+    
+    for prop in object_props.properties:
+        taggs.append(process_tagg_property(prop))
+    logger.log("Collected named properties")
+
+    # Vertex mass should only be exported for the Geometry LOD
+    if object_props.lod == '6':
+        layer = bm.verts.layers.float.get("a3ob_mass")
+        if layer:
+            taggs.append(process_tagg_mass(bm, layer))
+            logger.log("Collected vertex masses")
+
+    taggs.extend(process_taggs_selections(obj, bm))
+    logger.log("Collected selections")
+
+    return taggs
+
+
+def process_lod(operator, obj, proxy_lookup, validator, logger):
+    lod_name = obj.a3ob_properties_object.get_name()
+
+    logger.level_up()
+    logger.step("Name: %s" % lod_name)
+    logger.step("Processing data:")
+
     # The P3D format cannot store n-gons, so the export must
     # skip LODs with such faces.
     if lodutils.Validator.has_ngons(obj.data):
-        logger.step("N-gons detected -> skipping LOD")
-        logger.step("Name: %s" % lodutils.format_lod_name(int(obj.a3ob_properties_object.lod), obj.a3ob_properties_object.resolution))
+        logger.log("N-gons detected -> skipping LOD")
         logger.level_down()
-        return False
-    
+        return None
+
     if validator:
+        validator.lod = obj
         if not validator.validate(obj.a3ob_properties_object.lod):
-            logger.step("Failed validation -> skipping LOD (run manual validation for details)")
-            logger.step("Name: %s" % lodutils.format_lod_name(int(obj.a3ob_properties_object.lod), obj.a3ob_properties_object.resolution))
+            logger.log("Failed validation -> skipping LOD (run manual validation for details)")
             logger.level_down()
-            return False
-    
-    binary.write_chars(file, "P3DM")
-    binary.write_ulong(file, 0x1c)
-    binary.write_ulong(file, 0x100)
-        
+            return None
+
+    output = p3d.P3D_LOD()
+    output.resolution = obj.a3ob_properties_object.get_signature()
+
     mesh = obj.data
     mesh.calc_normals_split()
-    
-    normals, normals_lookup_dict = get_normals(mesh)
-    
+
+    normals, normals_lookup_dict = process_normals(mesh)
+    output.normals = normals
+    logger.log("Collected vertex normals")
+
     bm = bmesh.new()
     bm.from_mesh(mesh)
     bm.normal_update()
     bm.verts.ensure_lookup_table()
     bm.edges.ensure_lookup_table()
     bm.faces.ensure_lookup_table()
-    
-    count_verts = len(mesh.vertices)
-    count_normals = len(normals)
-    count_faces = len(mesh.polygons)
-    
-    binary.write_ulong(file, count_verts)
-    binary.write_ulong(file, count_normals)
-    binary.write_ulong(file, count_faces)
-    binary.write_ulong(file, 0) # unknown flags/padding
-    
-    vertex_flag = 33554432 # set vertices to fixed normals
-    if obj.a3ob_properties_object.normals_flag == 'AVG':
-        vertex_flag = 0 # leave vertices with average recalculation
-    
-    for vert in bm.verts:
-        write_vertex(file, vert.co, vertex_flag)
-        
-    logger.step("Wrote vertices: %d" % count_verts)
-        
-    for normal in normals:
-        write_normal(file, normal)
-        
-    logger.step("Wrote vertex normals: %d" % count_normals)
-        
-    first_uv_layer = None
-    if len(bm.loops.layers.uv.values()) > 0: # 1st UV set needs to be written into the face data section too
-        first_uv_layer = bm.loops.layers.uv.values()[0]
-        
-    for face in bm.faces:
-        write_face(file, bm, face, materials, first_uv_layer, normals_lookup_dict)
-        
-    logger.step("Wrote faces: %d" % count_faces)
-        
-    binary.write_chars(file, "TAGG") # TAGG section start
-    
-    write_tagg_sharps_edges(file, bm)
-    write_tagg_uv_sets(file, bm, logger)
-    
-    if obj.a3ob_properties_object.lod == '6':
-        write_tagg_mass(file, bm, count_verts) # need to make sure to only export for Geo LODs
-        logger.step("Wrote vertex mass")
-        
+
+    output.verts = process_vertices(bm)
+    logger.log("Collected vertices")
+    output.faces = process_faces(obj, bm, normals_lookup_dict)
+    logger.log("Collected faces")
+    output.taggs = process_taggs(obj, bm, logger)
+
+    if operator.renumber_components:
+        output.renumber_components()
+        logger.log("Renumbered component selections")
+
     bm.free()
-        
-    write_tagg_named_properties(file, obj)
-    
-    if len(obj.vertex_groups) > 0:
-        write_tagg_selections(file, obj, proxies, logger)
-    
-    binary.write_byte(file, 1)
-    binary.write_asciiz(file, "#EndOfFile#") # EOF signature
-    binary.write_ulong(file, 0)
-    binary.write_float(file, get_resolution(obj)) # LOD resolution index
-    
-    logger.step("Resolution signature: %d" % float(get_resolution(obj)))
-    logger.step("Name: %s" % lodutils.format_lod_name(int(obj.a3ob_properties_object.lod), obj.a3ob_properties_object.resolution))
-    
+
+    # The placeholder proxy selection names must be replaced with the actual names.
+    output.placeholders_to_proxies(proxy_lookup)
+    logger.log("Finalized proxy selection names")
+
+    logger.step("File report:")
+    logger.log("Signature: %d" % output.resolution)
+    logger.log("Type: P3DM")
+    logger.log("Version: 28.256")
+    logger.log("Vertices: %d" % len(output.verts))
+    logger.log("Normals: %d" % len(output.normals))
+    logger.log("Faces: %d" % len(output.faces))
+    logger.log("Taggs: %d" % (len(output.taggs) + 1))
+
     logger.level_down()
-    
-    return True
+
+    return output
 
 
 def write_file(operator, context, file):
     wm = context.window_manager
     wm.progress_begin(0, 1000)
-    logger = ProcessLogger()
-    logger.step("P3D export to %s" % operator.filepath)
+    wm.progress_update(0)
     
-    time_file_start = time.time()
-    
-    lod_list = get_lod_data(operator, context)
-    lod_list.sort(key=lambda lod: get_resolution(lod[0])) # export LODs in order of resolution signature
-    
-    count_lod = len(lod_list)
-    
-    logger.log("Detected %d LOD objects" % count_lod)
-    
-    write_file_header(file, count_lod)
-    lod_count_pos = file.tell()
-    binary.write_ulong(file, count_lod) # temporary placeholder value
-    
-    logger.level_up()
-    
-    exported_count = 0
     validator = None
     if operator.validate_lods:
-        validator = lodutils.Validator(None, operator.validate_lods_warning_errors, True)
-        
-    for i, lod in enumerate(lod_list):
+        validator = lodutils.Validator(None, operator.validate_lods_warnings_errors, True)
+    
+    logger = ProcessLogger()
+    logger.step("P3D export to %s" % operator.filepath)
+
+    time_file_start = time.time()
+
+    # Gather all exportable LOD objects, duplicate them, and merge their components.
+    # Produce the final mesh data, and proxy lookup table to export for each LOD.
+    lod_list = get_lod_data(operator, context)
+    
+    logger.log("Preprocessing done in %f sec" % (time.time() - time_file_start))
+    logger.log("Detected %d LOD objects" % len(lod_list))
+
+    mlod = p3d.P3D_MLOD()
+    logger.log("File type: MLOD")
+    logger.log("File version: %d" % 257)
+
+    logger.log("Processing LOD data:")
+    logger.level_up()
+
+    mlod_lods = []
+    for i, (lod, proxy_lookup) in enumerate(lod_list):
         time_lod_start = time.time()
-        logger.step("LOD %d" % i)
-        
-        if validator:
-            validator.obj = lod[0]
-            
-        success = write_lod(file, lod[0], lod[2], lod[1], validator, logger)
-        if success:
-            exported_count += 1
-            
-        bpy.data.meshes.remove(lod[0].data, do_unlink=True)
-        
+        logger.step("LOD %d" % (i + 1))
+
+        new_lod = process_lod(operator, lod, proxy_lookup, validator, logger)
+        if new_lod:
+            mlod_lods.append(new_lod)
+        bpy.data.meshes.remove(lod.data, do_unlink=True)
+
         logger.log("Done in %f sec" % (time.time() - time_lod_start))
         wm.progress_update(i + 1)
-    
-    if exported_count == 0:
+
+    if len(mlod_lods) == 0:
         raise errors.P3DError("All LODs had n-gons/failed validation, cannot write P3D with 0 LODs")
+
+    # LODs should be sorted by their resolution signature.
+    mlod_lods.sort(key=lambda lod: lod.resolution)
+    mlod.lods = mlod_lods
+
+    if operator.force_lowercase:
+        mlod.force_lowercase()
+        logger.log("Forced lowercase")
+
+    mlod.write(file)
     
-    file.seek(lod_count_pos, 0)
-    binary.write_ulong(file, exported_count) # actual LOD count
-        
     logger.level_down()
-    logger.step("")
     logger.step("P3D export finished in %f sec" % (time.time() - time_file_start))
-    wm.progress_end()
-    
-    return count_lod, exported_count
+
+    return len(lod_list), len(mlod_lods)

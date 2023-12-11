@@ -8,6 +8,22 @@ from ..utilities import lod as lodutils
 from ..utilities import data
 
 
+def create_default_flag_groups(self, context):
+    obj = self.id_data
+    flag_props = obj.a3ob_properties_object_flags
+    
+    if len(flag_props.vertex) < 1:
+        new_group = flag_props.vertex.add()
+        new_group.name = "Default"
+        new_group.normals = 'FIXED'
+        flag_props.vertex_index = 0
+    
+    if len(flag_props.face) < 1:
+        new_group = flag_props.face.add()
+        new_group.name = "Default"
+        flag_props.face_index = 0
+
+
 def proxy_name_update(self, context):
     if not self.dynamic_naming:
         return
@@ -27,29 +43,27 @@ def lod_name_update(self, context):
         return
         
     obj = self.id_data
-    object_props = obj.a3ob_properties_objec
+    object_props = obj.a3ob_properties_object
     
-    name = "LOD: %s" % lodutils.format_lod_name(int(object_props.lod), object_props.resolution)
+    name = "LOD: %s" % object_props.get_name()
     obj.name = name
     obj.data.name = name
 
 
 def lod_props_update(self, context):
-    obj = self.id_data
-    object_props = obj.a3ob_properties_object
-    if not object_props.is_a3_lod:
+    if not self.is_a3_lod:
         return
     
-    if len(object_props.flags_vertex) < 1:
-        new_group = object_props.flags_vertex.add()
-        new_group.name = "Default"
-        object_props.flags_vertex_index = 0
-    
+    create_default_flag_groups(self, context)
     lod_name_update(self, context)
 
 
-def flag_get(self):
-    return self.get_flag()
+def proxy_props_update(self, context):
+    if not self.is_a3_proxy:
+        return
+    
+    create_default_flag_groups(self, context)
+    proxy_name_update(self, context)
 
 
 class A3OB_PG_properties_named_property(bpy.types.PropertyGroup):
@@ -120,7 +134,7 @@ class A3OB_PG_properties_flag_vertex(bpy.types.PropertyGroup):
             ('ANGLE', "Impedance Angle", "", 0x04000000),
             ('FIXED', "Fixed", "", 0x02000000),
         ),
-        default = 'FIXED'
+        default = 'AREA'
     )
     hidden: bpy.props.BoolProperty (
         name = "Hidden Vertex",
@@ -130,19 +144,45 @@ class A3OB_PG_properties_flag_vertex(bpy.types.PropertyGroup):
     
     def get_flag(self):
         flag = 0
-        flag += data.flags_vertex[self.surface]
-        flag += data.flags_vertex[self.fog]
-        flag += data.flags_vertex[self.decal]
-        flag += data.flags_vertex[self.lighting]
-        flag += data.flags_vertex[self.normals]
+        flag += data.flags_vertex_surface[self.surface]
+        flag += data.flags_vertex_fog[self.fog]
+        flag += data.flags_vertex_decal[self.decal]
+        flag += data.flags_vertex_lighting[self.lighting]
+        flag += data.flags_vertex_normals[self.normals]
         
         if self.hidden:
-            flag += data.flags_vertex['HIDDEN']
-        
-        # print(hex(flag))
+            flag += data.flag_vertex_hidden
         
         return flag
+    
+    def set_flag(self, value):        
+        for name in data.flags_vertex_surface:
+            if value & data.flags_vertex_surface[name]:
+                self.surface = name
+                break
+                
+        for name in data.flags_vertex_fog:
+            if value & data.flags_vertex_fog[name]:
+                self.fog = name
+                break
+                
+        for name in data.flags_vertex_lighting:
+            if value & data.flags_vertex_lighting[name]:
+                self.lighting = name
+                break
+                
+        for name in data.flags_vertex_decal:
+            if value & data.flags_vertex_decal[name]:
+                self.decal = name
+                break
+                
+        for name in data.flags_vertex_normals:
+            if value & data.flags_vertex_normals[name]:
+                self.normals = name
+                break
         
+        if value & data.flag_vertex_hidden:
+            self.hidden = True
 
 
 class A3OB_PG_properties_flag_face(bpy.types.PropertyGroup):
@@ -178,18 +218,41 @@ class A3OB_PG_properties_flag_face(bpy.types.PropertyGroup):
         description = "",
         default = True # True: 0x00000000 False: 0x00000010
     )
+    merging: bpy.props.BoolProperty (
+        name = "Enable Texture Merging",
+        description = "",
+        default = True # True: 0x00000000 False: 0x01000000
+    )
     
     def get_flag(self):
         flag = 0
-        flag += data.flags_face[self.lighting]
-        flag += data.flags_face[self.zbias]
+        flag += data.flags_face_lighting[self.lighting]
+        flag += data.flags_face_zbias[self.zbias]
         
         if not self.shadow:
-            flag += data.flags_face['NO_SHADOW']
+            flag += data.flag_face_noshadow
         
-        # print(hex(flag))
+        if not self.merging:
+            flag += data.flag_face_merging
         
         return flag
+
+    def set_flag(self, value):
+        for name in data.flags_face_lighting:
+            if value & data.flags_face_lighting[name]:
+                self.lighting = name
+                break
+
+        for name in data.flags_face_zbias:
+            if value & data.flags_face_zbias[name]:
+                self.zbias = name
+                break
+        
+        if value & data.flag_face_noshadow:
+            self.shadow = False
+        
+        if value & data.flag_face_merging:
+            self.merging = False
 
 
 class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
@@ -231,32 +294,31 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
         default = True,
         update = lod_props_update
     )
-    normals_flag: bpy.props.EnumProperty (
-        name = "Vertex Normals Flag",
-        description = "Setting flag for normals recalculation",
-        items = (
-            ('FIX', "Fixed", "Vertex normals are fixed, and won't change during recalculation (manual or upon object updates)"),
-            ('AVG', "Average", "Normals are recalculated (manually or automatically upon object updates) as the average of normals of connected faces, weighted by the area of the faces")
-            
-        ),
-        default = 'FIX'
-    )
-    flags_vertex: bpy.props.CollectionProperty (
+
+    def get_name(self):
+        return lodutils.format_lod_name(int(self.lod), self.resolution)
+
+    def get_signature(self):
+        return lodutils.get_lod_signature(int(self.lod), self.resolution)
+
+
+class A3OB_PG_properties_object_flags(bpy.types.PropertyGroup):
+    vertex: bpy.props.CollectionProperty (
         name = "Vertex Flag Groups",
         description = "Vertex flag groups used in the LOD",
         type = A3OB_PG_properties_flag_vertex
     )
-    flags_vertex_index: bpy.props.IntProperty (
+    vertex_index: bpy.props.IntProperty (
         name = "Vertex Flag Group Index",
         description = "Index of the currently selected vertex flag group",
         default = -1
     )
-    flags_face: bpy.props.CollectionProperty (
+    face: bpy.props.CollectionProperty (
         name = "Face Flag Groups",
         description = "Face flag groups used in the LOD",
         type = A3OB_PG_properties_flag_face
     )
-    flags_face_index: bpy.props.IntProperty (
+    face_index: bpy.props.IntProperty (
         name = "Face Flag Group Index",
         description = "Index of the currently selected face flag group",
         default = -1
@@ -267,14 +329,15 @@ class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
     is_a3_proxy: bpy.props.BoolProperty (
         name = "Arma 3 Model Proxy",
         description = "This object is a proxy (cannot change manually)",
-        default = False
+        default = False,
+        update = proxy_props_update
     )
     proxy_path: bpy.props.StringProperty (
         name = "Path",
         description = "File path to the proxy model",
         default = "",
         subtype = 'FILE_PATH',
-        update = proxy_name_update
+        update = proxy_props_update
     )
     proxy_index: bpy.props.IntProperty (
         name = "Index",
@@ -282,14 +345,23 @@ class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
         default = 1,
         min = 0,
         max = 999,
-        update = proxy_name_update
+        update = proxy_props_update
     )
     dynamic_naming: bpy.props.BoolProperty (
         name = "Dynamic Object Naming",
         description = "Object and object data names are automatically constructed and updated from the properties",
         default = True,
-        update = lod_name_update
+        update = proxy_props_update
     )
+    
+    def to_placeholder(self):
+        addon_prefs = utils.get_addon_preferences()
+
+        path = utils.format_path(utils.abspath(self.proxy_path), utils.abspath(addon_prefs.project_root), addon_prefs.export_relative, False)
+        if len(path) > 0 and path[0] != "\\":
+            path = "\\" + path
+        
+        return path, self.proxy_index
 
 
 class A3OB_PG_properties_object_dtm(bpy.types.PropertyGroup):
@@ -385,6 +457,7 @@ classes = (
     A3OB_PG_properties_flag_vertex,
     A3OB_PG_properties_flag_face,
     A3OB_PG_properties_object_mesh,
+    A3OB_PG_properties_object_flags,
     A3OB_PG_properties_object_proxy,
     A3OB_PG_properties_object_dtm,
     A3OB_PG_properties_keyframe,
@@ -397,6 +470,7 @@ def register():
         bpy.utils.register_class(cls)
         
     bpy.types.Object.a3ob_properties_object = bpy.props.PointerProperty(type=A3OB_PG_properties_object_mesh)
+    bpy.types.Object.a3ob_properties_object_flags = bpy.props.PointerProperty(type=A3OB_PG_properties_object_flags)
     bpy.types.Object.a3ob_properties_object_proxy = bpy.props.PointerProperty(type=A3OB_PG_properties_object_proxy)
     bpy.types.Object.a3ob_properties_object_dtm = bpy.props.PointerProperty(type=A3OB_PG_properties_object_dtm)
     bpy.types.Object.a3ob_properties_object_armature = bpy.props.PointerProperty(type=A3OB_PG_properties_object_armature)
@@ -422,6 +496,7 @@ def unregister():
     del bpy.types.Object.a3ob_properties_object_armature
     del bpy.types.Object.a3ob_properties_object_dtm
     del bpy.types.Object.a3ob_properties_object_proxy
+    del bpy.types.Object.a3ob_properties_object_flags
     del bpy.types.Object.a3ob_properties_object
     
     for cls in reversed(classes):
