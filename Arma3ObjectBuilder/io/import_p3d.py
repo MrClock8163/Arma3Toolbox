@@ -368,6 +368,9 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
     collection = categories[lod_links[2]]
     collection.objects.link(obj)
 
+    if operator.validate_meshes:
+        mesh.data.validate(clean_customdata=False)
+
     if operator.proxy_action != 'NOTHING' and 'SELECTIONS' in operator.additional_data:
         process_proxies(operator, obj, proxy_lookup, materials[0])
         logger.log("Processed proxies: %d" % len(proxy_lookup))
