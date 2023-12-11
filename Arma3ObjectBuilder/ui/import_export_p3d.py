@@ -270,7 +270,12 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         description = "Renumber the \"component##\" selections to make sure they are unique (only use if necessary\neg.: geometry type LODs have sub-objects)",
         default = False
     )
-    
+    force_lowercase: bpy.props.BoolProperty (
+        name = "Force Lowercase",
+        description = "Export all paths, and selection names as lowercase",
+        default = True
+    )
+
     def draw(self, context):
         pass
     
@@ -300,6 +305,30 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             self.report({'INFO'}, "There are no LODs to export")
         
         return {'FINISHED'}
+
+
+class A3OB_PT_export_p3d_main(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Include"
+    bl_parent_id = "FILE_PT_operator"
+    bl_options = {'HIDE_HEADER'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        return operator.bl_idname == "A3OB_OT_export_p3d"
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.prop(operator, "force_lowercase")
 
 
 class A3OB_PT_export_p3d_include(bpy.types.Panel):
@@ -393,6 +422,7 @@ classes = (
     A3OB_PT_import_p3d_data,
     A3OB_PT_import_p3d_proxies,
     A3OB_OP_export_p3d,
+    A3OB_PT_export_p3d_main,
     A3OB_PT_export_p3d_include,
     A3OB_PT_export_p3d_meshes,
     A3OB_PT_export_p3d_validate

@@ -234,6 +234,9 @@ class P3D_TAGG():
         
         return output
     
+    def is_selection(self):
+        return not self.name.startswith("#") and not self.name.endswith("#")
+    
     def write(self, file):
         if not self.active:
             return 
@@ -300,7 +303,7 @@ class P3D_LOD():
         texture = binary.read_asciiz(file)
         material = binary.read_asciiz(file)
 
-        return vertices, normals, uvs, texture, material, flag
+        return [vertices, normals, uvs, texture, material, flag]
 
     def read_faces(self, file, count_faces):
         self.faces = {i: self.read_face(file) for i in range(count_faces)}
@@ -560,6 +563,16 @@ class P3D_LOD():
             values[idx] = group
 
         return list(groups.keys()), values
+    
+    def force_lowercase(self):
+        for idx in self.faces:
+            face = self.faces[idx]
+            face[3] = face[3].lower()
+            face[4] = face[4].lower()
+        
+        for tagg in self.taggs:
+            if tagg.is_selection():
+                tagg.name = tagg.name.lower()
 
 
 class P3D_MLOD():
@@ -631,3 +644,7 @@ class P3D_MLOD():
             lod.get_materials(materials)
 
         return materials
+
+    def force_lowercase(self):
+        for lod in self.lods:
+            lod.force_lowercase()

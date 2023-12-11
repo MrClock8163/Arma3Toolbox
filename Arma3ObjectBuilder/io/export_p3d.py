@@ -283,7 +283,7 @@ def process_faces(obj, bm, normals_lookup):
             normals.append(normals_lookup[loop.index])
             uvs.append((loop[uv_layer].uv[0], 1 - loop[uv_layer].uv[1]) if uv_layer else (0, 0))
 
-        output[face.index] = (verts, normals, uvs, *materials[face.material_index], face[flag_layer])
+        output[face.index] = [verts, normals, uvs, *materials[face.material_index], face[flag_layer]]
 
     return output
 
@@ -530,6 +530,10 @@ def write_file(operator, context, file):
     # LODs should be sorted by their resolution signature.
     mlod_lods.sort(key=lambda lod: lod.resolution)
     mlod.lods = mlod_lods
+
+    if operator.force_lowercase:
+        mlod.force_lowercase()
+        logger.log("Forced lowercase")
 
     mlod.write(file)
     
