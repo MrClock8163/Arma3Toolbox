@@ -360,7 +360,6 @@ class A3OB_PT_export_p3d_meshes(bpy.types.Panel):
         col.prop(operator, "apply_transforms")
         col.prop(operator, "preserve_normals")
         col.prop(operator, "sort_sections")
-        # col.prop(operator, "renumber_components")
 
 
 class A3OB_PT_export_p3d_validate(bpy.types.Panel):
