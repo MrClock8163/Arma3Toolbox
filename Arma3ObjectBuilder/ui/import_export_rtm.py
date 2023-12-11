@@ -42,6 +42,11 @@ class A3OB_OP_export_rtm(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         default = 100,
         min = 0
     )
+    force_lowercase: bpy.props.BoolProperty (
+        name = "Force Lowercase",
+        description = "Export all bone names as lowercase",
+        default = True
+    )
     
     @classmethod
     def poll(cls, context):
@@ -110,6 +115,7 @@ class A3OB_PT_export_rtm_main(bpy.types.Panel):
         operator = sfile.active_operator
         
         layout.prop(operator, "static_pose")
+        layout.prop(operator, "force_lowercase")
 
 
 class A3OB_PT_export_rtm_frames(bpy.types.Panel):

@@ -31,8 +31,8 @@ def add_frame_timeline(obj):
     fcurves = obj.animation_data.action.fcurves
     for curve in fcurves:
         for point in curve.keyframe_points:
-            if point.co.x not in frames:
-                frames.append(point.co.x)
+            if int(point.co.x) not in frames:
+                frames.append(int(point.co.x))
                 
     frames.sort()
     

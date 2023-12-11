@@ -161,14 +161,11 @@ class P3D_TAGG_DataSelection():
         output = cls()
         
         output.count_verts = count_verts
-        # output.count_faces = count_faces
+        output.count_faces = count_faces
         
         data_verts = bytearray(file.read(count_verts))
-        # data_faces = bytearray(file.read(count_faces))
-        # file.read(count_faces)
 
         output.weight_verts = {i: cls.decode_weight(value) for i, value in enumerate(data_verts) if value > 0}
-        # output.weight_faces = {i: cls.decode_weight(value) for i, value in enumerate(data_faces) if value > 0}
         file.read(count_faces)
 
         return output
@@ -402,15 +399,6 @@ class P3D_LOD():
         self.write_normals(file)
         self.write_faces(file)
         
-        # for item in self.verts.values():
-        #     item.write(file)
-        
-        # for item in self.normals.values():
-        #     item.write(file)
-        
-        # for item in self.faces.values():
-        #     item.write(file)
-        
         binary.write_chars(file, "TAGG")
         
         for tagg in self.taggs:
@@ -635,10 +623,6 @@ class P3D_MLOD():
     def write_file(self, filepath):
         with open(filepath, "wb") as file:
             self.write(file)
-        
-    # def clean_taggs(self):
-    #     for lod in self.lods:
-    #         lod.clean_taggs()
     
     def get_materials(self):
         materials = {("", ""): 0}
@@ -647,20 +631,3 @@ class P3D_MLOD():
             lod.get_materials(materials)
 
         return materials
-    
-    # def sections(self, materials):
-    #     return [lod.get_sections(materials) for lod in self.lods]
-
-    # def pydata(self):
-    #     return [lod.pydata() for lod in self.lods] # generator to conserve memory
-    
-    # def renumber_components(self):
-    #     for lod in self.lods:
-    #         lod.renumber_components()
-    
-    # def proxies_to_placeholderes(self):
-    #     return [lod.proxies_to_placeholders() for lod in self.lods]
-    
-    # def placeholders_to_proxies(self, lookup):
-    #     for i, lod in enumerate(self.lods):
-    #         lod.placeholders_to_proxies(lookup[i])

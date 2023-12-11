@@ -505,6 +505,7 @@ def write_file(operator, context, file):
     mlod = p3d.P3D_MLOD()
     mlod.version = 257
     mlod.signature = "MLOD"
+    logger.log("File type: MLOD")
     logger.log("File version: %d" % 257)
 
     logger.log("Processing LOD data:")
