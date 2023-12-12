@@ -10,6 +10,7 @@ def update_outliner(scene):
     scene_props = scene.a3ob_outliner
     
     scene_props.lods.clear()
+    scene_props.proxies.clear()
 
     for obj in [obj for obj in scene.objects if obj.visible_get() or scene_props.show_hidden]:
         if obj.type != 'MESH' or not obj.a3ob_properties_object.is_a3_lod or obj.parent != None:
@@ -28,6 +29,18 @@ def update_outliner(scene):
                 item.proxy_count += 1
             else:
                 item.subobject_count += 1
+    
+    if not scene_props.lods_index in range(len(scene_props.lods)):
+        return
+    
+    lod = scene.objects[scene_props.lods[scene_props.lods_index].obj]
+    for child in lod.children:
+        if child.type != 'MESH' or not child.a3ob_properties_object_proxy.is_a3_proxy:
+            continue
+
+        item = scene_props.proxies.add()
+        item.obj = child.name
+        item.name = child.a3ob_properties_object_proxy.get_name()
 
 
 def identify_lod(context):

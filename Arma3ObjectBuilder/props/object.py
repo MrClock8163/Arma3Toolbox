@@ -328,7 +328,7 @@ class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
         if name == "":
             name = "unknown"
             
-        name = "proxy: %s %d" % (name, self.proxy_index)
+        name = "%s %d" % (name, self.proxy_index)
 
         return name
 

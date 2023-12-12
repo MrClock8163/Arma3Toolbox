@@ -27,6 +27,23 @@ class A3OB_UL_outliner_lods(bpy.types.UIList):
         return flt_flags, flt_neworder
 
 
+class A3OB_UL_outliner_proxies(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        row = layout.row(align=True)
+        row.operator("a3ob.select_object", text="", icon='RESTRICT_SELECT_OFF', emboss=False).object_name = item.obj
+        row.label(text=" %s" % item.name)
+    
+    def filter_items(self, context, data, propname):
+        helper_funcs = bpy.types.UI_UL_list
+        flt_flags = []
+        flt_neworder = []
+        
+        sorter = getattr(data, propname)
+        flt_neworder = helper_funcs.sort_items_by_name(sorter, "name")
+        
+        return flt_flags, flt_neworder
+
+
 class A3OB_OT_select_object(bpy.types.Operator):
     """Select object in scene"""
     
@@ -120,6 +137,25 @@ class A3OB_PT_outliner(bpy.types.Panel):
             box_subobject.label(text="")
 
         layout.operator("a3ob.identify_lod", icon='VIEWZOOM')
+
+
+class A3OB_PT_outliner_proxies(bpy.types.Panel):
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "Object Builder"
+    bl_label = "Proxies"
+    bl_parent_id = "A3OB_PT_outliner"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def draw(self, context):
+        layout = self.layout
+        scene_props = context.scene.a3ob_outliner
+
+        layout.template_list("A3OB_UL_outliner_proxies", "A3OB_outliner_proxies", scene_props, "proxies", scene_props, "proxies_index")
         
 
 @persistent
@@ -128,10 +164,12 @@ def depsgraph_update_post_handler(scene, depsgraph):
     
 
 classes = (
+    A3OB_UL_outliner_proxies,
     A3OB_UL_outliner_lods,
     A3OB_OT_select_object,
     A3OB_OT_indentify_lod,
-    A3OB_PT_outliner
+    A3OB_PT_outliner,
+    A3OB_PT_outliner_proxies
 )
 
 

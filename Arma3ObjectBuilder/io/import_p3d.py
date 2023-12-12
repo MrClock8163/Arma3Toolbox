@@ -267,8 +267,9 @@ def process_proxies(operator, obj, proxy_lookup, empty_material):
             proxy_obj.data.materials.clear()
             proxy_obj.data.materials.append(empty_material)
             proxy_obj.parent = obj
-            proxy_obj.name = proxy_obj.a3ob_properties_object_proxy.get_name()
-            proxy_obj.data.name = proxy_obj.a3ob_properties_object_proxy.get_name()
+            name = "proxy: %s" % proxy_obj.a3ob_properties_object_proxy.get_name()
+            proxy_obj.name = name
+            proxy_obj.data.name = name
 
 
 def process_lod(operator, logger, lod, materials, materials_lookup, categories, lod_links):

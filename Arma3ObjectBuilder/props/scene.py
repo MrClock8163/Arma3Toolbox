@@ -32,6 +32,15 @@ def color_conversion_update(self, context):
         self.output_linear = rgb_out
 
 
+class A3OB_PG_outliner_proxy(bpy.types.PropertyGroup):
+    obj: bpy.props.StringProperty (
+        name = "Object Name"
+    )
+    name: bpy.props.StringProperty (
+        name = "Proxy Type"
+    )
+
+
 class A3OB_PG_outliner_lod(bpy.types.PropertyGroup):
     obj: bpy.props.StringProperty (
         name = "Object Name"
@@ -62,20 +71,13 @@ class A3OB_PG_outliner(bpy.types.PropertyGroup):
         name = "Selection Index",
         default = -1
     )
-    # proxies: bpy.props.CollectionProperty (
-    #     type = A3OB_PG_outliner_proxy
-    # )
-    # proxies_index: bpy.props.IntProperty (
-    #     name = "Selection Index",
-    #     default = -1
-    # )
-    # sub_objects: bpy.props.CollectionProperty (
-    #     type = A3OB_PG_outliner_sublod
-    # )
-    # sub_objects_index: bpy.props.IntProperty (
-    #     name = "Selection Index",
-    #     default = -1
-    # )
+    proxies: bpy.props.CollectionProperty (
+        type = A3OB_PG_outliner_proxy
+    )
+    proxies_index: bpy.props.IntProperty (
+        name = "Selection Index",
+        default = -1
+    )
     
 
 
@@ -645,6 +647,7 @@ class A3OB_PG_weights(bpy.types.PropertyGroup):
 
 
 classes = (
+    A3OB_PG_outliner_proxy,
     A3OB_PG_outliner_lod,
     A3OB_PG_outliner,
     A3OB_PG_common_proxy,
