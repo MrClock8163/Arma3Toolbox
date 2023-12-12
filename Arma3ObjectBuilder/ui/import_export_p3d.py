@@ -69,11 +69,6 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         ),
         default = 'SEPARATE'
     )
-    dynamic_naming: bpy.props.BoolProperty (
-        name = "Dynamic Naming",
-        description = "Enable Dynamic Object Naming for LOD and proxy objects",
-        default = True
-    )
     first_lod_only: bpy.props.BoolProperty (
         name = "First LOD Only",
         description = "Import only the first LOD found in the file",
@@ -119,7 +114,6 @@ class A3OB_PT_import_p3d_main(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
         
-        layout.prop(operator, "dynamic_naming")
         layout.prop(operator, "first_lod_only")
         layout.prop(operator, "validate_meshes")
 
