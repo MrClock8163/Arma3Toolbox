@@ -104,7 +104,7 @@ class A3OB_PT_outliner(bpy.types.Panel):
     
     @classmethod
     def poll(cls, context):
-        return True
+        return utils.get_addon_preferences().outliner == 'ENABLED'
     
     def draw_header(self, context):
         if not utils.get_addon_preferences().show_info_links:
@@ -177,13 +177,17 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     
-    bpy.app.handlers.depsgraph_update_post.append(depsgraph_update_post_handler)
+    if utils.get_addon_preferences().outliner == 'ENABLED':
+        bpy.app.handlers.depsgraph_update_post.append(depsgraph_update_post_handler)
     
     print("\t" + "UI: Outliner")
 
 
 def unregister():
-    bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update_post_handler)
+    try:
+        bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update_post_handler)
+    except:
+        pass
     
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

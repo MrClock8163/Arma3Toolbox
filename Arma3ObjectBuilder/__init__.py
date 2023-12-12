@@ -28,6 +28,15 @@ import winreg
 import bpy
 
 
+def outliner_enable_update(self, context):
+    if self.outliner == 'ENABLED' and ui.tool_outliner.depsgraph_update_post_handler not in bpy.app.handlers.depsgraph_update_post:
+        bpy.app.handlers.depsgraph_update_post.append(ui.tool_outliner.depsgraph_update_post_handler)
+        ui.tool_outliner.depsgraph_update_post_handler(context.scene, None)
+    elif self.outliner == 'DISABLED' and ui.tool_outliner.depsgraph_update_post_handler in bpy.app.handlers.depsgraph_update_post:
+        bpy.app.handlers.depsgraph_update_post.remove(ui.tool_outliner.depsgraph_update_post_handler)
+        context.scene.a3ob_outliner.clear()
+
+
 class A3OB_OT_find_a3_tools(bpy.types.Operator):
     """Find the Arma 3 Tools installation through the registry"""
     
@@ -90,6 +99,16 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         ),
         default = 'DARK'
     )
+    outliner: bpy.props.EnumProperty (
+        name = "Outliner",
+        description = "Enable or disable LOD object outliner panel",
+        items = (
+            ('ENABLED', "Enabled", ""),
+            ('DISABLED', "Disabled", "")
+        ),
+        default = 'ENABLED',
+        update = outliner_enable_update
+    )
     # Paths
     project_root: bpy.props.StringProperty (
         name = "Project Root",
@@ -132,6 +151,8 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
             box.prop(self, "preserve_faulty_output")
             row_theme = box.row(align=True)
             row_theme.prop(self, "icon_theme", expand=True)
+            row_outliner = box.row(align=True)
+            row_outliner.prop(self, "outliner", expand=True)
             
         elif self.tabs == 'PATHS':
             box.prop(self, "project_root", icon='DISK_DRIVE')

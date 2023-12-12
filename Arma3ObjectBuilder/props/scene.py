@@ -78,6 +78,12 @@ class A3OB_PG_outliner(bpy.types.PropertyGroup):
         name = "Selection Index",
         default = -1
     )
+
+    def clear(self):
+        self.lods.clear()
+        self.lods_index = -1
+        self.proxies.clear()
+        self.proxies_index = -1
     
 
 
