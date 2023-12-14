@@ -1,5 +1,42 @@
 # Changelog
 
+## [v2.0.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.0.0)
+
+**This update brings compatibility with the Blender 4 releases**
+
+### Added:
+- LOD object outliner
+- option to force lower case bone names during RTM export
+- option to force lower case file paths and selection names during P3D export
+- option to renumber components during P3D export
+- Copy Proxy operator
+- Copy Proxies operator
+- Transfer Proxies operator
+- 4 new proxies in the Common Proxies list
+- Vertex Flag Groups
+- Face Flag Groups
+
+### Changed:
+- updated internal operator calls to be compatible with the new Blender API
+- updated Live Mass Editing to be compatible with the new Blender API
+- named property operators now correctly operate on object displayed in the properties tab, instead of the active view-layer object
+- P3D import and export was completely overhauled
+  - file is now first read completely and kept in memory during the import process
+  - roughly average **40% decrease in import time**
+  - updated import-export logging
+  - edges of flat shaded faces are now only exported as sharp, if the entire LOD is flat shaded
+- RTM export was completely overhauled
+
+### Fixed:
+- RTM export would not delete faulty outputs and raise an exception due to in missing module import
+- P3D import would sometimes fail due to mismatching normals-loops counts (on topoologically defective models)
+- ASCIIZ strings and characters were mistakenly decoded as UTF-8 (with no practical consequnce)
+- P3D output would become potentially faulty if non-manifold edges were marked as sharp
+
+### Removed:
+- Dynamic Object Naming (from LOD and proxy objects)
+- Vertex Normals Flag LOD object property (use the new Vertex Flag Groups instead)
+
 ## [v1.0.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v1.0.0)
 
 ### Added:
