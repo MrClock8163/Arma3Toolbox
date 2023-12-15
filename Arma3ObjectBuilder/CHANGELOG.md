@@ -26,6 +26,7 @@
   - updated import-export logging
   - edges of flat shaded faces are now only exported as sharp, if the entire LOD is flat shaded
 - RTM export was completely overhauled
+- Validation tool now correctly considers modifiers
 
 ### Fixed:
 - RTM export would not delete faulty outputs and raise an exception due to in missing module import
