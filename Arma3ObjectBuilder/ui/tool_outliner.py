@@ -9,7 +9,8 @@ class A3OB_UL_outliner_lods(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         row = layout.row(align=True)
         row.alignment = 'EXPAND'
-        row.operator("a3ob.select_object", text="", icon='RESTRICT_SELECT_OFF', emboss=False).object_name = item.obj
+        op = row.operator("a3ob.select_object", text="", icon='RESTRICT_SELECT_OFF', emboss=False)
+        op.object_name = item.obj
         row.label(text=" %s" % item.name)
 
         row_counts = row.row(align=True)
@@ -30,7 +31,9 @@ class A3OB_UL_outliner_lods(bpy.types.UIList):
 class A3OB_UL_outliner_proxies(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         row = layout.row(align=True)
-        row.operator("a3ob.select_object", text="", icon='RESTRICT_SELECT_OFF', emboss=False).object_name = item.obj
+        op = row.operator("a3ob.select_object", text="", icon='RESTRICT_SELECT_OFF', emboss=False)
+        op.object_name = item.obj
+        op.identify_lod = False
         row.label(text=" %s" % item.name)
     
     def filter_items(self, context, data, propname):
@@ -54,6 +57,10 @@ class A3OB_OT_select_object(bpy.types.Operator):
     object_name: bpy.props.StringProperty (
         name = "Object Name"
     )
+    identify_lod: bpy.props.BoolProperty (
+        name = "Identify In Outliner",
+        default = True
+    )
     
     @classmethod
     def poll(cls, context):
@@ -69,7 +76,8 @@ class A3OB_OT_select_object(bpy.types.Operator):
                 try:
                     obj.select_set(True)
                     context.view_layer.objects.active = obj
-                    linerutils.identify_lod(context)
+                    if self.identify_lod:
+                        linerutils.identify_lod(context)
                 except:
                     pass
         
@@ -89,7 +97,6 @@ class A3OB_OT_indentify_lod(bpy.types.Operator):
     
     def execute(self, context):
         if context.active_object:
-            print("asd")
             linerutils.identify_lod(context)
 
         return {'FINISHED'}
@@ -112,7 +119,7 @@ class A3OB_PT_outliner(bpy.types.Panel):
             
         layout = self.layout
         row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/proxies"
+        row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/outliner"
     
     def draw(self, context):
         layout = self.layout
