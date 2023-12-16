@@ -192,8 +192,8 @@ def get_lod_data(operator, context):
         # Some corrections: https://mrcmodding.gitbook.io/home/documents/sections.
         if operator.sort_sections:
             sections = {0: []}
-            for slot in main_obj.material_slots:
-                sections[slot.slot_index] = []
+            for i, slot in enumerate(main_obj.material_slots):
+                sections[i] = []
 
             bm = bmesh.new()
             bm.from_mesh(main_obj.data)
