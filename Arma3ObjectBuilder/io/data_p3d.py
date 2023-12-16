@@ -24,7 +24,7 @@ class P3D_TAGG_DataEmpty():
         return 0
     
     def write(self, file):
-        binary.write_ulong(file, 0)
+        pass
 
 
 class P3D_TAGG_DataSharpEdges():
@@ -36,8 +36,7 @@ class P3D_TAGG_DataSharpEdges():
         output = cls()
         
         for i in range(length // 8):
-            point_1 = binary.read_ulong(file)
-            point_2 = binary.read_ulong(file)
+            point_1, point_2 = binary.read_ulongs(file, 2)
             
             if point_1 == point_2:
                 continue
@@ -50,13 +49,11 @@ class P3D_TAGG_DataSharpEdges():
         return len(self.edges) * 8
     
     def write(self, file):
-        binary.write_ulong(file, self.length())
         for edge in self.edges:
             if edge[0] == edge[1]:
                 continue
             
-            binary.write_ulong(file, edge[0])
-            binary.write_ulong(file, edge[1])
+            binary.write_ulongs(file, *edge)
 
 
 class P3D_TAGG_DataProperty():
@@ -77,7 +74,6 @@ class P3D_TAGG_DataProperty():
         return 128
     
     def write(self, file):
-        binary.write_ulong(file, self.length())
         file.write(struct.pack('<64s', self.key.encode('ASCII')))
         file.write(struct.pack('<64s', self.value.encode('ASCII')))
 
@@ -89,7 +85,7 @@ class P3D_TAGG_DataMass():
     @classmethod
     def read(cls, file, count_verts):
         output = cls()
-        output.masses = {i: value for i, value in enumerate(struct.unpack('<%df' % count_verts, file.read(count_verts * 4)))}
+        output.masses = {i: value for i, value in enumerate(binary.read_floats(file, count_verts))}
         
         return output
     
@@ -97,7 +93,6 @@ class P3D_TAGG_DataMass():
         return len(self.masses) * 4
     
     def write(self, file):
-        binary.write_ulong(file, self.length())
         for value in self.masses.values():
             binary.write_float(file, value)
 
@@ -112,20 +107,18 @@ class P3D_TAGG_DataUVSet():
         output = cls()
         count_values = (length - 4) // 4
         output.id = binary.read_ulong(file)
-        data = struct.unpack('<%df' % count_values, file.read(length - 4))
+        data = binary.read_floats(file, count_values)
         output.uvs = {i: (data[i * 2], 1 - data[i * 2 + 1]) for i in range(count_values // 2)}
 
         return output
     
     def length(self):
-        return len(self.uvs) * 8
+        return len(self.uvs) * 8 + 4
     
     def write(self, file):
-        binary.write_ulong(file, self.length() + 4)
         binary.write_ulong(file, self.id)
         for value in self.uvs.values():
-            binary.write_float(file, value[0])
-            binary.write_float(file, 1 - value[1])
+            binary.write_float(file, value[0], 1 - value[1])
 
 
 class P3D_TAGG_DataSelection():
@@ -180,9 +173,7 @@ class P3D_TAGG_DataSelection():
     def length(self):
         return self.count_verts + self.count_faces
     
-    def write(self, file):
-        binary.write_ulong(file, self.length())
-        
+    def write(self, file):        
         bytes_verts = bytearray(self.count_verts)
         for idx in self.weight_verts:
             bytes_verts[idx] = self.encode_weight(self.weight_verts[idx])
@@ -251,6 +242,7 @@ class P3D_TAGG():
             
         binary.write_bool(file, self.active)
         binary.write_asciiz(file, self.name)
+        binary.write_ulong(file, self.data.length())
         self.data.write(file)
     
     # Operations
@@ -328,7 +320,7 @@ class P3D_LOD():
         if signature != "P3DM":
             raise errors.P3DError("Unsupported LOD type: %s" % signature)
         
-        version = (binary.read_ulong(file), binary.read_ulong(file))
+        version = binary.read_ulongs(file, 2)
         if version != (0x1c, 0x100):
             raise errors.P3DError("Unsupported LOD version: %d.%d" % (version[0], version[1]))
 
@@ -336,11 +328,8 @@ class P3D_LOD():
         output.signature = signature
         output.version = version
         
-        count_verts = binary.read_ulong(file)
-        count_normals = binary.read_ulong(file)
-        count_faces = binary.read_ulong(file)
-        
-        output.flags = binary.read_ulong(file)
+        count_verts, count_normals, count_faces, flags = binary.read_ulongs(file, 4)
+        output.flags = flags
 
         output.read_verts(file, count_verts)
         output.read_normals(file, count_normals)
@@ -400,17 +389,13 @@ class P3D_LOD():
 
     def write(self, file):
         binary.write_chars(file, self.signature)
-        binary.write_ulong(file, self.version[0])
-        binary.write_ulong(file, self.version[1])
+        binary.write_ulong(file, *self.version)
         
         count_verts = len(self.verts)
         count_normals = len(self.normals)
         count_faces = len(self.faces)
         
-        binary.write_ulong(file, count_verts)
-        binary.write_ulong(file, count_normals)
-        binary.write_ulong(file, count_faces)
-        binary.write_ulong(file, self.flags)
+        binary.write_ulong(file, count_verts, count_normals, count_faces, self.flags)
 
         self.write_verts(file)
         self.write_normals(file)
@@ -651,9 +636,6 @@ class P3D_MLOD():
 
         if len(self.lods) == 0:
             dummy_lod = P3D_LOD()
-            dummy_lod.resolution = 0
-            dummy_lod.version = (28, 256)
-            dummy_lod.signature = "P3DM"
 
             binary.write_ulong(file, 1)
             dummy_lod.write(file)
