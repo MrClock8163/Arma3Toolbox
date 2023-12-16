@@ -247,9 +247,9 @@ class A3OB_OT_proxy_copy_all(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.active_object
-        selected = [item for item in context.selected_objects if item.type == 'MESH' and item.mode == 'OBJECT' and item != obj]
+        selected = [item for item in context.selected_objects if item.type == 'MESH' and item.mode == 'OBJECT' and item != obj and item.a3ob_properties_object.is_a3_lod]
         
-        return obj and obj.type == 'MESH' and obj.mode == 'OBJECT' and len(selected) == 1
+        return obj and obj.type == 'MESH' and obj.mode == 'OBJECT' and obj.a3ob_properties_object.is_a3_lod and len(selected) == 1
     
     def execute(self, context):
         target = context.active_object
@@ -299,9 +299,9 @@ class A3OB_OT_proxy_transfer(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.active_object
-        selected = [item for item in context.selected_objects if item.type == 'MESH' and item.mode == 'OBJECT' and item != obj]
+        selected = [item for item in context.selected_objects if item.type == 'MESH' and item.mode == 'OBJECT' and item != obj and item.a3ob_properties_object.is_a3_lod]
         
-        return obj and obj.type == 'MESH' and obj.mode == 'OBJECT' and len(selected) == 1
+        return obj and obj.type == 'MESH' and obj.mode == 'OBJECT' and obj.a3ob_properties_object.is_a3_lod and len(selected) == 1
     
     def execute(self, context):
         target = context.active_object
