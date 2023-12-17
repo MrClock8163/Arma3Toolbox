@@ -112,7 +112,7 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
     def draw_header(self, context):
         row = self.layout.row(align=True)
         if utils.get_addon_preferences().show_info_links:
-            row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/vertex-mass-editing"
+            row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/vertex-mass-editing"
         
     def draw(self, context):
         layout = self.layout

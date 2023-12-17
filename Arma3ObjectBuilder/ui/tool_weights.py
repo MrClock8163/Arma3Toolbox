@@ -240,7 +240,7 @@ class A3OB_PT_weights(bpy.types.Panel):
             
         layout = self.layout
         row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/weight-painting"
+        row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/weight-painting"
         
     def draw(self, context):
         scene_props = context.scene.a3ob_weights

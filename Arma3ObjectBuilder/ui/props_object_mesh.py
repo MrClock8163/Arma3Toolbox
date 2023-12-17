@@ -437,7 +437,7 @@ class A3OB_PT_object_mesh(bpy.types.Panel):
             
         layout = self.layout
         row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/lod"
+        row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/lod"
         
     def draw(self, context):
         obj = context.object
@@ -509,7 +509,7 @@ class A3OB_PT_object_mesh_flags(bpy.types.Panel):
             
         layout = self.layout
         row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/flag-groups"
+        row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/flag-groups"
 
     def draw(self, context):
         pass
@@ -623,7 +623,7 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
             
         layout = self.layout
         row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/proxy"
+        row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/proxy"
         
     def draw(self, context):
         obj = context.object
@@ -664,7 +664,7 @@ class A3OB_PT_object_dtm(bpy.types.Panel):
             
         layout = self.layout
         row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/raster-dtm"
+        row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/raster-dtm"
         
     def draw(self, context):
         obj = context.object

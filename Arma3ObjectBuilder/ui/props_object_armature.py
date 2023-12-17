@@ -96,7 +96,7 @@ class A3OB_PT_object_armature(bpy.types.Panel):
             
         layout = self.layout
         row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/rtm"
+        row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/rtm"
         
     def draw(self, context):
         obj = context.object

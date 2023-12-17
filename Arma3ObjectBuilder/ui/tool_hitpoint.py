@@ -38,7 +38,7 @@ class A3OB_PT_hitpoints(bpy.types.Panel):
             
         layout = self.layout
         row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/hit-point-cloud"
+        row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/hit-point-cloud"
         
     def draw(self, context):
         scene_props = context.scene.a3ob_hitpoint_generator
