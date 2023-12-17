@@ -98,6 +98,9 @@ def merge_into_lod(operator, main_object, sub_objects, proxy_objects):
     # a placeholder name must be used, and added to a lookup dictionary.
     proxy_lookup = {}
     for i, proxy in enumerate(proxy_objects):
+        for face in proxy.data.polygons:
+            face.use_smooth = False
+
         placeholder = "@proxy_%d" % i
         utils.create_selection(proxy, placeholder)
         proxy_lookup[placeholder] = proxy.a3ob_properties_object_proxy.to_placeholder()

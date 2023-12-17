@@ -53,7 +53,7 @@ class P3D_TAGG_DataSharpEdges():
             if edge[0] == edge[1]:
                 continue
             
-            binary.write_ulongs(file, *edge)
+            binary.write_ulong(file, *edge)
 
 
 class P3D_TAGG_DataProperty():
