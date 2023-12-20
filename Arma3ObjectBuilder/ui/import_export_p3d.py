@@ -45,6 +45,7 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         options = {'ENUM_FLAG'},
         items = (
             ('NORMALS', "Custom Normals", "WARNING: may not work properly on certain files"),
+            ('FLAGS', "Flags", "Vertex and face flags"),
             ('PROPS', "Named Properties", ""),
             ('MASS', "Vertex Mass", "Mass of individual vertices (in Geometry LODs)"),
             ('SELECTIONS', "Selections", ""),

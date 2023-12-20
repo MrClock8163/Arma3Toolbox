@@ -353,11 +353,12 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
     process_properties(obj, lod)
     logger.log("Added named properties")
 
-    process_flag_groups_vertex(obj, bm, lod)
-    logger.log("Assigned vertex flag groups")
+    if 'FLAGS' in operator.additional_data:
+        process_flag_groups_vertex(obj, bm, lod)
+        logger.log("Assigned vertex flag groups")
 
-    process_flag_groups_face(obj, bm, lod)
-    logger.log("Assigned face flag groups")
+        process_flag_groups_face(obj, bm, lod)
+        logger.log("Assigned face flag groups")
         
     for name in selection_names:
         obj.vertex_groups.new(name=name)
