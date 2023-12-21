@@ -176,7 +176,7 @@ def process_flag_groups_vertex(obj, bm, lod):
     
     for i, grp in enumerate(groups):
         new_group = obj.a3ob_properties_object_flags.vertex.add()
-        new_group.name = ("Group %d" % i if i > 0 else "Default")
+        new_group.name = ("Group %d" % i )
         new_group.set_flag(grp)
 
 
@@ -189,7 +189,7 @@ def process_flag_groups_face(obj, bm, lod):
     
     for i, grp in enumerate(groups):
         new_group = obj.a3ob_properties_object_flags.face.add()
-        new_group.name = ("Group %d" % i if i > 0 else "Default")
+        new_group.name = ("Group %d" % i)
         new_group.set_flag(grp)
 
 

@@ -205,20 +205,17 @@ class A3OB_OT_flags_vertex_remove(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and obj.a3ob_properties_object_flags.vertex_index > 0
+        return obj and obj.type == 'MESH' and obj.a3ob_properties_object_flags.vertex_index in range(len(obj.a3ob_properties_object_flags.vertex))
         
     def execute(self, context):
         obj = context.object
         flag_props = obj.a3ob_properties_object_flags
         index = flag_props.vertex_index
-        if index != -1:
-            flag_props.vertex.remove(index)
-            if len(flag_props.vertex) == 0:
-                flag_props.vertex_index = -1
-            elif index > len(flag_props.vertex) - 1:
-                flag_props.vertex_index = len(flag_props.vertex) - 1            
-        
-            flagutils.remove_group_vertex(obj, index)
+
+        flag_props.vertex.remove(index)
+        flag_props.vertex_index = len(flag_props.vertex) - 1            
+    
+        flagutils.remove_group_vertex(obj, index)
         
         return {'FINISHED'}
 
@@ -285,6 +282,25 @@ class A3OB_OT_flags_vertex_deselect(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class A3OB_OT_flags_vertex_clear(bpy.types.Operator):
+    """Clear all vertex flag groups from the active object"""
+    
+    bl_label = "Clear"
+    bl_idname = "a3ob.flags_vertex_clear"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        obj = context.object
+        return obj and obj.type == 'MESH' and len(obj.a3ob_properties_object_flags.vertex) > 0
+    
+    def execute(self, context):
+        obj = context.object
+        flagutils.clear_groups_vertex(obj)
+
+        return {'FINISHED'}
+
+
 class A3OB_OT_flags_face_add(bpy.types.Operator):
     """Add a new face flag group to the active object"""
     
@@ -317,20 +333,17 @@ class A3OB_OT_flags_face_remove(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and obj.a3ob_properties_object_flags.face_index > 0
+        return obj and obj.type == 'MESH' and obj.a3ob_properties_object_flags.face_index in range(len(obj.a3ob_properties_object_flags.face))
         
     def execute(self, context):
         obj = context.object
         flag_props = obj.a3ob_properties_object_flags
         index = flag_props.face_index
-        if index != -1:
-            flag_props.face.remove(index)
-            if len(flag_props.face) == 0:
-                flag_props.face_index = -1
-            elif index > len(flag_props.face) - 1:
-                flag_props.face_index = len(flag_props.face) - 1            
         
-            flagutils.remove_group_face(obj, index)
+        flag_props.face.remove(index)
+        flag_props.face_index = len(flag_props.face) - 1            
+        
+        flagutils.remove_group_face(obj, index)
         
         return {'FINISHED'}
 
@@ -394,6 +407,25 @@ class A3OB_OT_flags_face_deselect(bpy.types.Operator):
         flagutils.select_group_face(obj, flag_props.face_index, False)
         bpy.ops.mesh.select_mode(type='FACE')
         
+        return {'FINISHED'}
+
+
+class A3OB_OT_flags_face_clear(bpy.types.Operator):
+    """Clear all face flag groups from the active object"""
+    
+    bl_label = "Clear"
+    bl_idname = "a3ob.flags_face_clear"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        obj = context.object
+        return obj and obj.type == 'MESH' and len(obj.a3ob_properties_object_flags.face) > 0
+    
+    def execute(self, context):
+        obj = context.object
+        flagutils.clear_groups_face(obj)
+
         return {'FINISHED'}
 
 
@@ -559,6 +591,8 @@ class A3OB_PT_object_mesh_flags_vertex(bpy.types.Panel):
         col_operators = row.column(align=True)
         col_operators.operator("a3ob.flags_vertex_add", text="", icon='ADD')
         col_operators.operator("a3ob.flags_vertex_remove", text="", icon='REMOVE')
+        col_operators.separator()
+        col_operators.operator("a3ob.flags_vertex_clear", text="", icon='TRASH')
 
 
 class A3OB_PT_object_mesh_flags_face(bpy.types.Panel):
@@ -603,6 +637,8 @@ class A3OB_PT_object_mesh_flags_face(bpy.types.Panel):
         col_operators = row.column(align=True)
         col_operators.operator("a3ob.flags_face_add", text="", icon='ADD')
         col_operators.operator("a3ob.flags_face_remove", text="", icon='REMOVE')
+        col_operators.separator()
+        col_operators.operator("a3ob.flags_face_clear", text="", icon='TRASH')
 
 
 class A3OB_PT_object_proxy(bpy.types.Panel):
@@ -705,11 +741,13 @@ classes = (
     A3OB_OT_flags_vertex_assign,
     A3OB_OT_flags_vertex_select,
     A3OB_OT_flags_vertex_deselect,
+    A3OB_OT_flags_vertex_clear,
     A3OB_OT_flags_face_add,
     A3OB_OT_flags_face_remove,
     A3OB_OT_flags_face_assign,
     A3OB_OT_flags_face_select,
     A3OB_OT_flags_face_deselect,
+    A3OB_OT_flags_face_clear,
     A3OB_UL_namedprops,
     A3OB_UL_common_proxies,
     A3OB_UL_flags_vertex,

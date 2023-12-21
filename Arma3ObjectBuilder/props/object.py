@@ -9,36 +9,6 @@ from ..utilities import flags as flagutils
 from ..utilities import data
 
 
-def create_default_flag_groups(self, context):
-    obj = self.id_data
-    flag_props = obj.a3ob_properties_object_flags
-    
-    if len(flag_props.vertex) < 1:
-        new_group = flag_props.vertex.add()
-        new_group.name = "Default"
-        new_group.normals = 'FIXED'
-        flag_props.vertex_index = 0
-    
-    if len(flag_props.face) < 1:
-        new_group = flag_props.face.add()
-        new_group.name = "Default"
-        flag_props.face_index = 0
-
-
-def lod_props_update(self, context):
-    if not self.is_a3_lod:
-        return
-    
-    # create_default_flag_groups(self, context)
-
-
-def proxy_props_update(self, context):
-    if not self.is_a3_proxy:
-        return
-    
-    # create_default_flag_groups(self, context)
-
-
 class A3OB_PG_properties_named_property(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty (
         name = "Name",
@@ -172,15 +142,13 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
     is_a3_lod: bpy.props.BoolProperty (
         name = "Arma 3 LOD",
         description = "This object is a LOD for an Arma 3 P3D",
-        default = False,
-        update = lod_props_update
+        default = False
     )
     lod: bpy.props.EnumProperty (
         name = "LOD Type",
         description = "Type of LOD",
         items = data.enum_lod_types,
-        default = '0',
-        update = lod_props_update
+        default = '0'
     )
     resolution: bpy.props.IntProperty (
         name = "Resolution/Index",
@@ -188,8 +156,7 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
         default = 1,
         min = 0,
         soft_max = 1000,
-        step = 1,
-        update = lod_props_update
+        step = 1
     )
     properties: bpy.props.CollectionProperty (
         name = "Named Properties",
@@ -236,23 +203,20 @@ class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
     is_a3_proxy: bpy.props.BoolProperty (
         name = "Arma 3 Model Proxy",
         description = "This object is a proxy (cannot change manually)",
-        default = False,
-        update = proxy_props_update
+        default = False
     )
     proxy_path: bpy.props.StringProperty (
         name = "Path",
         description = "File path to the proxy model",
         default = "",
-        subtype = 'FILE_PATH',
-        update = proxy_props_update
+        subtype = 'FILE_PATH'
     )
     proxy_index: bpy.props.IntProperty (
         name = "Index",
         description = "Index of proxy",
         default = 1,
         min = 0,
-        max = 999,
-        update = proxy_props_update
+        max = 999
     )
     
     def to_placeholder(self):
