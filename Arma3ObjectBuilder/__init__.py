@@ -277,14 +277,25 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
     )
     flag_vertex: bpy.props.IntProperty (
         name = "Vertex Flag",
-        description = "Default vertex flag",
-        default = 0x02000000,
-        options = {'HIDDEN'}
+        description = "",
+        default = 0x02000000
     )
     flag_face: bpy.props.IntProperty (
         name = "Face Flag",
-        description = "Default face flag",
+        description = "",
         default = 0
+    )
+    flag_vertex_display: bpy.props.StringProperty (
+        name = "Vertex Flag",
+        description = "Default vertex flag",
+        default = "02000000",
+        get = lambda self: "%08x" % self.flag_vertex
+    )
+    flag_face_display: bpy.props.StringProperty (
+        name = "Face Flag",
+        description = "Default face flag",
+        default = "00000000",
+        get = lambda self: "%08x" % self.flag_face
     )
     
     def draw(self,context):
@@ -315,16 +326,12 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
             box.prop(self, "custom_data", icon='PRESET')
         
         elif self.tabs == 'DEFAULTS':
-            col_flags = box.column(heading="Flags")
-            
-            row_vertex = col_flags.row(align=True)
-            row_vertex.label(text="Vertex Flag")
-            row_vertex.label(text="%08x" % self.flag_vertex)
+            row_vertex = box.row(align=True)
+            row_vertex.prop(self, "flag_vertex_display")
             row_vertex.operator("a3ob.prefs_edit_flag_vertex", text="", icon='GREASEPENCIL')
-            
-            row_face = col_flags.row(align=True)
-            row_face.label(text="Face Flag")
-            row_face.label(text="%08x" % self.flag_face)
+
+            row_face = box.row(align=True)
+            row_face.prop(self, "flag_face_display")
             row_face.operator("a3ob.prefs_edit_flag_face", text="", icon='GREASEPENCIL')
 
 
