@@ -224,12 +224,6 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         )
     )
     # General
-    a3_tools: bpy.props.StringProperty (
-        name = "Arma 3 Tools",
-        description = "Install directory of the official Arma 3 Tools",
-        default = "",
-        subtype = 'DIR_PATH'
-    )
     show_info_links: bpy.props.BoolProperty (
         name = "Show Help Links",
         description = "Display links to the addon documentation in the headers of panels",
@@ -260,6 +254,12 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         update = outliner_enable_update
     )
     # Paths
+    a3_tools: bpy.props.StringProperty (
+        name = "Arma 3 Tools",
+        description = "Install directory of the official Arma 3 Tools",
+        default = "",
+        subtype = 'DIR_PATH'
+    )
     project_root: bpy.props.StringProperty (
         name = "Project Root",
         description = "Root directory of the project (should be P:\ for most cases)",
@@ -282,6 +282,7 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         default = "",
         subtype = 'FILE_PATH'
     )
+    # Defaults
     flag_vertex: bpy.props.IntProperty (
         name = "Vertex Flag",
         description = "",
@@ -305,20 +306,17 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         get = lambda self: "%08x" % self.flag_face
     )
     
-    def draw(self,context):
+    def draw(self, context):
         layout = self.layout
         
         col = layout.column(align=True)
         row = col.row(align=True)
-        row.prop(self,"tabs",expand=True)
+        row.prop(self,"tabs", expand=True)
         box = col.box()
         box.use_property_split = True
         box.use_property_decorate = False
         
         if self.tabs == 'GENERAL':
-            row_a3_tools = box.row(align=True)
-            row_a3_tools.prop(self, "a3_tools", icon='TOOL_SETTINGS')
-            row_a3_tools.operator("a3ob.prefs_find_a3_tools", text="", icon='VIEWZOOM')
             box.prop(self, "show_info_links")
             box.prop(self, "preserve_faulty_output")
             row_theme = box.row(align=True)
@@ -327,6 +325,9 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
             row_outliner.prop(self, "outliner", expand=True)
             
         elif self.tabs == 'PATHS':
+            row_a3_tools = box.row(align=True)
+            row_a3_tools.prop(self, "a3_tools", icon='TOOL_SETTINGS')
+            row_a3_tools.operator("a3ob.prefs_find_a3_tools", text="", icon='VIEWZOOM')
             box.prop(self, "project_root", icon='DISK_DRIVE')
             box.prop(self, "export_relative")
             box.prop(self, "import_absolute")
