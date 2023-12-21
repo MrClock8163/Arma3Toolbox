@@ -185,6 +185,13 @@ class A3OB_OT_prefs_edit_flag_face(bpy.types.Operator):
         description = "",
         default = True # True: 0x00000000 False: 0x01000000
     )
+    user: bpy.props.IntProperty (
+        name = "User Value",
+        description = "",
+        default = 0,
+        min = 0,
+        max = 127
+    )
 
     @classmethod
     def poll(cls, context):

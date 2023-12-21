@@ -633,6 +633,7 @@ class A3OB_PT_object_mesh_flags_face(bpy.types.Panel):
             layout.prop(prop, "zbias")
             layout.prop(prop, "shadow")
             layout.prop(prop, "merging")
+            layout.prop(prop, "user")
             
         col_operators = row.column(align=True)
         col_operators.operator("a3ob.flags_face_add", text="", icon='ADD')

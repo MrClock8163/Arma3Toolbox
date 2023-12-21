@@ -61,6 +61,7 @@ flags_face_zbias = {
 
 flag_face_noshadow = 0x00000010
 flag_face_merging = 0x01000000
+flag_face_user_mask = 0xfe000000
 
 
 lod_resolution_position = { # decimal places in normalized format

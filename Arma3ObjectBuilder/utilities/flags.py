@@ -60,6 +60,8 @@ def get_flag_face(props):
         
         if not props.merging:
             flag += data.flag_face_merging
+
+        flag += (props.user << 25)
         
         return flag
 
@@ -92,6 +94,8 @@ def set_flag_vertex(props, value):
         
         if value & data.flag_vertex_hidden:
             props.hidden = True
+        
+        props.user = (value & data.flag_face_user_mask) >> 25
 
 
 def set_flag_face(props, value):

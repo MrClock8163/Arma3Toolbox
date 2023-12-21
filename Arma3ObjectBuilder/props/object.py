@@ -130,6 +130,13 @@ class A3OB_PG_properties_flag_face(bpy.types.PropertyGroup):
         description = "",
         default = True # True: 0x00000000 False: 0x01000000
     )
+    user: bpy.props.IntProperty (
+        name = "User Value",
+        description = "",
+        default = 0,
+        min = 0,
+        max = 127
+    )
     
     def get_flag(self):
         return flagutils.get_flag_face(self)
