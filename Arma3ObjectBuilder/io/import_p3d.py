@@ -196,7 +196,7 @@ def process_flag_groups_face(obj, bm, lod):
 # Align the object coordinate system with the proxy coordinates.
 # https://mrcmodding.gitbook.io/home/documents/proxy-coordinates
 def transform_proxy(obj):
-    if len(obj.vertices) < 3:
+    if len(obj.data.vertices) < 3:
         return
     
     rotation_matrix = proxyutils.get_transform_rotation(obj)
