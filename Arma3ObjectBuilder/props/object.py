@@ -5,6 +5,7 @@ import bpy
 from ..utilities import generic as utils
 from ..utilities import masses as massutils
 from ..utilities import lod as lodutils
+from ..utilities import flags as flagutils
 from ..utilities import data
 
 
@@ -28,14 +29,14 @@ def lod_props_update(self, context):
     if not self.is_a3_lod:
         return
     
-    create_default_flag_groups(self, context)
+    # create_default_flag_groups(self, context)
 
 
 def proxy_props_update(self, context):
     if not self.is_a3_proxy:
         return
     
-    create_default_flag_groups(self, context)
+    # create_default_flag_groups(self, context)
 
 
 class A3OB_PG_properties_named_property(bpy.types.PropertyGroup):
@@ -114,47 +115,11 @@ class A3OB_PG_properties_flag_vertex(bpy.types.PropertyGroup):
         default = False # True: 0x00000000 False: 0x01000000
     )
     
-    def get_flag(self):
-        flag = 0
-        flag += data.flags_vertex_surface[self.surface]
-        flag += data.flags_vertex_fog[self.fog]
-        flag += data.flags_vertex_decal[self.decal]
-        flag += data.flags_vertex_lighting[self.lighting]
-        flag += data.flags_vertex_normals[self.normals]
-        
-        if self.hidden:
-            flag += data.flag_vertex_hidden
-        
-        return flag
+    def get_flag(self):        
+        return flagutils.get_flag_vertex(self)
     
-    def set_flag(self, value):        
-        for name in data.flags_vertex_surface:
-            if value & data.flags_vertex_surface[name]:
-                self.surface = name
-                break
-                
-        for name in data.flags_vertex_fog:
-            if value & data.flags_vertex_fog[name]:
-                self.fog = name
-                break
-                
-        for name in data.flags_vertex_lighting:
-            if value & data.flags_vertex_lighting[name]:
-                self.lighting = name
-                break
-                
-        for name in data.flags_vertex_decal:
-            if value & data.flags_vertex_decal[name]:
-                self.decal = name
-                break
-                
-        for name in data.flags_vertex_normals:
-            if value & data.flags_vertex_normals[name]:
-                self.normals = name
-                break
-        
-        if value & data.flag_vertex_hidden:
-            self.hidden = True
+    def set_flag(self, value):
+        flagutils.set_flag_vertex(self, value)
 
 
 class A3OB_PG_properties_flag_face(bpy.types.PropertyGroup):
@@ -197,34 +162,10 @@ class A3OB_PG_properties_flag_face(bpy.types.PropertyGroup):
     )
     
     def get_flag(self):
-        flag = 0
-        flag += data.flags_face_lighting[self.lighting]
-        flag += data.flags_face_zbias[self.zbias]
-        
-        if not self.shadow:
-            flag += data.flag_face_noshadow
-        
-        if not self.merging:
-            flag += data.flag_face_merging
-        
-        return flag
+        return flagutils.get_flag_face(self)
 
     def set_flag(self, value):
-        for name in data.flags_face_lighting:
-            if value & data.flags_face_lighting[name]:
-                self.lighting = name
-                break
-
-        for name in data.flags_face_zbias:
-            if value & data.flags_face_zbias[name]:
-                self.zbias = name
-                break
-        
-        if value & data.flag_face_noshadow:
-            self.shadow = False
-        
-        if value & data.flag_face_merging:
-            self.merging = False
+        flagutils.set_flag_face(self, value)
 
 
 class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):

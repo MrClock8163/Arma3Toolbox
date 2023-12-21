@@ -65,11 +65,16 @@ def bake_flags_vertex(obj):
     bm.from_mesh(obj.data)
     bm.verts.ensure_lookup_table()
 
+    default_flag = utils.get_addon_preferences().flag_vertex
+
     layer = flagutils.get_layer_flags_vertex(bm)
-    if layer:
-        flags_vertex = {i: item.get_flag() for i, item in enumerate(obj.a3ob_properties_object_flags.vertex)}
+    flags_vertex = {i: item.get_flag() for i, item in enumerate(obj.a3ob_properties_object_flags.vertex)}
+    if len(flags_vertex) > 0:
         for vert in bm.verts:
-            vert[layer] = flags_vertex.get(vert[layer], 0)
+            vert[layer] = flags_vertex.get(vert[layer], default_flag)
+    else:
+        for vert in bm.verts:
+            vert[layer] = default_flag
     
     bm.to_mesh(obj.data)
     bm.free()
@@ -80,11 +85,16 @@ def bake_flags_face(obj):
     bm.from_mesh(obj.data)
     bm.faces.ensure_lookup_table()
 
+    default_flag = utils.get_addon_preferences().flag_face
+
     layer = flagutils.get_layer_flags_face(bm)
-    if layer:
-        flags_face = {i: item.get_flag() for i, item in enumerate(obj.a3ob_properties_object_flags.face)}
+    flags_face = {i: item.get_flag() for i, item in enumerate(obj.a3ob_properties_object_flags.face)}
+    if len(flags_face) > 0:
         for face in bm.faces:
-            face[layer] = flags_face.get(face[layer], 0)
+            face[layer] = flags_face.get(face[layer], default_flag)
+    else:
+        for face in bm.faces:
+            face[layer] = default_flag
     
     bm.to_mesh(obj.data)
     bm.free()
