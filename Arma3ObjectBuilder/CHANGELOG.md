@@ -22,11 +22,12 @@
 - named property operators now correctly operate on object displayed in the properties tab, instead of the active view-layer object
 - P3D import and export was completely overhauled
   - file is now first read completely and kept in memory during the import process
-  - roughly average **40% decrease in import time**
+  - import speed increase
   - updated import-export logging
   - edges of flat shaded faces are now only exported as sharp, if the entire LOD is flat shaded
 - RTM export was completely overhauled
 - Validation tool now correctly considers modifiers
+- Arma 3 Tools path was moved to the path settings category
 
 ### Fixed:
 - RTM export would not delete faulty outputs and raise an exception due to in missing module import
