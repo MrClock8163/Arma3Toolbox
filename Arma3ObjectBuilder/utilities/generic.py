@@ -151,46 +151,22 @@ def format_path(path, root = "", to_relative = True, extension = True):
     return path
 
 
-def get_common_proxies():
+def get_common(name):
     prefs = get_addon_preferences()
     custom_path = abspath(prefs.custom_data)
-    proxies = data.common_proxies
-    
-    if not os.path.exists(custom_path):
-        return proxies
-    
-    custom_proxies = {}
-    
-    try:
-        jsonfile = open(custom_path)
-        customs = json.loads(jsonfile.read().replace("\\", "/"))
-        jsonfile.close()
-        custom_proxies = customs["proxies"]
-    except:
-        pass
-        
-    return {**proxies, **custom_proxies}
+    builtin = data.common_data[name]
 
-
-def get_common_namedprops():
-    prefs = get_addon_preferences()
-    custom_path = abspath(prefs.custom_data)
-    namedprops = data.common_namedprops
-    
     if not os.path.exists(custom_path):
-        return namedprops
+        return builtin, {}
     
-    custom_namedprops = {}
-    
+    custom = {}
     try:
-        jsonfile = open(custom_path)
-        customs = json.loads(jsonfile.read().replace("\\", "/"))
-        jsonfile.close()
-        custom_namedprops = customs["namedprops"]
+        with open(custom_path) as file:
+            custom = json.load(file)[name]
     except:
-        pass
-        
-    return {**namedprops, **custom_namedprops}
+        return builtin, None
+
+    return builtin, custom
 
 
 preview_collection = {}

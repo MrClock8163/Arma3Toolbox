@@ -235,28 +235,28 @@ enum_lod_types = (
 )
 
 
-common_namedprops = {
-    "autocenter": "0",
-    "buoyancy": "1",
-    "class": "building",
-    "class": "house",
-    "forcenotalpha": "1",
-    "lodnoshadow": "1",
-    "map": "building",
-    "map": "hide",
-    "map": "house",
-    "prefershadowvolume": "1"
-}
-
-
-common_proxies = {
-    "Weapon: optic": r"P:\a3\data_f\proxies\weapon_slots\top.p3d",
-    "Weapon: pointer": r"P:\a3\data_f\proxies\weapon_slots\side.p3d",
-    "Weapon: suppressor": r"P:\a3\data_f\proxies\weapon_slots\muzzle.p3d",
-    "Weapon: magazine": r"P:\a3\data_f\proxies\weapon_slots\magazineslot.p3d",
-    "Weapon: bipod": r"P:\a3\data_f_mark\proxies\weapon_slots\underbarrel.p3d",
-    "Driver: offroad": r"P:\a3\data_f\proxies\passenger_low01\cargo01.p3d",
-    "Gunner: hunter": r"P:\a3\data_f\proxies\gunner_hunter\gunner.p3d",
-    "Commander: hunter": r"P:\a3\data_f\proxies\gunner_hunter\commander.p3d",
-    "Light volume: car": r"P:\a3\data_f\volumelightcar.p3d"
+common_data = {
+    "proxies": {
+        "Weapon: optic": r"P:\a3\data_f\proxies\weapon_slots\top.p3d",
+        "Weapon: pointer": r"P:\a3\data_f\proxies\weapon_slots\side.p3d",
+        "Weapon: suppressor": r"P:\a3\data_f\proxies\weapon_slots\muzzle.p3d",
+        "Weapon: magazine": r"P:\a3\data_f\proxies\weapon_slots\magazineslot.p3d",
+        "Weapon: bipod": r"P:\a3\data_f_mark\proxies\weapon_slots\underbarrel.p3d",
+        "Driver: offroad": r"P:\a3\data_f\proxies\passenger_low01\cargo01.p3d",
+        "Gunner: hunter": r"P:\a3\data_f\proxies\gunner_hunter\gunner.p3d",
+        "Commander: hunter": r"P:\a3\data_f\proxies\gunner_hunter\commander.p3d",
+        "Light volume: car": r"P:\a3\data_f\volumelightcar.p3d"
+    },
+    "namedprops": {
+        "autocenter": "0",
+        "buoyancy": "1",
+        "class": "building",
+        "class": "house",
+        "forcenotalpha": "1",
+        "lodnoshadow": "1",
+        "map": "building",
+        "map": "hide",
+        "map": "house",
+        "prefershadowvolume": "1"
+    }
 }

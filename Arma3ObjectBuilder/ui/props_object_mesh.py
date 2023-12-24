@@ -45,11 +45,16 @@ class A3OB_OT_proxy_common(bpy.types.Operator):
         scene = context.scene
         scene.a3ob_proxy_common.clear()
         
-        common_proxies = utils.get_common_proxies()
-        for proxy in common_proxies:
+        proxies, custom = utils.get_common("proxies")
+        if custom is None:
+            self.report({'ERROR'}, "Custom data JSON could not be loaded")
+        else:
+            proxies.update(custom)
+
+        for proxy in proxies:
             item = scene.a3ob_proxy_common.add()
             item.name = proxy
-            item.path = utils.replace_slashes(common_proxies[proxy])
+            item.path = utils.replace_slashes(proxies[proxy])
         
         scene.a3ob_proxy_common_index = 0
         
@@ -143,11 +148,16 @@ class A3OB_OT_namedprops_common(bpy.types.Operator):
         scene = context.scene
         scene.a3ob_namedprops_common.clear()
         
-        common_namedprops = utils.get_common_namedprops()
-        for prop in common_namedprops:
+        namedprops, custom = utils.get_common("namedprops")
+        if custom is None:
+            self.report({'ERROR'}, "Custom data JSON could not be loaded")
+        else:
+            namedprops.update(custom)
+
+        for prop in namedprops:
             item = scene.a3ob_namedprops_common.add()
             item.name = prop
-            item.value = common_namedprops[prop]
+            item.value = namedprops[prop]
         
         scene.a3ob_namedprops_common_index = 0
         
