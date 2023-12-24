@@ -15,6 +15,7 @@
 - 4 new proxies in the Common Proxies list
 - Vertex Flag Groups
 - Face Flag Groups
+- function to add material path from list of common materials (supported in the custom data JSON)
 
 ### Changed:
 - updated internal operator calls to be compatible with the new Blender API
@@ -28,6 +29,7 @@
 - RTM export was completely overhauled
 - Validation tool now correctly considers modifiers
 - Arma 3 Tools path was moved to the path settings category
+- Vertex Mass Editing now operates on the context object (object shown in the properties panel) instead of the active object
 
 ### Fixed:
 - RTM export would not delete faulty outputs and raise an exception due to in missing module import
