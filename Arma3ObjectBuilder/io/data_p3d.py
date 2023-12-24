@@ -251,7 +251,7 @@ class P3D_TAGG():
         if not self.name.startswith("proxy:"):
             return False
         
-        regex_proxy = "proxy:.*\.\d{3}"
+        regex_proxy = "proxy:.*\.\d+"
         return re.match(regex_proxy, self.name)
     
     def is_selection(self):
@@ -493,7 +493,7 @@ class P3D_LOD():
     # they have to be replaced by formatted placeholders and later looked up
     # from a dictionary when needed.
     def proxies_to_placeholders(self):
-        regex_proxy = "proxy:(.*)\.(\d{3})"
+        regex_proxy = "proxy:(.*)\.(\d+)"
 
         lookup = {}
 
