@@ -16,7 +16,7 @@ class A3OB_OT_vertex_mass_set(bpy.types.Operator):
         return massutils.can_edit_mass(context) and context.scene.a3ob_mass_editor.source == 'MASS'
         
     def execute(self, context):
-        obj = context.active_object
+        obj = context.object
         scene = context.scene
         massutils.set_selection_mass_each(obj, scene.a3ob_mass_editor.mass)
         return {'FINISHED'}
@@ -34,7 +34,7 @@ class A3OB_OT_vertex_mass_distribute(bpy.types.Operator):
         return massutils.can_edit_mass(context) and context.scene.a3ob_mass_editor.source == 'MASS'
         
     def execute(self, context):
-        obj = context.active_object
+        obj = context.object
         scene = context.scene
         massutils.set_selection_mass_distribute(obj, scene.a3ob_mass_editor.mass)
         return {'FINISHED'}
@@ -52,7 +52,7 @@ class A3OB_OT_vertex_mass_set_density(bpy.types.Operator):
         return massutils.can_edit_mass(context) and context.scene.a3ob_mass_editor.source == 'DENSITY'
         
     def execute(self, context):
-        obj = context.active_object
+        obj = context.object
         scene = context.scene
         contiguous = massutils.set_selection_mass_density(obj, scene.a3ob_mass_editor.density)
         if not contiguous:
@@ -73,7 +73,7 @@ class A3OB_OT_vertex_mass_clear(bpy.types.Operator):
         return massutils.can_edit_mass(context)
         
     def execute(self, context):
-        obj = context.active_object
+        obj = context.object
         massutils.clear_selection_masses(obj)
         return {'FINISHED'}
 
@@ -90,7 +90,7 @@ class A3OB_OT_vertex_mass_visualize(bpy.types.Operator):
         return massutils.can_edit_mass(context)
     
     def execute(self, context):
-        obj = context.active_object
+        obj = context.object
         scene_props = context.scene.a3ob_mass_editor
         
         massutils.visualize_mass(obj, scene_props)
@@ -118,7 +118,7 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
         layout = self.layout
         
         scene_props = context.scene.a3ob_mass_editor
-        obj = context.active_object
+        obj = context.object
         
         layout.prop(scene_props, "enabled", text="Live Editing", toggle=True)
         row_dynamic = layout.row(align=True)

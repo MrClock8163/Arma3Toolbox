@@ -14,8 +14,8 @@ from . import lod as lodutils
 
 
 def can_edit_mass(context):
-    obj = context.active_object
-    return len(context.selected_objects) == 1 and obj and obj.type == 'MESH' and obj.mode == 'EDIT' 
+    obj = context.object
+    return obj and obj.type == 'MESH' and obj.mode == 'EDIT'
 
 
 # Query the sum of the vertex mass of selected vertices.
