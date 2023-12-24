@@ -4,7 +4,6 @@
 
 import re
 
-import bpy
 import mathutils
 
 from . import data_rtm as rtm

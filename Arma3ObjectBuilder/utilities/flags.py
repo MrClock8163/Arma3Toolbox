@@ -1,4 +1,6 @@
-import bpy
+# Helper functions to handle vertex and face flag values.
+
+
 import bmesh
 
 from . import data

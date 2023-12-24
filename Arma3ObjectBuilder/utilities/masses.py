@@ -4,8 +4,6 @@
 import numpy as np
 import math
 
-import bpy
-import bpy_extras.mesh_utils as meshutils
 import bmesh
 from mathutils import Vector
 

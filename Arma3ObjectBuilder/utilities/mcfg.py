@@ -5,10 +5,8 @@ import os
 import tempfile
 import subprocess
 
-import bpy
 import bmesh
 
-from . import generic as utils
 from ..io import import_rap as rap
 
 

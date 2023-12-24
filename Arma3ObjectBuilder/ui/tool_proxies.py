@@ -6,7 +6,6 @@ import bpy
 import mathutils
 
 from ..utilities import generic as utils
-from ..utilities import proxy as proxyutils
 from ..utilities import lod as lodutils
 from ..utilities import compat as computils
 from ..io import import_p3d

@@ -2,8 +2,6 @@
 # and proxy creation.
 
 
-import math
-
 import bpy
 import mathutils
 

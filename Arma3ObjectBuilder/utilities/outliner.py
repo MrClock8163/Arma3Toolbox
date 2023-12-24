@@ -1,6 +1,5 @@
-import os
+# Backend functions for the LOD object outliner panel.
 
-import bpy
 
 from ..utilities import generic as utils
 from ..utilities import lod as lodutils

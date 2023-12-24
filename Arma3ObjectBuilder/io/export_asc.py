@@ -5,8 +5,6 @@
 
 import math
 
-import bpy
-
 from ..utilities.logger import ProcessLogger
 
 
