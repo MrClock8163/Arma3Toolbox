@@ -65,10 +65,10 @@ class A3OB_OT_proxy_common(bpy.types.Operator):
         layout = self.layout
         layout.template_list("A3OB_UL_common_proxies", "A3OB_proxies_common", scene, "a3ob_proxy_common", scene, "a3ob_proxy_common_index")
         
-        selectionIndex = scene.a3ob_proxy_common_index
-        if selectionIndex in range(len(scene.a3ob_proxy_common)):
+        selection_index = scene.a3ob_proxy_common_index
+        if selection_index in range(len(scene.a3ob_proxy_common)):
             row = layout.row()
-            item = scene.a3ob_proxy_common[selectionIndex]
+            item = scene.a3ob_proxy_common[selection_index]
             row.prop(item, "path", text="")
             row.enabled = False
     

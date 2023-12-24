@@ -84,20 +84,6 @@ class A3OB_PG_outliner(bpy.types.PropertyGroup):
         self.lods_index = -1
         self.proxies.clear()
         self.proxies_index = -1
-    
-
-
-class A3OB_PG_common_proxy(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty (
-        name = "Name",
-        description = "Descriptive name of the common proxy",
-        default = ""
-    )
-    path: bpy.props.StringProperty (
-        name = "Path",
-        description = "File path of the proxy model",
-        default = ""
-    )
 
 
 class A3OB_PG_lod_object(bpy.types.PropertyGroup):
@@ -122,6 +108,33 @@ class A3OB_PG_proxies(bpy.types.PropertyGroup):
     lod_objects_index: bpy.props.IntProperty (
         name = "Selection Index",
         default = -1
+    )
+    
+
+
+class A3OB_PG_common_proxy(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty (
+        name = "Name",
+        description = "Descriptive name of the common proxy",
+        default = ""
+    )
+    path: bpy.props.StringProperty (
+        name = "Path",
+        description = "File path of the proxy model",
+        default = ""
+    )
+
+
+class A3OB_PG_common_material(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty (
+        name = "Name",
+        description = "Descriptive name of the common material",
+        default = ""
+    )
+    path: bpy.props.StringProperty (
+        name = "Path",
+        description = "File path of the material",
+        default = ""
     )
 
 
@@ -656,9 +669,10 @@ classes = (
     A3OB_PG_outliner_proxy,
     A3OB_PG_outliner_lod,
     A3OB_PG_outliner,
-    A3OB_PG_common_proxy,
     A3OB_PG_lod_object,
     A3OB_PG_proxies,
+    A3OB_PG_common_proxy,
+    A3OB_PG_common_material,
     A3OB_PG_mass_editor_stats,
     A3OB_PG_mass_editor,
     A3OB_PG_hitpoint_generator,
@@ -682,6 +696,8 @@ def register():
     bpy.types.Scene.a3ob_proxies = bpy.props.PointerProperty(type=A3OB_PG_proxies)
     bpy.types.Scene.a3ob_proxy_common = bpy.props.CollectionProperty(type=A3OB_PG_common_proxy)
     bpy.types.Scene.a3ob_proxy_common_index = bpy.props.IntProperty(name="Selection Index", default = -1)
+    bpy.types.Scene.a3ob_materials_common = bpy.props.CollectionProperty(type=A3OB_PG_common_material)
+    bpy.types.Scene.a3ob_materials_common_index = bpy.props.IntProperty(name="Selection Index", default = -1)
     bpy.types.Scene.a3ob_namedprops_common = bpy.props.CollectionProperty(type=objectprops.A3OB_PG_properties_named_property)
     bpy.types.Scene.a3ob_namedprops_common_index = bpy.props.IntProperty(name="Selection Index", default = -1)
     bpy.types.Scene.a3ob_mass_editor = bpy.props.PointerProperty(type=A3OB_PG_mass_editor)
@@ -707,6 +723,8 @@ def unregister():
     del bpy.types.Scene.a3ob_mass_editor
     del bpy.types.Scene.a3ob_namedprops_common_index
     del bpy.types.Scene.a3ob_namedprops_common
+    del bpy.types.Scene.a3ob_materials_common_index
+    del bpy.types.Scene.a3ob_materials_common
     del bpy.types.Scene.a3ob_proxy_common_index
     del bpy.types.Scene.a3ob_proxy_common
     del bpy.types.Scene.a3ob_proxies

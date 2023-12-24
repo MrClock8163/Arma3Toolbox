@@ -159,14 +159,17 @@ def get_common(name):
     if not os.path.exists(custom_path):
         return builtin, {}
     
-    custom = {}
+    json_data = {}
     try:
         with open(custom_path) as file:
-            custom = json.load(file)[name]
+            json_data = json.load(file)
     except:
         return builtin, None
 
-    return builtin, custom
+    if name not in json_data:
+        return builtin, {}
+
+    return builtin, json_data[name]
 
 
 preview_collection = {}

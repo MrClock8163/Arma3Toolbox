@@ -258,5 +258,9 @@ common_data = {
         "map": "hide",
         "map": "house",
         "prefershadowvolume": "1"
+    },
+    "materials": {
+        "Glass": r"P:\a3\data_f\glass_veh.rvmat",
+        "Collimator": r"P:\a3\weapons_f\acc\data\collimdot_cshader.rvmat"
     }
 }
