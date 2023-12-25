@@ -30,6 +30,7 @@
 - Validation tool now correctly considers modifiers
 - Arma 3 Tools path was moved to the path settings category
 - Vertex Mass Editing now operates on the context object (object shown in the properties panel) instead of the active object
+- mesh validation is no longer default during P3D import or export
 
 ### Fixed:
 - RTM export would not delete faulty outputs and raise an exception due to in missing module import

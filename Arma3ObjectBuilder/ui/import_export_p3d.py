@@ -57,7 +57,6 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     )
     validate_meshes: bpy.props.BoolProperty(
         name = "Validate Meshes",
-        default = True
         description = "Validate LOD meshes after creation, and clean up duplicate faces and other problematic geometry"
     )
     proxy_action: bpy.props.EnumProperty(
@@ -221,7 +220,6 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     )
     validate_meshes: bpy.props.BoolProperty(
         name = "Validate Meshes",
-        default = True
         description = "Clean up invalid geometry before export (eg.: duplicate faces, edges, vertices)"
     )
     use_selection: bpy.props.BoolProperty(
