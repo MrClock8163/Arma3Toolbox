@@ -138,6 +138,26 @@ class A3OB_PG_common_material(bpy.types.PropertyGroup):
     )
 
 
+class A3OB_PG_common_procedural(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty (
+        name = "Name",
+        description = "Descriptive name of the common procedural texture",
+        default = ""
+    )
+    value: bpy.props.StringProperty (
+        name = "Value",
+        description = "Procedural texture string",
+        default = ""
+    )
+
+
+class A3OB_PG_common_data(bpy.types.PropertyGroup):
+    procedurals: bpy.props.CollectionProperty (
+        type = A3OB_PG_common_procedural
+    )
+    procedurals_index: bpy.props.IntProperty(name="Selection Index", default = -1)
+
+
 class A3OB_PG_mass_editor_stats(bpy.types.PropertyGroup):
     mass_max: bpy.props.FloatProperty (
         name = "Max Mass",
@@ -673,6 +693,8 @@ classes = (
     A3OB_PG_proxies,
     A3OB_PG_common_proxy,
     A3OB_PG_common_material,
+    A3OB_PG_common_procedural,
+    A3OB_PG_common_data,
     A3OB_PG_mass_editor_stats,
     A3OB_PG_mass_editor,
     A3OB_PG_hitpoint_generator,
@@ -694,6 +716,7 @@ def register():
         
     bpy.types.Scene.a3ob_outliner = bpy.props.PointerProperty(type=A3OB_PG_outliner)
     bpy.types.Scene.a3ob_proxies = bpy.props.PointerProperty(type=A3OB_PG_proxies)
+    bpy.types.Scene.a3ob_commons = bpy.props.PointerProperty(type=A3OB_PG_common_data)
     bpy.types.Scene.a3ob_proxy_common = bpy.props.CollectionProperty(type=A3OB_PG_common_proxy)
     bpy.types.Scene.a3ob_proxy_common_index = bpy.props.IntProperty(name="Selection Index", default = -1)
     bpy.types.Scene.a3ob_materials_common = bpy.props.CollectionProperty(type=A3OB_PG_common_material)
@@ -727,6 +750,7 @@ def unregister():
     del bpy.types.Scene.a3ob_materials_common
     del bpy.types.Scene.a3ob_proxy_common_index
     del bpy.types.Scene.a3ob_proxy_common
+    del bpy.types.Scene.a3ob_commons
     del bpy.types.Scene.a3ob_proxies
     del bpy.types.Scene.a3ob_outliner
     

@@ -262,5 +262,8 @@ common_data = {
     "materials": {
         "Glass": r"P:\a3\data_f\glass_veh.rvmat",
         "Collimator": r"P:\a3\weapons_f\acc\data\collimdot_cshader.rvmat"
+    },
+    "procedurals": {
+        "PIP": "#(argb,512,512,1)r2t(rendertarget0,1.0)"
     }
 }
