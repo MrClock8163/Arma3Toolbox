@@ -3,11 +3,11 @@ import bpy
 from ..utilities import generic as utils
 
 
-class A3OB_OT_materials_common(bpy.types.Operator):
+class A3OB_OT_paste_common_material(bpy.types.Operator):
     """Paste a common material path"""
     
-    bl_label = "Common Material"
-    bl_idname = "a3ob.materials_common"
+    bl_label = "Paste Common Material"
+    bl_idname = "a3ob.paste_common_material"
     bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
@@ -16,8 +16,8 @@ class A3OB_OT_materials_common(bpy.types.Operator):
         return mat
     
     def invoke(self, context, event):
-        scene = context.scene
-        scene.a3ob_materials_common.clear()
+        scene_props = context.scene.a3ob_commons
+        scene_props.materials.clear()
 
         materials, custom = utils.get_common("materials")
         if custom is None:
@@ -25,33 +25,33 @@ class A3OB_OT_materials_common(bpy.types.Operator):
         else:
             materials.update(custom)
         
-        for mat in materials:
-            item = scene.a3ob_materials_common.add()
-            item.name = mat
-            item.path = utils.replace_slashes(materials[mat])
+        for name in materials:
+            item = scene_props.materials.add()
+            item.name = name
+            item.path = utils.replace_slashes(materials[name])
         
-        scene.a3ob_materials_common_index = 0
+        scene_props.materials_index = 0
 
         return context.window_manager.invoke_props_dialog(self)
     
     def draw(self, context):
-        scene = context.scene
+        scene_props = context.scene.a3ob_commons
         layout = self.layout
-        layout.template_list("A3OB_UL_materials", "A3OB_materials_common", scene, "a3ob_materials_common", scene, "a3ob_materials_common_index")
+        layout.template_list("A3OB_UL_common_materials", "A3OB_common_materials", scene_props, "materials", scene_props, "materials_index")
 
-        selection_index = scene.a3ob_materials_common_index
-        if selection_index in range(len(scene.a3ob_materials_common)):
+        selection_index = scene_props.materials_index
+        if selection_index in range(len(scene_props.materials)):
             row = layout.row()
-            item = scene.a3ob_materials_common[selection_index]
+            item = scene_props.materials[selection_index]
             row.prop(item, "path", text="")
             row.enabled = False
 
     def execute(self, context):
         mat = context.material
-        scene = context.scene
+        scene_props = context.scene.a3ob_commons
 
-        if scene.a3ob_materials_common_index in range(len(scene.a3ob_materials_common)):
-            new_item = scene.a3ob_materials_common[scene.a3ob_materials_common_index]
+        if scene_props.materials_index in range(len(scene_props.materials)):
+            new_item = scene_props.materials[scene_props.materials_index]
             mat_props = mat.a3ob_properties_material
             mat_props.material_path = new_item.path
         
@@ -61,14 +61,13 @@ class A3OB_OT_materials_common(bpy.types.Operator):
 class A3OB_OT_paste_common_procedural(bpy.types.Operator):
     """Paste a common procedural texture"""
     
-    bl_label = "Common Procedural"
+    bl_label = "Paste Common Procedural"
     bl_idname = "a3ob.paste_common_procedural"
     bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
-        mat = context.material
-        return mat
+        return bool(context.material)
     
     def invoke(self, context, event):
         scene_props = context.scene.a3ob_commons
@@ -113,7 +112,7 @@ class A3OB_OT_paste_common_procedural(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class A3OB_UL_materials(bpy.types.UIList):
+class A3OB_UL_common_materials(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         layout.label(text=item.name)
 
@@ -167,14 +166,14 @@ class A3OB_PT_material(bpy.types.Panel):
             row_raw.prop(material_props, "color_raw", text="", icon='TEXT')
         
         row_material = layout.row(align=True)
-        row_material.operator("a3ob.materials_common", text="", icon='PASTEDOWN')
+        row_material.operator("a3ob.paste_common_material", text="", icon='PASTEDOWN')
         row_material.prop(material_props, "material_path", text="", icon='MATERIAL')
 
 
 classes = (
-    A3OB_OT_materials_common,
+    A3OB_OT_paste_common_material,
     A3OB_OT_paste_common_procedural,
-    A3OB_UL_materials,
+    A3OB_UL_common_materials,
     A3OB_UL_common_procedurals,
     A3OB_PT_material,
 )

@@ -28,11 +28,11 @@ class A3OB_OT_proxy_add(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class A3OB_OT_proxy_common(bpy.types.Operator):
+class A3OB_OT_paste_common_proxy(bpy.types.Operator):
     """Paste a common proxy model path"""
     
-    bl_idname = "a3ob.proxy_common"
-    bl_label = "Common Proxy"
+    bl_idname = "a3ob.paste_common_proxy"
+    bl_label = "Paste Common Proxy"
     bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
@@ -42,8 +42,8 @@ class A3OB_OT_proxy_common(bpy.types.Operator):
         return obj and obj.type == 'MESH' and obj.a3ob_properties_object_proxy.is_a3_proxy
     
     def invoke(self, context, event):
-        scene = context.scene
-        scene.a3ob_proxy_common.clear()
+        scene_props = context.scene.a3ob_commons
+        scene_props.proxies.clear()
         
         proxies, custom = utils.get_common("proxies")
         if custom is None:
@@ -51,33 +51,33 @@ class A3OB_OT_proxy_common(bpy.types.Operator):
         else:
             proxies.update(custom)
 
-        for proxy in proxies:
-            item = scene.a3ob_proxy_common.add()
-            item.name = proxy
-            item.path = utils.replace_slashes(proxies[proxy])
+        for name in proxies:
+            item = scene_props.proxies.add()
+            item.name = name
+            item.path = utils.replace_slashes(proxies[name])
         
-        scene.a3ob_proxy_common_index = 0
+        scene_props.proxies_index = 0
         
         return context.window_manager.invoke_props_dialog(self)
     
     def draw(self, context):
-        scene = context.scene
+        scene_props = context.scene.a3ob_commons
         layout = self.layout
-        layout.template_list("A3OB_UL_common_proxies", "A3OB_proxies_common", scene, "a3ob_proxy_common", scene, "a3ob_proxy_common_index")
+        layout.template_list("A3OB_UL_common_proxies", "A3OB_proxies_common", scene_props, "proxies", scene_props, "proxies_index")
         
-        selection_index = scene.a3ob_proxy_common_index
-        if selection_index in range(len(scene.a3ob_proxy_common)):
+        selection_index = scene_props.proxies_index
+        if selection_index in range(len(scene_props.proxies)):
             row = layout.row()
-            item = scene.a3ob_proxy_common[selection_index]
+            item = scene_props.proxies[selection_index]
             row.prop(item, "path", text="")
             row.enabled = False
     
     def execute(self, context):
         obj = context.object
-        scene = context.scene
+        scene_props = context.scene.a3ob_commons
         
-        if len(scene.a3ob_proxy_common) > 0 and scene.a3ob_proxy_common_index in range(len(scene.a3ob_proxy_common)):
-            new_item = scene.a3ob_proxy_common[scene.a3ob_proxy_common_index]
+        if scene_props.proxies_index in range(len(scene_props.proxies)):
+            new_item = scene_props.proxies[scene_props.proxies_index]
             obj.a3ob_properties_object_proxy.proxy_path = new_item.path
             
         return {'FINISHED'}
@@ -132,11 +132,11 @@ class A3OB_OT_namedprops_remove(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class A3OB_OT_namedprops_common(bpy.types.Operator):
+class A3OB_OT_paste_common_namedprop(bpy.types.Operator):
     """Add a common named property"""
     
-    bl_label = "Common Named Property"
-    bl_idname = "a3ob.namedprops_common"
+    bl_label = "Paste Common Named Property"
+    bl_idname = "a3ob.paste_common_namedprop"
     bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
@@ -145,8 +145,8 @@ class A3OB_OT_namedprops_common(bpy.types.Operator):
         return obj and obj.type == 'MESH'
     
     def invoke(self, context, event):
-        scene = context.scene
-        scene.a3ob_namedprops_common.clear()
+        scene_props = context.scene.a3ob_commons
+        scene_props.namedprops.clear()
         
         namedprops, custom = utils.get_common("namedprops")
         if custom is None:
@@ -154,26 +154,26 @@ class A3OB_OT_namedprops_common(bpy.types.Operator):
         else:
             namedprops.update(custom)
 
-        for prop in namedprops:
-            item = scene.a3ob_namedprops_common.add()
-            item.name = prop
-            item.value = namedprops[prop]
+        for name in namedprops:
+            item = scene_props.namedprops.add()
+            item.name = name
+            item.value = namedprops[name]
         
-        scene.a3ob_namedprops_common_index = 0
+        scene_props.namedprops_index = 0
         
         return context.window_manager.invoke_props_dialog(self)
     
     def draw(self, context):
-        scene = context.scene
+        scene_props = context.scene.a3ob_commons
         layout = self.layout
-        layout.template_list("A3OB_UL_namedprops", "A3OB_namedprops_common", scene, "a3ob_namedprops_common", scene, "a3ob_namedprops_common_index")
+        layout.template_list("A3OB_UL_namedprops", "A3OB_common_namedprops", scene_props, "namedprops", scene_props, "namedprops_index")
 
     def execute(self, context):
         obj = context.object
-        scene = context.scene
+        scene_props = context.scene.a3ob_commons
         
-        if len(scene.a3ob_namedprops_common) > 0 and scene.a3ob_namedprops_common_index in range(len(scene.a3ob_namedprops_common)):
-            new_item = scene.a3ob_namedprops_common[scene.a3ob_namedprops_common_index]
+        if scene_props.namedprops_index in range(len(scene_props.namedprops)):
+            new_item = scene_props.namedprops[scene_props.namedprops_index]
             object_props = obj.a3ob_properties_object
             item = object_props.properties.add()
             item.name = new_item.name
@@ -532,7 +532,7 @@ class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
         col_operators.operator("a3ob.namedprops_add", text="", icon='ADD')
         col_operators.operator("a3ob.namedprops_remove", text="", icon='REMOVE')
         col_operators.separator()
-        col_operators.operator("a3ob.namedprops_common", icon='PASTEDOWN', text="")
+        col_operators.operator("a3ob.paste_common_namedprop", icon='PASTEDOWN', text="")
 
 
 class A3OB_PT_object_mesh_flags(bpy.types.Panel):
@@ -690,7 +690,7 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
         
         layout.separator()
         row_path = layout.row(align=True)
-        row_path.operator("a3ob.proxy_common", text="", icon='PASTEDOWN')
+        row_path.operator("a3ob.paste_common_proxy", text="", icon='PASTEDOWN')
         row_path.prop(object_props, "proxy_path", text="", icon='MESH_CUBE')
         layout.prop(object_props, "proxy_index", text="")
 
@@ -745,10 +745,10 @@ def menu_func(self, context):
 
 classes = (
     A3OB_OT_proxy_add,
-    A3OB_OT_proxy_common,
+    A3OB_OT_paste_common_proxy,
     A3OB_OT_namedprops_add,
     A3OB_OT_namedprops_remove,
-    A3OB_OT_namedprops_common,
+    A3OB_OT_paste_common_namedprop,
     A3OB_OT_flags_vertex_add,
     A3OB_OT_flags_vertex_remove,
     A3OB_OT_flags_vertex_assign,
