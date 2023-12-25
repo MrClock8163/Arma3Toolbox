@@ -16,33 +16,31 @@ class A3OB_OP_export_rtm(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     bl_options = {'REGISTER', 'UNDO', 'PRESET'}
     filename_ext = ".rtm"
     
-    filter_glob: bpy.props.StringProperty (
+    filter_glob: bpy.props.StringProperty(
         default = "*.rtm",
         options = {'HIDDEN'}
     )
-    static_pose: bpy.props.BoolProperty (
+    static_pose: bpy.props.BoolProperty(
         name = "Static Pose",
-        description = "Export current frame as static pose",
-        default = False
+        description = "Export current frame as static pose"
     )
-    clamp: bpy.props.BoolProperty (
+    clamp: bpy.props.BoolProperty(
         name = "Clamp To Range",
         description = "Do not export frames outside of the animation start-end range",
         default = True
     )
-    frame_start: bpy.props.IntProperty (
+    frame_start: bpy.props.IntProperty(
         name = "Start",
         description = "Starting frame of animation",
-        default = 0,
         min = 0
     )
-    frame_end: bpy.props.IntProperty (
+    frame_end: bpy.props.IntProperty(
         name = "End",
         description = "Ending frame of animation",
         default = 100,
         min = 0
     )
-    force_lowercase: bpy.props.BoolProperty (
+    force_lowercase: bpy.props.BoolProperty(
         name = "Force Lowercase",
         description = "Export all bone names as lowercase",
         default = True

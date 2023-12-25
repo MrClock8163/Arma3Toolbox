@@ -10,25 +10,14 @@ from ..utilities import data
 
 
 class A3OB_PG_properties_named_property(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty (
-        name = "Name",
-        description = "Property name"
-    )
-    value: bpy.props.StringProperty (
-        name = "Value",
-        description = "Property value"
-    )
+    name: bpy.props.StringProperty(name="Name", description="Property name")
+    value: bpy.props.StringProperty(name="Value", description="Property value")
 
 
 class A3OB_PG_properties_flag_vertex(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty (
-        name = "Name",
-        description = "Name of the vertex flag group",
-        default = ""
-    )
-    surface: bpy.props.EnumProperty (
+    name: bpy.props.StringProperty(name="Name", description="Name of the vertex flag group")
+    surface: bpy.props.EnumProperty(
         name = "Surface",
-        description = "",
         items = (
             ('NORMAL', "Normal", "", 0x00000000),
             ('SURFACE_ON', "On Surface", "", 0x00000001),
@@ -38,9 +27,8 @@ class A3OB_PG_properties_flag_vertex(bpy.types.PropertyGroup):
         ),
         default = 'NORMAL'
     )
-    fog: bpy.props.EnumProperty (
+    fog: bpy.props.EnumProperty(
         name = "Fog",
-        description = "",
         items = (
             ('NORMAL', "Normal", "", 0x00000000),
             ('SKY', "Sky", "", 0x00002000),
@@ -48,18 +36,16 @@ class A3OB_PG_properties_flag_vertex(bpy.types.PropertyGroup):
         ),
         default = 'NORMAL'
     )
-    decal: bpy.props.EnumProperty (
+    decal: bpy.props.EnumProperty(
         name = "Decal",
-        description = "",
         items = (
             ('NORMAL', "Normal", "", 0x00000000),
             ('DECAL', "Decal", "", 0x00000100)
         ),
         default = 'NORMAL'
     )
-    lighting: bpy.props.EnumProperty (
+    lighting: bpy.props.EnumProperty(
         name = "Lighting",
-        description = "",
         items = (
             ('NORMAL', "Normal", "", 0x00000000),
             ('SHINING', "Shining", "", 0x00000010),
@@ -69,9 +55,8 @@ class A3OB_PG_properties_flag_vertex(bpy.types.PropertyGroup):
         ),
         default = 'NORMAL'
     )
-    normals: bpy.props.EnumProperty (
+    normals: bpy.props.EnumProperty(
         name = "Normals",
-        description = "Weighted average calculation mode",
         items = (
             ('AREA', "Face Dimension", "", 0x00000000),
             ('ANGLE', "Impedance Angle", "", 0x04000000),
@@ -79,11 +64,7 @@ class A3OB_PG_properties_flag_vertex(bpy.types.PropertyGroup):
         ),
         default = 'AREA'
     )
-    hidden: bpy.props.BoolProperty (
-        name = "Hidden Vertex",
-        description = "",
-        default = False # True: 0x00000000 False: 0x01000000
-    )
+    hidden: bpy.props.BoolProperty(name="Hidden Vertex") # True: 0x00000000 False: 0x01000000
     
     def get_flag(self):        
         return flagutils.get_flag_vertex(self)
@@ -93,14 +74,9 @@ class A3OB_PG_properties_flag_vertex(bpy.types.PropertyGroup):
 
 
 class A3OB_PG_properties_flag_face(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty (
-        name = "Name",
-        description = "Name of the face flag group",
-        default = ""
-    )
-    lighting: bpy.props.EnumProperty (
+    name: bpy.props.StringProperty(name="Name", description="Name of the face flag group")
+    lighting: bpy.props.EnumProperty(
         name = "Lighting & Shadows",
-        description = "",
         items = (
             ('NORMAL', "Normal", "", 0x00000000),
             ('BOTH', "Both Sides", "", 0x00000020),
@@ -110,9 +86,8 @@ class A3OB_PG_properties_flag_face(bpy.types.PropertyGroup):
         ),
         default = 'NORMAL'
     )
-    zbias: bpy.props.EnumProperty (
+    zbias: bpy.props.EnumProperty(
         name = "Z Bias",
-        description = "",
         items = (
             ('NONE', "None", "", 0x00000000),
             ('LOW', "Low", "", 0x00000100),
@@ -120,20 +95,10 @@ class A3OB_PG_properties_flag_face(bpy.types.PropertyGroup):
             ('HIGH', "High", "", 0x00000300)
         )
     )
-    shadow: bpy.props.BoolProperty (
-        name = "Enable Shadow",
-        description = "",
-        default = True # True: 0x00000000 False: 0x00000010
-    )
-    merging: bpy.props.BoolProperty (
-        name = "Enable Texture Merging",
-        description = "",
-        default = True # True: 0x00000000 False: 0x01000000
-    )
-    user: bpy.props.IntProperty (
+    shadow: bpy.props.BoolProperty(name="Enable Shadow", default=True) # True: 0x00000000 False: 0x00000010
+    merging: bpy.props.BoolProperty(name="Enable Texture Merging", default=True) # True: 0x00000000 False: 0x01000000
+    user: bpy.props.IntProperty(
         name = "User Value",
-        description = "",
-        default = 0,
         min = 0,
         max = 127
     )
@@ -146,18 +111,17 @@ class A3OB_PG_properties_flag_face(bpy.types.PropertyGroup):
 
 
 class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
-    is_a3_lod: bpy.props.BoolProperty (
+    is_a3_lod: bpy.props.BoolProperty(
         name = "Arma 3 LOD",
-        description = "This object is a LOD for an Arma 3 P3D",
-        default = False
+        description = "This object is a LOD for an Arma 3 P3D"
     )
-    lod: bpy.props.EnumProperty (
+    lod: bpy.props.EnumProperty(
         name = "LOD Type",
         description = "Type of LOD",
         items = data.enum_lod_types,
         default = '0'
     )
-    resolution: bpy.props.IntProperty (
+    resolution: bpy.props.IntProperty(
         name = "Resolution/Index",
         description = "Resolution or index value of LOD object",
         default = 1,
@@ -165,16 +129,12 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
         soft_max = 1000,
         step = 1
     )
-    properties: bpy.props.CollectionProperty (
+    properties: bpy.props.CollectionProperty(
         name = "Named Properties",
         description = "Named properties associated with the LOD",
         type = A3OB_PG_properties_named_property
     )
-    property_index: bpy.props.IntProperty (
-        name = "Named Property Index",
-        description = "Index of the currently selected named property",
-        default = -1
-    )
+    property_index: bpy.props.IntProperty(name="Active Property Index")
 
     def get_name(self):
         return lodutils.format_lod_name(int(self.lod), self.resolution)
@@ -184,41 +144,31 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
 
 
 class A3OB_PG_properties_object_flags(bpy.types.PropertyGroup):
-    vertex: bpy.props.CollectionProperty (
+    vertex: bpy.props.CollectionProperty(
         name = "Vertex Flag Groups",
         description = "Vertex flag groups used in the LOD",
         type = A3OB_PG_properties_flag_vertex
     )
-    vertex_index: bpy.props.IntProperty (
-        name = "Vertex Flag Group Index",
-        description = "Index of the currently selected vertex flag group",
-        default = -1
-    )
-    face: bpy.props.CollectionProperty (
-        name = "Face Flag Groups",
+    vertex_index: bpy.props.IntProperty(name="Vertex Flag Group Index")
+    face: bpy.props.CollectionProperty(
+        name = "Active Face Flag Groups",
         description = "Face flag groups used in the LOD",
         type = A3OB_PG_properties_flag_face
     )
-    face_index: bpy.props.IntProperty (
-        name = "Face Flag Group Index",
-        description = "Index of the currently selected face flag group",
-        default = -1
-    )
+    face_index: bpy.props.IntProperty(name="Active Face Flag Group Index")
 
 
 class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
-    is_a3_proxy: bpy.props.BoolProperty (
+    is_a3_proxy: bpy.props.BoolProperty(
         name = "Arma 3 Model Proxy",
-        description = "This object is a proxy (cannot change manually)",
-        default = False
+        description = "This object is a proxy (cannot change manually)"
     )
-    proxy_path: bpy.props.StringProperty (
+    proxy_path: bpy.props.StringProperty(
         name = "Path",
         description = "File path to the proxy model",
-        default = "",
         subtype = 'FILE_PATH'
     )
-    proxy_index: bpy.props.IntProperty (
+    proxy_index: bpy.props.IntProperty(
         name = "Index",
         description = "Index of proxy",
         default = 1,
@@ -246,7 +196,7 @@ class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
 
 
 class A3OB_PG_properties_object_dtm(bpy.types.PropertyGroup):
-    origin: bpy.props.EnumProperty (
+    origin: bpy.props.EnumProperty(
         name = "Origin",
         description = "Origin point of DTM mesh",
         items = (
@@ -255,21 +205,18 @@ class A3OB_PG_properties_object_dtm(bpy.types.PropertyGroup):
         ),
         default = 'CORNER'
     )
-    easting: bpy.props.FloatProperty (
+    easting: bpy.props.FloatProperty(
         name = "Easting",
-        description = "",
         unit = 'LENGTH',
         default = 200000,
         soft_max = 1000000
     )
-    northing: bpy.props.FloatProperty (
+    northing: bpy.props.FloatProperty(
         name = "Northing",
-        description = "",
         unit = 'LENGTH',
-        default = 0,
         soft_max = 1000000
     )
-    cellsize_source: bpy.props.EnumProperty (
+    cellsize_source: bpy.props.EnumProperty(
         name = "Source",
         description = "Source of raster spacing",
         items = (
@@ -278,13 +225,13 @@ class A3OB_PG_properties_object_dtm(bpy.types.PropertyGroup):
         ),
         default = 'MANUAL'
     )
-    cellsize: bpy.props.FloatProperty (
+    cellsize: bpy.props.FloatProperty(
         name = "Raster Spacing",
         description = "Horizontal and vertical spacing between raster points",
         unit = 'LENGTH',
         default = 1.0
     )
-    nodata: bpy.props.FloatProperty (
+    nodata: bpy.props.FloatProperty(
         name = "NULL Indicator",
         description = "Filler value where data does not exist",
         default = -9999.0
@@ -292,15 +239,11 @@ class A3OB_PG_properties_object_dtm(bpy.types.PropertyGroup):
 
 
 class A3OB_PG_properties_keyframe(bpy.types.PropertyGroup):
-    index: bpy.props.IntProperty (
-        name = "Frame Index",
-        description = "Index of the keyframe to export",
-        default = 0
-    )
+    index: bpy.props.IntProperty(name="Frame Index", description="Index of the keyframe to export")
 
 
 class A3OB_PG_properties_object_armature(bpy.types.PropertyGroup):
-    motion_source: bpy.props.EnumProperty (
+    motion_source: bpy.props.EnumProperty(
         name = "Motion Source",
         description = "Source of motion vector",
         items = (
@@ -309,28 +252,20 @@ class A3OB_PG_properties_object_armature(bpy.types.PropertyGroup):
         ),
         default = 'MANUAL'
     )
-    motion_vector: bpy.props.FloatVectorProperty (
+    motion_vector: bpy.props.FloatVectorProperty(
         name = "Motion Vector",
         description = "Total motion done during the animation",
         default = (0, 0, 0),
         subtype = 'XYZ',
         unit = 'LENGTH'
     )
-    motion_bone: bpy.props.StringProperty (
-        name = "Reference Bone",
-        description = "Bone to track for motion calculation",
-        default = ""
-    )
-    frames: bpy.props.CollectionProperty (
+    motion_bone: bpy.props.StringProperty(name="Reference Bone", description="Bone to track for motion calculation")
+    frames: bpy.props.CollectionProperty(
         name = "RTM keyframes",
         description = "List of keyframes to export to RTM",
         type = A3OB_PG_properties_keyframe
     )
-    frames_index: bpy.props.IntProperty (
-        name = "Selection Index",
-        description = "Index of the currently selected RTM frame",
-        default = -1
-    )
+    frames_index: bpy.props.IntProperty(name="Active Keyrame Index")
 
 
 classes = (
@@ -355,10 +290,9 @@ def register():
     bpy.types.Object.a3ob_properties_object_proxy = bpy.props.PointerProperty(type=A3OB_PG_properties_object_proxy)
     bpy.types.Object.a3ob_properties_object_dtm = bpy.props.PointerProperty(type=A3OB_PG_properties_object_dtm)
     bpy.types.Object.a3ob_properties_object_armature = bpy.props.PointerProperty(type=A3OB_PG_properties_object_armature)
-    bpy.types.Object.a3ob_selection_mass = bpy.props.FloatProperty ( # Can't be in property group due to reference requirements
+    bpy.types.Object.a3ob_selection_mass = bpy.props.FloatProperty( # Can't be in property group due to reference requirements
         name = "Current Mass",
         description = "Total mass of current selection",
-        default = 0.0,
         min = 0,
         max = 1000000,
         step = 10,

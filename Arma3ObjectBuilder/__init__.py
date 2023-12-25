@@ -70,9 +70,8 @@ class A3OB_OT_prefs_edit_flag_vertex(bpy.types.Operator):
     bl_label = "Edit"
     bl_options = {'REGISTER', 'UNDO'}
 
-    surface: bpy.props.EnumProperty (
+    surface: bpy.props.EnumProperty(
         name = "Surface",
-        description = "",
         items = (
             ('NORMAL', "Normal", ""),
             ('SURFACE_ON', "On Surface", ""),
@@ -82,9 +81,8 @@ class A3OB_OT_prefs_edit_flag_vertex(bpy.types.Operator):
         ),
         default = 'NORMAL'
     )
-    fog: bpy.props.EnumProperty (
+    fog: bpy.props.EnumProperty(
         name = "Fog",
-        description = "",
         items = (
             ('NORMAL', "Normal", ""),
             ('SKY', "Sky", ""),
@@ -92,18 +90,16 @@ class A3OB_OT_prefs_edit_flag_vertex(bpy.types.Operator):
         ),
         default = 'NORMAL'
     )
-    decal: bpy.props.EnumProperty (
+    decal: bpy.props.EnumProperty(
         name = "Decal",
-        description = "",
         items = (
             ('NORMAL', "Normal", ""),
             ('DECAL', "Decal", "")
         ),
         default = 'NORMAL'
     )
-    lighting: bpy.props.EnumProperty (
+    lighting: bpy.props.EnumProperty(
         name = "Lighting",
-        description = "",
         items = (
             ('NORMAL', "Normal", ""),
             ('SHINING', "Shining", ""),
@@ -113,9 +109,8 @@ class A3OB_OT_prefs_edit_flag_vertex(bpy.types.Operator):
         ),
         default = 'NORMAL'
     )
-    normals: bpy.props.EnumProperty (
+    normals: bpy.props.EnumProperty(
         name = "Normals",
-        description = "Weighted average calculation mode",
         items = (
             ('AREA', "Face Dimension", ""),
             ('ANGLE', "Impedance Angle", ""),
@@ -123,11 +118,7 @@ class A3OB_OT_prefs_edit_flag_vertex(bpy.types.Operator):
         ),
         default = 'AREA'
     )
-    hidden: bpy.props.BoolProperty (
-        name = "Hidden Vertex",
-        description = "",
-        default = False # True: 0x00000000 False: 0x01000000
-    )
+    hidden: bpy.props.BoolProperty(name="Hidden Vertex") # True: 0x00000000 False: 0x01000000
     
     @classmethod
     def poll(cls, context):
@@ -153,9 +144,8 @@ class A3OB_OT_prefs_edit_flag_face(bpy.types.Operator):
     bl_label = "Edit"
     bl_options = {'REGISTER', 'UNDO'}
     
-    lighting: bpy.props.EnumProperty (
+    lighting: bpy.props.EnumProperty(
         name = "Lighting & Shadows",
-        description = "",
         items = (
             ('NORMAL', "Normal", ""),
             ('BOTH', "Both Sides", ""),
@@ -165,9 +155,8 @@ class A3OB_OT_prefs_edit_flag_face(bpy.types.Operator):
         ),
         default = 'NORMAL'
     )
-    zbias: bpy.props.EnumProperty (
+    zbias: bpy.props.EnumProperty(
         name = "Z Bias",
-        description = "",
         items = (
             ('NONE', "None", ""),
             ('LOW', "Low", ""),
@@ -175,20 +164,10 @@ class A3OB_OT_prefs_edit_flag_face(bpy.types.Operator):
             ('HIGH', "High", "")
         )
     )
-    shadow: bpy.props.BoolProperty (
-        name = "Enable Shadow",
-        description = "",
-        default = True # True: 0x00000000 False: 0x00000010
-    )
-    merging: bpy.props.BoolProperty (
-        name = "Enable Texture Merging",
-        description = "",
-        default = True # True: 0x00000000 False: 0x01000000
-    )
-    user: bpy.props.IntProperty (
+    shadow: bpy.props.BoolProperty(name = "Enable Shadow", default = True) # True: 0x00000000 False: 0x00000010
+    merging: bpy.props.BoolProperty(name = "Enable Texture Merging", default = True) # True: 0x00000000 False: 0x01000000
+    user: bpy.props.IntProperty(
         name = "User Value",
-        description = "",
-        default = 0,
         min = 0,
         max = 127
     )
@@ -213,9 +192,8 @@ class A3OB_OT_prefs_edit_flag_face(bpy.types.Operator):
 class A3OB_AT_preferences(bpy.types.AddonPreferences):
     bl_idname = __name__
     
-    tabs: bpy.props.EnumProperty (
+    tabs: bpy.props.EnumProperty(
         name = "Tabs",
-        description = "",
         default = 'GENERAL',
         items = (
             ('GENERAL', "General", "General and misc settings", 'PREFERENCES', 0),
@@ -224,17 +202,16 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         )
     )
     # General
-    show_info_links: bpy.props.BoolProperty (
+    show_info_links: bpy.props.BoolProperty(
         name = "Show Help Links",
         description = "Display links to the addon documentation in the headers of panels",
         default = True
     )
-    preserve_faulty_output: bpy.props.BoolProperty (
+    preserve_faulty_output: bpy.props.BoolProperty(
         name = "Preserve Faulty Output",
-        description = "Preserve the .temp files if an export failed (could be useful to attach to a bug report)",
-        default = False
+        description = "Preserve the .temp files if an export failed (could be useful to attach to a bug report)"
     )
-    icon_theme: bpy.props.EnumProperty (
+    icon_theme: bpy.props.EnumProperty(
         name = "Icon Theme",
         description = "Color theme of custom icons",
         items = (
@@ -243,7 +220,7 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         ),
         default = 'DARK'
     )
-    outliner: bpy.props.EnumProperty (
+    outliner: bpy.props.EnumProperty(
         name = "Outliner",
         description = "Enable or disable LOD object outliner panel",
         items = (
@@ -254,52 +231,42 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         update = outliner_enable_update
     )
     # Paths
-    a3_tools: bpy.props.StringProperty (
+    a3_tools: bpy.props.StringProperty(
         name = "Arma 3 Tools",
         description = "Install directory of the official Arma 3 Tools",
-        default = "",
         subtype = 'DIR_PATH'
     )
-    project_root: bpy.props.StringProperty (
+    project_root: bpy.props.StringProperty(
         name = "Project Root",
         description = "Root directory of the project (should be P:\ for most cases)",
         default = "P:\\",
         subtype = 'DIR_PATH'
     )
-    export_relative: bpy.props.BoolProperty (
+    export_relative: bpy.props.BoolProperty(
         name = "Export Relative",
         description = "Export file paths as relative to the project root",
         default = True
     )
-    import_absolute: bpy.props.BoolProperty (
+    import_absolute: bpy.props.BoolProperty(
         name = "Reconstruct Absolute Paths",
         description = "Attempt to reconstruct absolute file paths during import (based on the project root)",
         default = True
     )
-    custom_data: bpy.props.StringProperty (
+    custom_data: bpy.props.StringProperty(
         name = "Custom Data",
         description = "Path to JSON file containing data for custom preset list items (common named properties and proxies)",
-        default = "",
         subtype = 'FILE_PATH'
     )
     # Defaults
-    flag_vertex: bpy.props.IntProperty (
-        name = "Vertex Flag",
-        description = "",
-        default = 0x02000000
-    )
-    flag_face: bpy.props.IntProperty (
-        name = "Face Flag",
-        description = "",
-        default = 0
-    )
-    flag_vertex_display: bpy.props.StringProperty (
+    flag_vertex: bpy.props.IntProperty(name="Vertex Flag", default=0x02000000)
+    flag_face: bpy.props.IntProperty(name="Face Flag")
+    flag_vertex_display: bpy.props.StringProperty(
         name = "Vertex Flag",
         description = "Default vertex flag",
         default = "02000000",
         get = lambda self: "%08x" % self.flag_vertex
     )
-    flag_face_display: bpy.props.StringProperty (
+    flag_face_display: bpy.props.StringProperty(
         name = "Face Flag",
         description = "Default face flag",
         default = "00000000",

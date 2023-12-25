@@ -15,11 +15,11 @@ class A3OB_OP_import_asc(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     bl_options = {'REGISTER', 'UNDO', 'PRESET'}
     filename_ext = ".asc"
     
-    filter_glob: bpy.props.StringProperty (
+    filter_glob: bpy.props.StringProperty(
         default = "*.asc",
         options = {'HIDDEN'}
     )
-    vertical_scale: bpy.props.FloatProperty (
+    vertical_scale: bpy.props.FloatProperty(
         name = "Vertical Scaling",
         description = "Vertical scaling coefficient",
         default = 1.0,
@@ -57,11 +57,11 @@ class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     bl_options = {'REGISTER', 'UNDO', 'PRESET'}
     filename_ext = ".asc"
     
-    filter_glob: bpy.props.StringProperty (
+    filter_glob: bpy.props.StringProperty(
         default = "*.asc",
         options = {'HIDDEN'}
     )
-    apply_modifiers: bpy.props.BoolProperty (
+    apply_modifiers: bpy.props.BoolProperty(
         name = "Apply Modifiers",
         description = "Apply the assigned modifiers to the DTM object during export",
         default = True
@@ -71,6 +71,12 @@ class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     def poll(cls, context):
         obj = context.active_object
         return obj and obj.type == 'MESH' and len(obj.data.vertices) > 0
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        layout.prop(self, "apply_modifiers")
     
     def execute(self, context):
         obj = context.active_object

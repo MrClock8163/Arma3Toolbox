@@ -97,23 +97,14 @@ class A3OB_OT_proxy_extract(bpy.types.Operator):
     bl_label = "Extract Proxy"
     bl_options = {'REGISTER', 'UNDO'}
     
-    enclose: bpy.props.BoolProperty (
-        default = False
-    )
-    groupby: bpy.props.EnumProperty (
-        default = 'NONE',
-        items = (
-            ('NONE', "", ""),
-        )
-    )
-    additional_data_allowed: bpy.props.BoolProperty (
-        default = True
-    )
-    additional_data: bpy.props.EnumProperty (
+    enclose: bpy.props.BoolProperty()
+    groupby: bpy.props.EnumProperty(default='NONE', items=(('NONE', "", ""),))
+    additional_data_allowed: bpy.props.BoolProperty(default=True)
+    additional_data: bpy.props.EnumProperty(
         options = {'ENUM_FLAG'},
         items = (
             ('NORMALS', "", ""),
-            ('PROPS', "Named Properties", ""),
+            ('PROPS', "", ""),
             ('MASS', "", ""),
             ('SELECTIONS', "", ""),
             ('UV', "", ""),
@@ -121,21 +112,10 @@ class A3OB_OT_proxy_extract(bpy.types.Operator):
         ),
         default = {'NORMALS', 'PROPS', 'MASS', 'SELECTIONS', 'UV', 'MATERIALS'}
     )
-    validate_meshes: bpy.props.BoolProperty (
-        default = True
-    )
-    proxy_action: bpy.props.EnumProperty (
-        items = (
-            ('SEPARATE', "", ""),
-        ),
-        default = 'SEPARATE'
-    )
-    first_lod_only: bpy.props.BoolProperty (
-        default = True
-    )
-    filepath: bpy.props.StringProperty (
-        default = ""
-    )
+    validate_meshes: bpy.props.BoolProperty(default=True)
+    proxy_action: bpy.props.EnumProperty(items=(('SEPARATE', "", ""),), default='SEPARATE')
+    first_lod_only: bpy.props.BoolProperty(default=True)
+    filepath: bpy.props.StringProperty()
     
     @classmethod
     def poll(cls, context):

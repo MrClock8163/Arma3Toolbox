@@ -54,13 +54,8 @@ class A3OB_OT_select_object(bpy.types.Operator):
     bl_label = "Select Object"
     bl_options = {'REGISTER'}
     
-    object_name: bpy.props.StringProperty (
-        name = "Object Name"
-    )
-    identify_lod: bpy.props.BoolProperty (
-        name = "Identify In Outliner",
-        default = True
-    )
+    object_name: bpy.props.StringProperty(name="Object Name")
+    identify_lod: bpy.props.BoolProperty(name="Identify In Outliner", default = True)
     
     @classmethod
     def poll(cls, context):
