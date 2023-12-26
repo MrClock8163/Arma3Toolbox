@@ -443,7 +443,10 @@ class A3OB_OT_flags_face_clear(bpy.types.Operator):
 
 class A3OB_UL_namedprops(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
-        layout.label(text="%s = %s" % (item.name, item.value))
+        layout.alignment = 'LEFT'
+        layout.prop(item, "name", text="", emboss=False)
+        layout.label(text="=")
+        layout.prop(item, "value", text="", emboss=False)
 
 
 class A3OB_UL_common_proxies(bpy.types.UIList):
@@ -521,12 +524,6 @@ class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
         row = layout.row()
         col_list = row.column()
         col_list.template_list("A3OB_UL_namedprops", "A3OB_namedprops", object_props, "properties", object_props, "property_index")
-        
-        if object_props.property_index in range(len(object_props.properties)):
-            row_edit = col_list.row(align=True)
-            prop = object_props.properties[object_props.property_index]
-            row_edit.prop(prop, "name", text="")
-            row_edit.prop(prop, "value", text="")
             
         col_operators = row.column(align=True)
         col_operators.operator("a3ob.namedprops_add", text="", icon='ADD')

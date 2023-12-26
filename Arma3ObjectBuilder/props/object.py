@@ -144,7 +144,7 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
         description = "Named properties associated with the LOD",
         type = A3OB_PG_properties_named_property
     )
-    property_index: bpy.props.IntProperty(name="Active Property Index")
+    property_index: bpy.props.IntProperty(name="Active Property Index", description="Double click to change name and value")
 
     def get_name(self):
         return lodutils.format_lod_name(int(self.lod), self.resolution)
