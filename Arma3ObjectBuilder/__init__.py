@@ -278,7 +278,7 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         
         col = layout.column(align=True)
         row = col.row(align=True)
-        row.prop(self,"tabs", expand=True)
+        row.prop_tabs_enum(self, "tabs")
         box = col.box()
         box.use_property_split = True
         box.use_property_decorate = False

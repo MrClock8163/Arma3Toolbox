@@ -398,7 +398,7 @@ class A3OB_PG_colors(bpy.types.PropertyGroup):
         name = "Input Type",
         description = "Color space of the input value",
         items = (
-            ('S8', "sRGB 8-bit", "8-bit sRGB color [0 - 255]"),
+            ('S8', "sRGB8", "8-bit sRGB color [0 - 255]"),
             ('S', "sRGB", "Decimal sRGB color [0.0 - 1.0]"),
             ('L', "Linear", "Linear RGB color [0.0 - 1.0]")
         ),
@@ -409,7 +409,7 @@ class A3OB_PG_colors(bpy.types.PropertyGroup):
         name = "Output Type",
         description = "Color space of the output value",
         items = (
-            ('S8', "sRGB 8-bit", "8-bit sRGB color [0 - 255]"),
+            ('S8', "sRGB8", "8-bit sRGB color [0 - 255]"),
             ('S', "sRGB", "Decimal sRGB color [0.0 - 1.0]"),
             ('L', "Linear", "Linear RGB color [0.0 - 1.0]")
         ),

@@ -132,7 +132,7 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
         layout.label(text="Overwrite Mass:")
         layout.prop(scene_props, "source", expand=True)
         
-        col = layout.column(align=True)        
+        col = layout.column(align=True)
         if scene_props.source == 'MASS':
             col.prop(scene_props, "mass")
             col.operator("a3ob.vertex_mass_set", icon_value=utils.get_icon("op_mass_set"))
