@@ -453,13 +453,13 @@ class A3OB_UL_common_proxies(bpy.types.UIList):
 
 class A3OB_UL_flags_vertex(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
-        layout.label(text=item.name)
+        layout.prop(item, "name", text="", emboss=False)
         layout.label(text=("%08x" % item.get_flag()))
 
 
 class A3OB_UL_flags_face(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
-        layout.label(text=item.name)
+        layout.prop(item, "name", text="", emboss=False)
         layout.label(text=("%08x" % item.get_flag()))
 
 
@@ -592,7 +592,6 @@ class A3OB_PT_object_mesh_flags_vertex(bpy.types.Panel):
                 row_operators.operator("a3ob.flags_vertex_deselect")
             
             prop = flag_props.vertex[flag_props.vertex_index]
-            layout.prop(prop, "name")
             layout.prop(prop, "surface")
             layout.prop(prop, "fog")
             layout.prop(prop, "decal")
@@ -640,7 +639,6 @@ class A3OB_PT_object_mesh_flags_face(bpy.types.Panel):
                 row_operators.operator("a3ob.flags_face_deselect")
             
             prop = flag_props.face[flag_props.face_index]
-            layout.prop(prop, "name")
             layout.prop(prop, "lighting")
             layout.prop(prop, "zbias")
             layout.prop(prop, "shadow")
