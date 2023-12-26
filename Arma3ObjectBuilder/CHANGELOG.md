@@ -16,6 +16,7 @@
 - Vertex Flag Groups
 - Face Flag Groups
 - function to add material path from list of common materials (supported in the custom data JSON)
+- autocomplete suggestions for named property names and values
 
 ### Changed:
 - updated internal operator calls to be compatible with the new Blender API
