@@ -79,37 +79,37 @@ lod_visuals = (0, 1, 2, 3, 18, 30)
 
 
 lod_type_index = {
-    (0.0, 0):   0, # Visual
-    (1.0, 3):   1, # View Gunner
-    (1.1, 3):   2, # View Pilot
-    (1.2, 3):   3, # View Cargo
-    (1.0, 4):   4, # Shadow
-    (2.0, 4):   5, # Edit
-    (1.0, 13):  6, # Geometry
-    (2.0, 13):  7, # Geometry Buoyancy
-    (4.0, 13):  8, # Geometry PhysX
-    (1.0, 15):  9, # Memory
-    (2.0, 15):  10, # Land Contact
-    (3.0, 15):  11, # Roadway
-    (4.0, 15):  12, # Paths
-    (5.0, 15):  13, # Hit Points
-    (6.0, 15):  14, # View Geometry
-    (7.0, 15):  15, # Fire Geometry
-    (8.0, 15):  16, # View Cargo Geometry
-    (9.0, 15):  17, # View Cargo Fire Geometry
-    (1.0, 16):  18, # View Commander
-    (1.1, 16):  19, # View Commander Geometry
-    (1.2, 16):  20, # View Commander Fire Geometry
-    (1.3, 16):  21, # View Pilot Geometry
-    (1.4, 16):  22, # View Pilot Fire General
-    (1.5, 16):  23, # View Gunner Geometry
-    (1.6, 16):  24, # View Gunner Fire Geometry
-    (1.7, 16):  25, # Sub Parts
-    (1.8, 16):  26, # Cargo View Shadow Volume
-    (1.9, 16):  27, # Pilot View Shadow Volume
-    (2.0, 16):  28, # Gunner View Shadow Volume
-    (2.1, 16):  29, # Wreckage
-    (-1.0, 0):  30 # Unknown
+    (0.0, 0): 0, # Visual
+    (1.0, 3): 1, # View Gunner
+    (1.1, 3): 2, # View Pilot
+    (1.2, 3): 3, # View Cargo
+    (1.0, 4): 4, # Shadow
+    (2.0, 4): 5, # Edit
+    (1.0, 13): 6, # Geometry
+    (2.0, 13): 7, # Geometry Buoyancy
+    (4.0, 13): 8, # Geometry PhysX
+    (1.0, 15): 9, # Memory
+    (2.0, 15): 10, # Land Contact
+    (3.0, 15): 11, # Roadway
+    (4.0, 15): 12, # Paths
+    (5.0, 15): 13, # Hit Points
+    (6.0, 15): 14, # View Geometry
+    (7.0, 15): 15, # Fire Geometry
+    (8.0, 15): 16, # View Cargo Geometry
+    (9.0, 15): 17, # View Cargo Fire Geometry
+    (1.0, 16): 18, # View Commander
+    (1.1, 16): 19, # View Commander Geometry
+    (1.2, 16): 20, # View Commander Fire Geometry
+    (1.3, 16): 21, # View Pilot Geometry
+    (1.4, 16): 22, # View Pilot Fire General
+    (1.5, 16): 23, # View Gunner Geometry
+    (1.6, 16): 24, # View Gunner Fire Geometry
+    (1.7, 16): 25, # Sub Parts
+    (1.8, 16): 26, # Cargo View Shadow Volume
+    (1.9, 16): 27, # Pilot View Shadow Volume
+    (2.0, 16): 28, # Gunner View Shadow Volume
+    (2.1, 16): 29, # Wreckage
+    (-1.0, 0): 30 # Unknown
 }
 
 

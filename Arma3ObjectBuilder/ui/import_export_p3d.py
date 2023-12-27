@@ -32,7 +32,8 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         default = 'TYPE',
         items = (
             ('NONE', "None", "Import LODs without collections"),
-            ('TYPE', "Type", "Group LODs by logical type (eg.: visuals, geometries, etc.)")
+            ('TYPE', "Type", "Group LODs by logical type (eg.: visuals, geometries, etc.)"),
+            # ('CONTEXT', "Context", "Group LODs by use context (eg.: 1st person, 3rd person, etc.)")
         )
     )
     additional_data_allowed: bpy.props.BoolProperty(
