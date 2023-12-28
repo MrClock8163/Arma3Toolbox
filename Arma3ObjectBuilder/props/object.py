@@ -9,6 +9,16 @@ from ..utilities import flags as flagutils
 from ..utilities import data
 
 
+def proxy_name_update(self, context):
+    if not self.is_a3_proxy:
+        return
+    
+    name = "proxy: %s" % self.get_name()
+    obj = self.id_data
+    obj.name = name
+    obj.data.name = name
+
+
 class A3OB_PG_properties_named_property(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(
         name = "Name",
@@ -171,19 +181,22 @@ class A3OB_PG_properties_object_flags(bpy.types.PropertyGroup):
 class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
     is_a3_proxy: bpy.props.BoolProperty(
         name = "Arma 3 Model Proxy",
-        description = "This object is a proxy (cannot change manually)"
+        description = "This object is a proxy (cannot change manually)",
+        update = proxy_name_update
     )
     proxy_path: bpy.props.StringProperty(
         name = "Path",
         description = "File path to the proxy model",
-        subtype = 'FILE_PATH'
+        subtype = 'FILE_PATH',
+        update = proxy_name_update
     )
     proxy_index: bpy.props.IntProperty(
         name = "Index",
         description = "Index of proxy",
         default = 1,
         min = 0,
-        max = 999
+        max = 999,
+        update = proxy_name_update
     )
     
     def to_placeholder(self):
