@@ -5,6 +5,7 @@ import bpy
 import bpy_extras
 
 from ..io import import_asc, export_asc
+from ..utilities import generic as utils
 
 
 class A3OB_OP_import_asc(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
