@@ -39,48 +39,48 @@ class A3OB_PG_properties_flag_vertex(bpy.types.PropertyGroup):
     surface: bpy.props.EnumProperty(
         name = "Surface",
         items = (
-            ('NORMAL', "Normal", "", 0x00000000),
-            ('SURFACE_ON', "On Surface", "", 0x00000001),
-            ('SURFACE_ABOVE', "Above Surface", "", 0x00000002),
-            ('SURFACE_UNDER', "Under Surface", "", 0x00000004),
-            ('KEEP_HEIGHT', "Keep Height", "", 0x00000008)
+            ('NORMAL', "Normal", ""),
+            ('SURFACE_ON', "On Surface", ""),
+            ('SURFACE_ABOVE', "Above Surface", ""),
+            ('SURFACE_UNDER', "Under Surface", ""),
+            ('KEEP_HEIGHT', "Keep Height", "")
         ),
         default = 'NORMAL'
     )
     fog: bpy.props.EnumProperty(
         name = "Fog",
         items = (
-            ('NORMAL', "Normal", "", 0x00000000),
-            ('SKY', "Sky", "", 0x00002000),
-            ('NONE', "None", "", 0x00001000)
+            ('NORMAL', "Normal", ""),
+            ('SKY', "Sky", ""),
+            ('NONE', "None", "")
         ),
         default = 'NORMAL'
     )
     decal: bpy.props.EnumProperty(
         name = "Decal",
         items = (
-            ('NORMAL', "Normal", "", 0x00000000),
-            ('DECAL', "Decal", "", 0x00000100)
+            ('NORMAL', "Normal", ""),
+            ('DECAL', "Decal", "")
         ),
         default = 'NORMAL'
     )
     lighting: bpy.props.EnumProperty(
         name = "Lighting",
         items = (
-            ('NORMAL', "Normal", "", 0x00000000),
-            ('SHINING', "Shining", "", 0x00000010),
-            ('SHADOW', "Always in Shadow", "", 0x00000020),
-            ('LIGHTED_HALF', "Half Lighted", "", 0x00000080),
-            ('LIGHTED_FULL', "Fully Lighted", "", 0x00000040),
+            ('NORMAL', "Normal", ""),
+            ('SHINING', "Shining", ""),
+            ('SHADOW', "Always in Shadow", ""),
+            ('LIGHTED_HALF', "Half Lighted", ""),
+            ('LIGHTED_FULL', "Fully Lighted", ""),
         ),
         default = 'NORMAL'
     )
     normals: bpy.props.EnumProperty(
         name = "Normals",
         items = (
-            ('AREA', "Face Dimension", "", 0x00000000),
-            ('ANGLE', "Impedance Angle", "", 0x04000000),
-            ('FIXED', "Fixed", "", 0x02000000),
+            ('AREA', "Face Dimension", ""),
+            ('ANGLE', "Impedance Angle", ""),
+            ('FIXED', "Fixed", ""),
         ),
         default = 'AREA'
     )
@@ -98,21 +98,21 @@ class A3OB_PG_properties_flag_face(bpy.types.PropertyGroup):
     lighting: bpy.props.EnumProperty(
         name = "Lighting & Shadows",
         items = (
-            ('NORMAL', "Normal", "", 0x00000000),
-            ('BOTH', "Both Sides", "", 0x00000020),
-            ('POSITION', "Position", "", 0x00000080),
-            ('FLAT', "Flat", "", 0x00100000),
-            ('REVERSED', "Reversed", "", 0x00200000)
+            ('NORMAL', "Normal", ""),
+            ('BOTH', "Both Sides", ""),
+            ('POSITION', "Position", ""),
+            ('FLAT', "Flat", ""),
+            ('REVERSED', "Reversed", "")
         ),
         default = 'NORMAL'
     )
     zbias: bpy.props.EnumProperty(
         name = "Z Bias",
         items = (
-            ('NONE', "None", "", 0x00000000),
-            ('LOW', "Low", "", 0x00000100),
-            ('MIDDLE', "Middle", "", 0x00000200),
-            ('HIGH', "High", "", 0x00000300)
+            ('NONE', "None", ""),
+            ('LOW', "Low", ""),
+            ('MIDDLE', "Middle", ""),
+            ('HIGH', "High", "")
         )
     )
     shadow: bpy.props.BoolProperty(name="Enable Shadow", default=True) # True: 0x00000000 False: 0x00000010
