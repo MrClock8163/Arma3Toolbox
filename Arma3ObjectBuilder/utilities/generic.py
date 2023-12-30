@@ -4,9 +4,11 @@
 import math
 import os
 import json
+from contextlib import contextmanager
 
 import bpy
 import bpy_extras.mesh_utils as meshutils
+import bmesh
 
 from . import data
 
@@ -38,6 +40,24 @@ def strip_extension(path):
 
 def get_addon_preferences():
     return bpy.context.preferences.addons["Arma3ObjectBuilder"].preferences
+
+
+@contextmanager
+def edit_bmesh(obj, loop_triangles = False, destructive = False):
+    mesh = obj.data
+    if obj.mode == 'EDIT':
+        try:
+            yield bmesh.from_edit_mesh(mesh)
+        finally:
+            bmesh.update_edit_mesh(mesh, loop_triangles=loop_triangles, destructive=destructive)
+    else:
+        try:
+            bm = bmesh.new()
+            bm.from_mesh(mesh)
+            yield bm
+        finally:
+            bm.to_mesh(mesh)
+            bm.free()
 
 
 def get_components(mesh):
