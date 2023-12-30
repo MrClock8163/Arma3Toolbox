@@ -8,6 +8,7 @@ import subprocess
 import bmesh
 
 from ..io import import_rap as rap
+from . import generic as utils
 
 
 class Bone():
@@ -151,12 +152,10 @@ def get_bone_group_indices(obj, cfgbones):
 
 
 def select_vertices_unnormalized(obj, bone_indices):
-    mesh = obj.data
-    bm = bmesh.from_edit_mesh(mesh)
-    deform = bm.verts.layers.deform.active
-    
-    if deform:
+    with utils.edit_bmesh(obj) as bm:
         bm.verts.ensure_lookup_table()
+        deform = bm.verts.layers.deform.verify()
+        
         for vert in bm.verts:
             weights = 0
             for key in vert[deform].keys():
@@ -166,19 +165,14 @@ def select_vertices_unnormalized(obj, bone_indices):
                 weights += vert[deform][key]
             
             vert.select_set(abs(weights-1) > 0.01)
-        
-    bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
 
 
 def normalize_weights(obj, bone_indices):
-    mesh = obj.data
-    bm = bmesh.from_edit_mesh(mesh)
-    deform = bm.verts.layers.deform.active
-    
-    normalized = 0
-    
-    if deform:
+    with utils.edit_bmesh(obj) as bm:
+        deform = bm.verts.layers.deform.verify()
         bm.verts.ensure_lookup_table()
+        
+        normalized = 0
         for vert in bm.verts:
             weights = 0
             for key in vert[deform].keys():
@@ -195,19 +189,15 @@ def normalize_weights(obj, bone_indices):
                     continue
                 
                 vert[deform][key] /= weights
-        
-    bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
     
     return normalized
 
 
 def select_vertices_overdetermined(obj, bone_indices):
-    mesh = obj.data
-    bm = bmesh.from_edit_mesh(mesh)
-    deform = bm.verts.layers.deform.active
-    
-    if deform:
+    with utils.edit_bmesh(obj) as bm:
         bm.verts.ensure_lookup_table()
+        deform = bm.verts.layers.deform.verify()
+        
         for vert in bm.verts:
             bones = 0
             for key in vert[deform].keys():
@@ -217,8 +207,6 @@ def select_vertices_overdetermined(obj, bone_indices):
                 bones += 1
             
             vert.select_set(bones > 3)
-        
-    bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
 
 
 # If a vertex has overdetermined weighting (more than 3 bones affecting it),
@@ -226,14 +214,11 @@ def select_vertices_overdetermined(obj, bone_indices):
 # the weights of bone selections are summed up, and the groups are sorted.
 # Only the groups with the top 3 influence sum are left, rest are removed.
 def prune_overdetermined(obj, bone_indices):
-    mesh = obj.data
-    bm = bmesh.from_edit_mesh(mesh)
-    deform = bm.verts.layers.deform.active
-    
-    pruned = 0
-    
-    if deform:
+    with utils.edit_bmesh(obj) as bm:
         bm.verts.ensure_lookup_table()
+        deform = bm.verts.layers.deform.verify()
+        
+        pruned = 0
         for vert in bm.verts:
             bones = []
             sections = []
@@ -253,8 +238,6 @@ def prune_overdetermined(obj, bone_indices):
             vert[deform].clear()
             for id, weight in (bones[0:3] + sections):
                 vert[deform][id] = weight
-        
-    bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
     
     return pruned
 
@@ -262,14 +245,11 @@ def prune_overdetermined(obj, bone_indices):
 # Weights are summed for every group for every vertex. Then all groups
 # are removed, and only those readded that are above the threshold.
 def prune_weights(obj, threshold):
-    mesh = obj.data
-    bm = bmesh.from_edit_mesh(mesh)
-    deform = bm.verts.layers.deform.active
-    
-    pruned = 0
-    
-    if deform:
+    with utils.edit_bmesh(obj) as bm:
         bm.verts.ensure_lookup_table()
+        deform = bm.verts.layers.deform.verify()
+        
+        pruned = 0
         for vert in bm.verts:
             weights = []
             for key in vert[deform].keys():
@@ -282,9 +262,7 @@ def prune_weights(obj, threshold):
             vert[deform].clear()
             for id, weight in weights:
                 vert[deform][id] = weight
-        
-    bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
-    
+
     return pruned
 
 

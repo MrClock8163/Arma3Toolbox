@@ -4,6 +4,7 @@
 import bmesh
 
 from . import data
+from . import generic as utils
 
 
 def get_layer_flags_vertex(bm, create = True):
@@ -119,146 +120,80 @@ def set_flag_face(props, value):
 
 
 def remove_group_vertex(obj, group_id):
-    mesh = obj.data
-    bm = bmesh.new()
-
-    if obj.mode == 'EDIT':
-        bm = bmesh.from_edit_mesh(mesh)
-    else:
-        bm.from_mesh(mesh)
-    
-    layer = get_layer_flags_vertex(bm)
-    
-    for vertex in bm.verts:
-        if vertex[layer] >= group_id:
-            vertex[layer] -= 1
-    
-    if obj.mode == 'EDIT':
-        bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
-    else:
-        bm.to_mesh(mesh)
-        bm.free()
+    with utils.edit_bmesh(obj) as bm:
+        bm.verts.ensure_lookup_table()
+        layer = get_layer_flags_vertex(bm)
+        for vertex in bm.verts:
+            if vertex[layer] >= group_id:
+                vertex[layer] -= 1
 
 
 def assign_group_vertex(obj, group_id):
-    mesh = obj.data
-    bm = bmesh.from_edit_mesh(mesh)
-    bm.verts.ensure_lookup_table()
-    
-    layer = get_layer_flags_vertex(bm)
-    
-    for vertex in bm.verts:
-        if vertex.select:
-            vertex[layer] = group_id
+    with utils.edit_bmesh(obj) as bm:
+        bm.verts.ensure_lookup_table()
         
-    bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
+        layer = get_layer_flags_vertex(bm)
+        
+        for vertex in bm.verts:
+            if vertex.select:
+                vertex[layer] = group_id
 
 
 def select_group_vertex(obj, group_id, select = True):
-    mesh = obj.data
-    bm = bmesh.from_edit_mesh(mesh)
-    bm.verts.ensure_lookup_table()
-    
-    layer = get_layer_flags_vertex(bm)
-    
-    for vertex in bm.verts:
-        if vertex[layer] == group_id:
-            vertex.select = select
-    
-    bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
+    with utils.edit_bmesh(obj) as bm:
+        bm.verts.ensure_lookup_table()
+        
+        layer = get_layer_flags_vertex(bm)
+        
+        for vertex in bm.verts:
+            if vertex[layer] == group_id:
+                vertex.select = select
 
 
 def clear_groups_vertex(obj):
-    mesh = obj.data
-    bm = bmesh.new()
+    with utils.edit_bmesh(obj) as bm:
+        flag_props = obj.a3ob_properties_object_flags
+        flag_props.vertex.clear()
+        flag_props.vertex_index = -1
 
-    if obj.mode == 'EDIT':
-        bm = bmesh.from_edit_mesh(mesh)
-    else:
-        bm.from_mesh(mesh)
-
-    flag_props = obj.a3ob_properties_object_flags
-    flag_props.vertex.clear()
-    flag_props.vertex_index = -1
-
-    clear_layer_flags_vertex(bm)
-    
-    if obj.mode == 'EDIT':
-        bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
-    else:
-        bm.to_mesh(mesh)
-        bm.free()
+        clear_layer_flags_vertex(bm)
 
 
 def remove_group_face(obj, group_id):
-    mesh = obj.data
-    bm = bmesh.new()
-
-    if obj.mode == 'EDIT':
-        bm = bmesh.from_edit_mesh(mesh)
-    else:
-        bm.from_mesh(mesh)
-
-    bm.faces.ensure_lookup_table()
-    
-    layer = get_layer_flags_face(bm)
-    
-    for face in bm.faces:
-        if face[layer] >= group_id:
-            face[layer] -= 1
-    
-    if obj.mode == 'EDIT':
-        bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
-    else:
-        bm.to_mesh(mesh)
-        bm.free()
+    with utils.edit_bmesh(obj) as bm:
+        bm.verts.ensure_lookup_table()
+        layer = get_layer_flags_vertex(bm)
+        for vertex in bm.verts:
+            if vertex[layer] >= group_id:
+                vertex[layer] -= 1
 
 
 def assign_group_face(obj, group_id):
-    mesh = obj.data
-    bm = bmesh.from_edit_mesh(mesh)
-    bm.faces.ensure_lookup_table()
-    
-    layer = get_layer_flags_face(bm)
-    
-    for face in bm.faces:
-        if face.select:
-            face[layer] = group_id
+    with utils.edit_bmesh(obj) as bm:
+        bm.faces.ensure_lookup_table()
         
-    bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
+        layer = get_layer_flags_face(bm)
+        
+        for face in bm.faces:
+            if face.select:
+                face[layer] = group_id
 
 
 def select_group_face(obj, group_id, select = True):
-    mesh = obj.data
-    bm = bmesh.from_edit_mesh(mesh)
-    bm.faces.ensure_lookup_table()
-    
-    layer = get_layer_flags_face(bm)
-    
-    for face in bm.faces:
-        if face[layer] == group_id:
-            face.select = select
-    
-    bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
+    with utils.edit_bmesh(obj) as bm:
+        bm.faces.ensure_lookup_table()
+        
+        layer = get_layer_flags_face(bm)
+        
+        for face in bm.faces:
+            if face[layer] == group_id:
+                face.select = select
 
 
 def clear_groups_face(obj):
-    mesh = obj.data
-    bm = bmesh.new()
+    with utils.edit_bmesh(obj) as bm:
+        flag_props = obj.a3ob_properties_object_flags
+        flag_props.face.clear()
+        flag_props.face_index = -1
 
-    if obj.mode == 'EDIT':
-        bm = bmesh.from_edit_mesh(mesh)
-    else:
-        bm.from_mesh(mesh)
-
-    flag_props = obj.a3ob_properties_object_flags
-    flag_props.face.clear()
-    flag_props.face_index = -1
-
-    clear_layer_flags_face(bm)
-    
-    if obj.mode == 'EDIT':
-        bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
-    else:
-        bm.to_mesh(mesh)
-        bm.free()
+        clear_layer_flags_face(bm)

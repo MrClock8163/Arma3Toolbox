@@ -41,25 +41,22 @@ def get_selection_mass(self):
 # vertices, then the difference of the sum and the target
 # value is distributed equally to the selected vertices.
 def set_selection_mass(self, value):
-    mesh = self.data
-    bm = bmesh.from_edit_mesh(mesh)
+    with utils.edit_bmesh(self) as bm:
     
-    layer = bm.verts.layers.float.get("a3ob_mass")
-    if layer is None:
-        layer = bm.verts.layers.float.new("a3ob_mass")
+        layer = bm.verts.layers.float.get("a3ob_mass")
+        if layer is None:
+            layer = bm.verts.layers.float.new("a3ob_mass")
+            
+        verts = [vertex for vertex in bm.verts if vertex.select]
+        if len(verts) == 0:
+            return
         
-    verts = [vertex for vertex in bm.verts if vertex.select]
-    if len(verts) == 0:
-        return
-    
-    current_mass = get_selection_mass(self)
-    diff = value - current_mass
-    correction = diff / len(verts)
-    
-    for vertex in verts:
-        vertex[layer] += correction
+        current_mass = get_selection_mass(self)
+        diff = value - current_mass
+        correction = diff / len(verts)
         
-    bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
+        for vertex in verts:
+            vertex[layer] += correction
 
 
 def set_selection_mass_each(obj, value):
@@ -93,15 +90,12 @@ def set_selection_mass_distribute(obj, value):
 
 
 def clear_selection_masses(obj):
-    mesh = obj.data
-    
-    bm = bmesh.from_edit_mesh(mesh)
-    layer = bm.verts.layers.float.get("a3ob_mass")
-    if not layer:
-        return
-    
-    bm.verts.layers.float.remove(layer)
-    bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
+    with utils.edit_bmesh(obj) as bm:
+        layer = bm.verts.layers.float.get("a3ob_mass")
+        if not layer:
+            return
+        
+        bm.verts.layers.float.remove(layer)
 
 
 # Volume is calculated as a signed sum of the volume of tetrahedrons
@@ -139,19 +133,17 @@ def set_selection_mass_density(obj, density):
         item = data[id]
         item[2] = item[1] * density / item[0]
     
-    bm = bmesh.from_edit_mesh(mesh)
-    bm.verts.ensure_lookup_table()
-    
-    layer = bm.verts.layers.float.get("a3ob_mass")
-    if not layer:
-        layer = bm.verts.layers.float.new("a3ob_mass")
+    with utils.edit_bmesh(obj) as bm:
+        bm.verts.ensure_lookup_table()
         
-    for vert in bm.verts:
-        vert[layer] = data[lookup[vert.index]][2]
-    
-    contiguous = lodutils.Validator.is_contiguous_mesh(bm)
-    
-    bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
+        layer = bm.verts.layers.float.get("a3ob_mass")
+        if not layer:
+            layer = bm.verts.layers.float.new("a3ob_mass")
+            
+        for vert in bm.verts:
+            vert[layer] = data[lookup[vert.index]][2]
+        
+        contiguous = lodutils.Validator.is_contiguous_mesh(bm)
     
     return contiguous
 
@@ -237,52 +229,50 @@ def interpolate_colors(factors, stops, colorramp):
 def visualize_mass(obj, scene_props):
     obj.update_from_editmode()
     mesh = obj.data
-    bm = bmesh.from_edit_mesh(mesh)
-    bm.verts.ensure_lookup_table()
-    
-    if not len(bm.verts):
-        return
-    
-    layer = bm.verts.layers.float.get("a3ob_mass")
-    if not layer:
-        layer = bm.verts.layers.float.new("a3ob_mass")
-    
-    colorramp = [
-        Vector(scene_props.color_0),
-        Vector(scene_props.color_0),
-        Vector(scene_props.color_1),
-        Vector(scene_props.color_2),
-        Vector(scene_props.color_3),
-        Vector(scene_props.color_4),
-        Vector(scene_props.color_5),
-        Vector(scene_props.color_5)
-    ]
-    
-    stops = [0, 0.001, 0.25, 0.5, 0.75, 1, 100]
-    
-    vcolors = {}
-    factors = []
-    stats = ()
-    
-    if scene_props.method == 'VERT':
-        factors, stats = generate_factors_vertex(bm, layer)
-    elif scene_props.method == 'COMP':
-        factors, stats = generate_factors_component(mesh, bm, layer)
-    
-    vcolors = interpolate_colors(factors, stops, colorramp)
-    
-    color_layer = bm.loops.layers.color.get(scene_props.color_layer_name)
-    if not color_layer:
-        color_layer = bm.loops.layers.color.new(scene_props.color_layer_name)
+    with utils.edit_bmesh(obj) as bm:
+        bm.verts.ensure_lookup_table()
+        
+        if not len(bm.verts):
+            return
+        
+        layer = bm.verts.layers.float.get("a3ob_mass")
+        if not layer:
+            layer = bm.verts.layers.float.new("a3ob_mass")
+        
+        colorramp = [
+            Vector(scene_props.color_0),
+            Vector(scene_props.color_0),
+            Vector(scene_props.color_1),
+            Vector(scene_props.color_2),
+            Vector(scene_props.color_3),
+            Vector(scene_props.color_4),
+            Vector(scene_props.color_5),
+            Vector(scene_props.color_5)
+        ]
+        
+        stops = [0, 0.001, 0.25, 0.5, 0.75, 1, 100]
+        
+        vcolors = {}
+        factors = []
+        stats = ()
+        
+        if scene_props.method == 'VERT':
+            factors, stats = generate_factors_vertex(bm, layer)
+        elif scene_props.method == 'COMP':
+            factors, stats = generate_factors_component(mesh, bm, layer)
+        
+        vcolors = interpolate_colors(factors, stops, colorramp)
+        
+        color_layer = bm.loops.layers.color.get(scene_props.color_layer_name)
+        if not color_layer:
+            color_layer = bm.loops.layers.color.new(scene_props.color_layer_name)
 
-    for face in bm.faces:
-        for loop in face.loops:
-            loop[color_layer] = vcolors[loop.vert.index]
-    
-    scene_props.stats.mass_min = stats[0]
-    scene_props.stats.mass_avg = stats[1]
-    scene_props.stats.mass_max = stats[2]
-    scene_props.stats.mass_sum = stats[3]
-    scene_props.stats.count_item = stats[4]
-
-    bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
+        for face in bm.faces:
+            for loop in face.loops:
+                loop[color_layer] = vcolors[loop.vert.index]
+        
+        scene_props.stats.mass_min = stats[0]
+        scene_props.stats.mass_avg = stats[1]
+        scene_props.stats.mass_max = stats[2]
+        scene_props.stats.mass_sum = stats[3]
+        scene_props.stats.count_item = stats[4]

@@ -94,21 +94,18 @@ def check_convexity():
     utils.force_mode_object()
     
     obj = bpy.context.selected_objects[0]
-    bm = bmesh.new(use_operators=True)
-    bm.from_mesh(obj.data)
+    with utils.edit_bmesh(obj) as bm:
     
-    count_concave = 0
-    for edge in bm.edges:
-        if not edge.is_convex:
-            face1 = edge.link_faces[0]
-            face2 = edge.link_faces[1]
-            dot = face1.normal.dot(face2.normal)
-            
-            if not (0.9999 <= dot and dot <=1.0001):
-                edge.select_set(True)
-                count_concave += 1
-            
-    bm.to_mesh(obj.data)
+        count_concave = 0
+        for edge in bm.edges:
+            if not edge.is_convex:
+                face1 = edge.link_faces[0]
+                face2 = edge.link_faces[1]
+                dot = face1.normal.dot(face2.normal)
+                
+                if not (0.9999 <= dot and dot <=1.0001):
+                    edge.select_set(True)
+                    count_concave += 1
     
     return obj.name, count_concave
 
@@ -139,15 +136,13 @@ def redefine_vertex_group(obj, weight):
     if group is None:
         return
     
-    bm = bmesh.from_edit_mesh(mesh)
-    bm.verts.ensure_lookup_table()
-    bm.verts.layers.deform.verify()
-    deform = bm.verts.layers.deform.active
-    
-    for vert in bm.verts:
-        if vert.select:
-            vert[deform][group.index] = weight
-        elif group.index in vert[deform]:
-            del vert[deform][group.index]
+    with utils.edit_bmesh(obj) as bm:
+        bm.verts.ensure_lookup_table()
+        bm.verts.layers.deform.verify()
+        deform = bm.verts.layers.deform.active
         
-    bmesh.update_edit_mesh(mesh)
+        for vert in bm.verts:
+            if vert.select:
+                vert[deform][group.index] = weight
+            elif group.index in vert[deform]:
+                del vert[deform][group.index]
