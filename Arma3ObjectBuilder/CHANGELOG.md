@@ -35,7 +35,7 @@
   - updated internal operator calls to be compatible with the new Blender API
   - updated Live Mass Editing to be compatible with the new Blender API
 - named properties:
-  - operators now correctly operate on object displayed in the properties tab, instead of the active view-layer object
+  - operators now correctly operate on the object displayed in the properties tab, instead of the active view-layer object
   - names and values are now editable in the list directly
 - import-export:
   - P3D import-export complete overhaul
@@ -49,15 +49,14 @@
   - Validation now correctly considers modifiers
   - Vertex Mass Editing now operates on the context object (object shown in the properties panel) instead of the active object
 
-
 ### Fixed:
-- RTM export would not delete faulty outputs and raise an exception due to in missing module import
-- P3D import would sometimes fail due to mismatching normals-loops counts (on topoologically defective models)
-- ASCIIZ strings and characters were mistakenly decoded as UTF-8 (with no practical consequnce)
+- RTM export would not delete faulty outputs and raise an exception due to a missing module import
+- P3D import would sometimes fail due to mismatching normals-loops count (on topoologically defective models)
+- ASCIIZ strings and characters were mistakenly decoded as UTF-8 (with no practical consequence)
 - P3D output would become potentially faulty if non-manifold edges were marked as sharp
 
 ### Removed:
-- Dynamic Object Naming (from LOD and proxy objects)
+- Dynamic Object Naming (from LOD objects)
 - Vertex Normals Flag LOD object property (use the new Vertex Flag Groups instead)
 
 ## [v1.0.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v1.0.0)

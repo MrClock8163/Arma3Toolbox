@@ -132,7 +132,7 @@ class Validator():
                     face2 = edge.link_faces[1]
                     dot = face1.normal.dot(face2.normal)
                     
-                    if not (0.9999 <= dot and dot <=1.0001):
+                    if not (0.9999 <= dot and dot <= 1.0001):
                         if self.lazy:
                             raise errors.LODError("LOD has concave edge(s)")
                             
