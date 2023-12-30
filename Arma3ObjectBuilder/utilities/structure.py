@@ -11,7 +11,7 @@ from . import compat as computils
 
 
 def find_components(obj):
-    obj.update_from_editmode()
+    utils.force_mode_object()
     mesh = obj.data
     
     for group in obj.vertex_groups:
