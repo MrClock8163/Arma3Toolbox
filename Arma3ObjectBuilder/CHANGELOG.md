@@ -1,5 +1,64 @@
 # Changelog
 
+## [v2.0.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.0.0)
+
+**This update brings compatibility with the Blender 4 releases**
+
+### Added:
+- preferences:
+  - Defaults tab for default fallback values
+  - option to enable-disable the Outliner tool
+- tools:
+  - Outliner
+- object properties:
+  - Vertex Flag Groups
+  - Face Flag Groups
+- new operators:
+  - Copy Proxy
+  - Copy Proxies
+  - Transfer Proxies
+  - Paste Common Material
+  - Paste Common Procedural
+- common items:
+  - 4 new proxy paths included
+  - support for material paths
+  - support for procedural texture strings
+- import-export:
+  - option to force lower case bone names during RTM export
+  - option to force lower case file paths and selection names during P3D export
+  - option to renumber components during P3D export
+
+### Changed:
+- preferences:
+  - Arma 3 Tools path was moved to the path settings category
+- Blender 4 compatibility:
+  - updated internal operator calls to be compatible with the new Blender API
+  - updated Live Mass Editing to be compatible with the new Blender API
+- named properties:
+  - operators now correctly operate on the object displayed in the properties tab, instead of the active view-layer object
+  - names and values are now editable in the list directly
+- import-export:
+  - P3D import-export complete overhaul
+    - file is now first read completely and kept in memory during the import process
+    - import speed increase
+    - updated import-export logging
+    - edges of flat shaded faces are now only exported as sharp, if the entire LOD is flat shaded
+    - mesh validation is no longer default during P3D import or export
+  - RTM export complete overhaul
+- tools:
+  - Validation now correctly considers modifiers
+  - Vertex Mass Editing now operates on the context object (object shown in the properties panel) instead of the active object
+
+### Fixed:
+- RTM export would not delete faulty outputs and raise an exception due to a missing module import
+- P3D import would sometimes fail due to mismatching normals-loops count (on topoologically defective models)
+- ASCIIZ strings and characters were mistakenly decoded as UTF-8 (with no practical consequence)
+- P3D output would become potentially faulty if non-manifold edges were marked as sharp
+
+### Removed:
+- Dynamic Object Naming (from LOD objects)
+- Vertex Normals Flag LOD object property (use the new Vertex Flag Groups instead)
+
 ## [v1.0.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v1.0.0)
 
 ### Added:

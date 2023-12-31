@@ -11,7 +11,7 @@ class A3OB_OT_convert_to_a3ob(bpy.types.Operator):
     
     bl_idname = "a3ob.convert_to_a3ob"
     bl_label = "Convert Setup"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -38,7 +38,7 @@ class A3OB_OT_convert_to_a3ob(bpy.types.Operator):
         
         try:
             bpy.ops.object.select_all(action='DESELECT')
-            convertutils.convert_objects(objects, scene_props.dynamic_naming, scene_props.cleanup)
+            convertutils.convert_objects(objects, scene_props.cleanup)
             self.report({'INFO'}, "Finished setup conversion (check the logs in the system console)")
         except Exception as ex:
             self.report({'ERROR'}, "%s (check the system console)" % str(ex))
@@ -64,7 +64,7 @@ class A3OB_PT_conversion(bpy.types.Panel):
             
         layout = self.layout
         row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/conversion"
+        row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/conversion"
         
     def draw(self, context):
         layout = self.layout
@@ -76,7 +76,6 @@ class A3OB_PT_conversion(bpy.types.Panel):
         col.prop(scene_props, "use_selection")
         col.prop(scene_props, "types", text=" ")
         
-        layout.prop(scene_props, "dynamic_naming")
         layout.prop(scene_props, "cleanup")
         layout.operator("a3ob.convert_to_a3ob", icon_value=utils.get_icon("op_convert"))
 

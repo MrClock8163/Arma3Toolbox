@@ -4,9 +4,11 @@
 import math
 import os
 import json
+from contextlib import contextmanager
 
 import bpy
 import bpy_extras.mesh_utils as meshutils
+import bmesh
 
 from . import data
 
@@ -23,6 +25,39 @@ def show_info_box(message, title = "", icon = 'INFO'):
         self.layout.label(text=message)
         
     bpy.context.window_manager.popup_menu(draw, title=title, icon=icon)
+
+
+def abspath(path):
+    if not path.startswith("//"):
+        return path
+    
+    return os.path.abspath(bpy.path.abspath(path))
+
+
+def strip_extension(path):
+    return os.path.splitext(path)[0]
+
+
+def get_addon_preferences():
+    return bpy.context.preferences.addons["Arma3ObjectBuilder"].preferences
+
+
+@contextmanager
+def edit_bmesh(obj, loop_triangles = False, destructive = False):
+    mesh = obj.data
+    if obj.mode == 'EDIT':
+        try:
+            yield bmesh.from_edit_mesh(mesh)
+        finally:
+            bmesh.update_edit_mesh(mesh, loop_triangles=loop_triangles, destructive=destructive)
+    else:
+        try:
+            bm = bmesh.new()
+            bm.from_mesh(mesh)
+            yield bm
+        finally:
+            bm.to_mesh(mesh)
+            bm.free()
 
 
 def get_components(mesh):
@@ -86,6 +121,29 @@ def replace_slashes(path):
     return path.replace("/", "\\")
 
 
+# Attempt to restore absolute paths to the set project root (P drive by default).
+def restore_absolute(path, extension = ""):
+    path = replace_slashes(path.strip().lower())
+    addon_prefs = get_addon_preferences()
+    
+    if not addon_prefs.import_absolute:
+        return path
+    
+    if path == "":
+        return ""
+    
+    if os.path.splitext(path)[1].lower() != extension:
+        path += extension
+    
+    root = abspath(addon_prefs.project_root).lower()
+    if not path.startswith(root):
+        abs_path = os.path.join(root, path)
+        if os.path.exists(abs_path):
+            return abs_path
+    
+    return path
+
+
 def make_relative(path, root):
     path = path.lower()
     root = root.lower()
@@ -100,61 +158,38 @@ def make_relative(path, root):
     return path
 
 
-def strip_extension(path):
-    return os.path.splitext(path)[0]
+def format_path(path, root = "", to_relative = True, extension = True):
+    path = replace_slashes(path.strip())
+    
+    if to_relative:
+        root = replace_slashes(root.strip())
+        path = make_relative(path, root)
+        
+    if not extension:
+        path = strip_extension(path)
+        
+    return path
 
 
-def get_addon_preferences():
-    return bpy.context.preferences.addons["Arma3ObjectBuilder"].preferences
-
-
-def get_common_proxies():
+def get_common(name):
     prefs = get_addon_preferences()
     custom_path = abspath(prefs.custom_data)
-    proxies = data.common_proxies
-    
+    builtin = data.common_data[name]
+
     if not os.path.exists(custom_path):
-        return proxies
+        return builtin, {}
     
-    custom_proxies = {}
-    
+    json_data = {}
     try:
-        jsonfile = open(custom_path)
-        customs = json.loads(jsonfile.read().replace("\\", "/"))
-        jsonfile.close()
-        custom_proxies = customs["proxies"]
+        with open(custom_path) as file:
+            json_data = json.load(file)
     except:
-        pass
-        
-    return {**proxies, **custom_proxies}
+        return builtin, None
 
+    if name not in json_data:
+        return builtin, {}
 
-def get_common_namedprops():
-    prefs = get_addon_preferences()
-    custom_path = abspath(prefs.custom_data)
-    namedprops = data.common_namedprops
-    
-    if not os.path.exists(custom_path):
-        return namedprops
-    
-    custom_namedprops = {}
-    
-    try:
-        jsonfile = open(custom_path)
-        customs = json.loads(jsonfile.read().replace("\\", "/"))
-        jsonfile.close()
-        custom_namedprops = customs["namedprops"]
-    except:
-        pass
-        
-    return {**namedprops, **custom_namedprops}
-
-
-def abspath(path):
-    if not path.startswith("//"):
-        return path
-    
-    return os.path.abspath(bpy.path.abspath(path))
+    return builtin, json_data[name]
 
 
 preview_collection = {}

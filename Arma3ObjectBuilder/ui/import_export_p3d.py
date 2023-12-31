@@ -14,37 +14,39 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     
     bl_idname = "a3ob.import_p3d"
     bl_label = "Import P3D"
-    bl_options = {'UNDO', 'PRESET'}
+    bl_options = {'REGISTER', 'UNDO', 'PRESET'}
     filename_ext = ".p3d"
     
-    filter_glob: bpy.props.StringProperty (
+    filter_glob: bpy.props.StringProperty(
         default = "*.p3d",
         options = {'HIDDEN'}
     )
-    enclose: bpy.props.BoolProperty (
+    enclose: bpy.props.BoolProperty(
         name = "Enclose In Collection",
         description = "Enclose LODs in collection named after the original file",
         default = True
     )
-    groupby: bpy.props.EnumProperty (
+    groupby: bpy.props.EnumProperty(
         name = "Group By",
         description = "Include LODs in collections according to the selection",
         default = 'TYPE',
         items = (
             ('NONE', "None", "Import LODs without collections"),
-            ('TYPE', "Type", "Group LODs by logical type (eg.: visuals, geometries, etc.)")
+            ('TYPE', "Type", "Group LODs by logical type (eg.: visuals, geometries, etc.)"),
+            # ('CONTEXT', "Context", "Group LODs by use context (eg.: 1st person, 3rd person, etc.)")
         )
     )
-    additional_data_allowed: bpy.props.BoolProperty (
+    additional_data_allowed: bpy.props.BoolProperty(
         name = "Allow Additinal Data",
         description = "Import data in addition to the LOD geometries themselves",
         default = True
     )
-    additional_data: bpy.props.EnumProperty (
+    additional_data: bpy.props.EnumProperty(
         name = "Data",
         options = {'ENUM_FLAG'},
         items = (
             ('NORMALS', "Custom Normals", "WARNING: may not work properly on certain files"),
+            ('FLAGS', "Flags", "Vertex and face flags"),
             ('PROPS', "Named Properties", ""),
             ('MASS', "Vertex Mass", "Mass of individual vertices (in Geometry LODs)"),
             ('SELECTIONS', "Selections", ""),
@@ -54,12 +56,11 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         description = "Data to import in addition to the LOD meshes themselves",
         default = {'NORMALS', 'PROPS', 'MASS', 'SELECTIONS', 'UV', 'MATERIALS'}
     )
-    validate_meshes: bpy.props.BoolProperty (
+    validate_meshes: bpy.props.BoolProperty(
         name = "Validate Meshes",
-        description = "Validate LOD meshes after creation, and clean up duplicate faces and other problematic geometry",
-        default = True
+        description = "Validate LOD meshes after creation, and clean up duplicate faces and other problematic geometry"
     )
-    proxy_action: bpy.props.EnumProperty (
+    proxy_action: bpy.props.EnumProperty(
         name = "Proxy Action",
         description = "Post-import handling of proxies",
         items = (
@@ -69,15 +70,9 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         ),
         default = 'SEPARATE'
     )
-    dynamic_naming: bpy.props.BoolProperty (
-        name = "Dynamic Naming",
-        description = "Enable Dynamic Object Naming for LOD and proxy objects",
-        default = True
-    )
-    first_lod_only: bpy.props.BoolProperty (
+    first_lod_only: bpy.props.BoolProperty(
         name = "First LOD Only",
-        description = "Import only the first LOD found in the file",
-        default = False
+        description = "Import only the first LOD found in the file"
     )
     
     def draw(self, context):
@@ -86,8 +81,8 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     def execute(self, context):        
         with open(self.filepath, "rb") as file:
             try:
-                lod_data = import_p3d.read_file(self, context, file, self.first_lod_only)
-                self.report({'INFO'}, "Succesfully imported %d LODs (check the logs in the system console)" % len(lod_data))
+                lod_objects = import_p3d.read_file(self, context, file)
+                self.report({'INFO'}, "Succesfully imported %d LODs (check the logs in the system console)" % len(lod_objects))
             except struct.error as ex:
                 self.report({'ERROR'}, "Unexpected EndOfFile (check the system console)")
                 traceback.print_exc()
@@ -119,7 +114,6 @@ class A3OB_PT_import_p3d_main(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
         
-        layout.prop(operator, "dynamic_naming")
         layout.prop(operator, "first_lod_only")
         layout.prop(operator, "validate_meshes")
 
@@ -213,59 +207,65 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     
     bl_idname = "a3ob.export_p3d"
     bl_label = "Export P3D"
-    bl_options = {'UNDO', 'PRESET'}
+    bl_options = {'REGISTER', 'UNDO', 'PRESET'}
     filename_ext = ".p3d"
     
-    filter_glob: bpy.props.StringProperty (
+    filter_glob: bpy.props.StringProperty(
         default = "*.p3d",
         options = {'HIDDEN'}
     )
-    preserve_normals: bpy.props.BoolProperty (
+    preserve_normals: bpy.props.BoolProperty(
         name = "Custom Normals",
         description = "Export the custom split edge normals",
         default = True
     )
-    validate_meshes: bpy.props.BoolProperty (
+    validate_meshes: bpy.props.BoolProperty(
         name = "Validate Meshes",
-        description = "Clean up invalid geometry before export (eg.: duplicate faces, edges, vertices)",
-        default = True
+        description = "Clean up invalid geometry before export (eg.: duplicate faces, edges, vertices)"
     )
-    use_selection: bpy.props.BoolProperty (
+    use_selection: bpy.props.BoolProperty(
         name = "Selected Only",
-        description = "Export only selected objects",
-        default = False
+        description = "Export only selected objects"
     )
-    visible_only: bpy.props.BoolProperty (
+    visible_only: bpy.props.BoolProperty(
         name = "Visible",
         description = "Only export visible LOD objects (necessary, only shown for indication)",
         default = True
     )
-    apply_transforms: bpy.props.BoolProperty (
+    apply_transforms: bpy.props.BoolProperty(
         name = "Apply Transforms",
         description = "Apply space transformations to the exported model data",
         default = True
     )
-    apply_modifiers: bpy.props.BoolProperty (
+    apply_modifiers: bpy.props.BoolProperty(
         name = "Apply Modifiers",
         description = "Apply the assigned modifiers to the LOD objects during export",
         default = True
     )
-    sort_sections: bpy.props.BoolProperty (
+    sort_sections: bpy.props.BoolProperty(
         name = "Sort Sections",
         description = "Sort faces in LODs by the assigned materials (prevents fragmentation in the face list, and allows proper sorting of alpha faces)",
         default = True
     )
-    validate_lods: bpy.props.BoolProperty (
+    validate_lods: bpy.props.BoolProperty(
         name = "Validate LODs",
-        description = "Validate LOD objects, and skip the export of invalid ones",
-        default = False
+        description = "Validate LOD objects, and skip the export of invalid ones"
     )
-    validate_lods_warning_errors: bpy.props.BoolProperty (
+    validate_lods_warning_errors: bpy.props.BoolProperty(
         name = "Warnings Are Errors",
         description = "Treat warnings as errors",
         default = True
     )
-    
+    renumber_components: bpy.props.BoolProperty(
+        name = "Renumber Components",
+        description = "Renumber the \"component##\" selections to make sure they are unique (only use if necessary\neg.: geometry type LODs have sub-objects)"
+    )
+    force_lowercase: bpy.props.BoolProperty(
+        name = "Force Lowercase",
+        description = "Export all paths and selection names as lowercase",
+        default = True
+    )
+
     def draw(self, context):
         pass
     
@@ -380,6 +380,30 @@ class A3OB_PT_export_p3d_validate(bpy.types.Panel):
             row.enabled = False
 
 
+class A3OB_PT_export_p3d_post(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Postprocess"
+    bl_parent_id = "FILE_PT_operator"
+    
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        return operator.bl_idname == "A3OB_OT_export_p3d"
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.prop(operator, "renumber_components")
+        layout.prop(operator, "force_lowercase")
+
+
 classes = (
     A3OB_OP_import_p3d,
     A3OB_PT_import_p3d_main,
@@ -389,7 +413,8 @@ classes = (
     A3OB_OP_export_p3d,
     A3OB_PT_export_p3d_include,
     A3OB_PT_export_p3d_meshes,
-    A3OB_PT_export_p3d_validate
+    A3OB_PT_export_p3d_validate,
+    A3OB_PT_export_p3d_post
 )
 
 

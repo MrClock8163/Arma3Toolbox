@@ -32,45 +32,96 @@ def color_conversion_update(self, context):
         self.output_linear = rgb_out
 
 
+class A3OB_PG_outliner_proxy(bpy.types.PropertyGroup):
+    obj: bpy.props.StringProperty(name="Object Name")
+    name: bpy.props.StringProperty(name="Proxy Type")
+
+
+class A3OB_PG_outliner_lod(bpy.types.PropertyGroup):
+    obj: bpy.props.StringProperty(name="Object Name")
+    name: bpy.props.StringProperty(name="LOD Type")
+    signature: bpy.props.FloatProperty(name="LOD Signature")
+    proxy_count: bpy.props.IntProperty(name="Proxy Count")
+    subobject_count: bpy.props.IntProperty(name="Sub-object Count")
+
+
+class A3OB_PG_outliner(bpy.types.PropertyGroup):
+    show_hidden: bpy.props.BoolProperty(name="Show Hidden Objects")
+    lods: bpy.props.CollectionProperty(type=A3OB_PG_outliner_lod)
+    lods_index: bpy.props.IntProperty(name="Selection Index")
+    proxies: bpy.props.CollectionProperty(type=A3OB_PG_outliner_proxy)
+    proxies_index: bpy.props.IntProperty(name="Selection Index")
+
+    def clear(self):
+        self.lods.clear()
+        self.lods_index = -1
+        self.proxies.clear()
+        self.proxies_index = -1
+
+
+class A3OB_PG_lod_object(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty(name="Object Name")
+    lod: bpy.props.StringProperty(name="LOD type")
+    enabled: bpy.props.BoolProperty(name="Enabled")
+
+
+class A3OB_PG_proxies(bpy.types.PropertyGroup):
+    lod_objects: bpy.props.CollectionProperty(type=A3OB_PG_lod_object)
+    lod_objects_index: bpy.props.IntProperty(name="Selection Index")
+
+
 class A3OB_PG_common_proxy(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty (
-        name = "Name",
-        description = "Descriptive name of the common proxy",
-        default = ""
-    )
-    path: bpy.props.StringProperty (
-        name = "Path",
-        description = "File path of the proxy model",
-        default = ""
-    )
+    name: bpy.props.StringProperty(name="Name", description="Descriptive name of the common proxy")
+    path: bpy.props.StringProperty(name="Path", description="File path of the proxy model")
+
+
+class A3OB_PG_common_material(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty(name="Name", description="Descriptive name of the common material")
+    path: bpy.props.StringProperty(name="Path", description="File path of the material")
+
+
+class A3OB_PG_common_procedural(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty(name="Name", description="Descriptive name of the common procedural texture")
+    value: bpy.props.StringProperty(name="Value", description="Procedural texture string")
+
+
+class A3OB_PG_common_data(bpy.types.PropertyGroup):
+    namedprops: bpy.props.CollectionProperty(type=objectprops.A3OB_PG_properties_named_property)
+    namedprops_index: bpy.props.IntProperty(name="Selection Index")
+    proxies: bpy.props.CollectionProperty(type=A3OB_PG_common_proxy)
+    proxies_index: bpy.props.IntProperty(name="Selection Index")
+    materials: bpy.props.CollectionProperty(type=A3OB_PG_common_material)
+    materials_index: bpy.props.IntProperty(name="Selection Index")
+    procedurals: bpy.props.CollectionProperty(type=A3OB_PG_common_procedural)
+    procedurals_index: bpy.props.IntProperty(name="Selection Index")
 
 
 class A3OB_PG_mass_editor_stats(bpy.types.PropertyGroup):
-    mass_max: bpy.props.FloatProperty (
+    mass_max: bpy.props.FloatProperty(
         name = "Max Mass",
         description = "Highest vertex/component mass value on the mesh",
         default = -1,
         min = -1
     )
-    mass_min: bpy.props.FloatProperty (
+    mass_min: bpy.props.FloatProperty(
         name = "Min Mass",
         description = "Lowest non-zero vertex/component mass value on the mesh",
         default = -1,
         min = -1
     )
-    mass_avg: bpy.props.FloatProperty (
+    mass_avg: bpy.props.FloatProperty(
         name = "Average Mass",
         description = "Average non-zero vertex/component mass value on the mesh",
         default = -1,
         min = -1
     )
-    mass_sum: bpy.props.FloatProperty (
+    mass_sum: bpy.props.FloatProperty(
         name = "Total Mass",
         description = "Total vertex/component mass on the mesh",
         default = -1,
         min = -1
     )
-    count_item: bpy.props.IntProperty (
+    count_item: bpy.props.IntProperty(
         name = "Count",
         description = "Number of vertices/components in the mesh",
         default = -1,
@@ -79,12 +130,11 @@ class A3OB_PG_mass_editor_stats(bpy.types.PropertyGroup):
 
 
 class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
-    enabled: bpy.props.BoolProperty (
+    enabled: bpy.props.BoolProperty(
         name = "Enable Vertex Mass Tools",
-        description = "Dynamic calculation of the vertex masses can be performace heavy on large meshes",
-        default = False
+        description = "Dynamic calculation of the vertex masses can be performace heavy on large meshes"
     )
-    source: bpy.props.EnumProperty (
+    source: bpy.props.EnumProperty(
         name = "Source",
         description = "Type of source for mass calculations",
         items = (
@@ -93,7 +143,7 @@ class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
         ),
         default = 'MASS'
     )
-    density: bpy.props.FloatProperty (
+    density: bpy.props.FloatProperty(
         name = "Density",
         description = "Volumetric density of mesh (kg/m3)",
         default = 1.0,
@@ -103,10 +153,9 @@ class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
         step = 10,
         precision = 3
     )
-    mass: bpy.props.FloatProperty (
+    mass: bpy.props.FloatProperty(
         name = "Mass",
         description = "Mass to set equally or distribute",
-        default = 0.0,
         unit = 'MASS',
         min = 0,
         max = 1000000,
@@ -114,7 +163,7 @@ class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
         step = 10,
         precision = 3
     )
-    method: bpy.props.EnumProperty (
+    method: bpy.props.EnumProperty(
         name = "Visualization Method",
         description = "",
         items = (
@@ -123,7 +172,7 @@ class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
         ),
         default = 'COMP'
     )
-    color_0: bpy.props.FloatVectorProperty (
+    color_0: bpy.props.FloatVectorProperty(
         name = "NULL Color",
         description = "Color used where no vertex mass is defined",
         size = 4,
@@ -132,7 +181,7 @@ class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
         min = 0,
         max = 1
     )
-    color_1: bpy.props.FloatVectorProperty (
+    color_1: bpy.props.FloatVectorProperty(
         name = "Color 1",
         description = "1st element of the color ramp",
         size = 4,
@@ -141,7 +190,7 @@ class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
         min = 0,
         max = 1
     )
-    color_2: bpy.props.FloatVectorProperty (
+    color_2: bpy.props.FloatVectorProperty(
         name = "Color 2",
         description = "2nd element of the color ramp",
         size = 4,
@@ -150,7 +199,7 @@ class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
         min = 0,
         max = 1
     )
-    color_3: bpy.props.FloatVectorProperty (
+    color_3: bpy.props.FloatVectorProperty(
         name = "Color 3",
         description = "3rd element of the color ramp",
         size = 4,
@@ -159,7 +208,7 @@ class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
         min = 0,
         max = 1
     )
-    color_4: bpy.props.FloatVectorProperty (
+    color_4: bpy.props.FloatVectorProperty(
         name = "Color 4",
         description = "4th element of the color ramp",
         size = 4,
@@ -168,7 +217,7 @@ class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
         min = 0,
         max = 1
     )
-    color_5: bpy.props.FloatVectorProperty (
+    color_5: bpy.props.FloatVectorProperty(
         name = "Color 5",
         description = "5th element of the color ramp",
         size = 4,
@@ -177,30 +226,28 @@ class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
         min = 0,
         max = 1
     )
-    color_layer_name: bpy.props.StringProperty (
+    color_layer_name: bpy.props.StringProperty(
         name = "Vertex Color Layer",
         description = "Name of the vertex color layer to use/create for visualization",
         default = "Vertex Masses"
     )
-    stats: bpy.props.PointerProperty (
-        type = A3OB_PG_mass_editor_stats
-    )
+    stats: bpy.props.PointerProperty(type=A3OB_PG_mass_editor_stats)
 
 
 class A3OB_PG_hitpoint_generator(bpy.types.PropertyGroup):
-    source: bpy.props.PointerProperty (
+    source: bpy.props.PointerProperty(
         type=bpy.types.Object,
         name = "Source",
         description = "Mesh object to use as source for point cloud generation",
         poll = mesh_object_poll
     )
-    target: bpy.props.PointerProperty (
+    target: bpy.props.PointerProperty(
         type=bpy.types.Object,
         name = "Target",
         description = "Mesh object to write generate point cloud to\n(leave empty to create new object)",
         poll = mesh_object_poll
     )
-    spacing: bpy.props.FloatVectorProperty (
+    spacing: bpy.props.FloatVectorProperty(
         name = "Spacing",
         description = "Space between generated points",
         subtype = 'XYZ',
@@ -209,20 +256,20 @@ class A3OB_PG_hitpoint_generator(bpy.types.PropertyGroup):
         default = (0.2, 0.2, 0.2),
         size = 3
     )
-    bevel_offset: bpy.props.FloatProperty (
+    bevel_offset: bpy.props.FloatProperty(
         name = "Bevel Offset",
         description = "Offset value of bevel to apply to every edge of the source object",
         min = 0,
         default = 0.1
     )
-    bevel_segments: bpy.props.IntProperty (
+    bevel_segments: bpy.props.IntProperty(
         name = "Bevel Segments",
         description = "Number of segments of bevel to apply to every edge of the source object",
         min = 1,
         max = 10,
         default = 4
     )
-    triangulate: bpy.props.EnumProperty (
+    triangulate: bpy.props.EnumProperty(
         name = "Triangulation Order",
         description = "Triangulate before, or after bevelling",
         items = (
@@ -231,26 +278,22 @@ class A3OB_PG_hitpoint_generator(bpy.types.PropertyGroup):
         ),
         default = 'AFTER'
     )
-    selection: bpy.props.StringProperty (
-        name = "Selection",
-        description = "Vertex group to add the generated points to",
-        default = ""
-    )
+    selection: bpy.props.StringProperty(name="Selection", description="Vertex group to add the generated points to")
 
 
 class A3OB_PG_validation(bpy.types.PropertyGroup):
-    detect: bpy.props.BoolProperty (
-        name = "Detect Type",
-        description = "Detect LOD type when set",
-        default = True
+    detect: bpy.props.BoolProperty(
+        name="Detect Type",
+        description="Detect LOD type when set",
+        default=True
     )
-    lod: bpy.props.EnumProperty (
+    lod: bpy.props.EnumProperty(
         name = "Type",
         description = "Type of LOD",
         items = data.enum_lod_types,
         default = '0'
     )
-    warning_errors: bpy.props.BoolProperty (
+    warning_errors: bpy.props.BoolProperty(
         name = "Warnings Are Errors",
         description = "Treat warnings as errors during validation",
         default = True
@@ -258,7 +301,7 @@ class A3OB_PG_validation(bpy.types.PropertyGroup):
 
 
 class A3OB_PG_keyframes(bpy.types.PropertyGroup):
-    mode: bpy.props.EnumProperty (
+    mode: bpy.props.EnumProperty(
         name = "Mode",
         description = "List mode",
         items = (
@@ -267,24 +310,20 @@ class A3OB_PG_keyframes(bpy.types.PropertyGroup):
         ),
         default = 'RANGE'
     )
-    clear: bpy.props.BoolProperty (
-        name = "Clear Existing",
-        description = "Clear existing frames before adding new",
-        default = False
-    )
-    range_start: bpy.props.IntProperty (
+    clear: bpy.props.BoolProperty(name="Clear Existing", description="Clear existing frames before adding new")
+    range_start: bpy.props.IntProperty(
         name = "Start",
         description = "Start of frame range",
         default = 0,
         min = 0
     )
-    range_end: bpy.props.IntProperty (
+    range_end: bpy.props.IntProperty(
         name = "End",
         description = "End of frame range",
         default = 100,
         min = 0
     )
-    range_step: bpy.props.IntProperty (
+    range_step: bpy.props.IntProperty(
         name = "Step",
         description = "Step in frame range",
         default = 5,
@@ -293,12 +332,8 @@ class A3OB_PG_keyframes(bpy.types.PropertyGroup):
 
  
 class A3OB_PG_conversion(bpy.types.PropertyGroup):
-    use_selection: bpy.props.BoolProperty (
-        name = "Selected Only",
-        description = "Convert only selected objects",
-        default = False
-    )
-    types: bpy.props.EnumProperty (
+    use_selection: bpy.props.BoolProperty(name="Selected Only", description="Convert only selected objects")
+    types: bpy.props.EnumProperty(
         name = "Object Types",
         description = "Only convert object of the selected types",
         items = (
@@ -309,12 +344,7 @@ class A3OB_PG_conversion(bpy.types.PropertyGroup):
         options = {'ENUM_FLAG'},
         default = {'MESH', 'DTM', 'ARMATURE'}
     )
-    dynamic_naming: bpy.props.BoolProperty (
-        name = "Dynamic Object Naming",
-        description = "Enable Dynamic Object Naming for LOD and proxy objects",
-        default = True
-    )
-    cleanup: bpy.props.BoolProperty (
+    cleanup: bpy.props.BoolProperty(
         name = "Cleanup",
         description = "Cleanup the ArmaToolbox-style settings and properties",
         default = True
@@ -322,15 +352,11 @@ class A3OB_PG_conversion(bpy.types.PropertyGroup):
 
 
 class A3OB_PG_renamable(bpy.types.PropertyGroup):
-    path: bpy.props.StringProperty (
-        name = "From",
-        description = "File path",
-        default = ""
-    )
+    path: bpy.props.StringProperty(name = "From", description = "File path")
 
 
 class A3OB_PG_renaming(bpy.types.PropertyGroup):
-    source_filter: bpy.props.EnumProperty (
+    source_filter: bpy.props.EnumProperty(
         name = "Filter",
         description = "",
         items = (
@@ -341,41 +367,26 @@ class A3OB_PG_renaming(bpy.types.PropertyGroup):
         options = {'ENUM_FLAG'},
         default = {'TEX','RVMAT', 'PROXY'}
     )
-    path_list: bpy.props.CollectionProperty (
-        type = A3OB_PG_renamable
-    )
-    path_list_index: bpy.props.IntProperty (
-        name = "Selection Index",
-        default = -1
-    )
-    new_path: bpy.props.StringProperty (
+    path_list: bpy.props.CollectionProperty(type=A3OB_PG_renamable)
+    path_list_index: bpy.props.IntProperty(name="Selection Index")
+    new_path: bpy.props.StringProperty(
         name = "To",
         description = "New file path",
-        default = "",
         subtype = 'FILE_PATH'
     )
-    root_old: bpy.props.StringProperty (
+    root_old: bpy.props.StringProperty(
         name = "From",
         description = "Path root to change",
-        default = "",
         subtype = 'FILE_PATH'
     )
-    root_new: bpy.props.StringProperty (
+    root_new: bpy.props.StringProperty(
         name = "To",
         description = "Path to change root to",
-        default = "",
         subtype = 'FILE_PATH'
     )
-    vgroup_old: bpy.props.StringProperty (
-        name = "From",
-        description = "Vertex group to rename",
-        default = ""
-    )
-    vgroup_new: bpy.props.StringProperty (
-        name = "To",
-        description = "New vertex group name"
-    )
-    vgroup_match_whole: bpy.props.BoolProperty (
+    vgroup_old: bpy.props.StringProperty(name="From", description="Vertex group to rename")
+    vgroup_new: bpy.props.StringProperty(name = "To", description = "New vertex group name")
+    vgroup_match_whole: bpy.props.BoolProperty(
         name = "Whole Name",
         description = "Only replace if the whole name matches",
         default = True
@@ -383,22 +394,22 @@ class A3OB_PG_renaming(bpy.types.PropertyGroup):
 
 
 class A3OB_PG_colors(bpy.types.PropertyGroup):
-    input_type: bpy.props.EnumProperty (
+    input_type: bpy.props.EnumProperty(
         name = "Input Type",
         description = "Color space of the input value",
         items = (
-            ('S8', "sRGB 8-bit", "8-bit sRGB color [0 - 255]"),
+            ('S8', "sRGB8", "8-bit sRGB color [0 - 255]"),
             ('S', "sRGB", "Decimal sRGB color [0.0 - 1.0]"),
             ('L', "Linear", "Linear RGB color [0.0 - 1.0]")
         ),
         default = 'S8',
         update = color_conversion_update
     )
-    output_type: bpy.props.EnumProperty (
+    output_type: bpy.props.EnumProperty(
         name = "Output Type",
         description = "Color space of the output value",
         items = (
-            ('S8', "sRGB 8-bit", "8-bit sRGB color [0 - 255]"),
+            ('S8', "sRGB8", "8-bit sRGB color [0 - 255]"),
             ('S', "sRGB", "Decimal sRGB color [0.0 - 1.0]"),
             ('L', "Linear", "Linear RGB color [0.0 - 1.0]")
         ),
@@ -406,114 +417,102 @@ class A3OB_PG_colors(bpy.types.PropertyGroup):
         update = color_conversion_update
     )
     # Float inputs
-    input_red_float: bpy.props.FloatProperty (
+    input_red_float: bpy.props.FloatProperty(
         name = "R",
         description = "Input red value",
-        default = 0,
         min = 0,
         max = 1,
         precision = 3,
         update = color_conversion_update
     )
-    input_green_float: bpy.props.FloatProperty (
+    input_green_float: bpy.props.FloatProperty(
         name = "G",
         description = "Input green value",
-        default = 0,
         min = 0,
         max = 1,
         precision = 3,
         update = color_conversion_update
     )
-    input_blue_float: bpy.props.FloatProperty (
+    input_blue_float: bpy.props.FloatProperty(
         name = "B",
         description = "Input blue value",
-        default = 0,
         min = 0,
         max = 1,
         precision = 3,
         update = color_conversion_update
     )
     # Integer inputs
-    input_red_int: bpy.props.IntProperty (
+    input_red_int: bpy.props.IntProperty(
         name = "R",
         description = "Input red value",
-        default = 0,
         min = 0,
         max = 255,
         update = color_conversion_update
     )
-    input_green_int: bpy.props.IntProperty (
+    input_green_int: bpy.props.IntProperty(
         name = "G",
         description = "Input green value",
-        default = 0,
         min = 0,
         max = 255,
         update = color_conversion_update
     )
-    input_blue_int: bpy.props.IntProperty (
+    input_blue_int: bpy.props.IntProperty(
         name = "B",
         description = "Input blue value",
-        default = 0,
         min = 0,
         max = 255,
         update = color_conversion_update
     )
     # Float outputs
-    output_red_float: bpy.props.FloatProperty (
+    output_red_float: bpy.props.FloatProperty(
         name = "R",
         description = "Output red value",
-        default = 0,
         min = 0,
         max = 1,
         precision = 3
     )
-    output_green_float: bpy.props.FloatProperty (
+    output_green_float: bpy.props.FloatProperty(
         name = "G",
         description = "Output green value",
-        default = 0,
         min = 0,
         max = 1,
         precision = 3
     )
-    output_blue_float: bpy.props.FloatProperty (
+    output_blue_float: bpy.props.FloatProperty(
         name = "B",
         description = "Output blue value",
-        default = 0,
         min = 0,
         max = 1,
         precision = 3
     )
     # Integer outputs
-    output_red_int: bpy.props.IntProperty (
+    output_red_int: bpy.props.IntProperty(
         name = "R",
         description = "Output red value",
-        default = 0,
         min = 0,
         max = 255
     )
-    output_green_int: bpy.props.IntProperty (
+    output_green_int: bpy.props.IntProperty(
         name = "G",
         description = "Output green value",
-        default = 0,
         min = 0,
         max = 255
     )
-    output_blue_int: bpy.props.IntProperty (
+    output_blue_int: bpy.props.IntProperty(
         name = "B",
         description = "Output blue value",
-        default = 0,
         min = 0,
         max = 255
     )
     # Color outputs
-    output_srgb: bpy.props.FloatVectorProperty (
+    output_srgb: bpy.props.FloatVectorProperty(
         name = "Output Color",
         description = "Color sample of the output color",
         subtype = 'COLOR_GAMMA',
         min = 0,
         max = 1
     )
-    output_linear: bpy.props.FloatVectorProperty (
+    output_linear: bpy.props.FloatVectorProperty(
         name = "Output Color",
         description = "Color sample of the output color",
         subtype = 'COLOR',
@@ -523,51 +522,27 @@ class A3OB_PG_colors(bpy.types.PropertyGroup):
 
 
 class A3OB_PG_bone(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty (
-        name = "Name",
-        description = "Name of the bone item"
-    )
-    parent: bpy.props.StringProperty (
-        name = "Parent",
-        description = "Name of the parent bone"
-    )
+    name: bpy.props.StringProperty(name="Name", description="Name of the bone item")
+    parent: bpy.props.StringProperty(name="Parent", description="Name of the parent bone")
 
 
 class A3OB_PG_skeleton(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty (
-        name = "Name",
-        description = "Name of the skeleton"
-    )
-    bones: bpy.props.CollectionProperty (
-        type = A3OB_PG_bone
-    )
-    bones_index: bpy.props.IntProperty (
-        name = "Selection Index",
-        default = -1
-    )
+    name: bpy.props.StringProperty(name="Name", description="Name of the skeleton")
+    bones: bpy.props.CollectionProperty(type=A3OB_PG_bone)
+    bones_index: bpy.props.IntProperty(name="Selection Index")
 
 
 class A3OB_PG_weights(bpy.types.PropertyGroup):
-    filepath: bpy.props.StringProperty (
+    filepath: bpy.props.StringProperty(
         name = "File Path",
         description = "File path of the model.cfg file",
         subtype = 'FILE_PATH'
     )
-    skeletons: bpy.props.CollectionProperty (
-        type = A3OB_PG_skeleton
-    )
-    skeletons_index: bpy.props.IntProperty (
-        name = "Selection Index",
-        default = -1
-    )
-    bones: bpy.props.CollectionProperty (
-        type = A3OB_PG_bone
-    )
-    bones_index: bpy.props.IntProperty (
-        name = "Selection Index",
-        default = -1
-    )
-    prune_threshold: bpy.props.FloatProperty (
+    skeletons: bpy.props.CollectionProperty(type=A3OB_PG_skeleton)
+    skeletons_index: bpy.props.IntProperty(name="Active Skeleton Index")
+    bones: bpy.props.CollectionProperty(type=A3OB_PG_bone) # empty collection to show when no skeleton is selected
+    bones_index: bpy.props.IntProperty(name="Selection Index") # empty collection to show when no skeleton is selected
+    prune_threshold: bpy.props.FloatProperty(
         name = "Threshold",
         description = "Selection weight threshold",
         min = 0.0,
@@ -578,7 +553,15 @@ class A3OB_PG_weights(bpy.types.PropertyGroup):
 
 
 classes = (
+    A3OB_PG_outliner_proxy,
+    A3OB_PG_outliner_lod,
+    A3OB_PG_outliner,
+    A3OB_PG_lod_object,
+    A3OB_PG_proxies,
     A3OB_PG_common_proxy,
+    A3OB_PG_common_material,
+    A3OB_PG_common_procedural,
+    A3OB_PG_common_data,
     A3OB_PG_mass_editor_stats,
     A3OB_PG_mass_editor,
     A3OB_PG_hitpoint_generator,
@@ -598,10 +581,9 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
         
-    bpy.types.Scene.a3ob_proxy_common = bpy.props.CollectionProperty(type=A3OB_PG_common_proxy)
-    bpy.types.Scene.a3ob_proxy_common_index = bpy.props.IntProperty(name="Selection Index", default = -1)
-    bpy.types.Scene.a3ob_namedprops_common = bpy.props.CollectionProperty(type=objectprops.A3OB_PG_properties_named_property)
-    bpy.types.Scene.a3ob_namedprops_common_index = bpy.props.IntProperty(name="Selection Index", default = -1)
+    bpy.types.Scene.a3ob_outliner = bpy.props.PointerProperty(type=A3OB_PG_outliner)
+    bpy.types.Scene.a3ob_proxies = bpy.props.PointerProperty(type=A3OB_PG_proxies)
+    bpy.types.Scene.a3ob_commons = bpy.props.PointerProperty(type=A3OB_PG_common_data)
     bpy.types.Scene.a3ob_mass_editor = bpy.props.PointerProperty(type=A3OB_PG_mass_editor)
     bpy.types.Scene.a3ob_hitpoint_generator = bpy.props.PointerProperty(type=A3OB_PG_hitpoint_generator)
     bpy.types.Scene.a3ob_validation = bpy.props.PointerProperty(type=A3OB_PG_validation)
@@ -623,10 +605,9 @@ def unregister():
     del bpy.types.Scene.a3ob_keyframes
     del bpy.types.Scene.a3ob_hitpoint_generator
     del bpy.types.Scene.a3ob_mass_editor
-    del bpy.types.Scene.a3ob_namedprops_common_index
-    del bpy.types.Scene.a3ob_namedprops_common
-    del bpy.types.Scene.a3ob_proxy_common_index
-    del bpy.types.Scene.a3ob_proxy_common
+    del bpy.types.Scene.a3ob_commons
+    del bpy.types.Scene.a3ob_proxies
+    del bpy.types.Scene.a3ob_outliner
     
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

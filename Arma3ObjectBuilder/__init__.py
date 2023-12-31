@@ -2,7 +2,7 @@ bl_info = {
     "name": "Arma 3 Object Builder",
     "description": "Collection of tools for editing Arma 3 content",
     "author": "MrClock (present add-on), Hans-Joerg \"Alwarren\" Frieden (original ArmaToolbox add-on)",
-    "version": (1, 0, 0),
+    "version": (2, 0, 0),
     "blender": (2, 90, 0),
     "location": "Object Builder panels",
     "warning": "",
@@ -17,10 +17,12 @@ if "bpy" in locals():
     
     importlib.reload(props)
     importlib.reload(ui)
+    importlib.reload(utilities.flags)
 
 else:
     from . import props
     from . import ui
+    from .utilities import flags as flagutils
 
 
 import winreg
@@ -28,12 +30,21 @@ import winreg
 import bpy
 
 
-class A3OB_OT_find_a3_tools(bpy.types.Operator):
+def outliner_enable_update(self, context):
+    if self.outliner == 'ENABLED' and ui.tool_outliner.depsgraph_update_post_handler not in bpy.app.handlers.depsgraph_update_post:
+        bpy.app.handlers.depsgraph_update_post.append(ui.tool_outliner.depsgraph_update_post_handler)
+        ui.tool_outliner.depsgraph_update_post_handler(context.scene, None)
+    elif self.outliner == 'DISABLED' and ui.tool_outliner.depsgraph_update_post_handler in bpy.app.handlers.depsgraph_update_post:
+        bpy.app.handlers.depsgraph_update_post.remove(ui.tool_outliner.depsgraph_update_post_handler)
+        context.scene.a3ob_outliner.clear()
+
+
+class A3OB_OT_prefs_find_a3_tools(bpy.types.Operator):
     """Find the Arma 3 Tools installation through the registry"""
     
-    bl_idname = "a3ob.find_a3_tools"
+    bl_idname = "a3ob.prefs_find_a3_tools"
     bl_label = "Find Arma 3 Tools"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -52,36 +63,155 @@ class A3OB_OT_find_a3_tools(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class A3OB_OT_prefs_edit_flag_vertex(bpy.types.Operator):
+    """Set the default vertex flag value"""
+
+    bl_idname = "a3ob.prefs_edit_flag_vertex"
+    bl_label = "Edit"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    surface: bpy.props.EnumProperty(
+        name = "Surface",
+        items = (
+            ('NORMAL', "Normal", ""),
+            ('SURFACE_ON', "On Surface", ""),
+            ('SURFACE_ABOVE', "Above Surface", ""),
+            ('SURFACE_UNDER', "Under Surface", ""),
+            ('KEEP_HEIGHT', "Keep Height", "")
+        ),
+        default = 'NORMAL'
+    )
+    fog: bpy.props.EnumProperty(
+        name = "Fog",
+        items = (
+            ('NORMAL', "Normal", ""),
+            ('SKY', "Sky", ""),
+            ('NONE', "None", "")
+        ),
+        default = 'NORMAL'
+    )
+    decal: bpy.props.EnumProperty(
+        name = "Decal",
+        items = (
+            ('NORMAL', "Normal", ""),
+            ('DECAL', "Decal", "")
+        ),
+        default = 'NORMAL'
+    )
+    lighting: bpy.props.EnumProperty(
+        name = "Lighting",
+        items = (
+            ('NORMAL', "Normal", ""),
+            ('SHINING', "Shining", ""),
+            ('SHADOW', "Always in Shadow", ""),
+            ('LIGHTED_HALF', "Half Lighted", ""),
+            ('LIGHTED_FULL', "Fully Lighted", ""),
+        ),
+        default = 'NORMAL'
+    )
+    normals: bpy.props.EnumProperty(
+        name = "Normals",
+        items = (
+            ('AREA', "Face Dimension", ""),
+            ('ANGLE', "Impedance Angle", ""),
+            ('FIXED', "Fixed", ""),
+        ),
+        default = 'AREA'
+    )
+    hidden: bpy.props.BoolProperty(name="Hidden Vertex") # True: 0x00000000 False: 0x01000000
+    
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    def invoke(self, context, event):
+        prefs = context.preferences.addons["Arma3ObjectBuilder"].preferences
+        flagutils.set_flag_vertex(self, prefs.flag_vertex)
+
+        return context.window_manager.invoke_props_dialog(self)
+    
+    def execute(self, context):
+        prefs = context.preferences.addons["Arma3ObjectBuilder"].preferences
+        prefs.flag_vertex = flagutils.get_flag_vertex(self)
+
+        return {'FINISHED'}
+
+
+class A3OB_OT_prefs_edit_flag_face(bpy.types.Operator):
+    """Set the default face flag value"""
+
+    bl_idname = "a3ob.prefs_edit_flag_face"
+    bl_label = "Edit"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    lighting: bpy.props.EnumProperty(
+        name = "Lighting & Shadows",
+        items = (
+            ('NORMAL', "Normal", ""),
+            ('BOTH', "Both Sides", ""),
+            ('POSITION', "Position", ""),
+            ('FLAT', "Flat", ""),
+            ('REVERSED', "Reversed", "")
+        ),
+        default = 'NORMAL'
+    )
+    zbias: bpy.props.EnumProperty(
+        name = "Z Bias",
+        items = (
+            ('NONE', "None", ""),
+            ('LOW', "Low", ""),
+            ('MIDDLE', "Middle", ""),
+            ('HIGH', "High", "")
+        )
+    )
+    shadow: bpy.props.BoolProperty(name = "Enable Shadow", default = True) # True: 0x00000000 False: 0x00000010
+    merging: bpy.props.BoolProperty(name = "Enable Texture Merging", default = True) # True: 0x00000000 False: 0x01000000
+    user: bpy.props.IntProperty(
+        name = "User Value",
+        min = 0,
+        max = 127
+    )
+
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    def invoke(self, context, event):
+        prefs = context.preferences.addons["Arma3ObjectBuilder"].preferences
+        flagutils.set_flag_face(self, prefs.flag_face)
+
+        return context.window_manager.invoke_props_dialog(self)
+    
+    def execute(self, context):
+        prefs = context.preferences.addons["Arma3ObjectBuilder"].preferences
+        prefs.flag_face = flagutils.get_flag_face(self)
+
+        return {'FINISHED'}
+
+
 class A3OB_AT_preferences(bpy.types.AddonPreferences):
     bl_idname = __name__
     
-    tabs: bpy.props.EnumProperty (
+    tabs: bpy.props.EnumProperty(
         name = "Tabs",
-        description = "",
         default = 'GENERAL',
         items = (
             ('GENERAL', "General", "General and misc settings", 'PREFERENCES', 0),
-            ('PATHS', "Paths", "File path related settings", 'FILE_TICK', 1)
+            ('PATHS', "Paths", "File path related settings", 'FILE_TICK', 1),
+            ('DEFAULTS', "Defaults", "Default fallback values", 'RECOVER_LAST', 2)
         )
     )
     # General
-    a3_tools: bpy.props.StringProperty (
-        name = "Arma 3 Tools",
-        description = "Install directory of the official Arma 3 Tools",
-        default = "",
-        subtype = 'DIR_PATH'
-    )
-    show_info_links: bpy.props.BoolProperty (
+    show_info_links: bpy.props.BoolProperty(
         name = "Show Help Links",
         description = "Display links to the addon documentation in the headers of panels",
         default = True
     )
-    preserve_faulty_output: bpy.props.BoolProperty (
+    preserve_faulty_output: bpy.props.BoolProperty(
         name = "Preserve Faulty Output",
-        description = "Preserve the .temp files if an export failed (could be useful to attach to a bug report)",
-        default = False
+        description = "Preserve the .temp files if an export failed (could be useful to attach to a bug report)"
     )
-    icon_theme: bpy.props.EnumProperty (
+    icon_theme: bpy.props.EnumProperty(
         name = "Icon Theme",
         description = "Color theme of custom icons",
         items = (
@@ -90,58 +220,100 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         ),
         default = 'DARK'
     )
+    outliner: bpy.props.EnumProperty(
+        name = "Outliner",
+        description = "Enable or disable LOD object outliner panel",
+        items = (
+            ('ENABLED', "Enabled", ""),
+            ('DISABLED', "Disabled", "")
+        ),
+        default = 'ENABLED',
+        update = outliner_enable_update
+    )
     # Paths
-    project_root: bpy.props.StringProperty (
+    a3_tools: bpy.props.StringProperty(
+        name = "Arma 3 Tools",
+        description = "Install directory of the official Arma 3 Tools",
+        subtype = 'DIR_PATH'
+    )
+    project_root: bpy.props.StringProperty(
         name = "Project Root",
         description = "Root directory of the project (should be P:\ for most cases)",
         default = "P:\\",
         subtype = 'DIR_PATH'
     )
-    export_relative: bpy.props.BoolProperty (
+    export_relative: bpy.props.BoolProperty(
         name = "Export Relative",
         description = "Export file paths as relative to the project root",
         default = True
     )
-    import_absolute: bpy.props.BoolProperty (
+    import_absolute: bpy.props.BoolProperty(
         name = "Reconstruct Absolute Paths",
         description = "Attempt to reconstruct absolute file paths during import (based on the project root)",
         default = True
     )
-    custom_data: bpy.props.StringProperty (
+    custom_data: bpy.props.StringProperty(
         name = "Custom Data",
         description = "Path to JSON file containing data for custom preset list items (common named properties and proxies)",
-        default = "",
         subtype = 'FILE_PATH'
     )
+    # Defaults
+    flag_vertex: bpy.props.IntProperty(name="Vertex Flag", default=0x02000000)
+    flag_face: bpy.props.IntProperty(name="Face Flag")
+    flag_vertex_display: bpy.props.StringProperty(
+        name = "Vertex Flag",
+        description = "Default vertex flag",
+        default = "02000000",
+        get = lambda self: "%08x" % self.flag_vertex
+    )
+    flag_face_display: bpy.props.StringProperty(
+        name = "Face Flag",
+        description = "Default face flag",
+        default = "00000000",
+        get = lambda self: "%08x" % self.flag_face
+    )
     
-    def draw(self,context):
+    def draw(self, context):
         layout = self.layout
         
         col = layout.column(align=True)
         row = col.row(align=True)
-        row.prop(self,"tabs",expand=True)
+        row.prop_tabs_enum(self, "tabs")
         box = col.box()
         box.use_property_split = True
         box.use_property_decorate = False
         
         if self.tabs == 'GENERAL':
-            row_a3_tools = box.row(align=True)
-            row_a3_tools.prop(self, "a3_tools", icon='TOOL_SETTINGS')
-            row_a3_tools.operator("a3ob.find_a3_tools", text="", icon='VIEWZOOM')
             box.prop(self, "show_info_links")
             box.prop(self, "preserve_faulty_output")
             row_theme = box.row(align=True)
             row_theme.prop(self, "icon_theme", expand=True)
+            row_outliner = box.row(align=True)
+            row_outliner.prop(self, "outliner", expand=True)
             
         elif self.tabs == 'PATHS':
+            row_a3_tools = box.row(align=True)
+            row_a3_tools.prop(self, "a3_tools", icon='TOOL_SETTINGS')
+            row_a3_tools.operator("a3ob.prefs_find_a3_tools", text="", icon='VIEWZOOM')
             box.prop(self, "project_root", icon='DISK_DRIVE')
             box.prop(self, "export_relative")
             box.prop(self, "import_absolute")
             box.prop(self, "custom_data", icon='PRESET')
+        
+        elif self.tabs == 'DEFAULTS':
+            row_vertex = box.row(align=True)
+            row_vertex.prop(self, "flag_vertex_display")
+            row_vertex.operator("a3ob.prefs_edit_flag_vertex", text="", icon='GREASEPENCIL')
+
+            row_face = box.row(align=True)
+            row_face.prop(self, "flag_face_display")
+            row_face.operator("a3ob.prefs_edit_flag_face", text="", icon='GREASEPENCIL')
 
 
 classes = (
-    A3OB_OT_find_a3_tools,
+    A3OB_OT_prefs_find_a3_tools,
+    A3OB_OT_prefs_edit_flag_vertex,
+    A3OB_OT_prefs_edit_flag_face,
     A3OB_AT_preferences
 )
 
@@ -156,6 +328,7 @@ modules = (
     ui.import_export_p3d,
     ui.import_export_rtm,
     ui.import_export_asc,
+    ui.tool_outliner,
     ui.tool_mass,
     ui.tool_hitpoint,
     ui.tool_paths,

@@ -9,7 +9,7 @@ class A3OB_OT_validate_lod(bpy.types.Operator):
     
     bl_idname = "a3ob.validate_for_lod"
     bl_label = "Validate LOD"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
@@ -28,7 +28,8 @@ class A3OB_OT_validate_lod(bpy.types.Operator):
                 self.report({'INFO'}, "No validation rules for detected LOD type")
                 return {'FINISHED'}
         
-        validator = lodutils.Validator(obj, scene_props.warning_errors)
+        eval_obj = obj.evaluated_get(context.evaluated_depsgraph_get())
+        validator = lodutils.Validator(eval_obj, scene_props.warning_errors)
         valid = validator.validate(scene_props.lod)
         if valid:
             self.report({'INFO'}, "Validation succeeded")
@@ -55,7 +56,7 @@ class A3OB_PT_validation(bpy.types.Panel):
             
         layout = self.layout
         row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/validation"
+        row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/validation"
         
     def draw(self, context):
         layout = self.layout

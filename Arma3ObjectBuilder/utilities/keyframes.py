@@ -1,9 +1,6 @@
 # Backend functions of the rtm tool.
 
 
-import bpy
-
-
 def get_range(scene_props):
     return list(range(scene_props.range_start, scene_props.range_end + 1, scene_props.range_step))
 
@@ -31,8 +28,8 @@ def add_frame_timeline(obj):
     fcurves = obj.animation_data.action.fcurves
     for curve in fcurves:
         for point in curve.keyframe_points:
-            if point.co.x not in frames:
-                frames.append(point.co.x)
+            if int(point.co.x) not in frames:
+                frames.append(int(point.co.x))
                 
     frames.sort()
     

@@ -1,6 +1,69 @@
 # Various hard coded data used in I/O and throughout the UI.
 
 
+flags_vertex_surface = {
+    'NORMAL': 0x00000000,
+    'SURFACE_ON': 0x00000001,
+    'SURFACE_ABOVE': 0x00000002,
+    'SURFACE_UNDER': 0x00000004,
+    'KEEP_HEIGHT': 0x00000008
+}
+
+
+flags_vertex_fog = {
+    'NORMAL': 0x00000000,
+    'SKY': 0x00002000,
+    'NONE': 0x00001000
+}
+
+
+flags_vertex_decal = {
+    'NORMAL': 0x00000000,
+    'DECAL': 0x00000100
+}
+
+
+flags_vertex_lighting = {
+    'NORMAL': 0x00000000,
+    'SHINING': 0x00000010,
+    'SHADOW': 0x00000020,
+    'LIGHTED_HALF': 0x00000080,
+    'LIGHTED_FULL': 0x00000040
+}
+
+
+flags_vertex_normals = {
+    'AREA': 0x00000000,
+    'ANGLE': 0x04000000,
+    'FIXED': 0x02000000
+}
+
+
+flag_vertex_hidden = 0x01000000
+
+
+flags_face_lighting = {
+    'NORMAL': 0x00000000,
+    'BOTH': 0x00000020,
+    'POSITION': 0x00000080,
+    'FLAT': 0x00100000,
+    'REVERSED': 0x00200000
+}
+
+
+flags_face_zbias = {
+    'NONE': 0x00000000,
+    'LOW': 0x00000100,
+    'MIDDLE': 0x00000200,
+    'HIGH': 0x00000300
+}
+
+
+flag_face_noshadow = 0x00000010
+flag_face_merging = 0x01000000
+flag_face_user_mask = 0xfe000000
+
+
 lod_resolution_position = { # decimal places in normalized format
     0: -1,
     3: 3,
@@ -16,37 +79,37 @@ lod_visuals = (0, 1, 2, 3, 18, 30)
 
 
 lod_type_index = {
-    (0.0, 0):   0, # Visual
-    (1.0, 3):   1, # View Gunner
-    (1.1, 3):   2, # View Pilot
-    (1.2, 3):   3, # View Cargo
-    (1.0, 4):   4, # Shadow
-    (2.0, 4):   5, # Edit
-    (1.0, 13):  6, # Geometry
-    (2.0, 13):  7, # Geometry Buoyancy
-    (4.0, 13):  8, # Geometry PhysX
-    (1.0, 15):  9, # Memory
-    (2.0, 15):  10, # Land Contact
-    (3.0, 15):  11, # Roadway
-    (4.0, 15):  12, # Paths
-    (5.0, 15):  13, # Hit Points
-    (6.0, 15):  14, # View Geometry
-    (7.0, 15):  15, # Fire Geometry
-    (8.0, 15):  16, # View Cargo Geometry
-    (9.0, 15):  17, # View Cargo Fire Geometry
-    (1.0, 16):  18, # View Commander
-    (1.1, 16):  19, # View Commander Geometry
-    (1.2, 16):  20, # View Commander Fire Geometry
-    (1.3, 16):  21, # View Pilot Geometry
-    (1.4, 16):  22, # View Pilot Fire General
-    (1.5, 16):  23, # View Gunner Geometry
-    (1.6, 16):  24, # View Gunner Fire Geometry
-    (1.7, 16):  25, # Sub Parts
-    (1.8, 16):  26, # Cargo View Shadow Volume
-    (1.9, 16):  27, # Pilot View Shadow Volume
-    (2.0, 16):  28, # Gunner View Shadow Volume
-    (2.1, 16):  29, # Wreckage
-    (-1.0, 0):  30 # Unknown
+    (0.0, 0): 0, # Visual
+    (1.0, 3): 1, # View Gunner
+    (1.1, 3): 2, # View Pilot
+    (1.2, 3): 3, # View Cargo
+    (1.0, 4): 4, # Shadow
+    (2.0, 4): 5, # Edit
+    (1.0, 13): 6, # Geometry
+    (2.0, 13): 7, # Geometry Buoyancy
+    (4.0, 13): 8, # Geometry PhysX
+    (1.0, 15): 9, # Memory
+    (2.0, 15): 10, # Land Contact
+    (3.0, 15): 11, # Roadway
+    (4.0, 15): 12, # Paths
+    (5.0, 15): 13, # Hit Points
+    (6.0, 15): 14, # View Geometry
+    (7.0, 15): 15, # Fire Geometry
+    (8.0, 15): 16, # View Cargo Geometry
+    (9.0, 15): 17, # View Cargo Fire Geometry
+    (1.0, 16): 18, # View Commander
+    (1.1, 16): 19, # View Commander Geometry
+    (1.2, 16): 20, # View Commander Fire Geometry
+    (1.3, 16): 21, # View Pilot Geometry
+    (1.4, 16): 22, # View Pilot Fire General
+    (1.5, 16): 23, # View Gunner Geometry
+    (1.6, 16): 24, # View Gunner Fire Geometry
+    (1.7, 16): 25, # Sub Parts
+    (1.8, 16): 26, # Cargo View Shadow Volume
+    (1.9, 16): 27, # Pilot View Shadow Volume
+    (2.0, 16): 28, # Gunner View Shadow Volume
+    (2.1, 16): 29, # Wreckage
+    (-1.0, 0): 30 # Unknown
 }
 
 
@@ -172,24 +235,166 @@ enum_lod_types = (
 )
 
 
-common_namedprops = {
-    "autocenter": "0",
-    "buoyancy": "1",
-    "class": "building",
-    "class": "house",
-    "forcenotalpha": "1",
-    "lodnoshadow": "1",
-    "map": "building",
-    "map": "hide",
-    "map": "house",
-    "prefershadowvolume": "1"
-}
+# Currently unused as the search function for string properties is a
+# relatively new addition and not supported by older Blender versions
+# known_namedprops = {
+#     "animated": [],
+#     "aicovers": ["0", "1"],
+#     "armor": [],
+#     "autocenter": ["0", "1"],
+#     "buoyancy": ["0", "1"],
+#     "cratercolor": [],
+#     "canbeoccluded": ["0", "1"],
+#     "canocclude": ["0", "1"],
+#     "class": [
+#         "breakablehouseanimated",
+#         "bridge",
+#         "building",
+#         "bushhard",
+#         "bushsoft",
+#         "church",
+#         "clutter",
+#         "forest",
+#         "house",
+#         "housesimulated",
+#         "land_decal",
+#         "man",
+#         "none",
+#         "pond",
+#         "road",
+#         "streetlamp",
+#         "thing",
+#         "thingx",
+#         "tower",
+#         "treehard",
+#         "treesoft",
+#         "vehicle",
+#         "wall"
+#     ],
+#     "damage": [
+#         "building",
+#         "engine",
+#         "no",
+#         "tent",
+#         "tree",
+#         "wall",
+#         "wreck"
+#     ],
+#     "destroysound": [
+#         "treebroadleaf",
+#         "treepalm"
+#     ],
+#     "drawimportance": [],
+#     "explosionshielding": [],
+#     "forcenotalpha": ["0", "1"],
+#     "frequent": ["0", "1"],
+#     "keyframe": ["0", "1"],
+#     "loddensitycoef": [],
+#     "lodnoshadow": ["0", "1"],
+#     "map": [
+#         "main road",
+#         "road",
+#         "track",
+#         "trail",
+#         "building",
+#         "fence",
+#         "wall",
+#         "bush",
+#         "small tree",
+#         "tree",
+#         "rock",
+#         "bunker",
+#         "fortress",
+#         "fuelstation",
+#         "hospital",
+#         "lighthouse",
+#         "quay",
+#         "view-tower",
+#         "ruin",
+#         "busstop",
+#         "church",
+#         "chapel",
+#         "cross",
+#         "fountain",
+#         "power lines",
+#         "powersolar",
+#         "powerwave",
+#         "powerwind",
+#         "railway",
+#         "shipwreck",
+#         "stack",
+#         "tourism",
+#         "transmitter",
+#         "watertower",
+#         "hide"
+#     ],
+#     "mass": [],
+#     "maxsegments": [],
+#     "minsegments": [],
+#     "notl": [],
+#     "placement": [
+#         "slope",
+#         "slopez",
+#         "slopex",
+#         "slopelandcontact",
+#         "vertical"
+#     ],
+#     "prefershadowvolume": ["0", "1"],
+#     "reversed": [],
+#     "sbsource": [
+#         "explicit",
+#         "none",
+#         "shadow",
+#         "shadowvolume",
+#         "visual",
+#         "visualex"
+#     ],
+#     "shadow": ["hybrid"],
+#     "shadowlod": [],
+#     "shadowvolumelod": [],
+#     "shadowbufferlod": [],
+#     "shadowbufferlodvis": [],
+#     "shadowoffset": [],
+#     "viewclass": [],
+#     "viewdensitycoef": [],
+#     "xcount": [],
+#     "xsize": [],
+#     "xstep": [],
+#     "ycount": [],
+#     "ysize": []
+# }
 
 
-common_proxies = {
-    "Weapon optic": r"P:\a3\data_f\proxies\weapon_slots\top.p3d",
-    "Weapon pointer": r"P:\a3\data_f\proxies\weapon_slots\side.p3d",
-    "Weapon suppressor": r"P:\a3\data_f\proxies\weapon_slots\muzzle.p3d",
-    "Weapon magazine": r"P:\a3\data_f\proxies\weapon_slots\magazineslot.p3d",
-    "Weapon bipod": r"P:\a3\data_f_mark\proxies\weapon_slots\underbarrel.p3d"
+common_data = {
+    "proxies": {
+        "Weapon: optic": r"P:\a3\data_f\proxies\weapon_slots\top.p3d",
+        "Weapon: pointer": r"P:\a3\data_f\proxies\weapon_slots\side.p3d",
+        "Weapon: suppressor": r"P:\a3\data_f\proxies\weapon_slots\muzzle.p3d",
+        "Weapon: magazine": r"P:\a3\data_f\proxies\weapon_slots\magazineslot.p3d",
+        "Weapon: bipod": r"P:\a3\data_f_mark\proxies\weapon_slots\underbarrel.p3d",
+        "Driver: offroad": r"P:\a3\data_f\proxies\passenger_low01\cargo01.p3d",
+        "Gunner: hunter": r"P:\a3\data_f\proxies\gunner_hunter\gunner.p3d",
+        "Commander: hunter": r"P:\a3\data_f\proxies\gunner_hunter\commander.p3d",
+        "Light volume: car": r"P:\a3\data_f\volumelightcar.p3d"
+    },
+    "namedprops": {
+        "autocenter": "0",
+        "buoyancy": "1",
+        "class": "building",
+        "class": "house",
+        "forcenotalpha": "1",
+        "lodnoshadow": "1",
+        "map": "building",
+        "map": "hide",
+        "map": "house",
+        "prefershadowvolume": "1"
+    },
+    "materials": {
+        "Glass": r"P:\a3\data_f\glass_veh.rvmat",
+        "Collimator": r"P:\a3\weapons_f\acc\data\collimdot_cshader.rvmat",
+        "VR Armor Emissive": r"P:\a3\characters_f_bootcamp\common\data\vrarmoremmisive.rvmat"
+    },
+    "procedurals": {
+        "PIP": "#(argb,512,512,1)r2t(rendertarget0,1.0)"
+    }
 }

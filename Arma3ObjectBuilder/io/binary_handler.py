@@ -17,15 +17,27 @@ def read_bool(file):
     
 def read_short(file):
     return struct.unpack('<h', file.read(2))[0]
+
+def read_shorts(file, count = 1):
+    return struct.unpack('<%dh' % count, file.read(2 * count))
     
 def read_ushort(file):
     return struct.unpack('<H', file.read(2))[0]
 
+def read_shorts(file, count = 1):
+    return struct.unpack('<%dH' % count, file.read(2 * count))
+
 def read_long(file):
     return struct.unpack('<i', file.read(4))[0]
 
+def read_longs(file, count = 1):
+    return struct.unpack('<%di' % count, file.read(4 * count))
+
 def read_ulong(file):
     return struct.unpack('<I', file.read(4))[0]
+
+def read_ulongs(file, count = 1):
+    return struct.unpack('<%dI' % count, file.read(4 * count))
 
 def read_compressed_uint(file):
     output = 0
@@ -42,28 +54,34 @@ def read_compressed_uint(file):
     
 def read_float(file):
     return struct.unpack('<f', file.read(4))[0]
+
+def read_floats(file, count = 1):
+    return struct.unpack('<%df' % count, file.read(4 * count))
     
 def read_double(file):
     return struct.unpack('<d', file.read(8))[0]
+
+def read_doubles(file, count = 1):
+    return struct.unpack('<%dd' % count, file.read(8 * count))
     
 def read_char(file, count = 1):
     chars = struct.unpack('%ds' % count, file.read(count))[0]
-    return chars.decode('utf-8')
+    return chars.decode('ascii')
     
 def read_asciiz(file):
     res = b''
     
     while True:
         a = file.read(1)
-        if a == b'\000':
+        if a == b'\x00':
             break
             
         res += a
     
-    return res.decode("utf-8")
+    return res.decode('ascii')
     
 def write_byte(file, value):
-    file.write(struct.pack('B',value))
+    file.write(struct.pack('B', value))
     
 def write_bytes(file, values):
     file.write(struct.pack('%dB' % len(values), *values))
@@ -71,26 +89,26 @@ def write_bytes(file, values):
 def write_bool(file, value):
     write_byte(file, value)
     
-def write_short(file, value):
-    file.write(struct.pack('<h', value))
+def write_short(file, *args):
+    file.write(struct.pack('<%dh' % len(args), *args))
     
-def write_ushort(file, value):
-    file.write(struct.pack('<H', value))
+def write_ushort(file, *args):
+    file.write(struct.pack('<%dH' % len(args), *args))
     
-def write_long(file, value):
-    file.write(struct.pack('<i', value))
+def write_long(file, *args):
+    file.write(struct.pack('<%di' % len(args), *args))
     
-def write_ulong(file, value):
-    file.write(struct.pack('<I', value))
+def write_ulong(file, *args):
+    file.write(struct.pack('<%dI' % len(args), *args))
     
-def write_float(file, value):
-    file.write(struct.pack('<f', value))
+def write_float(file, *args):
+    file.write(struct.pack('<%df' % len(args), *args))
     
-def write_double(file, value):
-    file.write(struct.pack('<d', value))
+def write_double(file, *args):
+    file.write(struct.pack('<%dd' % len(args), *args))
     
 def write_chars(file, values):
-    file.write(struct.pack('<%ds' % len(values), values.encode('ASCII')))
+    file.write(struct.pack('<%ds' % len(values), values.encode('ascii')))
     
 def write_asciiz(file, value):
-    file.write(struct.pack('<%ds' % (len(value)+1), value.encode('ASCII')))
+    file.write(struct.pack('<%ds' % (len(value) + 1), value.encode('ascii')))

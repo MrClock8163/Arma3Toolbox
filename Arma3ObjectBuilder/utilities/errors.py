@@ -4,6 +4,9 @@
 class P3DError(Exception):
     pass
 
+class RTMError(Exception):
+    pass
+
 
 class LODError(Exception):
     pass

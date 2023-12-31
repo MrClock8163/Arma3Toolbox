@@ -9,14 +9,14 @@ class A3OB_OT_vertex_mass_set(bpy.types.Operator):
     
     bl_idname = "a3ob.vertex_mass_set"
     bl_label = "Set Mass On Each"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
         return massutils.can_edit_mass(context) and context.scene.a3ob_mass_editor.source == 'MASS'
         
     def execute(self, context):
-        obj = context.active_object
+        obj = context.object
         scene = context.scene
         massutils.set_selection_mass_each(obj, scene.a3ob_mass_editor.mass)
         return {'FINISHED'}
@@ -27,14 +27,14 @@ class A3OB_OT_vertex_mass_distribute(bpy.types.Operator):
     
     bl_idname = "a3ob.vertex_mass_distribute"
     bl_label = "Distribute Mass"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
         return massutils.can_edit_mass(context) and context.scene.a3ob_mass_editor.source == 'MASS'
         
     def execute(self, context):
-        obj = context.active_object
+        obj = context.object
         scene = context.scene
         massutils.set_selection_mass_distribute(obj, scene.a3ob_mass_editor.mass)
         return {'FINISHED'}
@@ -45,14 +45,14 @@ class A3OB_OT_vertex_mass_set_density(bpy.types.Operator):
     
     bl_idname = "a3ob.vertex_mass_set_density"
     bl_label = "Mass From Density"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
         return massutils.can_edit_mass(context) and context.scene.a3ob_mass_editor.source == 'DENSITY'
         
     def execute(self, context):
-        obj = context.active_object
+        obj = context.object
         scene = context.scene
         contiguous = massutils.set_selection_mass_density(obj, scene.a3ob_mass_editor.density)
         if not contiguous:
@@ -66,14 +66,14 @@ class A3OB_OT_vertex_mass_clear(bpy.types.Operator):
     
     bl_idname = "a3ob.vertex_mass_clear"
     bl_label = "Clear Masses"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
         return massutils.can_edit_mass(context)
         
     def execute(self, context):
-        obj = context.active_object
+        obj = context.object
         massutils.clear_selection_masses(obj)
         return {'FINISHED'}
 
@@ -83,14 +83,14 @@ class A3OB_OT_vertex_mass_visualize(bpy.types.Operator):
     
     bl_idname = "a3ob.vertex_mass_visualize"
     bl_label = "Visualize"
-    bl_options = {'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
     def poll(cls, context):
         return massutils.can_edit_mass(context)
     
     def execute(self, context):
-        obj = context.active_object
+        obj = context.object
         scene_props = context.scene.a3ob_mass_editor
         
         massutils.visualize_mass(obj, scene_props)
@@ -112,13 +112,13 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
     def draw_header(self, context):
         row = self.layout.row(align=True)
         if utils.get_addon_preferences().show_info_links:
-            row.operator("wm.url_open", text="", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/vertex-mass-editing"
+            row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/vertex-mass-editing"
         
     def draw(self, context):
         layout = self.layout
         
         scene_props = context.scene.a3ob_mass_editor
-        obj = context.active_object
+        obj = context.object
         
         layout.prop(scene_props, "enabled", text="Live Editing", toggle=True)
         row_dynamic = layout.row(align=True)
@@ -132,7 +132,7 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
         layout.label(text="Overwrite Mass:")
         layout.prop(scene_props, "source", expand=True)
         
-        col = layout.column(align=True)        
+        col = layout.column(align=True)
         if scene_props.source == 'MASS':
             col.prop(scene_props, "mass")
             col.operator("a3ob.vertex_mass_set", icon_value=utils.get_icon("op_mass_set"))

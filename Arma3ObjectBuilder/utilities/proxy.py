@@ -2,8 +2,6 @@
 # and proxy creation.
 
 
-import math
-
 import bpy
 import mathutils
 
@@ -32,12 +30,11 @@ def get_transform_rotation(obj):
 
 
 def create_proxy():
-    mesh = bpy.data.meshes.new("proxy: unknown 1")
+    mesh = bpy.data.meshes.new("proxy")
     mesh.from_pydata([(0, 0, 0), (0, 0, 2), (0, 1, 0)], [], [(0, 1, 2)])
     mesh.update(calc_edges=True)
-    mesh.polygons[0].use_smooth = True
     
-    obj = bpy.data.objects.new("proxy: unknown 1", mesh)
+    obj = bpy.data.objects.new("proxy", mesh)
     obj.a3ob_properties_object_proxy.is_a3_proxy = True
     
     return obj

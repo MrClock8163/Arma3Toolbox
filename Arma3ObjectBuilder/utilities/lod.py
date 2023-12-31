@@ -92,13 +92,14 @@ class Validator():
 
     @classmethod
     def is_all_sharp(cls, bm):
+        for face in bm.faces:
+            if face.smooth:
+                break
+        else:
+            return True
+
         for edge in bm.edges:
-            smooths = [not face.smooth for face in edge.link_faces]
-            
-            if sum(smooths) > 0:
-                continue
-                        
-            if edge.smooth:
+            if edge.smooth and edge.is_manifold:
                 return False
         
         return True
@@ -131,7 +132,7 @@ class Validator():
                     face2 = edge.link_faces[1]
                     dot = face1.normal.dot(face2.normal)
                     
-                    if not (0.9999 <= dot and dot <=1.0001):
+                    if not (0.9999 <= dot and dot <= 1.0001):
                         if self.lazy:
                             raise errors.LODError("LOD has concave edge(s)")
                             
