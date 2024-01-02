@@ -295,8 +295,6 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
     logger.step("Processing data:")
     
     mesh = bpy.data.meshes.new(lod_name)
-    mesh.use_auto_smooth = True
-    mesh.auto_smooth_angle = math.radians(180)
     
     mesh.from_pydata(*lod.pydata())
     mesh.update(calc_edges=True)
@@ -314,9 +312,11 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
         
     object_props.resolution = lod_resolution
 
-    
-    for face in mesh.polygons:
-        face.use_smooth = True
+    if lod_index not in data.lod_shadows:
+        for face in mesh.polygons:
+            face.use_smooth = True
+        mesh.use_auto_smooth = True
+        mesh.auto_smooth_angle = math.radians(180)
     
     if 'NORMALS' in operator.additional_data and lod_index in data.lod_visuals:
         if process_normals(mesh, lod):
