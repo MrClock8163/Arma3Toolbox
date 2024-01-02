@@ -12,6 +12,12 @@
 ### Changed:
 - tools:
   - Validation logic was completely overhaul for better extensibility
+- import-export:
+  - P3D:
+    - split normals are now only imported for visual LODs
+    - split normals are now only exported for visual LODs
+    - when custom normalsa are not exported, they are now replaced with weighted normals automatically
+    - shadow LODs are now imported as flat shaded
 
 ### Fixed:
 - LOD validation would produce false negatives when proxies were used
