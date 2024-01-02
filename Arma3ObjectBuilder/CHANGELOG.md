@@ -1,5 +1,21 @@
 # Changelog
 
+## [v2.1.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.1.0)
+
+### Added:
+- tools:
+  - Validation:
+    - Point cloud ruleset
+    - Paths ruleset
+    - Roadway ruleset
+
+### Changed:
+- tools:
+  - Validation logic was completely overhaul for better extensibility
+
+### Fixed:
+- LOD validation would produce false negatives when proxies were used
+
 ## [v2.0.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.0.0)
 
 **This update brings compatibility with the Blender 4 releases**
