@@ -14,7 +14,8 @@ from ..utilities import lod as lodutils
 from ..utilities import flags as flagutils
 from ..utilities import compat as computils
 from ..utilities import errors
-from ..utilities.logger import ProcessLogger
+from ..utilities.logger import ProcessLogger, ProcessLoggerNull
+from ..utilities.validator import Validator
 
 
 # Simple check to not even start the export if there are
@@ -145,7 +146,7 @@ def merge_into_lod(operator, main_object, sub_objects, proxy_objects):
 # P3D file. Merges the sub-objects and proxies into the main objects, applies transformations,
 # runs mesh validation and sorts sections if necessary.
 # [(LOD object 0, proxy lookup 0), (..., ....), ....]
-def get_lod_data(operator, context):
+def get_lod_data(operator, context, validator):
     scene = context.scene
     export_objects = scene.objects
 
@@ -163,6 +164,7 @@ def get_lod_data(operator, context):
             computils.call_operator_ctx(bpy.ops.object.mode_set, {"active_object": obj}, mode='OBJECT')
         
         main_obj = duplicate_object(obj)
+        is_valid = True
 
         sub_objects = []
         proxy_objects = []
@@ -180,7 +182,13 @@ def get_lod_data(operator, context):
             else:
                 sub_objects.append(child_copy)
         
-        proxy_lookup = merge_into_lod(operator, main_obj, sub_objects, proxy_objects)
+        # Merging of the components has to be done in two steps (1st: sub-objects, 2nd: proxies), because the LOD
+        # validation would otherwise get confused by the proxy triangles (eg.: it'd be impossible to validate
+        # that a mesh is otherwise contiguous or not).
+        merge_into_lod(operator, main_obj, sub_objects, [])
+        if validator:
+            is_valid = validator.validate(main_obj, main_obj.a3ob_properties_object.lod, True, operator.validate_lods_warning_errors)
+        proxy_lookup = merge_into_lod(operator, main_obj, [], proxy_objects)
 
         if operator.apply_transforms:
             ctx = {
@@ -225,7 +233,7 @@ def get_lod_data(operator, context):
             bm.to_mesh(main_obj.data)
             bm.free()
 
-        lod_list.append((main_obj, proxy_lookup))
+        lod_list.append((main_obj, proxy_lookup, is_valid))
 
     return lod_list
 
@@ -431,7 +439,7 @@ def process_taggs(obj, bm, logger):
     return taggs
 
 
-def process_lod(operator, obj, proxy_lookup, validator, logger):
+def process_lod(operator, obj, proxy_lookup, is_valid, logger):
     lod_name = obj.a3ob_properties_object.get_name()
 
     logger.level_up()
@@ -440,17 +448,15 @@ def process_lod(operator, obj, proxy_lookup, validator, logger):
 
     # The P3D format cannot store n-gons, so the export must
     # skip LODs with such faces.
-    if lodutils.Validator.has_ngons(obj.data):
+    if lodutils.has_ngons(obj.data):
         logger.log("N-gons detected -> skipping LOD")
         logger.level_down()
         return None
 
-    if validator:
-        validator.lod = obj
-        if not validator.validate(obj.a3ob_properties_object.lod):
-            logger.log("Failed validation -> skipping LOD (run manual validation for details)")
-            logger.level_down()
-            return None
+    if not is_valid:
+        logger.log("Failed validation -> skipping LOD (run manual validation for details)")
+        logger.level_down()
+        return None
 
     output = p3d.P3D_LOD()
     output.resolution = obj.a3ob_properties_object.get_signature()
@@ -506,16 +512,16 @@ def write_file(operator, context, file):
     
     validator = None
     if operator.validate_lods:
-        validator = lodutils.Validator(None, operator.validate_lods_warnings_errors, True)
+        validator = Validator(ProcessLoggerNull())
     
     logger = ProcessLogger()
     logger.step("P3D export to %s" % operator.filepath)
 
     time_file_start = time.time()
 
-    # Gather all exportable LOD objects, duplicate them, and merge their components.
-    # Produce the final mesh data, and proxy lookup table to export for each LOD.
-    lod_list = get_lod_data(operator, context)
+    # Gather all exportable LOD objects, duplicate them, merge their components, and validate for LOD type.
+    # Produce the final mesh data, proxy lookup table and validity for each LOD.
+    lod_list = get_lod_data(operator, context, validator)
     
     logger.log("Preprocessing done in %f sec" % (time.time() - time_file_start))
     logger.log("Detected %d LOD objects" % len(lod_list))
@@ -528,11 +534,11 @@ def write_file(operator, context, file):
     logger.level_up()
 
     mlod_lods = []
-    for i, (lod, proxy_lookup) in enumerate(lod_list):
+    for i, (lod, proxy_lookup, is_valid) in enumerate(lod_list):
         time_lod_start = time.time()
         logger.step("LOD %d" % (i + 1))
 
-        new_lod = process_lod(operator, lod, proxy_lookup, validator, logger)
+        new_lod = process_lod(operator, lod, proxy_lookup, is_valid, logger)
         if new_lod:
             mlod_lods.append(new_lod)
         bpy.data.meshes.remove(lod.data, do_unlink=True)

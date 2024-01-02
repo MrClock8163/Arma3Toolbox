@@ -12,6 +12,14 @@ from . import errors
 from .logger import ProcessLogger
 
 
+def has_ngons(mesh):
+    for face in mesh.polygons:
+        if len(face.vertices) > 4:
+            return True
+    
+    return False
+
+
 def get_lod_id(value):
     fraction, exponent = utils.normalize_float(value)
 
