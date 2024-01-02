@@ -60,6 +60,24 @@ def edit_bmesh(obj, loop_triangles = False, destructive = False):
             bm.free()
 
 
+@contextmanager
+def query_bmesh(obj):
+    mesh = obj.data
+    if obj.mode == 'EDIT':
+        try:
+            bm = bmesh.from_edit_mesh(mesh)
+            yield bm
+        finally:
+            bm.free()
+    else:
+        try:
+            bm = bmesh.new()
+            bm.from_mesh(mesh)
+            yield bm
+        finally:
+            bm.free()
+
+
 def get_components(mesh):
     mesh.calc_loop_triangles()
     components = meshutils.mesh_linked_triangles(mesh)
