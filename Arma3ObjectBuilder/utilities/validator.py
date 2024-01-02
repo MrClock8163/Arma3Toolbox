@@ -40,6 +40,24 @@ class ValidatorComponent():
                 break
         
         return result
+
+    def has_selection_internal(self, re_selection):
+        if len(self.bm.verts) == 0:
+            return False
+        
+        RE_NAME = re.compile(re_selection, re.IGNORECASE)
+        groups = [group.index for group in self.obj.vertex_groups if RE_NAME.match(group.name)]
+        
+        if len(groups) == 0:
+            return False
+        
+        layer = self.bm.verts.layers.deform.verify()
+        for vert in self.bm.verts:
+            for group in groups:
+                if group in vert[layer] and vert[layer][group] == 1:
+                    return True
+        else:
+            return False
     
     ruleset = "Base"
     def conditions(self):
@@ -146,19 +164,10 @@ class ValidatorGeometry(ValidatorComponent):
         return result
     
     def has_components(self):
-        result = True, ""
-
-        if len(self.obj.data.vertices) == 0:
-            return result
+        if not self.has_selection_internal("component\d+"):
+            return False, "mesh has no component selections"
         
-        RE_COMPONENT = re.compile("component\d+", re.IGNORECASE)
-        for group in self.obj.vertex_groups:
-            if RE_COMPONENT.match(group.name):
-                break
-        else:
-            result = False, "mesh has no component selections"
-        
-        return result
+        return True, ""
     
     def has_mass(self):
         result = True, ""
@@ -193,11 +202,15 @@ class ValidatorGeometry(ValidatorComponent):
     ruleset = "Geometry"
     def conditions(self):
         strict = (
-            self.is_contiguous,
             self.is_convex,
-            self.has_components,
             self.has_mass
         )
+        if not self.has_selection_internal("occluder\d+"):
+            strict = (
+                self.is_contiguous,
+                self.has_components,
+                *strict
+            )
         optional = (
             self.is_triangulated,
             self.no_unweighted
@@ -213,10 +226,14 @@ class ValidatorGeometrySubtype(ValidatorGeometry):
     ruleset = "Geometry subtype"
     def conditions(self):
         strict = (
-            self.is_contiguous,
             self.is_convex,
-            self.has_components
         )
+        if not self.has_selection_internal("occluder\d+"):
+            strict = (
+                self.is_contiguous,
+                self.has_components,
+                *strict
+            )
         optional = (
             self.is_triangulated,
         )
@@ -376,51 +393,25 @@ class ValidatorPaths(ValidatorComponent):
         return result
     
     def has_entry(self):
-        result = True, ""
-
-        RE_IN = re.compile("in\d+", re.IGNORECASE)
-        entry_groups = [group.index for group in self.obj.vertex_groups if RE_IN.match(group.name)]
+        if not self.has_selection_internal("in\d+"):
+            return False, "mesh has no entry points assigned"
         
-        if len(entry_groups) == 0:
-            return False, "mesh has no entry point selections"
-        
-        layer = self.bm.verts.layers.deform.verify()
-        for vert in self.bm.verts:
-            for group in entry_groups:
-                if group in vert[layer] and vert[layer][group] == 1:
-                    break
-        else:
-            result = False, "mesh has no entry points assigned to entry selections"
-
-        return result
+        return True, ""
     
     def has_position(self):
-        result = True, ""
-
-        RE_POS = re.compile("pos\d+", re.IGNORECASE)
-        entry_groups = [group.index for group in self.obj.vertex_groups if RE_POS.match(group.name)]
+        if not self.has_selection_internal("in\d+"):
+            return False, "mesh has no position points assigned"
         
-        if len(entry_groups) == 0:
-            return False, "mesh has no position selections"
-        
-        layer = self.bm.verts.layers.deform.verify()
-        for vert in self.bm.verts:
-            for group in entry_groups:
-                if group in vert[layer] and vert[layer][group] == 1:
-                    break
-        else:
-            result = False, "mesh has no points assigned to position selections"
-
-        return result
+        return True, ""
 
     ruleset = "Paths"
     def conditions(self):
         strict = (
             self.has_faces,
+            self.has_entry,
         )
         optional = (
-            self.has_entry,
-            self.has_position
+            self.has_position,
         )
         info = tuple()
 
