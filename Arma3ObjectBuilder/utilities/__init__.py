@@ -15,3 +15,4 @@ from . import outliner
 from . import proxy
 from . import renaming
 from . import structure
+from . import validator

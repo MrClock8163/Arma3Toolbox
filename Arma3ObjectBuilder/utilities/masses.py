@@ -143,7 +143,7 @@ def set_selection_mass_density(obj, density):
         for vert in bm.verts:
             vert[layer] = data[lookup[vert.index]][2]
         
-        contiguous = lodutils.Validator.is_contiguous_mesh(bm)
+        contiguous = lodutils.is_contiguous_mesh(bm)
     
     return contiguous
 

@@ -1,7 +1,8 @@
 import bpy
 
 from ..utilities import generic as utils
-from ..utilities import lod as lodutils
+from ..utilities.validator import Validator
+from ..utilities.logger import ProcessLogger
 
 
 class A3OB_OT_validate_lod(bpy.types.Operator):
@@ -28,9 +29,8 @@ class A3OB_OT_validate_lod(bpy.types.Operator):
                 self.report({'INFO'}, "No validation rules for detected LOD type")
                 return {'FINISHED'}
         
-        eval_obj = obj.evaluated_get(context.evaluated_depsgraph_get())
-        validator = lodutils.Validator(eval_obj, scene_props.warning_errors)
-        valid = validator.validate(scene_props.lod)
+        processor = Validator(ProcessLogger())
+        valid = processor.validate(obj, scene_props.lod, False, scene_props.warning_errors)
         if valid:
             self.report({'INFO'}, "Validation succeeded")
         else:
