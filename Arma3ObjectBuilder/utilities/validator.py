@@ -43,22 +43,22 @@ class ValidatorComponent():
     
     ruleset = "Base"
     def conditions(self):
-        errs = tuple()
-        warns = tuple()
+        strict = tuple()
+        optional = tuple()
         info = tuple()
 
-        return errs, warns, info
+        return strict, optional, info
     
     def validate_lazy(self, warns_errs):
-        errs, warns, _ = self.conditions()
+        strict, optional, _ = self.conditions()
 
-        for item in errs:
+        for item in strict:
             success, _ = item()
             if not success:
                 return False
         
         if warns_errs:
-            for item in warns:
+            for item in optional:
                 success, _ = item()
                 if not success:
                     return False
@@ -66,17 +66,17 @@ class ValidatorComponent():
         return True
 
     def validate_verbose(self, warns_errs):
-        errs, warns, info = self.conditions()
+        strict, optional, info = self.conditions()
         is_valid = True
         self.logger.level_up()
 
-        for item in errs:
+        for item in strict:
             success, comment = item()
             if not success:
                 self.logger.step("ERROR: %s" % comment)
                 is_valid = False
         
-        for item in warns:
+        for item in optional:
             success, comment = item()
             if not success:
                 self.logger.step("WARNING: %s" % comment)
@@ -106,15 +106,22 @@ class ValidatorComponent():
 class ValidatorGeneric(ValidatorComponent):
     ruleset = "Generic"
     def conditions(self):
-        errs = (
+        strict = (
             self.no_ngons,
         )
-        warns = info = tuple()
+        optional = info = tuple()
 
-        return errs, warns, info
+        return strict, optional, info
 
 
 class ValidatorGeometry(ValidatorComponent):
+    def is_triangulated(self):
+        result =  super().is_triangulated()
+        if not result[0]:
+            result = False, "mesh is not triangulated (convexity is not definite)"
+        
+        return result
+    
     def is_convex_edge(self, edge):
         if edge.is_convex:
             return True
@@ -144,9 +151,9 @@ class ValidatorGeometry(ValidatorComponent):
         if len(self.obj.data.vertices) == 0:
             return result
         
-        re_component = re.compile("component\d+", re.IGNORECASE)
+        RE_COMPONENT = re.compile("component\d+", re.IGNORECASE)
         for group in self.obj.vertex_groups:
-            if re_component.match(group.name):
+            if RE_COMPONENT.match(group.name):
                 break
         else:
             result = False, "mesh has no component selections"
@@ -185,13 +192,13 @@ class ValidatorGeometry(ValidatorComponent):
 
     ruleset = "Geometry"
     def conditions(self):
-        errs = (
+        strict = (
             self.is_contiguous,
             self.is_convex,
             self.has_components,
             self.has_mass
         )
-        warns = (
+        optional = (
             self.is_triangulated,
             self.no_unweighted
         )
@@ -199,23 +206,23 @@ class ValidatorGeometry(ValidatorComponent):
             self.farthest_point,
         )
 
-        return errs, warns, info
+        return strict, optional, info
 
 
 class ValidatorGeometrySubtype(ValidatorGeometry):
     ruleset = "Geometry subtype"
     def conditions(self):
-        errs = (
+        strict = (
             self.is_contiguous,
             self.is_convex,
             self.has_components
         )
-        warns = (
+        optional = (
             self.is_triangulated,
         )
         info = tuple()
 
-        return errs, warns, info
+        return strict, optional, info
     
 
 class ValidatorShadow(ValidatorComponent):
@@ -257,24 +264,186 @@ class ValidatorShadow(ValidatorComponent):
     
     ruleset = "Shadow"
     def conditions(self):
-        errs = (
+        strict = (
             self.is_contiguous,
             self.is_triangulated,
             self.is_sharp,
             self.no_materials
         )
-        warns = info = tuple()
+        optional = info = tuple()
 
-        return errs, warns, info
+        return strict, optional, info
+
+
+class ValidatorPointcloud(ValidatorComponent):
+    def no_edges(self):
+        result = True, ""
+
+        if len(self.bm.edges) > 0:
+            result = False, "point cloud contains edges"
+
+        return result
+    
+    def no_faces(self):
+        result = True, ""
+
+        if len(self.bm.faces) > 0:
+            result = False, "point cloud contains faces"
+        
+        return result
+    
+    ruleset = "Point cloud"
+    def conditions(self):
+        strict = info = tuple()
+        optional = (
+            self.no_edges,
+            self.no_faces
+        )
+
+        return strict, optional, info
+
+
+class ValidatorRoadway(ValidatorComponent):
+    def under_limit(self):
+        result = True, ""
+
+        if len(self.bm.verts) > 255:
+            result = False, "mesh has more than 255 points (animations will not work properly)"
+
+        return result
+    
+    def has_faces(self):
+        result = True, ""
+
+        if len(self.bm.faces) == 0:
+            result = False, "mesh has no faces"
+
+        return result
+
+    def has_sound(self):
+        result = True, ""
+
+        textures = {}
+        for i, slot in enumerate(self.obj.material_slots):
+            mat = slot.material
+            if not mat:
+                textures[i] = ""
+                continue
+                
+            textures[i] = mat.a3ob_properties_material.to_p3d()[0]
+        
+        if len(textures) == 0:
+            result = False, "mesh has no sound textures assigned"
+        else:
+            for face in self.bm.faces:
+                if textures[face.material_index] == "":
+                    result = False, "mesh has faces with no sound texture assigned"
+                    break
+
+        return result
+
+    def farthest_point(self):
+        distance = 0
+        for vertex in self.bm.verts:
+            if vertex.co.length > distance:
+                distance = vertex.co.length
+        
+        return True, "distance of farthest point from origin is %.3f meters" % distance
+    
+    ruleset = "Roadway"
+    def conditions(self):
+        strict = (
+            self.has_faces,
+        )
+        optional = (
+            self.under_limit,
+            self.has_sound
+        )
+        info = (
+            self.farthest_point,
+        )
+
+        return strict, optional, info
+
+
+class ValidatorPaths(ValidatorComponent):
+    def has_faces(self):
+        result = True, ""
+
+        if len(self.bm.faces) == 0:
+            result = False, "mesh has no faces"
+
+        return result
+    
+    def has_entry(self):
+        result = True, ""
+
+        RE_IN = re.compile("in\d+", re.IGNORECASE)
+        entry_groups = [group.index for group in self.obj.vertex_groups if RE_IN.match(group.name)]
+        
+        if len(entry_groups) == 0:
+            return False, "mesh has no entry point selections"
+        
+        layer = self.bm.verts.layers.deform.verify()
+        for vert in self.bm.verts:
+            for group in entry_groups:
+                if group in vert[layer] and vert[layer][group] == 1:
+                    break
+        else:
+            result = False, "mesh has no entry points assigned to entry selections"
+
+        return result
+    
+    def has_position(self):
+        result = True, ""
+
+        RE_POS = re.compile("pos\d+", re.IGNORECASE)
+        entry_groups = [group.index for group in self.obj.vertex_groups if RE_POS.match(group.name)]
+        
+        if len(entry_groups) == 0:
+            return False, "mesh has no position selections"
+        
+        layer = self.bm.verts.layers.deform.verify()
+        for vert in self.bm.verts:
+            for group in entry_groups:
+                if group in vert[layer] and vert[layer][group] == 1:
+                    break
+        else:
+            result = False, "mesh has no points assigned to position selections"
+
+        return result
+
+    ruleset = "Paths"
+    def conditions(self):
+        strict = (
+            self.has_faces,
+        )
+        optional = (
+            self.has_entry,
+            self.has_position
+        )
+        info = tuple()
+
+        return strict, optional, info
 
 
 class Validator():
     def __init__(self, logger):
         self.logger = logger
+        self.components = {
+            **dict.fromkeys(('4', '26', '27', '28'), [ValidatorShadow]),
+            **dict.fromkeys(('9', '10', '13'), [ValidatorPointcloud]),
+            **dict.fromkeys(('7', '8', '14', '15', '16', '17', '19', '20', '21', '22', '23', '24'), [ValidatorGeometrySubtype]),
+            '6': [ValidatorGeometry],
+            '11': [ValidatorRoadway],
+            '12': [ValidatorPaths]
+        }
     
     def validate(self, obj, lod, lazy = False, warns_errs = True):
-        self.logger.step("validating %s" % obj.name)
+        self.logger.step("Validating %s" % obj.name)
         self.logger.level_up()
+        if warns_errs:
+            self.logger.step("Warnings are errors")
 
         obj.update_from_editmode()
         bm = bmesh.new()
@@ -283,19 +452,8 @@ class Validator():
         bm.edges.ensure_lookup_table()
         bm.faces.ensure_lookup_table()
 
-        steps = [
-            ValidatorGeneric
-        ]
-
-        if lod in ('4', '26', '27', '28'):
-            steps.append(ValidatorShadow)
-        elif lod == '6':
-            steps.append(ValidatorGeometry)
-        elif lod in ('7', '8', '14', '15', '16', '17', '19', '20', '21', '22', '23', '24'):
-            steps.append(ValidatorGeometrySubtype)
-        
         is_valid = True
-        for item in steps:
+        for item in [ValidatorGeneric] + self.components.get(lod, []):
             is_valid &= item(obj, bm, self.logger).validate(lazy, warns_errs)
 
         bm.free()
