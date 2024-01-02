@@ -318,7 +318,7 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
     for face in mesh.polygons:
         face.use_smooth = True
     
-    if 'NORMALS' in operator.additional_data:
+    if 'NORMALS' in operator.additional_data and lod_index in data.lod_visuals:
         if process_normals(mesh, lod):
             logger.log("Applied split normals")
         else:
