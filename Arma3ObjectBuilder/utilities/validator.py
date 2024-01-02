@@ -193,6 +193,7 @@ class ValidatorGeometry(ValidatorComponent):
         )
         warns = (
             self.is_triangulated,
+            self.no_unweighted
         )
         info = (
             self.farthest_point,
@@ -272,6 +273,9 @@ class Validator():
         self.logger = logger
     
     def validate(self, obj, lod, lazy = False, warns_errs = True):
+        self.logger.step("validating %s" % obj.name)
+        self.logger.level_up()
+
         obj.update_from_editmode()
         bm = bmesh.new()
         bm.from_object(obj, bpy.context.evaluated_depsgraph_get())
@@ -295,5 +299,7 @@ class Validator():
             is_valid &= item(obj, bm, self.logger).validate(lazy, warns_errs)
 
         bm.free()
+        self.logger.level_down()
+        self.logger.step("Finished validation")
 
         return is_valid
