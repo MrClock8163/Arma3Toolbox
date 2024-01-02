@@ -14,6 +14,7 @@ from ..utilities import lod as lodutils
 from ..utilities import flags as flagutils
 from ..utilities import compat as computils
 from ..utilities import errors
+from ..utilities import data
 from ..utilities.logger import ProcessLogger, ProcessLoggerNull
 from ..utilities.validator import Validator
 
@@ -53,57 +54,90 @@ def apply_modifiers(obj):
             obj.modifiers.remove(m)
 
 
-# Maybe transfer to the object props PG as a method?
-# def get_resolution(obj):
-#     object_props = obj.a3ob_properties_object
-#     return lodutils.get_lod_signature(int(object_props.lod), object_props.resolution)
-
-
 # In order to simplify merging the LOD parts, and the data access later on, the dereferenced
 # flags need to be written directly into their respective integer bmesh layers.
 def bake_flags_vertex(obj):
-    bm = bmesh.new()
-    bm.from_mesh(obj.data)
-    bm.verts.ensure_lookup_table()
+    with utils.edit_bmesh(obj) as bm:
+        bm.verts.ensure_lookup_table()
 
-    default_flag = utils.get_addon_preferences().flag_vertex
+        default_flag = utils.get_addon_preferences().flag_vertex
 
-    layer = flagutils.get_layer_flags_vertex(bm)
-    flags_vertex = {i: item.get_flag() for i, item in enumerate(obj.a3ob_properties_object_flags.vertex)}
-    if len(flags_vertex) > 0:
-        for vert in bm.verts:
-            vert[layer] = flags_vertex.get(vert[layer], default_flag)
-    else:
-        for vert in bm.verts:
-            vert[layer] = default_flag
-    
-    bm.to_mesh(obj.data)
-    bm.free()
+        layer = flagutils.get_layer_flags_vertex(bm)
+        flags_vertex = {i: item.get_flag() for i, item in enumerate(obj.a3ob_properties_object_flags.vertex)}
+        print(flags_vertex)
+        if len(flags_vertex) > 0:
+            for vert in bm.verts:
+                vert[layer] = flags_vertex.get(vert[layer], default_flag)
+                print(vert[layer])
+        else:
+            for vert in bm.verts:
+                vert[layer] = default_flag
 
 
 def bake_flags_face(obj):
-    bm = bmesh.new()
-    bm.from_mesh(obj.data)
-    bm.faces.ensure_lookup_table()
+    with utils.edit_bmesh(obj) as bm:
+        bm.faces.ensure_lookup_table()
 
-    default_flag = utils.get_addon_preferences().flag_face
+        default_flag = utils.get_addon_preferences().flag_face
 
-    layer = flagutils.get_layer_flags_face(bm)
-    flags_face = {i: item.get_flag() for i, item in enumerate(obj.a3ob_properties_object_flags.face)}
-    if len(flags_face) > 0:
+        layer = flagutils.get_layer_flags_face(bm)
+        flags_face = {i: item.get_flag() for i, item in enumerate(obj.a3ob_properties_object_flags.face)}
+        if len(flags_face) > 0:
+            for face in bm.faces:
+                face[layer] = flags_face.get(face[layer], default_flag)
+        else:
+            for face in bm.faces:
+                face[layer] = default_flag
+
+
+def blank_flags_vertex(obj):
+    with utils.edit_bmesh(obj) as bm:
+        bm.verts.ensure_lookup_table()
+        layer = flagutils.get_layer_flags_vertex(bm)
+
+        for vert in bm.verts:
+            vert[layer] = 0
+
+
+def blank_flags_face(obj):
+    with utils.edit_bmesh(obj) as bm:
+        bm.faces.ensure_lookup_table()
+        layer = flagutils.get_layer_flags_face(bm)
+
         for face in bm.faces:
-            face[layer] = flags_face.get(face[layer], default_flag)
-    else:
-        for face in bm.faces:
-            face[layer] = default_flag
-    
-    bm.to_mesh(obj.data)
-    bm.free()
+            face[layer] = 0
+
 
 # The sub-objects and proxy object need to be merged into the main LOD object after some
 # preprocessing. The proxy selections need to be created with placeholder names, the flags
 # need to be baked into the respective layers, and the modifiers have to get applied.
-def merge_into_lod(operator, main_object, sub_objects, proxy_objects):
+def merge_sub_objects(operator, main_obj, sub_objects):
+    all_objects = sub_objects + [main_obj]
+
+    # To simplify the object merging, the face and vertex flags need to be directly written
+    # into their layers. This way the process doesn't have to deal with managing and merging
+    # flag groups on the different component objects.
+    for obj in all_objects:
+        bake_flags_vertex(obj)
+        bake_flags_face(obj)
+
+        if operator.apply_modifiers:
+            apply_modifiers(obj)
+    
+    if len(all_objects) > 1:
+        ctx = {
+            "active_object": main_obj,
+            "selected_objects": all_objects,
+            "selected_editable_objects": all_objects
+        }
+        computils.call_operator_ctx(bpy.ops.object.join, ctx)
+    
+    # Duplicate cleanup
+    for obj in sub_objects:
+        bpy.data.meshes.remove(obj.data, do_unlink=True)
+
+
+def merge_proxy_objects(operator, main_obj, proxy_objects):
     # Blender has a 63 character length limit on vertex group names,
     # so the proxy paths can't be written to the group name directly,
     # a placeholder name must be used, and added to a lookup dictionary.
@@ -116,27 +150,21 @@ def merge_into_lod(operator, main_object, sub_objects, proxy_objects):
         utils.create_selection(proxy, placeholder)
         proxy_lookup[placeholder] = proxy.a3ob_properties_object_proxy.to_placeholder()
 
-    # To simplify the object merging, the face and vertex flags need to be directly written
-    # into their layers. This way the process doesn't have to deal with managing and merging
-    # flag groups on the different component objects.
-    all_objects = sub_objects + proxy_objects + [main_object]
-    for obj in all_objects:
-        bake_flags_face(obj)
-        bake_flags_vertex(obj)
-
-        if operator.apply_modifiers:
-            apply_modifiers(obj)
+    all_objects = proxy_objects + [main_obj]
+    for obj in proxy_objects:
+        blank_flags_face(obj)
+        blank_flags_vertex(obj)
 
     if len(all_objects) > 1:
         ctx = {
-            "active_object": main_object,
+            "active_object": main_obj,
             "selected_objects": all_objects,
             "selected_editable_objects": all_objects
         }
         computils.call_operator_ctx(bpy.ops.object.join, ctx)
     
     # Duplicate cleanup
-    for obj in (sub_objects + proxy_objects):
+    for obj in proxy_objects:
         bpy.data.meshes.remove(obj.data, do_unlink=True)
 
     return proxy_lookup
@@ -185,10 +213,10 @@ def get_lod_data(operator, context, validator):
         # Merging of the components has to be done in two steps (1st: sub-objects, 2nd: proxies), because the LOD
         # validation would otherwise get confused by the proxy triangles (eg.: it'd be impossible to validate
         # that a mesh is otherwise contiguous or not).
-        merge_into_lod(operator, main_obj, sub_objects, [])
+        merge_sub_objects(operator, main_obj, sub_objects)
         if validator:
             is_valid = validator.validate(main_obj, main_obj.a3ob_properties_object.lod, True, operator.validate_lods_warning_errors)
-        proxy_lookup = merge_into_lod(operator, main_obj, [], proxy_objects)
+        proxy_lookup = merge_proxy_objects(operator, main_obj, proxy_objects)
 
         if operator.apply_transforms:
             ctx = {
@@ -200,12 +228,18 @@ def get_lod_data(operator, context, validator):
         if operator.validate_meshes:
             main_obj.data.validate(clean_customdata=False)
             
-        if not operator.preserve_normals:
+        if not operator.preserve_normals or int(main_obj.a3ob_properties_object.lod) not in data.lod_visuals:
             ctx = {
                 "active_object": main_obj,
                 "object": main_obj
             }
             computils.call_operator_ctx(bpy.ops.mesh.customdata_custom_splitnormals_clear, ctx)
+            main_obj.data.use_auto_smooth = True
+            main_obj.data.auto_smooth_angle = 3.141592654
+            mod = main_obj.modifiers.new("Temp", 'WEIGHTED_NORMAL')
+            mod.weight = 50
+            mod.keep_sharp = True
+            apply_modifiers(main_obj)
 
         # Sections are important for in-game performace, and should be sorted during export
         # to avoid any unnecessary fragmentation. Some info about sections can be found on the

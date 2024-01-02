@@ -3,7 +3,6 @@
 # in the data_p3d module.
 
 
-import math
 import time
 import os
 
@@ -316,7 +315,7 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
         for face in mesh.polygons:
             face.use_smooth = True
         mesh.use_auto_smooth = True
-        mesh.auto_smooth_angle = math.radians(180)
+        mesh.auto_smooth_angle = 3.141592654
     
     if 'NORMALS' in operator.additional_data and lod_index in data.lod_visuals:
         if process_normals(mesh, lod):
