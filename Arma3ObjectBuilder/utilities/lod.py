@@ -1,15 +1,8 @@
-# Backend functions mainly used by the P3D I/O, and the LOD
-# validation tool.
+# Backend functions mainly used by the P3D I/O.
 
-
-import re
-
-import bmesh
 
 from . import generic as utils
 from . import data
-from . import errors
-from .logger import ProcessLogger
 
 
 def has_ngons(mesh):
