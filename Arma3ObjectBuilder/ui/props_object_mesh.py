@@ -553,7 +553,7 @@ class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
 class A3OB_PT_object_mesh_proxies(bpy.types.Panel):
     bl_region_type = 'WINDOW'
     bl_space_type = 'PROPERTIES'
-    bl_label = "Proxy Outliner"
+    bl_label = "Proxies"
     bl_context = "data"
     bl_parent_id = "A3OB_PT_object_mesh"
     bl_options = {'DEFAULT_CLOSED'}
@@ -567,7 +567,24 @@ class A3OB_PT_object_mesh_proxies(bpy.types.Panel):
         layout = self.layout
         scene_props = context.scene.a3ob_proxy_access
 
-        layout.template_list("A3OB_UL_proxy_access", "A3OB_proxy_access", scene_props, "proxies", scene_props, "proxies_index")
+        layout = self.layout
+        row = layout.row()
+        col_list = row.column()
+        col_list.template_list("A3OB_UL_proxy_access", "A3OB_proxy_access", scene_props, "proxies", scene_props, "proxies_index")
+
+        # col_operators = row.column(align=True)
+
+
+        if scene_props.proxies_index not in range(len(scene_props.proxies)):
+            return
+        
+        proxy = context.scene.objects.get(scene_props.proxies[scene_props.proxies_index].obj)
+        if not proxy:
+            return
+        
+        proxy_props = proxy.a3ob_properties_object_proxy
+        col_list.prop(proxy_props, "proxy_path", text="", icon='MESH_CUBE')
+        col_list.prop(proxy_props, "proxy_index")
 
 
 class A3OB_PT_object_mesh_flags(bpy.types.Panel):
