@@ -78,6 +78,9 @@ lod_resolution_position = { # decimal places in normalized format
 lod_visuals = (0, 1, 2, 3, 18, 30)
 
 
+lod_shadows = (4, 26, 27, 28)
+
+
 lod_type_index = {
     (0.0, 0): 0, # Visual
     (1.0, 3): 1, # View Gunner

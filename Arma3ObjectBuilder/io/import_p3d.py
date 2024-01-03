@@ -3,7 +3,6 @@
 # in the data_p3d module.
 
 
-import math
 import time
 import os
 
@@ -295,8 +294,6 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
     logger.step("Processing data:")
     
     mesh = bpy.data.meshes.new(lod_name)
-    mesh.use_auto_smooth = True
-    mesh.auto_smooth_angle = math.radians(180)
     
     mesh.from_pydata(*lod.pydata())
     mesh.update(calc_edges=True)
@@ -314,11 +311,13 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
         
     object_props.resolution = lod_resolution
 
+    if lod_index not in data.lod_shadows:
+        for face in mesh.polygons:
+            face.use_smooth = True
+        mesh.use_auto_smooth = True
+        mesh.auto_smooth_angle = 3.141592654
     
-    for face in mesh.polygons:
-        face.use_smooth = True
-    
-    if 'NORMALS' in operator.additional_data:
+    if 'NORMALS' in operator.additional_data and lod_index in data.lod_visuals:
         if process_normals(mesh, lod):
             logger.log("Applied split normals")
         else:
@@ -349,7 +348,7 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
         process_materials(mesh, bm, lod, materials, materials_lookup)
         logger.log("Assigned materials")
     
-    if 'MASS' in operator.additional_data:
+    if lod_index == 6 and 'MASS' in operator.additional_data:
         process_mass(bm, lod)
         logger.log("Added vertex masses")
     
