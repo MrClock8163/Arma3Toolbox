@@ -7,24 +7,37 @@ from ..utilities import flags as flagutils
 
 
 class A3OB_OT_proxy_add(bpy.types.Operator):
-    """Add Arma 3 proxy object and parent to the active object"""
+    """Add an Arma 3 proxy object and parent to the active object"""
     
     bl_idname = "a3ob.proxy_add"
-    bl_label = "Arma 3 proxy"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_label = "Add Proxy"
+    bl_options = {'REGISTER'}
+
+    parent: bpy.props.StringProperty(
+        name = "Parent LOD Object",
+        description = "Name of the LOD object to parent the new proxy to"
+    )
+    path: bpy.props.StringProperty (
+        name = "Proxy Path",
+        description = "Proxy file path to assign to new proxy object"
+    )
     
     @classmethod
     def poll(cls, context):
-        obj = context.active_object
-        return obj and obj.type == 'MESH' and obj.mode == 'OBJECT' and obj.parent == None and not obj.a3ob_properties_object_proxy.is_a3_proxy
+        return True
         
     def execute(self, context):
-        obj = context.active_object
+        obj = context.scene.objects.get(self.parent, context.active_object)        
+        if not obj:
+            self.report({'INFO'}, "Cannot add new proxy object without parent")
+            return {'FINISHED'}
+
         proxy_object = proxyutils.create_proxy()
         proxy_object.location = context.scene.cursor.location
         obj.users_collection[0].objects.link(proxy_object)
         proxy_object.parent = obj
         proxy_object.matrix_parent_inverse = obj.matrix_world.inverted()
+        proxy_object.a3ob_properties_object_proxy.proxy_path = self.path
         return {'FINISHED'}
 
 
