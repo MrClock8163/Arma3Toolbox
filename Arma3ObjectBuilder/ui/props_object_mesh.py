@@ -28,6 +28,33 @@ class A3OB_OT_proxy_add(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class A3OB_OT_proxy_remove(bpy.types.Operator):
+    """Remove an Arma 3 proxy object from the active object"""
+
+    bl_idname = "a3ob.proxy_remove"
+    bl_label = "Remove Proxy"
+    bl_options = {'REGISTER'}
+
+    obj: bpy.props.StringProperty(
+        name = "Proxy Object",
+        description = "Name of the proxy object to remove"
+    )
+
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    def execute(self, context):
+        obj = context.scene.objects.get(self.obj, context.active_object)
+        if not obj or obj.type != 'MESH' or not obj.a3ob_properties_object_proxy.is_a3_proxy:
+            self.report({'INFO'}, "Cannot remove proxy")
+            return {'FINISHED'}
+        
+        bpy.data.meshes.remove(obj.data)
+
+        return {'FINISHED'}
+
+
 class A3OB_OT_paste_common_proxy(bpy.types.Operator):
     """Paste a common proxy model path"""
     
@@ -802,6 +829,7 @@ def menu_func(self, context):
 
 classes = (
     A3OB_OT_proxy_add,
+    A3OB_OT_proxy_remove,
     A3OB_OT_paste_common_proxy,
     A3OB_OT_namedprops_add,
     A3OB_OT_namedprops_remove,
