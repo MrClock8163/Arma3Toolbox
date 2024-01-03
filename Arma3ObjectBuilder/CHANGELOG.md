@@ -8,6 +8,11 @@
     - Point cloud ruleset
     - Paths ruleset
     - Roadway ruleset
+- properties:
+  - Proxy Access sub-panel in LOD Properties
+    - direct access to proxy properties
+    - Add Proxy
+    - Remove Proxy
 
 ### Changed:
 - tools:
