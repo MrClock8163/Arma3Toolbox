@@ -631,8 +631,12 @@ class A3OB_PT_object_mesh_proxies(bpy.types.Panel):
         if not proxy:
             return
         
+        op_remove.obj = proxy.name
         proxy_props = proxy.a3ob_properties_object_proxy
-        col_list.prop(proxy_props, "proxy_path", text="", icon='MESH_CUBE')
+        row_path = col_list.row(align=True)
+        op_common = row_path.operator("a3ob.paste_common_proxy", text="", icon='PASTEDOWN')
+        op_common.obj = proxy.name
+        row_path.prop(proxy_props, "proxy_path", text="", icon='MESH_CUBE')
         col_list.prop(proxy_props, "proxy_index")
 
 
@@ -798,7 +802,7 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
         row_path = layout.row(align=True)
         row_path.operator("a3ob.paste_common_proxy", text="", icon='PASTEDOWN')
         row_path.prop(object_props, "proxy_path", text="", icon='MESH_CUBE')
-        layout.prop(object_props, "proxy_index", text="")
+        layout.prop(object_props, "proxy_index")
 
 
 class A3OB_PT_object_dtm(bpy.types.Panel):
@@ -846,7 +850,7 @@ class A3OB_PT_object_dtm(bpy.types.Panel):
 
 def menu_func(self, context):
     self.layout.separator()
-    self.layout.operator(A3OB_OT_proxy_add.bl_idname, icon_value=utils.get_icon("op_proxy_add"))
+    self.layout.operator(A3OB_OT_proxy_add.bl_idname, text="Arma 3 Proxy", icon_value=utils.get_icon("op_proxy_add"))
 
 
 classes = (
