@@ -600,7 +600,7 @@ class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
 class A3OB_PT_object_mesh_proxies(bpy.types.Panel):
     bl_region_type = 'WINDOW'
     bl_space_type = 'PROPERTIES'
-    bl_label = "Proxies"
+    bl_label = "Proxy Access"
     bl_context = "data"
     bl_parent_id = "A3OB_PT_object_mesh"
     bl_options = {'DEFAULT_CLOSED'}
