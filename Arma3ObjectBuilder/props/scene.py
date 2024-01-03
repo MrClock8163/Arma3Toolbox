@@ -59,6 +59,11 @@ class A3OB_PG_outliner(bpy.types.PropertyGroup):
         self.proxies_index = -1
 
 
+class A3OB_PG_proxy_access(bpy.types.PropertyGroup):
+    proxies: bpy.props.CollectionProperty(type=A3OB_PG_outliner_proxy)
+    proxies_index: bpy.props.IntProperty(name="Selection Index")
+
+
 class A3OB_PG_lod_object(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Object Name")
     lod: bpy.props.StringProperty(name="LOD type")
@@ -573,7 +578,8 @@ classes = (
     A3OB_PG_colors,
     A3OB_PG_bone,
     A3OB_PG_skeleton,
-    A3OB_PG_weights
+    A3OB_PG_weights,
+    A3OB_PG_proxy_access
 )
 
 
@@ -592,11 +598,13 @@ def register():
     bpy.types.Scene.a3ob_renaming = bpy.props.PointerProperty(type=A3OB_PG_renaming)
     bpy.types.Scene.a3ob_colors = bpy.props.PointerProperty(type=A3OB_PG_colors)
     bpy.types.Scene.a3ob_weights = bpy.props.PointerProperty(type=A3OB_PG_weights)
+    bpy.types.Scene.a3ob_proxy_access = bpy.props.PointerProperty(type=A3OB_PG_proxy_access)
     
     print("\t" + "Properties: scene")
     
     
 def unregister():
+    del bpy.types.Scene.a3ob_proxy_access
     del bpy.types.Scene.a3ob_weights
     del bpy.types.Scene.a3ob_colors
     del bpy.types.Scene.a3ob_renaming

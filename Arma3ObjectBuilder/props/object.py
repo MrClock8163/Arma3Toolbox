@@ -1,6 +1,7 @@
 import os
 
 import bpy
+from bpy.app.handlers import persistent
 
 from ..utilities import generic as utils
 from ..utilities import masses as massutils
@@ -291,6 +292,30 @@ class A3OB_PG_properties_object_armature(bpy.types.PropertyGroup):
     frames_index: bpy.props.IntProperty(name="Active Keyrame Index")
 
 
+@persistent
+def depsgraph_update_post_handler(scene, depsgraph):  
+    scene_props = scene.a3ob_proxy_access
+
+    obj = None
+    try:
+        obj = bpy.context.object
+    except:
+        pass
+    
+    if not obj or obj.type != 'MESH' or not obj.a3ob_properties_object.is_a3_lod:
+        scene_props.proxies_index = -1
+        return
+
+    scene_props.proxies.clear()
+    for child in obj.children:
+        if child.type != 'MESH' or not child.a3ob_properties_object_proxy.is_a3_proxy:
+            continue
+        
+        item = scene_props.proxies.add()
+        item.obj = child.name
+        item.name = child.a3ob_properties_object_proxy.get_name()
+
+
 classes = (
     A3OB_PG_properties_named_property,
     A3OB_PG_properties_flag_vertex,
@@ -325,11 +350,15 @@ def register():
         get = massutils.get_selection_mass,
         set = massutils.set_selection_mass
     )
+
+    bpy.app.handlers.depsgraph_update_post.append(depsgraph_update_post_handler)
     
     print("\t" + "Properties: object")
 
 
 def unregister():
+    bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update_post_handler)
+
     del bpy.types.Object.a3ob_selection_mass
     del bpy.types.Object.a3ob_properties_object_armature
     del bpy.types.Object.a3ob_properties_object_dtm
