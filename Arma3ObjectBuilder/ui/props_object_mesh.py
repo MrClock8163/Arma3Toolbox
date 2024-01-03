@@ -73,13 +73,16 @@ class A3OB_OT_paste_common_proxy(bpy.types.Operator):
     
     bl_idname = "a3ob.paste_common_proxy"
     bl_label = "Paste Common Proxy"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER'}
+
+    obj: bpy.props.StringProperty(
+        name = "Proxy Object",
+        description = "Proxy object to assign path to"
+    )
     
     @classmethod
     def poll(cls, context):
-        obj = context.object
-        
-        return obj and obj.type == 'MESH' and obj.a3ob_properties_object_proxy.is_a3_proxy
+        return True
     
     def invoke(self, context, event):
         scene_props = context.scene.a3ob_commons
@@ -113,7 +116,11 @@ class A3OB_OT_paste_common_proxy(bpy.types.Operator):
             row.enabled = False
     
     def execute(self, context):
-        obj = context.object
+        obj = context.scene.objects.get(self.obj, context.object)
+        if not obj or obj.type != 'MESH' or not obj.a3ob_properties_object_proxy.is_a3_proxy:
+            self.report({'INFO'}, "No proxy object was selected")
+            return {'FINISHED'}
+
         scene_props = context.scene.a3ob_commons
         
         if scene_props.proxies_index in range(len(scene_props.proxies)):
@@ -612,8 +619,10 @@ class A3OB_PT_object_mesh_proxies(bpy.types.Panel):
         col_list = row.column()
         col_list.template_list("A3OB_UL_proxy_access", "A3OB_proxy_access", scene_props, "proxies", scene_props, "proxies_index")
 
-        # col_operators = row.column(align=True)
-
+        col_operators = row.column(align=True)
+        op_add = col_operators.operator("a3ob.proxy_add", text="", icon='ADD')
+        op_add.parent = context.object.name
+        op_remove = col_operators.operator("a3ob.proxy_remove", text="", icon='REMOVE')
 
         if scene_props.proxies_index not in range(len(scene_props.proxies)):
             return
