@@ -466,6 +466,24 @@ class A3OB_UL_flags_face(bpy.types.UIList):
         layout.label(text=("%08x" % item.get_flag()))
 
 
+class A3OB_UL_proxy_access(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        row = layout.row(align=True)
+        op = row.operator("a3ob.select_object", text="", icon='RESTRICT_SELECT_OFF', emboss=False)
+        op.object_name = item.obj
+        row.label(text=" %s" % item.name)
+    
+    def filter_items(self, context, data, propname):
+        helper_funcs = bpy.types.UI_UL_list
+        flt_flags = []
+        flt_neworder = []
+        
+        sorter = getattr(data, propname)
+        flt_neworder = helper_funcs.sort_items_by_name(sorter, "name")
+        
+        return flt_flags, flt_neworder
+
+
 class A3OB_PT_object_mesh(bpy.types.Panel):
     bl_region_type = 'WINDOW'
     bl_space_type = 'PROPERTIES'
@@ -530,6 +548,26 @@ class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
         col_operators.operator("a3ob.namedprops_remove", text="", icon='REMOVE')
         col_operators.separator()
         col_operators.operator("a3ob.paste_common_namedprop", icon='PASTEDOWN', text="")
+
+
+class A3OB_PT_object_mesh_proxies(bpy.types.Panel):
+    bl_region_type = 'WINDOW'
+    bl_space_type = 'PROPERTIES'
+    bl_label = "Proxy Outliner"
+    bl_context = "data"
+    bl_parent_id = "A3OB_PT_object_mesh"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    @classmethod
+    def poll(cls, context):
+        obj = context.object
+        return obj and obj.type == 'MESH' and obj.a3ob_properties_object.is_a3_lod and not obj.a3ob_properties_object_proxy.is_a3_proxy
+    
+    def draw(self, context):
+        layout = self.layout
+        scene_props = context.scene.a3ob_proxy_access
+
+        layout.template_list("A3OB_UL_proxy_access", "A3OB_proxy_access", scene_props, "proxies", scene_props, "proxies_index")
 
 
 class A3OB_PT_object_mesh_flags(bpy.types.Panel):
@@ -678,7 +716,14 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
         col_enable = row.column(align=True)
         col_enable.prop(object_props, "is_a3_proxy", text="Is P3D Proxy", toggle=True)
         col_enable.enabled = False
-        col_naming = row.column(align=True)
+        
+        row_select = layout.row(align=True)
+        op = row_select.operator("a3ob.select_object", text="Select Parent LOD", icon='RESTRICT_SELECT_OFF')
+        if obj.parent and obj.parent.type == 'MESH' and obj.parent.a3ob_properties_object.is_a3_lod:
+            op.object_name = obj.parent.name
+            op.identify_lod = False
+        else:
+            row_select.enabled = False
         
         layout.use_property_split = True
         layout.use_property_decorate = False
@@ -760,12 +805,14 @@ classes = (
     A3OB_UL_common_proxies,
     A3OB_UL_flags_vertex,
     A3OB_UL_flags_face,
+    A3OB_UL_proxy_access,
     A3OB_PT_object_mesh,
     A3OB_PT_object_mesh_namedprops,
+    A3OB_PT_object_mesh_proxies,
+    A3OB_PT_object_proxy,
     A3OB_PT_object_mesh_flags,
     A3OB_PT_object_mesh_flags_vertex,
     A3OB_PT_object_mesh_flags_face,
-    A3OB_PT_object_proxy,
     A3OB_PT_object_dtm
 )
 
