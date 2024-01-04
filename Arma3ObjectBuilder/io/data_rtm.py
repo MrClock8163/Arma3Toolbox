@@ -20,14 +20,14 @@ class RTM_Transform():
     def read(cls, file):
         output = cls()
         
-        output.bone = binary.read_char(file, 32)
+        output.bone = binary.read_asciiz_padded(file, 32)
         data = struct.unpack('<12f', file.read(48))
 
         output.matrix = [
-            [data[0][0], data[0][2], data[0][1], 0],
-            [data[2][0], data[2][2], data[2][1], 0],
-            [data[1][0], data[1][2], data[1][1], 0],
-            [data[3][0], data[3][2], data[3][1], 1]
+            [data[0], data[2], data[1], 0],
+            [data[6], data[8], data[7], 0],
+            [data[3], data[5], data[4], 0],
+            [data[9], data[11], data[10], 1]
         ]
 
         return output
@@ -89,7 +89,7 @@ class RTM_File():
         count_frames = binary.read_ulong(file)
         count_bones = binary.read_ulong(file)
         
-        output.bones = [binary.read_char(file, 32) for i in range(count_bones)]
+        output.bones = [binary.read_asciiz_padded(file, 32) for i in range(count_bones)]
         output.frames = [RTM_Frame.read(file, count_bones) for i in range(count_frames)]
 
         return output
