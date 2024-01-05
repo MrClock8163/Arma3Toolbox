@@ -27,11 +27,14 @@ def build_transform_lookup(rtm_data):
     return transforms
 
 
-def build_frame_list(rtm_data, frame_start, frame_end):
+def build_frame_list(rtm_data, frame_start, frame_end, round_frames):
     frames = {}
 
     for i, frame in enumerate(rtm_data.frames):
         frames[i] = frame.phase * frame_end + (1 - frame.phase) * frame_start
+    
+    if round_frames:
+        frames = {i: round(frames[i]) for i in frames}
 
     return frames
 
@@ -121,6 +124,8 @@ def import_file(operator, obj):
     action = create_action(obj, os.path.basename(operator.filepath))
     rtm_data = data_rtm.RTM_File.read_file(operator.filepath)
     transforms = build_transform_lookup(rtm_data)
-    frames = build_frame_list(rtm_data, operator.frame_start, operator.frame_end)
+    frames = build_frame_list(rtm_data, operator.frame_start, operator.frame_end, operator.round_frames)
 
     import_keyframes(obj, action, transforms, frames)
+
+    return len(frames)

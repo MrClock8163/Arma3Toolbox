@@ -270,6 +270,7 @@ class A3OB_PT_weights(bpy.types.Panel):
         
         layout.operator("a3ob.weights_cleanup", icon_value=utils.get_icon("op_weights_cleanup"))
 
+
 classes = (
     A3OB_OT_weights_load_cfgskeletons,
     A3OB_OT_weights_select_unnormalized,
