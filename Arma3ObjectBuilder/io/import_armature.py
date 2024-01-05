@@ -36,6 +36,21 @@ def extract_pivot_coords(lod):
     return pivot_points
 
 
+def fake_pivot_coords(unknown, pivots):
+    placeholders = {}
+
+    front_coord = 0
+    for name in pivots:
+        pos = pivots[name]
+        if pos[1] < front_coord:
+            front_coord = pos[1]
+    
+    for i, item in enumerate(unknown):
+        placeholders[item.name.lower()] = Vector((i * 0.2, front_coord + 1, 0))
+
+    return placeholders
+
+
 def read_pivots(pivots_path):
     p3d_data = data_p3d.P3D_MLOD.read_file(pivots_path)
     pivots = extract_pivot_coords(p3d_data.lods[0])
@@ -54,7 +69,15 @@ def read_bones(mcfg_path, skeleton_name):
 
 
 def filter_bones(bones, pivots):
-    return [bone for bone in bones if bone.name.lower() in pivots]
+    known = []
+    unknown = []
+    for bone in bones:
+        if bone.name.lower() in pivots:
+            known.append(bone)
+        else:
+            unknown.append(bone)
+
+    return known, unknown
 
 
 def force_lowercase_bones(bones):
@@ -80,10 +103,10 @@ def build_bones(armature, parent, hierarchy, pivot_points):
         bone = armature.edit_bones.new(item)
         bone.head = pivot_points[item.lower()]
 
-        tail = Vector((0, 0, 1))
+        tail = bone.head + Vector((0, 0, 0.2))
         if len(children) > 0:
             tail = vector_average([pivot_points[child.lower()] for child in children])
-        elif parent.lower() in pivot_points:
+        elif len(hierarchy) == 1 and parent.lower() in pivot_points:
             tail_offset = (pivot_points[item.lower()] - pivot_points[parent.lower()]).length
             tail = bone.head + Vector((0, 0, 1)) * tail_offset
 
@@ -123,8 +146,14 @@ def build_armature(hierarchy, pivot_points, skeleton_name):
 
 def import_armature(operator, skeleton):
     pivots = read_pivots(operator.filepath)
-    filtered = filter_bones(list(skeleton.bones), pivots)
-    hierarchy = build_bone_hierarchy("", filtered)
+    pos_known, pos_unknown = filter_bones(list(skeleton.bones), pivots)
+
+    if not operator.ignore_without_pivot:
+        placeholders = fake_pivot_coords(pos_unknown, pivots)
+        pivots.update(placeholders)
+        pos_known.extend(pos_unknown)
+
+    hierarchy = build_bone_hierarchy("", pos_known)
     obj = build_armature(hierarchy, pivots, skeleton.name)
     
     return obj
