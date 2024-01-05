@@ -27,13 +27,22 @@ def build_transform_lookup(rtm_data):
     return transforms
 
 
-def build_frame_list(rtm_data, frame_start, frame_end, round_frames):
+def build_frame_list(operator, rtm_data):
     frames = {}
+
+    frame_start = operator.frame_start
+    frame_end = operator.frame_end
+    if operator.mapping_mode == 'FPS':
+        frame_start = 1
+        frame_end = operator.fps * operator.time + 1
+    elif operator.mapping_mode == 'DIRECT':
+        frame_start = 1
+        frame_end = len(rtm_data.frames)
 
     for i, frame in enumerate(rtm_data.frames):
         frames[i] = frame.phase * frame_end + (1 - frame.phase) * frame_start
     
-    if round_frames:
+    if operator.mapping_mode != 'DIRECT' and operator.round_frames:
         frames = {i: round(frames[i]) for i in frames}
 
     return frames
@@ -113,7 +122,8 @@ def import_keyframes(obj, action, transforms, frames):
                 rot = rot.to_euler(pose_bone.rotation_mode, rot_eul_prev)
                 rot_eul_prev = rot
             
-            loc = Vector() # clean computational residuals
+            if pose_bone.bone.use_connect:
+                loc = Vector() # clean computational residuals
 
             store_keyframes(keyframes, frames[i], zip(fcurves, chain(loc, rot, scale)))
 
@@ -124,7 +134,7 @@ def import_file(operator, obj):
     action = create_action(obj, os.path.basename(operator.filepath))
     rtm_data = data_rtm.RTM_File.read_file(operator.filepath)
     transforms = build_transform_lookup(rtm_data)
-    frames = build_frame_list(rtm_data, operator.frame_start, operator.frame_end, operator.round_frames)
+    frames = build_frame_list(operator, rtm_data)
 
     import_keyframes(obj, action, transforms, frames)
 

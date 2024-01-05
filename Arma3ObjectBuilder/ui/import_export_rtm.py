@@ -167,10 +167,38 @@ class A3OB_OP_import_rtm(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         default = 100,
         min = 0
     )
+    time: bpy.props.FloatProperty(
+        name = "Time",
+        description = "Length of animation in secods",
+        default = 1,
+        min = 0.1
+    )
+    fps: bpy.props.IntProperty(
+        name = "FPS",
+        description = "",
+        default = 24,
+        min = 1
+    )
+    fps_base: bpy.props.FloatProperty(
+        name = "FPS Base",
+        description = "",
+        default = 1.0,
+        min = 0.1
+    )
     round_frames: bpy.props.BoolProperty(
         name = "Round Frames",
         description = "Round fractional frames to the nearest whole number",
         default = True
+    )
+    mapping_mode: bpy.props.EnumProperty(
+        name = "Frame Calculation Mode",
+        description = "Method to map RTM phases to frames",
+        items = (
+            ('RANGE', "Range", "Map phases to specified start-end range"),
+            ('FPS', "FPS", "Map phases to specified range starting at 1, with the length of FPS * time"),
+            ('DIRECT', "Direct", "Map each phase to new frame"),
+        ),
+        default = 'FPS'
     )
 
     @classmethod
@@ -184,6 +212,8 @@ class A3OB_OP_import_rtm(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     def invoke(self, context, event):
         self.frame_start = context.scene.frame_start
         self.frame_end = context.scene.frame_end
+        self.fps = context.scene.render.fps
+        self.fps_base = context.scene.render.fps_base
         
         return super().invoke(context, event)
     
@@ -224,9 +254,16 @@ class A3OB_PT_import_rtm_main(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        layout.prop(operator, "frame_start")
-        layout.prop(operator, "frame_end")
         layout.prop(operator, "round_frames")
+        layout.prop(operator, "mapping_mode")
+
+        if operator.mapping_mode == 'RANGE':
+            layout.prop(operator, "frame_start")
+            layout.prop(operator, "frame_end")
+        elif operator.mapping_mode == 'FPS':
+            layout.prop(operator, "fps")
+            layout.prop(operator, "fps_base")
+            layout.prop(operator, "time")
 
 
 classes = (
