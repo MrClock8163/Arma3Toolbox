@@ -1,9 +1,9 @@
-import os
+
 
 import bpy
 
 from ..utilities import generic as utils
-from ..utilities import mcfg as mcfgutils
+from ..utilities import rigging as riggingutils
 
 
 class A3OB_UL_rigging_skeletons(bpy.types.UIList):
@@ -94,7 +94,7 @@ class A3OB_OT_skeletons_from_armature(bpy.types.Operator):
         obj.update_from_editmode()
         scene_props = context.scene.a3ob_rigging
 
-        bones = mcfgutils.bones_from_armature(obj)
+        bones = riggingutils.bones_from_armature(obj)
         skeleton = scene_props.skeletons.add()
         skeleton.name = obj.name
         for name, parent in bones:

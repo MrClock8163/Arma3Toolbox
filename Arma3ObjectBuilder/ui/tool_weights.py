@@ -4,7 +4,7 @@ import bpy
 
 from ..io import import_mcfg as mcfg
 from ..utilities import generic as utils
-from ..utilities import mcfg as mcfgutils
+from ..utilities import rigging as riggingutils
 
 
 class A3OB_OT_weights_load_cfgskeletons(bpy.types.Operator):
@@ -60,8 +60,8 @@ class A3OB_OT_weights_select_unnormalized(bpy.types.Operator):
         scene_props = context.scene.a3ob_weights
         cfgbones = scene_props.skeletons[scene_props.skeletons_index].bones
         
-        bone_indices = mcfgutils.get_bone_group_indices(obj, cfgbones)
-        mcfgutils.select_vertices_unnormalized(obj, bone_indices)
+        bone_indices = riggingutils.get_bone_group_indices(obj, cfgbones)
+        riggingutils.select_vertices_unnormalized(obj, bone_indices)
         
         return {'FINISHED'}
 
@@ -84,8 +84,8 @@ class A3OB_OT_weights_select_overdetermined(bpy.types.Operator):
         scene_props = context.scene.a3ob_weights
         cfgbones = scene_props.skeletons[scene_props.skeletons_index].bones
         
-        bone_indices = mcfgutils.get_bone_group_indices(obj, cfgbones)
-        mcfgutils.select_vertices_overdetermined(obj, bone_indices)
+        bone_indices = riggingutils.get_bone_group_indices(obj, cfgbones)
+        riggingutils.select_vertices_overdetermined(obj, bone_indices)
         
         return {'FINISHED'}
 
@@ -108,8 +108,8 @@ class A3OB_OT_weights_normalize(bpy.types.Operator):
         scene_props = context.scene.a3ob_weights
         cfgbones = scene_props.skeletons[scene_props.skeletons_index].bones
         
-        bone_indices = mcfgutils.get_bone_group_indices(obj, cfgbones)
-        normalized = mcfgutils.normalize_weights(obj, bone_indices)
+        bone_indices = riggingutils.get_bone_group_indices(obj, cfgbones)
+        normalized = riggingutils.normalize_weights(obj, bone_indices)
         
         self.report({'INFO'}, "Normalized weights on %d vertices" % normalized)
         
@@ -134,8 +134,8 @@ class A3OB_OT_weights_prune_overdetermined(bpy.types.Operator):
         scene_props = context.scene.a3ob_weights
         cfgbones = scene_props.skeletons[scene_props.skeletons_index].bones
         
-        bone_indices = mcfgutils.get_bone_group_indices(obj, cfgbones)
-        pruned = mcfgutils.prune_overdetermined(obj, bone_indices)
+        bone_indices = riggingutils.get_bone_group_indices(obj, cfgbones)
+        pruned = riggingutils.prune_overdetermined(obj, bone_indices)
         
         self.report({'INFO'}, "Pruned excess bones from %d vertices" % pruned)
         
@@ -157,7 +157,7 @@ class A3OB_OT_weights_prune(bpy.types.Operator):
     def execute(self, context):
         obj = context.active_object
         scene_props = context.scene.a3ob_weights
-        pruned = mcfgutils.prune_weights(obj, scene_props.prune_threshold)
+        pruned = riggingutils.prune_weights(obj, scene_props.prune_threshold)
         
         self.report({'INFO'}, "Pruned selection(s) from %d vertices" % pruned)
         
@@ -182,8 +182,8 @@ class A3OB_OT_weights_cleanup(bpy.types.Operator):
         scene_props = context.scene.a3ob_weights
         cfgbones = scene_props.skeletons[scene_props.skeletons_index].bones
         
-        bone_indices = mcfgutils.get_bone_group_indices(obj, cfgbones)
-        cleaned = mcfgutils.cleanup(obj, bone_indices, scene_props.prune_threshold)
+        bone_indices = riggingutils.get_bone_group_indices(obj, cfgbones)
+        cleaned = riggingutils.cleanup(obj, bone_indices, scene_props.prune_threshold)
         
         self.report({'INFO'}, "Cleaned up weight painting on %d vertices" % cleaned)
         
