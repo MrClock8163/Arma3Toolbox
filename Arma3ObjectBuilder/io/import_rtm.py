@@ -27,7 +27,21 @@ def build_transform_lookup(rtm_data):
     return transforms
 
 
-def build_frame_list(operator, rtm_data):
+def build_motion_lookup(operator, rtm_data):
+    lookup = {}
+    motion = Vector(rtm_data.motion)
+    if motion.length == 0 or not operator.apply_motion:
+        empty = Vector()
+        for i in range(len(rtm_data.frames)):
+            lookup[i] = empty
+    else:
+        for i, frame in enumerate(rtm_data.frames):
+            lookup[i] = motion * frame.phase
+    
+    return lookup
+
+
+def build_frame_mapping(operator, rtm_data):
     frames = {}
 
     frame_start = operator.frame_start
@@ -95,7 +109,7 @@ def add_keyframes(action, fcurves, dictionary):
         fc.update()
 
 
-def import_keyframes(obj, action, transforms, frames):
+def import_keyframes(obj, action, transforms, frames, motion):
     for pose_bone in obj.pose.bones:
         fcurves = build_fcurves(action, pose_bone)
 
@@ -110,6 +124,9 @@ def import_keyframes(obj, action, transforms, frames):
             mat_parent_channel = transforms.get((pose_bone.parent.name.lower() if pose_bone.parent else "", i), Matrix())
             mat_basis = mat_rest.inverted_safe() @ mat_parent_channel.inverted_safe() @ (mat_channel @ mat_rest)
             loc, rot, scale = mat_basis.decompose()
+
+            if not pose_bone.parent:
+                loc += motion[i]
 
             if pose_bone.rotation_mode == 'QUATERNION':
                 if rot_quat_prev.dot(rot) < 0.0:
@@ -134,8 +151,9 @@ def import_file(operator, obj):
     action = create_action(obj, os.path.basename(operator.filepath))
     rtm_data = data_rtm.RTM_File.read_file(operator.filepath)
     transforms = build_transform_lookup(rtm_data)
-    frames = build_frame_list(operator, rtm_data)
+    motion = build_motion_lookup(operator, rtm_data)
+    frames = build_frame_mapping(operator, rtm_data)
 
-    import_keyframes(obj, action, transforms, frames)
+    import_keyframes(obj, action, transforms, frames, motion)
 
     return len(frames)

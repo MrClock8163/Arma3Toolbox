@@ -200,6 +200,11 @@ class A3OB_OP_import_rtm(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         ),
         default = 'FPS'
     )
+    apply_motion: bpy.props.BoolProperty(
+        name = "Apply Motion",
+        description = "Bake the motion vector into the keyframes",
+        default = True
+    )
 
     @classmethod
     def poll(cls, context):
@@ -254,6 +259,7 @@ class A3OB_PT_import_rtm_main(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
+        layout.prop(operator, "apply_motion")
         layout.prop(operator, "round_frames")
         layout.prop(operator, "mapping_mode")
 

@@ -84,7 +84,7 @@ class RTM_File():
             raise errors.RTMError("Invalid header signature: %s" % signature)
 
         output.signature = signature
-        x, z ,y = struct.unpack('<fff', file.read(12))
+        x, y, z = struct.unpack('<fff', file.read(12))
         output.motion = (x, y, z)
         count_frames = binary.read_ulong(file)
         count_bones = binary.read_ulong(file)
@@ -104,7 +104,7 @@ class RTM_File():
     
     def write(self, file):
         binary.write_chars(file, self.signature)
-        file.write(struct.pack('<fff', self.motion[0], self.motion[2], self.motion[1]))
+        file.write(struct.pack('<fff', self.motion[0], self.motion[1], self.motion[2]))
         count_frames = len(self.frames)
         count_bones = len(self.bones)
 
