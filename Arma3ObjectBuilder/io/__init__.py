@@ -9,3 +9,4 @@ from . import import_armature
 from . import import_asc
 from . import import_mcfg
 from . import import_p3d
+from . import import_rtm
