@@ -328,6 +328,7 @@ modules = (
     ui.import_export_p3d,
     ui.import_export_rtm,
     ui.import_export_mcfg,
+    ui.import_export_armature,
     ui.import_export_asc,
     ui.tool_outliner,
     ui.tool_mass,

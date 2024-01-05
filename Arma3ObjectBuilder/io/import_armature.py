@@ -121,14 +121,10 @@ def build_armature(hierarchy, pivot_points, skeleton_name):
     return obj
 
 
-def import_armature(operator):
-    pivots = read_pivots(operator.path_pivots)
-    bones = read_bones(operator.path_mcfg, operator.skeleton)
-    filtered = filter_bones(bones, pivots)
-    if operator.force_lowercase:
-        filtered = force_lowercase_bones(filtered)
-
+def import_armature(operator, skeleton):
+    pivots = read_pivots(operator.filepath)
+    filtered = filter_bones(list(skeleton.bones), pivots)
     hierarchy = build_bone_hierarchy("", filtered)
-    obj = build_armature(hierarchy, pivots, operator.skeleton)
+    obj = build_armature(hierarchy, pivots, skeleton.name)
     
     return obj
