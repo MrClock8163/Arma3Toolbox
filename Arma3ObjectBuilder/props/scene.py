@@ -557,6 +557,24 @@ class A3OB_PG_weights(bpy.types.PropertyGroup):
     )
 
 
+class A3OB_PG_rigging_bone(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty(name="Name", description="Name of the bone item")
+    parent: bpy.props.StringProperty(name="Parent", description="Name of the parent bone")
+
+
+class A3OB_PG_rigging_skeleton(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty(name="Name", description="Name of the skeleton")
+    bones: bpy.props.CollectionProperty(type=A3OB_PG_rigging_bone)
+    bones_index: bpy.props.IntProperty(name="Selection Index")
+
+
+class A3OB_PG_rigging(bpy.types.PropertyGroup):
+    skeletons: bpy.props.CollectionProperty(type=A3OB_PG_rigging_skeleton)
+    skeletons_index: bpy.props.IntProperty(name="Active Skeleton Index")
+    bones: bpy.props.CollectionProperty(type=A3OB_PG_bone) # empty collection to show when no skeleton is selected
+    bones_index: bpy.props.IntProperty(name="Selection Index") # empty collection to show when no skeleton is selected
+
+
 classes = (
     A3OB_PG_outliner_proxy,
     A3OB_PG_outliner_lod,
@@ -579,6 +597,9 @@ classes = (
     A3OB_PG_bone,
     A3OB_PG_skeleton,
     A3OB_PG_weights,
+    A3OB_PG_rigging_bone,
+    A3OB_PG_rigging_skeleton,
+    A3OB_PG_rigging,
     A3OB_PG_proxy_access
 )
 
@@ -596,6 +617,7 @@ def register():
     bpy.types.Scene.a3ob_keyframes = bpy.props.PointerProperty(type=A3OB_PG_keyframes)
     bpy.types.Scene.a3ob_conversion = bpy.props.PointerProperty(type=A3OB_PG_conversion)
     bpy.types.Scene.a3ob_renaming = bpy.props.PointerProperty(type=A3OB_PG_renaming)
+    bpy.types.Scene.a3ob_rigging = bpy.props.PointerProperty(type=A3OB_PG_rigging)
     bpy.types.Scene.a3ob_colors = bpy.props.PointerProperty(type=A3OB_PG_colors)
     bpy.types.Scene.a3ob_weights = bpy.props.PointerProperty(type=A3OB_PG_weights)
     bpy.types.Scene.a3ob_proxy_access = bpy.props.PointerProperty(type=A3OB_PG_proxy_access)
@@ -607,6 +629,7 @@ def unregister():
     del bpy.types.Scene.a3ob_proxy_access
     del bpy.types.Scene.a3ob_weights
     del bpy.types.Scene.a3ob_colors
+    del bpy.types.Scene.a3ob_rigging
     del bpy.types.Scene.a3ob_renaming
     del bpy.types.Scene.a3ob_conversion
     del bpy.types.Scene.a3ob_validation
