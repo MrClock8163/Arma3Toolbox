@@ -573,6 +573,14 @@ class A3OB_PG_rigging(bpy.types.PropertyGroup):
     skeletons_index: bpy.props.IntProperty(name="Active Skeleton Index", description="Double click to rename")
     bones: bpy.props.CollectionProperty(type=A3OB_PG_bone) # empty collection to show when no skeleton is selected
     bones_index: bpy.props.IntProperty(name="Selection Index", description="Double click to rename or change parent") # empty collection to show when no skeleton is selected
+    prune_threshold: bpy.props.FloatProperty(
+        name = "Threshold",
+        description = "Selection weight threshold",
+        min = 0.0,
+        max = 1.0,
+        default = 0.001,
+        precision = 3
+    )
 
 
 classes = (
