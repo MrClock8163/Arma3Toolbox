@@ -2,6 +2,7 @@ import os
 
 import bpy
 
+from ..io import import_mcfg as mcfg
 from ..utilities import generic as utils
 from ..utilities import mcfg as mcfgutils
 
@@ -21,19 +22,18 @@ class A3OB_OT_weights_load_cfgskeletons(bpy.types.Operator):
         
     def execute(self, context):
         scene_props = context.scene.a3ob_weights
-        exepath = os.path.join(utils.abspath(utils.get_addon_preferences().a3_tools), "cfgconvert/cfgconvert.exe")
         
         scene_props.skeletons.clear()
         
-        data = mcfgutils.read_mcfg(utils.abspath(scene_props.filepath), exepath)
+        data = mcfg.read_mcfg(utils.abspath(scene_props.filepath))
         
         if data:
-            skeletons = mcfgutils.get_skeletons(data)
+            skeletons = mcfg.get_skeletons(data)
             for skelly in skeletons:
                 new_skelly = scene_props.skeletons.add()
                 new_skelly.name = skelly.name
                 
-                cfgbones = mcfgutils.get_bones_compiled(data, skelly.name)
+                cfgbones = mcfg.get_bones_compiled(data, skelly.name)
                 for bone in cfgbones:
                     new_bone = new_skelly.bones.add()
                     new_bone.name = bone.name
