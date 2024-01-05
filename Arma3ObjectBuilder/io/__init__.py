@@ -5,6 +5,7 @@ from . import data_rtm
 from . import export_asc
 from . import export_p3d
 from . import export_rtm
+from . import import_armature
 from . import import_asc
 from . import import_mcfg
 from . import import_p3d
