@@ -11,7 +11,7 @@ class A3OB_OP_import_armature(bpy.types.Operator, bpy_extras.io_utils.ImportHelp
     """Import Arma 3 armature"""
 
     bl_idname = "a3ob.import_armature"
-    bl_label = "Import Armature"
+    bl_label = "Import Pivots"
     bl_options = {'REGISTER', 'UNDO', 'PRESET'}
     filename_ext = "*.p3d"
     

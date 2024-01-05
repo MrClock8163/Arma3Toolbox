@@ -133,3 +133,7 @@ def cleanup(obj, bone_indices, threshold):
     verts_normalized = normalize_weights(obj, bone_indices)
     
     return max(verts_prune_selection, verts_prune_overdetermined, verts_normalized)
+
+
+def bones_from_armature(obj):
+    return [(bone.name, bone.parent.name if bone.parent else "") for bone in obj.pose.bones]

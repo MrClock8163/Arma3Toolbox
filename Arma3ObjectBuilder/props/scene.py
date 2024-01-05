@@ -570,9 +570,9 @@ class A3OB_PG_rigging_skeleton(bpy.types.PropertyGroup):
 
 class A3OB_PG_rigging(bpy.types.PropertyGroup):
     skeletons: bpy.props.CollectionProperty(type=A3OB_PG_rigging_skeleton)
-    skeletons_index: bpy.props.IntProperty(name="Active Skeleton Index")
+    skeletons_index: bpy.props.IntProperty(name="Active Skeleton Index", description="Double click to rename")
     bones: bpy.props.CollectionProperty(type=A3OB_PG_bone) # empty collection to show when no skeleton is selected
-    bones_index: bpy.props.IntProperty(name="Selection Index") # empty collection to show when no skeleton is selected
+    bones_index: bpy.props.IntProperty(name="Selection Index", description="Double click to rename or change parent") # empty collection to show when no skeleton is selected
 
 
 classes = (
