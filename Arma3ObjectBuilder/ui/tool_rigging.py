@@ -1,5 +1,3 @@
-
-
 import bpy
 
 from ..utilities import generic as utils

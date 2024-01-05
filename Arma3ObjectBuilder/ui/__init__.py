@@ -17,4 +17,3 @@ from . import tool_rigging
 from . import tool_rtm
 from . import tool_utilities
 from . import tool_validation
-from . import tool_weights
