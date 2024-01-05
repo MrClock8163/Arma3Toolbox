@@ -23,6 +23,8 @@ class Bone():
         self.name = self.name.lower()
         self.parent = self.parent.lower()
 
+        return self
+
 
 # The model.cfg reading is dependent on the import_rap module,
 # so the model config first needs to be rapified by the Arma 3 Tools.
