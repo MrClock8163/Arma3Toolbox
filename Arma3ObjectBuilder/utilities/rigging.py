@@ -1,6 +1,8 @@
 # Backend functions of the weight painting tools.
 
 
+import bpy
+
 from . import generic as utils
 
 
@@ -137,3 +139,48 @@ def cleanup(obj, bone_indices, threshold):
 
 def bones_from_armature(obj):
     return [(bone.name, bone.parent.name if bone.parent else "") for bone in obj.pose.bones]
+
+
+def bone_order_from_skeleton(skeleton):
+    bones = {}
+    for i in range(len(skeleton.bones)):
+        for item in skeleton.bones:
+            if item.name in bones or item.parent != "" and item.parent not in bones:
+                continue
+            
+            bones[item.name] = item.parent
+
+        if len(bones) == len(skeleton.bones):
+            return bones
+    
+    return None
+    
+
+def pivots_from_armature(obj, bones_parents):    
+    bone_map = {item.lower(): item for item in bones_parents}
+
+    mesh = bpy.data.meshes.new("%s pivots" % obj.name)
+    pivots = bpy.data.objects.new("%s pivots" % obj.name, mesh)
+
+    pivots_coords = {}
+    for bone in obj.data.bones:
+        if bone.name.lower() not in bone_map:
+            continue
+        
+        pivots_coords[bone_map[bone.name.lower()]] = tuple(bone.head_local)
+
+    mesh.from_pydata(list(pivots_coords.values()), [], [])
+
+    for i, item in enumerate(pivots_coords):
+        group = pivots.vertex_groups.new(name=item)
+        group.add([i], 1, 'REPLACE')
+    
+    pivots_props = pivots.a3ob_properties_object
+    pivots_props.lod = '9'
+    pivots_props.is_a3_lod = True
+
+    prop = pivots_props.properties.add()
+    prop.name = "autocenter"
+    prop.value = "0"
+
+    return pivots

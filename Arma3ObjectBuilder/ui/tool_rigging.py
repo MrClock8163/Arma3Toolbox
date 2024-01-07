@@ -195,6 +195,96 @@ class A3OB_OT_rigging_skeletons_bones_clear(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class A3OB_OT_rigging_skeletons_bones_lowercase(bpy.types.Operator):
+    """Make all bone names lowercase"""
+
+    bl_idname = "a3ob.rigging_skeletons_bones_lowercase"
+    bl_label = "Make Lowercase"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        scene_props = context.scene.a3ob_rigging
+        if scene_props.skeletons_index not in range(len(scene_props.skeletons)):
+            return False
+        
+        skeleton = scene_props.skeletons[scene_props.skeletons_index]
+        
+        return len(skeleton.bones) > 0
+    
+    def execute(self, context):
+        scene_props = context.scene.a3ob_rigging
+        skeleton = scene_props.skeletons[scene_props.skeletons_index]
+
+        for item in skeleton.bones:
+            item.name = item.name.lower()
+            item.parent = item.parent.lower()
+        
+        return {'FINISHED'}
+
+
+class A3OB_OT_rigging_skeletons_bones_check_hierarchy(bpy.types.Operator):
+    """Check bone hierarchy for circular or faulty references"""
+
+    bl_idname = "a3ob.rigging_skeletons_bones_check_hierarchy"
+    bl_label = "Check Hierarchy"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        scene_props = context.scene.a3ob_rigging
+        if scene_props.skeletons_index not in range(len(scene_props.skeletons)):
+            return False
+        
+        skeleton = scene_props.skeletons[scene_props.skeletons_index]
+        
+        return len(skeleton.bones) > 0
+
+    def execute(self, context):
+        scene_props = context.scene.a3ob_rigging
+        skeleton = scene_props.skeletons[scene_props.skeletons_index]
+
+        bones_parents = riggingutils.bone_order_from_skeleton(skeleton)
+        if bones_parents is None:
+            self.report({'WARNING'}, "Bone hierarchy is invalid (circular reference or typo)")
+        else:
+            self.report({'INFO'}, "Bone hierarchy is valid")
+        
+        return {'FINISHED'}
+
+
+class A3OB_OT_rigging_pivots_from_armature(bpy.types.Operator):
+    """Generate pivot points memory LOD from armature and skeleton definition"""
+
+    bl_idname = "a3ob.rigging_pivots_from_armature"
+    bl_label = "Pivots From Armature"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        scene_props = context.scene.a3ob_rigging
+        obj = context.active_object
+
+        if scene_props.skeletons_index not in range(len(scene_props.skeletons)):
+            return False
+        
+        return obj and obj.type == 'ARMATURE'
+    
+    def execute(self, context):
+        scene_props = context.scene.a3ob_rigging
+        obj = context.active_object
+
+        bones_parents = riggingutils.bone_order_from_skeleton(scene_props.skeletons[scene_props.skeletons_index])
+        if bones_parents is None:
+            self.report({'WARNING'}, "Circular dependency detected in skeleton definition")
+            return {'FINISHED'}
+
+        obj = riggingutils.pivots_from_armature(obj, bones_parents)
+        context.scene.collection.objects.link(obj)
+
+        return {'FINISHED'}
+
+
 class A3OB_OT_rigging_weights_select_unnormalized(bpy.types.Operator):
     """Select vertices with not normalized deform weights"""
     
@@ -343,6 +433,29 @@ class A3OB_OT_rigging_weights_cleanup(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class A3OB_MT_rigging_skeletons(bpy.types.Menu):
+    bl_label = "Skeleton Specials"
+
+    def draw(self, context):
+        layout = self.layout
+
+        layout.operator("a3ob.rigging_skeletons_from_armature", icon='OUTLINER_OB_ARMATURE')
+        layout.separator()
+        layout.operator("a3ob.rigging_skeletons_clear", text="Delete All Skeletons", icon='TRASH')
+
+
+class A3OB_MT_rigging_bones(bpy.types.Menu):
+    bl_label = "Bone Specials"
+
+    def draw(self, context):
+        layout = self.layout
+        
+        layout.operator("a3ob.rigging_skeletons_bones_lowercase", icon='SYNTAX_OFF')
+        layout.operator("a3ob.rigging_skeletons_bones_check_hierarchy", icon='VIEWZOOM')
+        layout.separator()
+        layout.operator("a3ob.rigging_skeletons_bones_clear", text="Delete All Bones", icon='TRASH')
+
+
 class A3OB_PT_rigging(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
@@ -390,9 +503,7 @@ class A3OB_PT_rigging_skeletons(bpy.types.Panel):
         col_skeletons_operators.operator("a3ob.rigging_skeletons_add", text="", icon='ADD')
         col_skeletons_operators.operator("a3ob.rigging_skeletons_remove", text="", icon='REMOVE')
         col_skeletons_operators.separator()
-        col_skeletons_operators.operator("a3ob.rigging_skeletons_from_armature", text="", icon='OUTLINER_OB_ARMATURE')
-        col_skeletons_operators.separator()
-        col_skeletons_operators.operator("a3ob.rigging_skeletons_clear", text="", icon='TRASH')
+        col_skeletons_operators.menu("A3OB_MT_rigging_skeletons", icon='DOWNARROW_HLT', text="")
 
         row_bones = layout.row()
         col_bones_list = row_bones.column()
@@ -406,7 +517,9 @@ class A3OB_PT_rigging_skeletons(bpy.types.Panel):
         col_bones_operators.operator("a3ob.rigging_skeletons_bones_add", text="", icon='ADD')
         col_bones_operators.operator("a3ob.rigging_skeletons_bones_remove", text="", icon='REMOVE')
         col_bones_operators.separator()
-        col_bones_operators.operator("a3ob.rigging_skeletons_bones_clear", text="", icon='TRASH')
+        col_bones_operators.menu("A3OB_MT_rigging_bones", icon='DOWNARROW_HLT', text="")
+
+        layout.operator("a3ob.rigging_pivots_from_armature")
 
 
 class A3OB_PT_rigging_weights(bpy.types.Panel):
@@ -448,12 +561,17 @@ classes = (
     A3OB_OT_rigging_skeletons_bones_add,
     A3OB_OT_rigging_skeletons_bones_remove,
     A3OB_OT_rigging_skeletons_bones_clear,
+    A3OB_OT_rigging_skeletons_bones_lowercase,
+    A3OB_OT_rigging_skeletons_bones_check_hierarchy,
+    A3OB_OT_rigging_pivots_from_armature,
     A3OB_OT_rigging_weights_select_unnormalized,
     A3OB_OT_rigging_weights_select_overdetermined,
     A3OB_OT_rigging_weights_normalize,
     A3OB_OT_rigging_weights_prune_overdetermined,
     A3OB_OT_rigging_weights_prune,
     A3OB_OT_rigging_weights_cleanup,
+    A3OB_MT_rigging_skeletons,
+    A3OB_MT_rigging_bones,
     A3OB_PT_rigging,
     A3OB_PT_rigging_skeletons,
     A3OB_PT_rigging_weights
