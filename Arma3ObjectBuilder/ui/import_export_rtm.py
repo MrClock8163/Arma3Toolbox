@@ -62,10 +62,9 @@ class A3OB_OP_export_rtm(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         
     def execute(self, context):
         obj = context.active_object
-        temppath = self.filepath + ".temp"
-        success = False
+        output = utils.OutputManager(self.filepath, "wb")
                 
-        with open(temppath, "wb") as file:
+        with output as file:
             try:
                 static, frame_count = export_rtm.write_file(self, context, file, obj)
             
@@ -74,19 +73,11 @@ class A3OB_OP_export_rtm(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                 else:
                     self.report({'INFO'}, "Exported %d frame(s)" % frame_count)
                 
-                success = True
+                output.success = True
                     
             except Exception as ex:
                 self.report({'ERROR'}, "%s (check the system console)" % str(ex))
                 traceback.print_exc()
-        
-        if success:
-            if os.path.isfile(self.filepath):
-                os.remove(self.filepath)
-                
-            os.rename(temppath, os.path.splitext(temppath)[0])
-        elif not success and not utils.get_addon_preferences().preserve_faulty_output:
-            os.remove(temppath)
             
         return {'FINISHED'}
         

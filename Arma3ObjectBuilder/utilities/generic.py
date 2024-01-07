@@ -81,11 +81,11 @@ def query_bmesh(obj):
 class OutputManager():
     def __init__(self, filepath, mode = "w"):
         self.filepath = filepath
-        self.success = False
         self.temppath = filepath + ".temp"
-        self.file = None
         self.mode = mode
-    
+        self.file = None
+        self.success = False
+
     def __enter__(self):
         file = open(self.temppath, self.mode)
         self.file = file
