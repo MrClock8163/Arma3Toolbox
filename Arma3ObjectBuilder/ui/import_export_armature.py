@@ -6,21 +6,6 @@ import bpy_extras
 from ..io import import_armature as arm
 
 
-class A3OB_UL_rigging_skeletons_protected(bpy.types.UIList):
-    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
-        layout.label(text=item.name, icon='ARMATURE_DATA')
-    
-    def filter_items(self, context, data, propname):
-        helper_funcs = bpy.types.UI_UL_list
-        flt_flags = []
-        flt_neworder = []
-        
-        sorter = getattr(data, propname)
-        flt_neworder = helper_funcs.sort_items_by_name(sorter, "name")
-        
-        return flt_flags, flt_neworder
-
-
 class A3OB_OP_import_armature(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     """Import Arma 3 armature"""
 
@@ -91,7 +76,6 @@ class A3OB_PT_import_armature_main(bpy.types.Panel):
 
 
 classes = (
-    A3OB_UL_rigging_skeletons_protected,
     A3OB_OP_import_armature,
     A3OB_PT_import_armature_main
 )

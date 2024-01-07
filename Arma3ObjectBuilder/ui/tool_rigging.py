@@ -19,6 +19,21 @@ class A3OB_UL_rigging_skeletons(bpy.types.UIList):
         return flt_flags, flt_neworder
 
 
+class A3OB_UL_rigging_skeletons_protected(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        layout.label(text=item.name, icon='ARMATURE_DATA')
+    
+    def filter_items(self, context, data, propname):
+        helper_funcs = bpy.types.UI_UL_list
+        flt_flags = []
+        flt_neworder = []
+        
+        sorter = getattr(data, propname)
+        flt_neworder = helper_funcs.sort_items_by_name(sorter, "name")
+        
+        return flt_flags, flt_neworder
+
+
 class A3OB_UL_rigging_bones(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         layout.alignment = 'LEFT'
@@ -553,6 +568,7 @@ class A3OB_PT_rigging_weights(bpy.types.Panel):
 
 classes = (
     A3OB_UL_rigging_skeletons,
+    A3OB_UL_rigging_skeletons_protected,
     A3OB_UL_rigging_bones,
     A3OB_OT_rigging_skeletons_add,
     A3OB_OT_rigging_skeletons_remove,
