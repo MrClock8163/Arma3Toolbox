@@ -78,6 +78,35 @@ def query_bmesh(obj):
             bm.free()
 
 
+class OutputManager():
+    def __init__(self, filepath, mode = "w"):
+        self.filepath = filepath
+        self.success = False
+        self.temppath = filepath + ".temp"
+        self.file = None
+        self.mode = mode
+    
+    def __enter__(self):
+        file = open(self.temppath, self.mode)
+        self.file = file
+
+        return file
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        self.file.close()
+
+        if self.success:
+            if os.path.isfile(self.filepath):
+                os.remove(self.filepath)
+            
+            os.rename(self.temppath, self.filepath)
+        
+        elif not self.success and not get_addon_preferences().preserve_faulty_output:
+            os.remove(self.temppath)
+        
+        return False
+
+
 def get_components(mesh):
     mesh.calc_loop_triangles()
     components = meshutils.mesh_linked_triangles(mesh)
