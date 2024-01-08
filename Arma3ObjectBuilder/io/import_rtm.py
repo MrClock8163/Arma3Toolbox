@@ -1,4 +1,5 @@
 import os
+from math import floor, ceil
 from itertools import chain
 
 import bpy
@@ -157,10 +158,10 @@ def import_keyframes(obj, action, transforms, frames, motion):
         add_keyframes(action, fcurves, keyframes)
 
 
-def import_file(operator, context):
+def import_file(operator, context, file):
     obj = context.active_object
     action = create_action(operator, obj)
-    rtm_data = data_rtm.RTM_File.read_file(operator.filepath)
+    rtm_data = data_rtm.RTM_File.read(file)
     transforms = build_transform_lookup(rtm_data)
     motion = build_motion_lookup(operator, rtm_data)
     frames = build_frame_mapping(operator, rtm_data)
@@ -170,7 +171,6 @@ def import_file(operator, context):
 
     if operator.make_active:
         values = list(frames.values())
-        context.scene.frame_start = values[0]
-        context.scene.frame_end = values[-1]
-
+        context.scene.frame_start = floor(values[0])
+        context.scene.frame_end = ceil(values[-1])
     return len(frames)

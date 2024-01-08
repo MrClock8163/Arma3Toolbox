@@ -225,11 +225,12 @@ class A3OB_OP_import_rtm(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     
     def execute(self, context):
         count_frames = 0
-        try:
-            count_frames = import_rtm.import_file(self, context)
-        except Exception as ex:
-            self.report({'ERROR'}, "%s (check the system console)" % str(ex))
-            traceback.print_exc()
+        with open(self.filepath, "rb") as file:
+            try:
+                count_frames = import_rtm.import_file(self, context, file)
+            except Exception as ex:
+                self.report({'ERROR'}, "%s (check the system console)" % str(ex))
+                traceback.print_exc()
         
         if count_frames > 0:
             self.report({'INFO'}, "Successfully imported %d frame(s)" % count_frames)
