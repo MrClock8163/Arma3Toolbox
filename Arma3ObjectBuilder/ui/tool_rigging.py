@@ -283,7 +283,9 @@ class A3OB_OT_rigging_pivots_from_armature(bpy.types.Operator):
         if scene_props.skeletons_index not in range(len(scene_props.skeletons)):
             return False
         
-        return obj and obj.type == 'ARMATURE'
+        skeleton = scene_props.skeletons[scene_props.skeletons_index]
+        
+        return obj and obj.type == 'ARMATURE' and len(skeleton.bones) > 0
     
     def execute(self, context):
         scene_props = context.scene.a3ob_rigging
