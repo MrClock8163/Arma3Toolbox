@@ -147,6 +147,21 @@ class A3OB_OP_import_rtm(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         default = "*.rtm",
         options = {'HIDDEN'}
     )
+    apply_motion: bpy.props.BoolProperty(
+        name = "Apply Motion",
+        description = "Bake the motion vector into the keyframes",
+        default = True
+    )
+    mute_constraints: bpy.props.BoolProperty(
+        name = "Mute Constraints",
+        description = "Mute constraints on affected pose bones",
+        default = True
+    )
+    make_active: bpy.props.BoolProperty(
+        name = "Make Active",
+        description = "Make the imported animation the active action",
+        default = True
+    )
     frame_start: bpy.props.IntProperty(
         name = "Start",
         description = "Starting frame of animation",
@@ -191,11 +206,6 @@ class A3OB_OP_import_rtm(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         ),
         default = 'FPS'
     )
-    apply_motion: bpy.props.BoolProperty(
-        name = "Apply Motion",
-        description = "Bake the motion vector into the keyframes",
-        default = True
-    )
 
     @classmethod
     def poll(cls, context):
@@ -214,11 +224,9 @@ class A3OB_OP_import_rtm(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         return super().invoke(context, event)
     
     def execute(self, context):
-        obj = context.active_object
-
         count_frames = 0
         try:
-            count_frames = import_rtm.import_file(self, obj)
+            count_frames = import_rtm.import_file(self, context)
         except Exception as ex:
             self.report({'ERROR'}, "%s (check the system console)" % str(ex))
             traceback.print_exc()
@@ -250,9 +258,33 @@ class A3OB_PT_import_rtm_main(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
+        layout.prop(operator, "make_active")
         layout.prop(operator, "apply_motion")
+        layout.prop(operator, "mute_constraints")
+        
+
+class A3OB_PT_import_rtm_mapping(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Frame Mapping"
+    bl_parent_id = "FILE_PT_operator"
+    
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        return operator.bl_idname == "A3OB_OT_import_rtm"
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        sfile = context.space_data
+        operator = sfile.active_operator
+
         layout.prop(operator, "round_frames")
-        layout.prop(operator, "mapping_mode")
+        layout.prop(operator, "mapping_mode", text="Method")
 
         if operator.mapping_mode == 'RANGE':
             layout.prop(operator, "frame_start")
@@ -268,7 +300,8 @@ classes = (
     A3OB_PT_export_rtm_main,
     A3OB_PT_export_rtm_frames,
     A3OB_OP_import_rtm,
-    A3OB_PT_import_rtm_main
+    A3OB_PT_import_rtm_main,
+    A3OB_PT_import_rtm_mapping
 )
 
 

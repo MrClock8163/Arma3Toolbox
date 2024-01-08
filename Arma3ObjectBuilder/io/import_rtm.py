@@ -7,12 +7,22 @@ from mathutils import Matrix, Vector
 from . import data_rtm
 
 
-def create_action(obj, name):
-    action = bpy.data.actions.new(name)
+def mute_constraints(obj, bones):
+    for bone in obj.pose.bones:
+        if bone.name.lower() not in bones:
+            continue
+
+        for item in bone.constraints:
+            item.mute = True
+
+
+def create_action(operator, obj):
+    action = bpy.data.actions.new(os.path.basename(operator.filepath))
     action.use_fake_user = True
     if not obj.animation_data:
         obj.animation_data_create()
-    if not obj.animation_data.action:
+    
+    if not obj.animation_data.action or operator.make_active:
         obj.animation_data.action = action
     
     return action
@@ -147,13 +157,20 @@ def import_keyframes(obj, action, transforms, frames, motion):
         add_keyframes(action, fcurves, keyframes)
 
 
-def import_file(operator, obj):
-    action = create_action(obj, os.path.basename(operator.filepath))
+def import_file(operator, context):
+    obj = context.active_object
+    action = create_action(operator, obj)
     rtm_data = data_rtm.RTM_File.read_file(operator.filepath)
     transforms = build_transform_lookup(rtm_data)
     motion = build_motion_lookup(operator, rtm_data)
     frames = build_frame_mapping(operator, rtm_data)
-
+    if operator.mute_constraints:
+        mute_constraints(obj, [item.lower() for item in rtm_data.bones])
     import_keyframes(obj, action, transforms, frames, motion)
+
+    if operator.make_active:
+        values = list(frames.values())
+        context.scene.frame_start = values[0]
+        context.scene.frame_end = values[-1]
 
     return len(frames)
