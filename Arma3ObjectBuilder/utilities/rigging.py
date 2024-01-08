@@ -142,6 +142,9 @@ def bones_from_armature(obj):
 
 
 def bone_order_from_skeleton(skeleton):
+    if len(skeleton.bones) == 0:
+        return {}
+    
     bones = {}
     for i in range(len(skeleton.bones)):
         for item in skeleton.bones:
