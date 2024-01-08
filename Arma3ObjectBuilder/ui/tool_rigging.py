@@ -536,7 +536,7 @@ class A3OB_PT_rigging_skeletons(bpy.types.Panel):
         col_bones_operators.separator()
         col_bones_operators.menu("A3OB_MT_rigging_bones", icon='DOWNARROW_HLT', text="")
 
-        layout.operator("a3ob.rigging_pivots_from_armature")
+        layout.operator("a3ob.rigging_pivots_from_armature", icon_value=utils.get_icon("op_pivots_from_armature"))
 
 
 class A3OB_PT_rigging_weights(bpy.types.Panel):
