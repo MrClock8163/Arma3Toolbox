@@ -40,7 +40,7 @@ class A3OB_PG_outliner_proxy(bpy.types.PropertyGroup):
 class A3OB_PG_outliner_lod(bpy.types.PropertyGroup):
     obj: bpy.props.StringProperty(name="Object Name")
     name: bpy.props.StringProperty(name="LOD Type")
-    signature: bpy.props.FloatProperty(name="LOD Signature")
+    priority: bpy.props.FloatProperty(name="LOD Signature")
     proxy_count: bpy.props.IntProperty(name="Proxy Count")
     subobject_count: bpy.props.IntProperty(name="Sub-object Count")
 

@@ -64,11 +64,9 @@ def bake_flags_vertex(obj):
 
         layer = flagutils.get_layer_flags_vertex(bm)
         flags_vertex = {i: item.get_flag() for i, item in enumerate(obj.a3ob_properties_object_flags.vertex)}
-        print(flags_vertex)
         if len(flags_vertex) > 0:
             for vert in bm.verts:
                 vert[layer] = flags_vertex.get(vert[layer], default_flag)
-                print(vert[layer])
         else:
             for vert in bm.verts:
                 vert[layer] = default_flag
@@ -474,7 +472,8 @@ def process_taggs(obj, bm, logger):
 
 
 def process_lod(operator, obj, proxy_lookup, is_valid, logger):
-    lod_name = obj.a3ob_properties_object.get_name()
+    object_props = obj.a3ob_properties_object
+    lod_name = object_props.get_name()
 
     logger.level_up()
     logger.step("Name: %s" % lod_name)
@@ -493,7 +492,7 @@ def process_lod(operator, obj, proxy_lookup, is_valid, logger):
         return None
 
     output = p3d.P3D_LOD()
-    output.resolution = obj.a3ob_properties_object.get_signature()
+    output.resolution.set(int(object_props.lod), object_props.resolution)
 
     mesh = obj.data
     mesh.calc_normals_split()
@@ -526,7 +525,7 @@ def process_lod(operator, obj, proxy_lookup, is_valid, logger):
     logger.log("Finalized proxy selection names")
 
     logger.step("File report:")
-    logger.log("Signature: %d" % output.resolution)
+    logger.log("Signature: %d" % float(output.resolution))
     logger.log("Type: P3DM")
     logger.log("Version: 28.256")
     logger.log("Vertices: %d" % len(output.verts))
@@ -584,7 +583,7 @@ def write_file(operator, context, file):
         raise errors.P3DError("All LODs had n-gons/failed validation, cannot write P3D with 0 LODs")
 
     # LODs should be sorted by their resolution signature.
-    mlod_lods.sort(key=lambda lod: lod.resolution)
+    mlod_lods.sort(key=lambda lod: float(lod.resolution))
     mlod.lods = mlod_lods
 
     if operator.force_lowercase:

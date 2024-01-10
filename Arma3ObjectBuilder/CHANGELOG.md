@@ -36,6 +36,8 @@
 
 ### Fixed:
 - LOD validation would produce false negatives when proxies were used
+- LOD type would be detected incorrectly for Shadow Volume - View Cargo when the resolution is higher than 4
+- LOD resolution would be incorrectly exported for Shadow Volume - View Cargo
 
 ## [v2.0.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.0.0)
 

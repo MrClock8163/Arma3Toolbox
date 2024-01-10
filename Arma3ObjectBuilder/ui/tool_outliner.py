@@ -23,7 +23,7 @@ class A3OB_UL_outliner_lods(bpy.types.UIList):
         flt_neworder = []
         
         sorter = [(index, frame) for index, frame in enumerate(getattr(data, propname))]
-        flt_neworder = helper_funcs.sort_items_helper(sorter, lambda f: f[1].signature, False)
+        flt_neworder = helper_funcs.sort_items_helper(sorter, lambda f: f[1].priority, False)
         
         return flt_flags, flt_neworder
 

@@ -1,7 +1,6 @@
 # Utility functions not exclusively related to a specific tool.
 
 
-import math
 import os
 import json
 from contextlib import contextmanager
@@ -123,25 +122,6 @@ def get_components(mesh):
     components.extend([[] for i in range(len(loose))])
     
     return component_lookup, components
-
-
-def normalize_float(number, precision = 4):
-    if number == 0:
-        return 0.0, 1
-    
-    base10 = math.log10(abs(number))
-    exponent = abs(math.floor(base10))
-    fraction = round(number / 10**exponent, precision)
-    
-    correction = 0
-    if fraction >= 10.0: # Rounding after normalization may break the normalization (eg: 9.99999 -> 10.0000)
-        fraction, correction = normalize_float(fraction, precision)
-
-    return round(fraction, precision), exponent + correction
-
-
-def floor(number, precision = 0):
-    return round(math.floor(number * 10**precision) / 10**precision, precision)
 
 
 def force_mode_object():
