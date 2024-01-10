@@ -1,3 +1,7 @@
+# Processing functions to import animation data from RTM files.
+# Actual file handling is implemented in the data_rtm module.
+
+
 import os
 from math import floor, ceil
 from itertools import chain

@@ -1,3 +1,5 @@
+# Processing functions to reconstruct armature from given skeleton definitions
+# pivot points P3D model.
 
 
 import bpy

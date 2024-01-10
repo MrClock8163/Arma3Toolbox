@@ -1,3 +1,7 @@
+# Processing functions to import skeleton definitions from model.cfg file.
+# The actual file handling is implemented in the data_rap module.
+
+
 import os
 import tempfile
 import subprocess

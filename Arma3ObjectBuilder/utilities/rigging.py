@@ -1,4 +1,4 @@
-# Backend functions of the weight painting tools.
+# Backend functions of the rigging painting tools.
 
 
 import bpy

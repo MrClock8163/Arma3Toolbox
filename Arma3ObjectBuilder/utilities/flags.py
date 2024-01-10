@@ -1,8 +1,6 @@
 # Helper functions to handle vertex and face flag values.
 
 
-import bmesh
-
 from . import data
 from . import generic as utils
 

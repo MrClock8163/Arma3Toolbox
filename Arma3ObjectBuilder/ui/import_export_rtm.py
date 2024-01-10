@@ -1,5 +1,4 @@
 import traceback
-import os
 
 import bpy
 import bpy_extras

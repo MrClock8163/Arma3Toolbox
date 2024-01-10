@@ -1,3 +1,4 @@
+# Writer functions to export text formatted model.cfg file.
 
 
 from . import data_rap as rap
