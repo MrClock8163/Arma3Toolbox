@@ -13,6 +13,7 @@
     - Add/Remove Skeleton definitions
     - Add/Remove Bone to/from Skeleton definition
     - Skeleton From Armature
+    - Pivots From Armature
 - properties:
   - Proxy Access sub-panel in LOD Properties
     - direct access to proxy properties
@@ -25,7 +26,7 @@
 
 ### Changed:
 - tools:
-  - Validation logic was completely overhaul for better extensibility
+  - Validation logic was completely overhauled for better extensibility
   - Weight Painting tool was reworked and moved under the new Rigging tool panel
 - import-export:
   - P3D:
