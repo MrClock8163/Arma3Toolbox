@@ -53,7 +53,11 @@ def fake_pivot_coords(unknown, pivots):
 
 def read_pivots(pivots_path):
     p3d_data = data_p3d.P3D_MLOD.read_file(pivots_path)
-    pivots = extract_pivot_coords(p3d_data.lods[0])
+    memory = p3d_data.find_lod(data_p3d.P3D_LOD_Resolution.MEMORY)
+    if not memory:
+        return {}
+    
+    pivots = extract_pivot_coords(memory)
 
     return pivots
 
