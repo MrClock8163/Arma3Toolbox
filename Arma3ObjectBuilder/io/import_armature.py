@@ -5,6 +5,7 @@ from mathutils import Vector
 
 from . import data_p3d
 from . import import_mcfg as mcfg
+from ..utilities.logger import ProcessLogger
 
 
 def vector_average(vectors):
@@ -149,15 +150,24 @@ def build_armature(hierarchy, pivot_points, skeleton_name):
 
 
 def import_armature(operator, skeleton):
+    logger = ProcessLogger()
+    logger.step("Armature reconstruction from pivots from %s" % operator.filepath)
+    logger.log("Skeleton definition: %s" % skeleton.name)
     pivots = read_pivots(operator.filepath)
+    logger.log("Potential pivot points: %d" % len(pivots))
     pos_known, pos_unknown = filter_bones(list(skeleton.bones), pivots)
+    logger.log("Bones without pivot point: %s" % len(pos_unknown))
 
     if not operator.ignore_without_pivot:
         placeholders = fake_pivot_coords(pos_unknown, pivots)
         pivots.update(placeholders)
         pos_known.extend(pos_unknown)
+        logger.log("Created placeholder pivot points")
 
     hierarchy = build_bone_hierarchy("", pos_known)
     obj = build_armature(hierarchy, pivots, skeleton.name)
+    logger.log("Created armature object")
     
+    logger.step("Armature reconstruction finished")
+
     return obj

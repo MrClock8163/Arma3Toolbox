@@ -35,28 +35,9 @@ class A3OB_OP_import_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         pass
 
     def execute(self, context):
-        scene_props = context.scene.a3ob_rigging
-        
         count_skeletons = 0
         try:
-            data = import_mcfg.read_mcfg(utils.abspath(self.filepath))
-
-            if data:
-                skeletons = import_mcfg.get_skeletons(data)
-                count_skeletons = len(skeletons)
-                for skelly in skeletons:
-                    new_skelly = scene_props.skeletons.add()
-                    new_skelly.name = skelly.name.lower() if self.force_lowercase else skelly.name
-                    
-                    cfgbones = import_mcfg.get_bones_compiled(data, skelly.name)
-                    if self.force_lowercase:
-                        cfgbones = [bone.to_lowercase() for bone in cfgbones]
-
-                    for bone in cfgbones:
-                        new_bone = new_skelly.bones.add()
-                        new_bone.name = bone.name
-                        new_bone.parent = bone.parent
-
+            count_skeletons = import_mcfg.read_file(self, context)
         except Exception as ex:
             self.report({'ERROR'}, "%s (check the system console)" % str(ex))
             traceback.print_exc()
