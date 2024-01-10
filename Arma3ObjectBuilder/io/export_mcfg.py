@@ -2,15 +2,24 @@
 
 from . import data_rap as rap
 from ..utilities import rigging as riggingutils
+from ..utilities.logger import ProcessLogger
 
 
 def write_file(operator, skeleton, file):
+    logger = ProcessLogger()
+    logger.step("Skeleton definition export to %s" % operator.filepath)
+    logger.log("Skeleton definition: %s" % skeleton.name)
     bones_parents = riggingutils.bone_order_from_skeleton(skeleton)
     if bones_parents is None:
+        logger.log("Bone hierarchy is invalid (circular reference or typo)")
+        logger.step("Skeleton export finished")
         return False
+
+    logger.log("Bones: %d" % len(bones_parents))
     
     if operator.force_lowercase:
-        bones_parents = {k.lower(): v.lower for k, v in bones_parents.items()}
+        logger.log("Force lowercase")
+        bones_parents = {k.lower(): v.lower() for k, v in bones_parents.items()}
     
     printer = rap.CfgFormatter(file)
 
@@ -28,5 +37,8 @@ def write_file(operator, skeleton, file):
     
     printer.class_close()
     printer.class_close()
+
+    logger.log("Wrote formatted file")
+    logger.step("Skeleton export finished")
 
     return True

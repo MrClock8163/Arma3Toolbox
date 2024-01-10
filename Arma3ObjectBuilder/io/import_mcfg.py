@@ -157,6 +157,7 @@ def read_file(operator, context):
 
     if not data:
         logger.log("Could not read model.cfg file")
+        logger.step("Skeleton import finished")
         return 0
     
     if operator.force_lowercase:

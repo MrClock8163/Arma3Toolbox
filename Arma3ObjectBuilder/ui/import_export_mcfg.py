@@ -105,13 +105,15 @@ class A3OB_OP_export_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     def execute(self, context):
         scene_props = context.scene.a3ob_rigging
         skeleton = scene_props.skeletons[self.skeleton_index]
-        output = utils.OutputManager(self.filepath, "wb")
+        output = utils.OutputManager(self.filepath, "w")
         
         with output as file:
             try:
                 success = export_mcfg.write_file(self, skeleton, file)
                 if not success:
                     self.report({'ERROR'}, "Invalid bone hierarchy detected, cannot export skeleton")
+                else:
+                    self.report({'INFO'}, "Successfully exported skeleton definition")
                 output.success = success
             except Exception as ex:
                 self.report({'ERROR'}, "%s (check the system console)" % str(ex))
