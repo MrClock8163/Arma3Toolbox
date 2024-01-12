@@ -32,11 +32,11 @@ def categorize_lods(operator, context, mlod):
     
     if operator.groupby == 'NONE':
         categories["None"] = [0, root]
-        lods = [[*lodutils.get_lod_id(lod.resolution), 0] for lod in mlod.lods]
+        lods = [[*lod.resolution.get(), 0] for lod in mlod.lods]
 
     else:
         for lod in mlod.lods:
-            lod_index, lod_resolution = lodutils.get_lod_id(lod.resolution)
+            lod_index, lod_resolution = lod.resolution.get()
             group_dict = data.lod_groups[operator.groupby]
             group_name = group_dict[lod_index]
 
@@ -283,7 +283,7 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
 
     logger.step("File report:")
     logger.log("Name: %s" % lod_name)
-    logger.log("Signature: %d" % lod.resolution)
+    logger.log("Signature: %d" % lod.resolution.source)
     logger.log("Type: P3DM")
     logger.log("Version: 28.256")
     logger.log("Vertices: %d" % len(lod.verts))
@@ -438,6 +438,6 @@ def read_file(operator, context, file):
 
     logger.level_down()
 
-    print("P3D import finished in %f sec" % (time.time() - time_file_start))
+    logger.step("P3D import finished in %f sec" % (time.time() - time_file_start))
     
     return lod_objects

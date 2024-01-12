@@ -85,10 +85,12 @@ class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         if not export_asc.valid_resolution(self, context, obj):
             self.report({'ERROR'}, "Cannot export irregular raster, raster resolutions must be equal in X and Y directions")
             return {'FINISHED'}
-            
-        with open(self.filepath, "wt") as file:
+        
+        output = utils.OutputManager(self.filepath, "w")
+        with output as file:
             try:
                 export_asc.write_file(self, context, file, obj)
+                output.success = True
             except Exception as ex:
                 self.report({'ERROR'}, "%s (check the system console)" % str(ex))
                 traceback.print_exc()

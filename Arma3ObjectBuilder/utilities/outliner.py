@@ -1,10 +1,6 @@
 # Backend functions for the LOD object outliner panel.
 
 
-from ..utilities import generic as utils
-from ..utilities import lod as lodutils
-
-
 def update_outliner(scene):
     scene_props = scene.a3ob_outliner
     
@@ -18,7 +14,7 @@ def update_outliner(scene):
         item = scene_props.lods.add()
         item.obj = obj.name
         item.name = obj.a3ob_properties_object.get_name()
-        item.signature = obj.a3ob_properties_object.get_signature()
+        item.priority = int(obj.a3ob_properties_object.lod) * 1e5 + obj.a3ob_properties_object.resolution
 
         for child in obj.children:
             if child.type != 'MESH':

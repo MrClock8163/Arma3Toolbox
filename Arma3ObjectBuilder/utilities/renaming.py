@@ -46,11 +46,8 @@ def rename_path(context):
     path_new = scene_props.new_path
     source_filter = scene_props.source_filter
     
-    print(path_old, path_new)
-    
     if 'TEX' in source_filter or 'RVMAT' in source_filter:
         for mat in bpy.data.materials:
-            print(mat.name)
             mat_props = mat.a3ob_properties_material
             
             if 'TEX' in source_filter:

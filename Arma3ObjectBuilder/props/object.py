@@ -160,9 +160,6 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
     def get_name(self):
         return lodutils.format_lod_name(int(self.lod), self.resolution)
 
-    def get_signature(self):
-        return lodutils.get_lod_signature(int(self.lod), self.resolution)
-
 
 class A3OB_PG_properties_object_flags(bpy.types.PropertyGroup):
     vertex: bpy.props.CollectionProperty(

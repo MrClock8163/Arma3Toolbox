@@ -270,26 +270,16 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         pass
     
     def execute(self, context):
-        if export_p3d.can_export(self, context):
-            temppath = self.filepath + ".temp"
-            success = False
-            
-            with open(temppath, "wb") as file:
+        if export_p3d.can_export(self, context):            
+            output = utils.OutputManager(self.filepath, "wb")            
+            with output as file:
                 try:
                     lod_count, exported_count = export_p3d.write_file(self, context, file)
                     self.report({'INFO'}, "Succesfully exported %d/%d LODs (check the logs in the system console)" % (exported_count, lod_count))
-                    success = True
+                    output.success = True
                 except Exception as ex:
                     self.report({'ERROR'}, "%s (check the system console)" % str(ex))
                     traceback.print_exc()
-            
-            if success:
-                if os.path.isfile(self.filepath):
-                    os.remove(self.filepath)
-                    
-                os.rename(temppath, os.path.splitext(temppath)[0])
-            elif not success and not utils.get_addon_preferences().preserve_faulty_output:
-                os.remove(temppath)
                 
         else:
             self.report({'INFO'}, "There are no LODs to export")

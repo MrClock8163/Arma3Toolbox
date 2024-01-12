@@ -8,15 +8,26 @@
     - Point cloud ruleset
     - Paths ruleset
     - Roadway ruleset
+  - Rigging:
+    - new tool panel consolidating rigging related tools
+    - Add/Remove Skeleton definitions
+    - Add/Remove Bone to/from Skeleton definition
+    - Skeleton From Armature
+    - Pivots From Armature
 - properties:
   - Proxy Access sub-panel in LOD Properties
     - direct access to proxy properties
     - Add Proxy
     - Remove Proxy
+- import-export:
+  - RTM import
+  - Skeleton import (from model.cfg)
+  - Aramture import (from pivots.p3d and selected skeleton definition)
 
 ### Changed:
 - tools:
-  - Validation logic was completely overhaul for better extensibility
+  - Validation logic was completely overhauled for better extensibility
+  - Weight Painting tool was reworked and moved under the new Rigging tool panel
 - import-export:
   - P3D:
     - split normals are now only imported for visual LODs
@@ -26,6 +37,8 @@
 
 ### Fixed:
 - LOD validation would produce false negatives when proxies were used
+- LOD type would be detected incorrectly for Shadow Volume - View Cargo when the resolution is higher than 4
+- LOD resolution would be incorrectly exported for Shadow Volume - View Cargo
 
 ## [v2.0.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.0.0)
 

@@ -8,6 +8,86 @@ from . import binary_handler as binary
 from ..utilities import errors
 
 
+class CfgFormatter():
+    def __init__(self, file):
+        self.indent = 0
+        self.file = file
+    
+    def write(self, value):
+        self.file.write(self.indented(value) + "\n")
+    
+    def indented(self, value):
+        return self.indent * "\t" + value
+    
+    @staticmethod
+    def quoted(value):
+        return "\"%s\"" % value
+    
+    def comment(self, content):
+        self.write("// %s" % content)
+
+    def class_delete(self, name):
+        self.write("del %s;" % name)
+
+    def class_reference(self, name):
+        self.write("class %s;" % name)
+    
+    def class_copy(self, name, parent):
+        self.write("class %s: %s {};" % (name, parent))
+    
+    def class_open(self, name, parent = ""):
+        self.write("class %s%s {" % (name, ": %s" % parent if parent != "" else ""))
+        self.indent += 1
+    
+    def class_close(self):
+        self.indent -= 1
+        self.write("};")
+    
+    def array_open(self, name):
+        self.write("%s[] = {" % name)
+        self.indent += 1
+    
+    def array_flagged_open(self, name):
+        self.write("%s[] += {" % name)
+        self.indent += 1
+    
+    def array_close(self):
+        self.indent -= 1
+        self.write("};")
+    
+    def array_empty(self, name):
+        self.write("%s[] = {};" % name)
+    
+    def array_items(self, values):
+        for item in values[:-1]:
+            self.write(item + ",")
+        
+        self.write(values[-1])
+    
+    def property_string(self, name, value):
+        self.write("%s = %s;" % (name, self.quoted(value)))
+    
+    def property_float(self, name, value):
+        self.write("%s = %f;" % (name, value))
+    
+    def property_int(self, name, value):
+        self.write("%s = %d;" % (name, value))
+    
+    def variable(self, name, value):
+        self.write("%s = %s;" % (name, value))
+    
+    def enum_open(self):
+        self.write("enum {")
+        self.indent += 1
+
+    def enum_close(self):
+        self.indent -= 1
+        self.write("};")
+    
+    def enum_item(self, name, value):
+        self.write("%s = %d;" % (name, value))
+
+
 # Internal data structure to store the read data.
 class Cfg():
     class EntryType(Enum):
