@@ -23,7 +23,7 @@ that allows the user to create, import and export unbinarized
 Arma Engine .p3d files.
 ```
 
-## Requirements
+## Requirements and Compatibility
 - [**Blender** v2.90.0](https://www.blender.org/download/releases/2-90/) or higher
 - [**Arma 3 Tools**](https://store.steampowered.com/app/233800/Arma_3_Tools/) (optional for some features to work)
 
@@ -31,6 +31,8 @@ The add-on is developed on **Blender** v2.90.0 for convenience reasons, which al
 it supports older versions, not just the latest releases. The add-on is tested on newer releases regardless.
 If a new release of **Blender** in the future renders it impossible to keep the add-on compatible with both old, 
 and new releases, support will be dropped for legacy versions in favor of the new API.
+
+The range of **Blender** releases tested for compatibility is indicated in the changelog entry of each packed release of the add-on.
 
 # License
 As inherited from the **ArmAToolbox**, the **Arma 3 Object Builder** add-on is released under the GNU General Public License version 3.

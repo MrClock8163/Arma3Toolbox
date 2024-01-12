@@ -1,6 +1,6 @@
 # Changelog
 
-## [v2.1.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.1.0)
+## [v2.1.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.1.0) (Blender 2.90 -> 4.0)
 
 ### Added:
 - tools:
@@ -40,7 +40,7 @@
 - LOD type would be detected incorrectly for Shadow Volume - View Cargo when the resolution is higher than 4
 - LOD resolution would be incorrectly exported for Shadow Volume - View Cargo
 
-## [v2.0.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.0.0)
+## [v2.0.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.0.0) (Blender 2.90 -> 4.0)
 
 **This update brings compatibility with the Blender 4 releases**
 
@@ -99,7 +99,7 @@
 - Dynamic Object Naming (from LOD objects)
 - Vertex Normals Flag LOD object property (use the new Vertex Flag Groups instead)
 
-## [v1.0.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v1.0.0)
+## [v1.0.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v1.0.0) (Blender 2.90 -> 3.6)
 
 ### Added:
 - Move Bottom utility function
@@ -128,7 +128,7 @@
 ### Removed:
 - Translucent option in material properties
 
-## [v0.3.4](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v0.3.4)
+## [v0.3.4](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v0.3.4) (Blender 2.90 -> 3.6)
 
 ### Added:
 - support for relative paths (not recommended to be used though)
@@ -145,7 +145,7 @@
 - fixed an error in the P3D import where random sharp edges would appear on the model under certain conditions
 - fixed various back-end issues with edge cases
 
-## [v0.3.3](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v0.3.3)
+## [v0.3.3](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v0.3.3) (Blender 2.90 -> 3.6)
 
 ### Added:
 - new utility functions:
@@ -163,7 +163,7 @@
 ### Fixed:
 - exception would occur in newer Blender versions during vertex mass editing (due to a so-far-unnoticed API difference in the bmesh module)
 
-## [v0.3.2](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v0.3.2)
+## [v0.3.2](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v0.3.2) (Blender 2.90 -> 3.6)
 
 ### Added:
 - Align With Object proxy operator
@@ -181,7 +181,7 @@
 ### Fixed:
 - proxy transformation issue during import
 
-## [v0.3.1](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v0.3.1)
+## [v0.3.1](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v0.3.1) (Blender 2.90 -> 3.6)
 
 ### Added:
 - Proxies tool panel
@@ -198,7 +198,7 @@
 - the magazine proxy path in the common proxies list had a typo
 
 
-## [v0.3.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v0.3.0)
+## [v0.3.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v0.3.0) (Blender 2.90 -> 3.6)
 
 ### Added:
 - Export - Arma 3 animation (*.rtm)
@@ -207,13 +207,13 @@
 - Setup conversion - DTM
 - Setup conversion - Armature
 
-## [v0.2.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v0.2.0)
+## [v0.2.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v0.2.0) (Blender 2.90 -> 3.6)
 
 ### Added:
 - Import - Esri ASCII grid (*.asc)
 - Export - Esri ASCII grid (*.asc)
 
-## [v0.1.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v0.1.0)
+## [v0.1.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v0.1.0) (Blender 2.90 -> 3.6)
 
 Initial release
 
