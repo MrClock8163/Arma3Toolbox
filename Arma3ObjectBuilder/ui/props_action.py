@@ -74,6 +74,28 @@ class A3OB_OT_rtm_frames_clear(bpy.types.Operator):
             
         return {'FINISHED'}
 
+ 
+class A3OB_UL_rtm_frames(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        index = item.index
+        split = layout.split(factor=0.3)
+        split.label(text=str(index))
+        
+        frame_range = context.scene.frame_end - context.scene.frame_start
+        if frame_range > 0:
+            phase = (index - context.scene.frame_start) / frame_range
+            split.label(text="{:.6f}".format(phase))
+        
+    def filter_items(self, context, data, propname):
+        helper_funcs = bpy.types.UI_UL_list
+        flt_flags = []
+        flt_neworder = []
+        
+        sorter = [(index, frame) for index, frame in enumerate(getattr(data, propname))]
+        flt_neworder = helper_funcs.sort_items_helper(sorter, lambda f: f[1].index, False)
+        
+        return flt_flags, flt_neworder
+
 
 class A3OB_PT_action(bpy.types.Panel):
     bl_region_type = 'UI'
@@ -137,7 +159,7 @@ class A3OB_PT_action_frames(bpy.types.Panel):
         split_header = col_list.split(factor=0.3)
         split_header.label(text="Index")
         split_header.label(text="Phase")
-        col_list.template_list("A3OB_UL_keyframes", "A3OB_keyframes", action_props, "frames", action_props, "frames_index")
+        col_list.template_list("A3OB_UL_rtm_frames", "A3OB_frames", action_props, "frames", action_props, "frames_index")
         
         col_operators = row.column(align=True)
         col_operators.operator("a3ob.rtm_frames_add", text="", icon = 'ADD')
@@ -145,34 +167,12 @@ class A3OB_PT_action_frames(bpy.types.Panel):
         col_operators.separator()
         col_operators.operator("a3ob.rtm_frames_clear", text="", icon = 'TRASH')
 
- 
-class A3OB_UL_keyframes(bpy.types.UIList):
-    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
-        index = item.index
-        split = layout.split(factor=0.3)
-        split.label(text=str(index))
-        
-        frame_range = context.scene.frame_end - context.scene.frame_start
-        if frame_range > 0:
-            phase = (index - context.scene.frame_start) / frame_range
-            split.label(text="{:.6f}".format(phase))
-        
-    def filter_items(self, context, data, propname):
-        helper_funcs = bpy.types.UI_UL_list
-        flt_flags = []
-        flt_neworder = []
-        
-        sorter = [(index, frame) for index, frame in enumerate(getattr(data, propname))]
-        flt_neworder = helper_funcs.sort_items_helper(sorter, lambda f: f[1].index, False)
-        
-        return flt_flags, flt_neworder
-
 
 classes = (
     A3OB_OT_rtm_frames_add,
     A3OB_OT_rtm_frames_remove,
     A3OB_OT_rtm_frames_clear,
-    A3OB_UL_keyframes,
+    A3OB_UL_rtm_frames,
     A3OB_PT_action,
     A3OB_PT_action_frames
 )

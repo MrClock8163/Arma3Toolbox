@@ -195,6 +195,7 @@ def import_file(operator, context, file):
     import_keyframes(obj, action, transforms, frames, motion)
     logger.log("Created keyframes")
 
+    action.use_frame_range = True
     if operator.make_active:
         values = list(frames.values())
         context.scene.frame_start = floor(values[0])

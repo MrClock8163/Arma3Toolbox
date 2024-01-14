@@ -19,7 +19,7 @@ class A3OB_OP_import_armature(bpy.types.Operator, bpy_extras.io_utils.ImportHelp
         options = {'HIDDEN'}
     )
     skeleton_index: bpy.props.IntProperty(
-        name="Skeleton To Reconstruct",
+        name = "Skeleton To Reconstruct",
         default = 0
     )
     ignore_without_pivot: bpy.props.BoolProperty(
