@@ -1,5 +1,6 @@
 # Processing functions to import animation data from RTM files.
 # Actual file handling is implemented in the data_rtm module.
+# Keyframe importing is based on the official io_scene_fbx module.
 
 
 import os

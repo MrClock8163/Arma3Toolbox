@@ -322,6 +322,8 @@ modules = (
     props.object,
     props.material,
     props.scene,
+    props.action,
+    ui.props_action,
     ui.props_object_mesh,
     ui.props_object_armature,
     ui.props_material,
