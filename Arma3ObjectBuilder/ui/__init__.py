@@ -5,7 +5,6 @@ from . import import_export_p3d
 from . import import_export_rtm
 from . import props_action
 from . import props_material
-from . import props_object_armature
 from . import props_object_mesh
 from . import tool_outliner
 from . import tool_color
