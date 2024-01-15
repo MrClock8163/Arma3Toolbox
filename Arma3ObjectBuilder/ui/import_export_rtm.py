@@ -23,11 +23,6 @@ class A3OB_OP_export_rtm(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         name = "Static Pose",
         description = "Export current frame as static pose"
     )
-    clamp: bpy.props.BoolProperty(
-        name = "Clamp To Range",
-        description = "Do not export frames outside of the animation start-end range",
-        default = True
-    )
     frame_start: bpy.props.IntProperty(
         name = "Start",
         description = "Starting frame of animation",
@@ -39,16 +34,43 @@ class A3OB_OP_export_rtm(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         default = 100,
         min = 0
     )
+    frame_step: bpy.props.IntProperty(
+        name = "Step",
+        description = "Sampling step",
+        default = 2,
+        min = 1
+    )
+    frame_count: bpy.props.IntProperty(
+        name = "Count",
+        description = "Number of frames to sample (including start and end)",
+        default = 20,
+        min = 2
+    )
     force_lowercase: bpy.props.BoolProperty(
         name = "Force Lowercase",
         description = "Export all bone names as lowercase",
         default = True
     )
+    frame_source: bpy.props.EnumProperty(
+        name = "Source",
+        description = "Source of frames to export to RTM",
+        items = (
+            ('LIST', "List", "Export frames added to the RTM frame list of the active action"),
+            ('SAMPLE_STEP', "Sample With Step", "Export frames sampled with the given step between the start and end frames"),
+            ('SAMPLE_COUNT', "Sample With Count", "Export frames sampled with the given count (fractional frames will be rounded to the nearest integer, so the actual exported frame count will be less than desired)")
+        ),
+        default = 'SAMPLE_STEP'
+    )
+    skeleton_index: bpy.props.IntProperty(
+        name = "Skeleton",
+        description = "Skeleton to use to filter out control bones from armature",
+        default = 0
+    )
     
     @classmethod
     def poll(cls, context):
-        obj = context.active_object
-        return obj and obj.type == 'ARMATURE' and len(obj.pose.bones) > 0
+        obj = context.object
+        return obj and obj.type == 'ARMATURE' and len(obj.pose.bones) > 0 and len(context.scene.a3ob_rigging.skeletons) > 0
         
     def draw(self, context):
         pass
@@ -56,19 +78,37 @@ class A3OB_OP_export_rtm(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     def invoke(self, context, event):
         self.frame_start = context.scene.frame_start
         self.frame_end = context.scene.frame_end
+
+        action = None
+        if context.object.animation_data:
+            action = context.object.animation_data.action
+
+        if action and action.use_frame_range:
+            self.frame_start = action.frame_start
+            self.frame_end = action.frame_end
         
         return super().invoke(context, event)
         
     def execute(self, context):
-        obj = context.active_object
-        output = utils.OutputManager(self.filepath, "wb")
+        obj = context.object
+        action = None
+        if obj.animation_data:
+            action = obj.animation_data.action
+
+        # Prevent cases where the start might be higher than the end due to user error
+        start = min(self.frame_start, self.frame_end)
+        end = max(self.frame_start, self.frame_end)
+
+        self.frame_start = start
+        self.frame_end = end
                 
+        output = utils.OutputManager(self.filepath, "wb")
         with output as file:
             try:
-                static, frame_count = export_rtm.write_file(self, context, file, obj)
+                static, frame_count = export_rtm.write_file(self, context, file, obj, action)
             
                 if not self.static_pose and static:
-                    self.report({'INFO'}, "No frames were added for export, exported as static pose")
+                    self.report({'INFO'}, "Exported as static pose")
                 else:
                     self.report({'INFO'}, "Exported %d frame(s)" % frame_count)
                 
@@ -101,9 +141,11 @@ class A3OB_PT_export_rtm_main(bpy.types.Panel):
         layout.use_property_decorate = False
         sfile = context.space_data
         operator = sfile.active_operator
+        scene_props = context.scene.a3ob_rigging
         
         layout.prop(operator, "static_pose")
         layout.prop(operator, "force_lowercase")
+        layout.template_list("A3OB_UL_rigging_skeletons_protected", "A3OB_rtm_skeletons", scene_props, "skeletons", operator, "skeleton_index", rows=3)
 
 
 class A3OB_PT_export_rtm_frames(bpy.types.Panel):
@@ -127,11 +169,20 @@ class A3OB_PT_export_rtm_frames(bpy.types.Panel):
         operator = sfile.active_operator
         
         layout.enabled = not operator.static_pose
-        layout.prop(operator, "clamp")
-        col = layout.column(align=True)
-        col.prop(operator, "frame_start")
-        col.prop(operator, "frame_end")
-        col.enabled = operator.clamp
+        layout.prop(operator, "frame_start")
+        layout.prop(operator, "frame_end")
+        layout.prop(operator, "frame_source")
+        if operator.frame_source == 'SAMPLE_STEP':
+            layout.prop(operator, "frame_step")
+        elif operator.frame_source == 'SAMPLE_COUNT':
+            layout.prop(operator, "frame_count")
+
+
+        # layout.prop(operator, "clamp")
+        # col = layout.column(align=True)
+        # col.prop(operator, "frame_start")
+        # col.prop(operator, "frame_end")
+        # col.enabled = operator.clamp
 
 
 class A3OB_OP_import_rtm(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):

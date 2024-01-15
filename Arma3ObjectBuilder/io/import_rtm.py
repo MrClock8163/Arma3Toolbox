@@ -1,5 +1,6 @@
 # Processing functions to import animation data from RTM files.
 # Actual file handling is implemented in the data_rtm module.
+# Keyframe importing is based on the official io_scene_fbx module.
 
 
 import os
@@ -194,6 +195,7 @@ def import_file(operator, context, file):
     import_keyframes(obj, action, transforms, frames, motion)
     logger.log("Created keyframes")
 
+    action.use_frame_range = True
     if operator.make_active:
         values = list(frames.values())
         context.scene.frame_start = floor(values[0])

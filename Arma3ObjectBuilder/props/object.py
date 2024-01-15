@@ -259,36 +259,6 @@ class A3OB_PG_properties_object_dtm(bpy.types.PropertyGroup):
     )
 
 
-class A3OB_PG_properties_keyframe(bpy.types.PropertyGroup):
-    index: bpy.props.IntProperty(name="Frame Index", description="Index of the keyframe to export")
-
-
-class A3OB_PG_properties_object_armature(bpy.types.PropertyGroup):
-    motion_source: bpy.props.EnumProperty(
-        name = "Motion Source",
-        description = "Source of motion vector",
-        items = (
-            ('MANUAL', "Manual", "The motion vector is explicitly set"),
-            ('CALCULATED', "Calculated", "The motion vector is calculated from the motion of a specific bone during the animation")
-        ),
-        default = 'MANUAL'
-    )
-    motion_vector: bpy.props.FloatVectorProperty(
-        name = "Motion Vector",
-        description = "Total motion done during the animation",
-        default = (0, 0, 0),
-        subtype = 'XYZ',
-        unit = 'LENGTH'
-    )
-    motion_bone: bpy.props.StringProperty(name="Reference Bone", description="Bone to track for motion calculation")
-    frames: bpy.props.CollectionProperty(
-        name = "RTM keyframes",
-        description = "List of keyframes to export to RTM",
-        type = A3OB_PG_properties_keyframe
-    )
-    frames_index: bpy.props.IntProperty(name="Active Keyrame Index")
-
-
 @persistent
 def depsgraph_update_post_handler(scene, depsgraph):  
     scene_props = scene.a3ob_proxy_access
@@ -320,9 +290,7 @@ classes = (
     A3OB_PG_properties_object_mesh,
     A3OB_PG_properties_object_flags,
     A3OB_PG_properties_object_proxy,
-    A3OB_PG_properties_object_dtm,
-    A3OB_PG_properties_keyframe,
-    A3OB_PG_properties_object_armature
+    A3OB_PG_properties_object_dtm
 )
 
 
@@ -334,7 +302,6 @@ def register():
     bpy.types.Object.a3ob_properties_object_flags = bpy.props.PointerProperty(type=A3OB_PG_properties_object_flags)
     bpy.types.Object.a3ob_properties_object_proxy = bpy.props.PointerProperty(type=A3OB_PG_properties_object_proxy)
     bpy.types.Object.a3ob_properties_object_dtm = bpy.props.PointerProperty(type=A3OB_PG_properties_object_dtm)
-    bpy.types.Object.a3ob_properties_object_armature = bpy.props.PointerProperty(type=A3OB_PG_properties_object_armature)
     bpy.types.Object.a3ob_selection_mass = bpy.props.FloatProperty( # Can't be in property group due to reference requirements
         name = "Current Mass",
         description = "Total mass of current selection",
@@ -357,7 +324,6 @@ def unregister():
     bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update_post_handler)
 
     del bpy.types.Object.a3ob_selection_mass
-    del bpy.types.Object.a3ob_properties_object_armature
     del bpy.types.Object.a3ob_properties_object_dtm
     del bpy.types.Object.a3ob_properties_object_proxy
     del bpy.types.Object.a3ob_properties_object_flags
