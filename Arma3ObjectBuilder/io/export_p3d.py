@@ -253,7 +253,7 @@ def get_lod_data(operator, context, validator):
             bm.faces.ensure_lookup_table()
 
             for face in bm.faces:
-                sections[face.material_index].append(face)
+                sections.get(face.material_index, sections[0]).append(face)
             
             face_index = 0
             for section in sections.values():
