@@ -20,25 +20,35 @@
     - Add Proxy
     - Remove Proxy
 - import-export:
+  - new options in RTM export
   - RTM import
   - Skeleton import (from model.cfg)
-  - Aramture import (from pivots.p3d and selected skeleton definition)
+  - Armature import (from pivots.p3d and selected skeleton definition)
 
 ### Changed:
 - tools:
   - Validation logic was completely overhauled for better extensibility
   - Weight Painting tool was reworked and moved under the new Rigging tool panel
+  - Utility functions in the Vertex Groups panel was moved to a menu
 - import-export:
   - P3D:
     - split normals are now only imported for visual LODs
     - split normals are now only exported for visual LODs
     - when custom normalsa are not exported, they are now replaced with weighted normals automatically
     - shadow LODs are now imported as flat shaded
+  - RTM:
+    - relevant properties were moved from the armature, to the active animation action
+    - export now requires a skeleton definition to filter out control bones
 
 ### Fixed:
 - LOD validation would produce false negatives when proxies were used
 - LOD type would be detected incorrectly for Shadow Volume - View Cargo when the resolution is higher than 4
 - LOD resolution would be incorrectly exported for Shadow Volume - View Cargo
+- fixed possible issue in P3D export when the material index of a face is out of the material range for some reason
+
+### Removed:
+- RTM Frames tool was removed
+- RTM Properties panel was removed from Armature objects
 
 ## [v2.0.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.0.0) (Blender 2.90 -> 4.0)
 
