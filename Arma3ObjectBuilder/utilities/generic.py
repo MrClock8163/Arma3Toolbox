@@ -202,6 +202,10 @@ def format_path(path, root = "", to_relative = True, extension = True):
     return path
 
 
+def get_addon_directory():
+    return os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
+
+
 def get_common(name):
     prefs = get_addon_preferences()
     custom_path = abspath(prefs.custom_data)

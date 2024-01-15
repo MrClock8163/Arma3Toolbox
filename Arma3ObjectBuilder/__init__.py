@@ -340,7 +340,8 @@ modules = (
     ui.tool_conversion,
     ui.tool_color,
     ui.tool_rigging,
-    ui.tool_utilities
+    ui.tool_utilities,
+    ui.tool_scripts
 )
 
 

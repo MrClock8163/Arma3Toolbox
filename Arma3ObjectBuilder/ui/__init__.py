@@ -14,5 +14,6 @@ from . import tool_mass
 from . import tool_paths
 from . import tool_proxies
 from . import tool_rigging
+from . import tool_scripts
 from . import tool_utilities
 from . import tool_validation
