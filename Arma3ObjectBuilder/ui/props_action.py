@@ -1,3 +1,5 @@
+from math import floor, ceil
+
 import bpy
 
 from ..utilities import generic as utils
@@ -20,6 +22,7 @@ class A3OB_OT_rtm_frames_add(bpy.types.Operator):
         
         for frame in action_props.frames:
             if frame.index == context.scene.frame_current:
+                self.report({'INFO'}, "The current frame is already in the list")
                 return {'FINISHED'}
         
         item = action_props.frames.add()
@@ -71,6 +74,71 @@ class A3OB_OT_rtm_frames_clear(bpy.types.Operator):
         
         action_props.frames.clear()
         action_props.frames_index = -1
+            
+        return {'FINISHED'}
+
+
+class A3OB_OT_rtm_frames_add_range(bpy.types.Operator):
+    """Add range of frames to list of RTM frames"""
+    
+    bl_idname = "a3ob.rtm_frames_add_range"
+    bl_label = "Add Frame Range"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    clear: bpy.props.BoolProperty(
+        name = "Clear Existing",
+        description = "Clear existing frames before adding the range",
+        default = True
+    )
+    start: bpy.props.IntProperty(
+        name = "Start",
+        description = "First frame to add",
+        default = 1,
+        min = 0
+    )
+    step: bpy.props.IntProperty(
+        name = "Step",
+        description = "Step between frames",
+        default = 5,
+        min = 1
+    )
+    end: bpy.props.IntProperty(
+        name = "End",
+        description = "Last frame to add",
+        default = 10,
+        min = 0
+    )
+    
+    @classmethod
+    def poll(cls, context):
+        return context.active_action
+
+    def invoke(self, context, event):
+        action = context.active_action
+        frame_range = action.frame_range
+        self.start = floor(frame_range[0])
+        self.end = ceil(frame_range[1])
+
+        return self.execute(context)
+        
+    def execute(self, context):
+        action = context.active_action
+        action_props = action.a3ob_properties_action
+
+        current_frames = [frame.index for frame in action_props.frames]
+
+        action_props.frames.clear()
+
+        new_frames = list(range(self.start, self.end + 1, self.step))
+        if not self.clear:
+            new_frames.extend(current_frames)
+
+        new_frames.append(self.end)
+        new_frames = list(set(new_frames))
+        
+        for idx in new_frames:
+            item = action_props.frames.add()
+            item.index = idx
             
         return {'FINISHED'}
 
@@ -165,6 +233,8 @@ class A3OB_PT_action_frames(bpy.types.Panel):
         col_operators.operator("a3ob.rtm_frames_add", text="", icon = 'ADD')
         col_operators.operator("a3ob.rtm_frames_remove", text="", icon = 'REMOVE')
         col_operators.separator()
+        col_operators.operator("a3ob.rtm_frames_add_range", text="", icon = 'ARROW_LEFTRIGHT')
+        col_operators.separator()
         col_operators.operator("a3ob.rtm_frames_clear", text="", icon = 'TRASH')
 
 
@@ -172,6 +242,7 @@ classes = (
     A3OB_OT_rtm_frames_add,
     A3OB_OT_rtm_frames_remove,
     A3OB_OT_rtm_frames_clear,
+    A3OB_OT_rtm_frames_add_range,
     A3OB_UL_rtm_frames,
     A3OB_PT_action,
     A3OB_PT_action_frames
