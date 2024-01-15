@@ -10,12 +10,12 @@ from ..utilities.logger import ProcessLogger
 
 def build_frame_list(operator, action):
     frame_range = operator.frame_end - operator.frame_start
-    if not action or frame_range == 0 or operator.static_pose:
+    if frame_range == 0 or operator.static_pose:
         return []
 
     frames = []
     if operator.frame_source == 'LIST':
-        if len(action.a3ob_properties_action.frames) == 0:
+        if not action or len(action.a3ob_properties_action.frames) == 0:
             return []
         
         frames = [item.index for item in action.a3ob_properties_action.frames if operator.frame_start <= item.index <= operator.frame_end]
