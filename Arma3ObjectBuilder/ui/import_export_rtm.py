@@ -79,14 +79,6 @@ class A3OB_OP_export_rtm(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     def invoke(self, context, event):
         self.frame_start = context.scene.frame_start
         self.frame_end = context.scene.frame_end
-
-        action = None
-        if context.object.animation_data:
-            action = context.object.animation_data.action
-
-        if action and action.use_frame_range:
-            self.frame_start = floor(action.frame_start)
-            self.frame_end = ceil(action.frame_end)
         
         return super().invoke(context, event)
         
