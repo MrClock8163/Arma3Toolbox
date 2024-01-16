@@ -1,4 +1,5 @@
 import traceback
+from math import floor, ceil
 
 import bpy
 import bpy_extras
@@ -84,8 +85,8 @@ class A3OB_OP_export_rtm(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             action = context.object.animation_data.action
 
         if action and action.use_frame_range:
-            self.frame_start = action.frame_start
-            self.frame_end = action.frame_end
+            self.frame_start = floor(action.frame_start)
+            self.frame_end = ceil(action.frame_end)
         
         return super().invoke(context, event)
         

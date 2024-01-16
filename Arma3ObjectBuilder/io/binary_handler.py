@@ -80,6 +80,9 @@ def read_asciiz(file):
     
     return res.decode('ascii')
 
+def read_lascii(file):
+    return file.read(read_byte(file)).decode('ascii')
+
 def read_asciiz_padded(file, max_len = 0):
     value = read_asciiz(file)
 
@@ -121,3 +124,6 @@ def write_chars(file, values):
     
 def write_asciiz(file, value):
     file.write(struct.pack('<%ds' % (len(value) + 1), value.encode('ascii')))
+
+def write_lascii(file, value):
+    file.write(struct.pack('b'))

@@ -69,21 +69,59 @@ class RTM_Frame():
             item.write(file)
 
 
-class RTM_File():
+class RTM_MDAT():
+    signature = b"RTM_MDAT"
+
     def __init__(self):
-        self.signature = "RTM_0101"
+        self.props = []
+    
+    @classmethod
+    def read(cls, file, skip_signature = False):
+        output = cls()
+
+        if not skip_signature:
+            signature = file.read(8)
+            if signature != b"RTM_MDAT":
+                raise errors.RTMError("Invalid MDAT signature: %s" % str(signature))
+
+        file.read(4) # padding
+        count_items = binary.read_ulong(file)
+        for i in range(count_items):
+            phase = binary.read_float(file)
+            name = binary.read_lascii(file)
+            value = binary.read_lascii(file)
+
+            output.props.append((phase, name, value))
+
+        return output
+
+    def write(self, file):
+        file.write(self.signature)
+        binary.write_ulong(file, 0)
+        binary.write_ulong(file, len(self.props))
+
+        for phase, name, value in self.props:
+            binary.write_float(file, phase)
+            binary.write_lascii(file, name)
+            binary.write_lascii(file, value)
+
+
+class RTM_0101():
+    signature = b"RTM_0101"
+
+    def __init__(self):
         self.motion = (0, 0, 0)
         self.frames = []
         self.bones = []
     
     @classmethod
-    def read(cls, file):
+    def read(cls, file, skip_signature = False):
         output = cls()
-        signature = binary.read_char(file, 8)
-        if signature != "RTM_0101":
-            raise errors.RTMError("Invalid header signature: %s" % signature)
+        if not skip_signature:
+            signature = file.read(8)
+            if signature != b"RTM_0101":
+                raise errors.RTMError("Invalid header signature: %s" % signature)
 
-        output.signature = signature
         x, y, z = struct.unpack('<fff', file.read(12))
         output.motion = (x, y, z)
         count_frames = binary.read_ulong(file)
@@ -103,7 +141,7 @@ class RTM_File():
         return output
     
     def write(self, file):
-        binary.write_chars(file, self.signature)
+        file.write(self.signature)
         file.write(struct.pack('<fff', self.motion[0], self.motion[1], self.motion[2]))
         count_frames = len(self.frames)
         count_bones = len(self.bones)
@@ -128,3 +166,31 @@ class RTM_File():
         for frame in self.frames:
             for trans in frame.transforms:
                 trans.bone = trans.bone.lower()
+
+
+class RTM_File():
+    def __init__(self):
+        self.source = ""
+        self.props = None
+        self.anim = RTM_0101()
+    
+    @classmethod
+    def read(cls, file):
+        output = cls()
+
+        while file.peek():
+            signature = file.read(8)
+            if signature == b"RTM_0101":
+                output.anim = RTM_0101.read(file, True)
+            elif signature == b"RTM_MDAT":
+                output.props = RTM_MDAT.read(file, True)
+            else:
+                raise errors.RTMError("Unknown datablock signature: %s" % str(signature))
+        
+        return output
+    
+    def write(self, file):
+        if self.props:
+            self.props.write(file)
+        
+        self.anim.write(file)

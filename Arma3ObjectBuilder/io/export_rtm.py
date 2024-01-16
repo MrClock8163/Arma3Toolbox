@@ -121,7 +121,8 @@ def write_file(operator, context, file, obj, action):
     logger.log("Processing data:")
     logger.level_up()
 
-    anim = rtm.RTM_File()
+    rtm_data = rtm.RTM_File()
+    anim = rtm.RTM_0101()
     if not static_pose:
         anim.motion = process_motion(context, obj, action, frame_start, frame_end)
         logger.log("Calculated motion")
@@ -145,7 +146,9 @@ def write_file(operator, context, file, obj, action):
 
     if operator.force_lowercase:
         anim.force_lowercase()
+    
+    rtm_data.anim = anim
 
-    anim.write(file)
+    rtm_data.write(file)
 
     return static_pose, len(anim.frames)

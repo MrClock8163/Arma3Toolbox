@@ -168,12 +168,24 @@ def import_file(operator, context, file):
     logger = ProcessLogger()
     logger.step("RTM import from %s" % operator.filepath)
     rtm_data = rtm.RTM_File.read(file)
+    anim_data = rtm_data.anim
+    prop_data = rtm_data.props
     logger.log("File report:")
     logger.level_up()
-    logger.log("Signature: %s" % rtm_data.signature)
-    logger.log("Motion vector: %s" % str(rtm_data.motion))
-    logger.log("Bones: %d" % len(rtm_data.bones))
-    logger.log("Frames: %d" % len(rtm_data.frames))
+    if prop_data:
+        logger.log("RTM_MDAT")
+        logger.level_up()
+        for item in prop_data.props:
+            logger.log(item)
+
+        logger.level_down()
+
+    logger.log("RTM_0101")
+    logger.level_up()
+    logger.log("Motion vector: %s" % str(anim_data.motion))
+    logger.log("Bones: %d" % len(anim_data.bones))
+    logger.log("Frames: %d" % len(anim_data.frames))
+    logger.level_down()
     logger.level_down()
 
     logger.log("Processing data:")
@@ -182,14 +194,14 @@ def import_file(operator, context, file):
     logger.log("Target armature: %s" % obj.name)
     action = create_action(operator, obj)
     logger.log("Created action: %s" % action.name)
-    transforms = build_transform_lookup(rtm_data)
+    transforms = build_transform_lookup(anim_data)
     logger.log("Built transform lookup")
-    motion = build_motion_lookup(operator, rtm_data)
+    motion = build_motion_lookup(operator, anim_data)
     logger.log("Built motion lookup")
-    frames = build_frame_mapping(operator, rtm_data)
+    frames = build_frame_mapping(operator, anim_data)
     logger.log("Built frame mapping")
     if operator.mute_constraints:
-        mute_constraints(obj, [item.lower() for item in rtm_data.bones])
+        mute_constraints(obj, [item.lower() for item in anim_data.bones])
         logger.log("Muted bone constraints")
 
     import_keyframes(obj, action, transforms, frames, motion)
