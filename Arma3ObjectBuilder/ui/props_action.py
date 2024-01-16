@@ -142,6 +142,74 @@ class A3OB_OT_rtm_frames_add_range(bpy.types.Operator):
             
         return {'FINISHED'}
 
+
+class A3OB_OT_rtm_props_add(bpy.types.Operator):
+    """Add property at current frame to RTM properties"""
+    
+    bl_idname = "a3ob.rtm_props_add"
+    bl_label = "Add Property"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        return context.active_action
+        
+    def execute(self, context):
+        action = context.active_action
+        action_props = action.a3ob_properties_action
+        
+        item = action_props.props.add()
+        item.index = context.scene.frame_current
+            
+        return {'FINISHED'}
+
+
+class A3OB_OT_rtm_props_remove(bpy.types.Operator):
+    """Remove selected property from list of RTM properties"""
+    
+    bl_idname = "a3ob.rtm_props_remove"
+    bl_label = "Remove Property"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        if not context.active_action:
+            return False
+        
+        action_props = context.active_action.a3ob_properties_action
+        return utils.is_valid_idx(action_props.props_index, action_props.props)
+        
+    def execute(self, context):
+        action_props = context.active_action.a3ob_properties_action
+        
+        action_props.props.remove(action_props.props_index)
+        if len(action_props.props) == 0:
+            action_props.props_index = -1
+        else:
+            action_props.props_index = len(action_props.props) - 1
+            
+        return {'FINISHED'}
+
+
+class A3OB_OT_rtm_props_clear(bpy.types.Operator):
+    """Clear all properties from list of RTM properties"""
+    
+    bl_idname = "a3ob.rtm_props_clear"
+    bl_label = "Clear Properties"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        return context.active_action and len(context.active_action.a3ob_properties_action.props) > 0
+        
+    def execute(self, context):
+        action_props = context.active_action.a3ob_properties_action
+        
+        action_props.props.clear()
+        action_props.props_index = -1
+            
+        return {'FINISHED'}
+
  
 class A3OB_UL_rtm_frames(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
@@ -153,6 +221,25 @@ class A3OB_UL_rtm_frames(bpy.types.UIList):
         if frame_range > 0:
             phase = (index - context.scene.frame_start) / frame_range
             split.label(text="{:.6f}".format(phase))
+        
+    def filter_items(self, context, data, propname):
+        helper_funcs = bpy.types.UI_UL_list
+        flt_flags = []
+        flt_neworder = []
+        
+        sorter = [(index, frame) for index, frame in enumerate(getattr(data, propname))]
+        flt_neworder = helper_funcs.sort_items_helper(sorter, lambda f: f[1].index, False)
+        
+        return flt_flags, flt_neworder
+
+ 
+class A3OB_UL_rtm_props(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        index = item.index
+        
+        layout.prop(item, "index", text="", emboss=False)
+        layout.prop(item, "name", text="", emboss=False)
+        layout.prop(item, "value", text="", emboss=False)
         
     def filter_items(self, context, data, propname):
         helper_funcs = bpy.types.UI_UL_list
@@ -227,7 +314,7 @@ class A3OB_PT_action_frames(bpy.types.Panel):
         split_header = col_list.split(factor=0.3)
         split_header.label(text="Index")
         split_header.label(text="Phase")
-        col_list.template_list("A3OB_UL_rtm_frames", "A3OB_frames", action_props, "frames", action_props, "frames_index")
+        col_list.template_list("A3OB_UL_rtm_frames", "A3OB_rtm_frames", action_props, "frames", action_props, "frames_index")
         
         col_operators = row.column(align=True)
         col_operators.operator("a3ob.rtm_frames_add", text="", icon = 'ADD')
@@ -238,14 +325,51 @@ class A3OB_PT_action_frames(bpy.types.Panel):
         col_operators.operator("a3ob.rtm_frames_clear", text="", icon = 'TRASH')
 
 
+class A3OB_PT_action_props(bpy.types.Panel):
+    bl_region_type = 'UI'
+    bl_space_type = 'DOPESHEET_EDITOR'
+    bl_label = "Properties"
+    bl_context = "data"
+    bl_parent_id = "A3OB_PT_action"
+    
+    @classmethod
+    def poll(cls, context):
+        return context.active_action
+    
+    def draw(self, context):
+        action = context.active_action
+        action_props = action.a3ob_properties_action
+
+        layout = self.layout
+
+        row = layout.row()
+        col_list = row.column()
+        row_header = col_list.row()
+        row_header.label(text="Index")
+        row_header.label(text="Name")
+        row_header.label(text="Value")
+        col_list.template_list("A3OB_UL_rtm_props", "A3OB_rtm_props", action_props, "props", action_props, "props_index")
+        
+        col_operators = row.column(align=True)
+        col_operators.operator("a3ob.rtm_props_add", text="", icon = 'ADD')
+        col_operators.operator("a3ob.rtm_props_remove", text="", icon = 'REMOVE')
+        col_operators.separator()
+        col_operators.operator("a3ob.rtm_props_clear", text="", icon = 'TRASH')
+
+
 classes = (
     A3OB_OT_rtm_frames_add,
     A3OB_OT_rtm_frames_remove,
     A3OB_OT_rtm_frames_clear,
     A3OB_OT_rtm_frames_add_range,
+    A3OB_OT_rtm_props_add,
+    A3OB_OT_rtm_props_remove,
+    A3OB_OT_rtm_props_clear,
     A3OB_UL_rtm_frames,
+    A3OB_UL_rtm_props,
     A3OB_PT_action,
-    A3OB_PT_action_frames
+    A3OB_PT_action_frames,
+    A3OB_PT_action_props
 )
 
 

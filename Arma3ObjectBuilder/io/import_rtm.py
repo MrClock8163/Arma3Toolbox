@@ -4,7 +4,7 @@
 
 
 import os
-from math import floor, ceil
+from math import floor, ceil, isclose
 from itertools import chain
 
 import bpy
@@ -73,10 +73,13 @@ def build_frame_mapping(operator, rtm_data):
     for i, frame in enumerate(rtm_data.frames):
         frames[i] = frame.phase * frame_end + (1 - frame.phase) * frame_start
     
-    if operator.mapping_mode != 'DIRECT' and operator.round_frames:
+    if operator.mapping_mode != 'DIRECT' or operator.round_frames:
         frames = {i: round(frames[i]) for i in frames}
+    
+    # phase -> frame mapping is needed when matching the frame properties to the frames
+    phases = {round(frame.phase, 4): frames[i] for i, frame in enumerate(rtm_data.frames)}
 
-    return frames
+    return frames, phases
 
 
 def build_fcurves(action, pose_bone):
@@ -192,14 +195,19 @@ def import_file(operator, context, file):
     logger.level_up()
     obj = context.active_object
     logger.log("Target armature: %s" % obj.name)
+
     action = create_action(operator, obj)
     logger.log("Created action: %s" % action.name)
+
     transforms = build_transform_lookup(anim_data)
     logger.log("Built transform lookup")
+
     motion = build_motion_lookup(operator, anim_data)
     logger.log("Built motion lookup")
-    frames = build_frame_mapping(operator, anim_data)
+
+    frames, phases = build_frame_mapping(operator, anim_data)
     logger.log("Built frame mapping")
+
     if operator.mute_constraints:
         mute_constraints(obj, [item.lower() for item in anim_data.bones])
         logger.log("Muted bone constraints")
@@ -212,7 +220,19 @@ def import_file(operator, context, file):
         values = list(frames.values())
         context.scene.frame_start = floor(values[0])
         context.scene.frame_end = ceil(values[-1])
+
+    if prop_data:
+        action_props = action.a3ob_properties_action
+        for phase, name, value in prop_data.props:
+            frame = phases.get(round(phase, 4))
+            if not frame:
+                continue
+
+            new_item = action_props.props.add()
+            new_item.index = round(frame)
+            new_item.name = name
+            new_item.value = value
     
     logger.level_down()
     logger.step("RTM import finished")
-    return len(frames)
+    return len(set(frames.values()))

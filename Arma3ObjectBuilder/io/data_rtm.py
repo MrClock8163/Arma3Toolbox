@@ -132,14 +132,6 @@ class RTM_0101():
 
         return output
     
-    @classmethod
-    def read_file(cls, filepath):
-        output = None
-        with open(filepath, "br") as file:
-            output = cls.read(file)
-
-        return output
-    
     def write(self, file):
         file.write(self.signature)
         file.write(struct.pack('<fff', self.motion[0], self.motion[1], self.motion[2]))
@@ -189,8 +181,19 @@ class RTM_File():
         
         return output
     
+    @classmethod
+    def read_file(cls, filepath):
+        output = None
+        with open(filepath, "br") as file:
+            output = cls.read(file)
+
+        return output
+    
     def write(self, file):
         if self.props:
             self.props.write(file)
+        
+        if not self.anim:
+            raise errors.RTMError("Cannot export RTM without animation data")
         
         self.anim.write(file)

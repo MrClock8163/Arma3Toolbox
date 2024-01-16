@@ -126,4 +126,5 @@ def write_asciiz(file, value):
     file.write(struct.pack('<%ds' % (len(value) + 1), value.encode('ascii')))
 
 def write_lascii(file, value):
-    file.write(struct.pack('b'))
+    length = len(value)
+    file.write(struct.pack('b%ds' % length, length, value.encode('ascii')))

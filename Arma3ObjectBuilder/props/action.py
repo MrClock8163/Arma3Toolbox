@@ -1,8 +1,14 @@
 import bpy
 
 
-class A3OB_PG_properties_keyframe(bpy.types.PropertyGroup):
-    index: bpy.props.IntProperty(name="Frame Index", description="Index of the keyframe to export")
+class A3OB_PG_rtm_keyframe(bpy.types.PropertyGroup):
+    index: bpy.props.IntProperty(name="Frame Index", description="Index of frame to export")
+
+
+class A3OB_PG_rtm_property(bpy.types.PropertyGroup):
+    index: bpy.props.IntProperty(name="Frame Index", description="Property frame index")
+    name: bpy.props.StringProperty(name="Name", description="Name of frame property")
+    value: bpy.props.StringProperty(name="Value", description="Value of frame property")
 
 
 class A3OB_PG_properties_action(bpy.types.PropertyGroup):
@@ -24,15 +30,22 @@ class A3OB_PG_properties_action(bpy.types.PropertyGroup):
     )
     motion_bone: bpy.props.StringProperty(name="Reference Bone", description="Bone to track for motion calculation")
     frames: bpy.props.CollectionProperty(
-        name = "RTM keyframes",
-        description = "List of keyframes to export to RTM",
-        type = A3OB_PG_properties_keyframe
+        name = "RTM frames",
+        description = "List of frames to export to RTM",
+        type = A3OB_PG_rtm_keyframe
     )
-    frames_index: bpy.props.IntProperty(name="Active Keyrame Index")
+    frames_index: bpy.props.IntProperty(name="Active Frame Index")
+    props: bpy.props.CollectionProperty(
+        name = "RTM frame properties",
+        description = "List of frame properties to export to RTM",
+        type = A3OB_PG_rtm_property
+    )
+    props_index: bpy.props.IntProperty(name="Active Property Index")
 
 
 classes = (
-    A3OB_PG_properties_keyframe,
+    A3OB_PG_rtm_keyframe,
+    A3OB_PG_rtm_property,
     A3OB_PG_properties_action
 )
 

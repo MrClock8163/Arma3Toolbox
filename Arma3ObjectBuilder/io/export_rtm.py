@@ -10,7 +10,7 @@ from ..utilities.logger import ProcessLogger
 
 def build_frame_list(operator, action):
     frame_range = operator.frame_end - operator.frame_start
-    if frame_range == 0 or operator.static_pose:
+    if not action or frame_range == 0 or operator.static_pose:
         return []
 
     frames = []
@@ -99,6 +99,20 @@ def process_frame(context, obj, bones_map, frame, phase):
     return output
 
 
+def process_props(operator, action_props):
+    output = []
+    frame_range = operator.frame_end - operator.frame_start
+    for item in action_props.props:
+        if not (operator.frame_start <= item.index <= operator.frame_end):
+            continue
+    
+        phase = (item.index - operator.frame_start) / frame_range
+
+        output.append((phase, item.name, item.value))
+
+    return output
+
+
 def write_file(operator, context, file, obj, action):
     logger = ProcessLogger()
     logger.step("RTM export to %s" % operator.filepath)
@@ -134,6 +148,13 @@ def write_file(operator, context, file, obj, action):
     
     logger.log("Collected frames")
     logger.level_down()
+
+    if not static_pose:
+        action_props = action.a3ob_properties_action
+        props = rtm.RTM_MDAT()
+        props.props = process_props(operator, action_props)
+        rtm_data.props = props
+        
 
     logger.log("File report:")
     logger.level_up()
