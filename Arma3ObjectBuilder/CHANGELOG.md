@@ -20,10 +20,11 @@
     - Add Proxy
     - Remove Proxy
 - import-export:
-  - new options in RTM export
+  - new options in RTM export (sampling options)
   - RTM import
   - Skeleton import (from model.cfg)
   - Armature import (from pivots.p3d and selected skeleton definition)
+- template scripts (Text editor Templates menu)
 
 ### Changed:
 - tools:
@@ -37,8 +38,9 @@
     - when custom normalsa are not exported, they are now replaced with weighted normals automatically
     - shadow LODs are now imported as flat shaded
   - RTM:
-    - relevant properties were moved from the armature, to the active animation action
     - export now requires a skeleton definition to filter out control bones
+- properties:
+  - RTM properties were moved from the armature, to the active animation action
 
 ### Fixed:
 - LOD validation would produce false negatives when proxies were used
