@@ -159,9 +159,19 @@ def write_file(operator, context, file, obj, action):
     logger.log("File report:")
     logger.level_up()
 
+    if rtm_data.props:
+        logger.log("RTM_MDAT")
+        logger.level_up()
+        for item in rtm_data.props.props:
+            logger.log(item)
+        logger.level_down()
+
+    logger.log("RTM_0101")
+    logger.level_up()
     logger.log("Motion: %f, %f, %f" %  tuple(anim.motion))
     logger.log("Bones: %d" % len(anim.bones))
     logger.log("Frames: %d" % len(anim.frames))
+    logger.level_down()
 
     logger.level_down()
 
