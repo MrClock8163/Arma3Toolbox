@@ -136,50 +136,49 @@ def write_file(operator, context, file, obj, action):
     logger.level_up()
 
     rtm_data = rtm.RTM_File()
-    anim = rtm.RTM_0101()
+    rtm_0101 = rtm.RTM_0101()
     if not static_pose:
-        anim.motion = process_motion(context, obj, action, frame_start, frame_end)
+        rtm_0101.motion = process_motion(context, obj, action, frame_start, frame_end)
         logger.log("Calculated motion")
 
     bone_map = build_bone_map(operator, context, obj)
-    anim.bones = list(bone_map.values())
+    rtm_0101.bones = list(bone_map.values())
     logger.log("Collected bones")
-    anim.frames = [process_frame(context, obj, bone_map, index, phase) for index, phase in frame_mapping]
+    rtm_0101.frames = [process_frame(context, obj, bone_map, index, phase) for index, phase in frame_mapping]
     
     logger.log("Collected frames")
     logger.level_down()
 
     if not static_pose:
         action_props = action.a3ob_properties_action
-        props = rtm.RTM_MDAT()
-        props.props = process_props(operator, action_props)
-        rtm_data.props = props
+        rtm_mdat = rtm.RTM_MDAT()
+        rtm_mdat.items = process_props(operator, action_props)
+        rtm_data.props = rtm_mdat
         
-
     logger.log("File report:")
     logger.level_up()
 
     if rtm_data.props:
         logger.log("RTM_MDAT")
         logger.level_up()
-        for item in rtm_data.props.props:
+        for item in rtm_data.props.items:
             logger.log(item)
         logger.level_down()
 
     logger.log("RTM_0101")
     logger.level_up()
-    logger.log("Motion: %f, %f, %f" %  tuple(anim.motion))
-    logger.log("Bones: %d" % len(anim.bones))
-    logger.log("Frames: %d" % len(anim.frames))
+    logger.log("Motion: %f, %f, %f" %  tuple(rtm_0101.motion))
+    logger.log("Bones: %d" % len(rtm_0101.bones))
+    logger.log("Frames: %d" % len(rtm_0101.frames))
     logger.level_down()
 
     logger.level_down()
 
     if operator.force_lowercase:
-        anim.force_lowercase()
+        rtm_0101.force_lowercase()
     
-    rtm_data.anim = anim
+    rtm_data.anim = rtm_0101
 
     rtm_data.write(file)
 
-    return static_pose, len(anim.frames)
+    return static_pose, len(rtm_0101.frames)

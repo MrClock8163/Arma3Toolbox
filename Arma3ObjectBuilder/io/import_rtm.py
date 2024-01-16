@@ -35,30 +35,30 @@ def create_action(operator, obj):
     return action
 
 
-def build_transform_lookup(rtm_data):
+def build_transform_lookup(rtm_0101):
     transforms = {}
-    for i, frame in enumerate(rtm_data.frames):
+    for i, frame in enumerate(rtm_0101.frames):
         for item in frame.transforms:
             transforms[item.bone.lower(), i] = Matrix(item.matrix).transposed()
 
     return transforms
 
 
-def build_motion_lookup(operator, rtm_data):
+def build_motion_lookup(operator, rtm_0101):
     lookup = {}
-    motion = Vector(rtm_data.motion)
+    motion = Vector(rtm_0101.motion)
     if motion.length == 0 or not operator.apply_motion:
         empty = Vector()
-        for i in range(len(rtm_data.frames)):
+        for i in range(len(rtm_0101.frames)):
             lookup[i] = empty
     else:
-        for i, frame in enumerate(rtm_data.frames):
+        for i, frame in enumerate(rtm_0101.frames):
             lookup[i] = motion * frame.phase
     
     return lookup
 
 
-def build_frame_mapping(operator, rtm_data):
+def build_frame_mapping(operator, rtm_0101):
     frames = {}
 
     frame_start = operator.frame_start
@@ -68,16 +68,16 @@ def build_frame_mapping(operator, rtm_data):
         frame_end = operator.fps * operator.time + 1
     elif operator.mapping_mode == 'DIRECT':
         frame_start = 1
-        frame_end = len(rtm_data.frames)
+        frame_end = len(rtm_0101.frames)
 
-    for i, frame in enumerate(rtm_data.frames):
+    for i, frame in enumerate(rtm_0101.frames):
         frames[i] = frame.phase * frame_end + (1 - frame.phase) * frame_start
     
     if operator.mapping_mode != 'DIRECT' or operator.round_frames:
         frames = {i: round(frames[i]) for i in frames}
     
     # phase -> frame mapping is needed when matching the frame properties to the frames
-    phases = {round(frame.phase, 4): frames[i] for i, frame in enumerate(rtm_data.frames)}
+    phases = {round(frame.phase, 4): frames[i] for i, frame in enumerate(rtm_0101.frames)}
 
     return frames, phases
 
@@ -171,23 +171,24 @@ def import_file(operator, context, file):
     logger = ProcessLogger()
     logger.step("RTM import from %s" % operator.filepath)
     rtm_data = rtm.RTM_File.read(file)
-    anim_data = rtm_data.anim
-    prop_data = rtm_data.props
+    rtm_0101 = rtm_data.anim
+    rtm_mdat = rtm_data.props
+
     logger.log("File report:")
     logger.level_up()
-    if prop_data:
+    if rtm_mdat:
         logger.log("RTM_MDAT")
         logger.level_up()
-        for item in prop_data.props:
+        for item in rtm_mdat.items:
             logger.log(item)
 
         logger.level_down()
 
     logger.log("RTM_0101")
     logger.level_up()
-    logger.log("Motion vector: %s" % str(anim_data.motion))
-    logger.log("Bones: %d" % len(anim_data.bones))
-    logger.log("Frames: %d" % len(anim_data.frames))
+    logger.log("Motion vector: %s" % str(rtm_0101.motion))
+    logger.log("Bones: %d" % len(rtm_0101.bones))
+    logger.log("Frames: %d" % len(rtm_0101.frames))
     logger.level_down()
     logger.level_down()
 
@@ -199,17 +200,17 @@ def import_file(operator, context, file):
     action = create_action(operator, obj)
     logger.log("Created action: %s" % action.name)
 
-    transforms = build_transform_lookup(anim_data)
+    transforms = build_transform_lookup(rtm_0101)
     logger.log("Built transform lookup")
 
-    motion = build_motion_lookup(operator, anim_data)
+    motion = build_motion_lookup(operator, rtm_0101)
     logger.log("Built motion lookup")
 
-    frames, phases = build_frame_mapping(operator, anim_data)
+    frames, phases = build_frame_mapping(operator, rtm_0101)
     logger.log("Built frame mapping")
 
     if operator.mute_constraints:
-        mute_constraints(obj, [item.lower() for item in anim_data.bones])
+        mute_constraints(obj, [item.lower() for item in rtm_0101.bones])
         logger.log("Muted bone constraints")
 
     import_keyframes(obj, action, transforms, frames, motion)
@@ -220,9 +221,9 @@ def import_file(operator, context, file):
         context.scene.frame_start = floor(values[0])
         context.scene.frame_end = ceil(values[-1])
 
-    if prop_data:
+    if rtm_mdat:
         action_props = action.a3ob_properties_action
-        for phase, name, value in prop_data.props:
+        for phase, name, value in rtm_mdat.items:
             frame = phases.get(round(phase, 4))
             if not frame:
                 continue

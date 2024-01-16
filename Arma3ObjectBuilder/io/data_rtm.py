@@ -73,7 +73,7 @@ class RTM_MDAT():
     signature = b"RTM_MDAT"
 
     def __init__(self):
-        self.props = []
+        self.items = []
     
     @classmethod
     def read(cls, file, skip_signature = False):
@@ -91,16 +91,16 @@ class RTM_MDAT():
             name = binary.read_lascii(file)
             value = binary.read_lascii(file)
 
-            output.props.append((phase, name, value))
+            output.items.append((phase, name, value))
 
         return output
 
     def write(self, file):
         file.write(self.signature)
         binary.write_ulong(file, 0)
-        binary.write_ulong(file, len(self.props))
+        binary.write_ulong(file, len(self.items))
 
-        for phase, name, value in self.props:
+        for phase, name, value in self.items:
             binary.write_float(file, phase)
             binary.write_lascii(file, name)
             binary.write_lascii(file, value)
