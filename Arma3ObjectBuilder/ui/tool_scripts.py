@@ -10,6 +10,10 @@ scripts = {
         "Lowercase": "vertex_groups_lowercase.py",
         "Match Armature": "vertex_groups_match_armature_case.py"
     },
+    "import": {
+        "P3D batch": "import_p3d_batch.py",
+        "RTM batch": "import_rtm_batch.py"
+    },
     "misc": {
         "Convert ATBX to A3OB": "convert_atbx_to_a3ob.py"
     }
@@ -18,6 +22,17 @@ scripts = {
 
 def get_scripts_directory():
     return os.path.join(utils.get_addon_directory(), "scripts")
+
+
+class A3OB_MT_scripts_import(bpy.types.Menu):
+    bl_label = "Import"
+
+    def draw(self, context):
+        layout = self.layout
+        scripts_vgroups = scripts["import"]
+
+        for item in scripts_vgroups:
+            layout.operator("text.open", text=item).filepath = os.path.join(get_scripts_directory(), scripts_vgroups[item])
 
 
 class A3OB_MT_scripts_vertex_groups(bpy.types.Menu):
@@ -49,11 +64,13 @@ class A3OB_MT_scripts(bpy.types.Menu):
 
     def draw(self, context):
         layout = self.layout
+        layout.menu("A3OB_MT_scripts_import")
         layout.menu("A3OB_MT_scripts_vertex_groups")
         layout.menu("A3OB_MT_scripts_misc")
 
 
 classes = (
+    A3OB_MT_scripts_import,
     A3OB_MT_scripts_vertex_groups,
     A3OB_MT_scripts_misc,
     A3OB_MT_scripts

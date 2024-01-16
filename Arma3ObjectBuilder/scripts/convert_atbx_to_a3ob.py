@@ -7,7 +7,7 @@
 #       The script converts objects set up with ATBX (ArmaToolbox) properties to the
 #       A3OB (Arma 3 Object Buikder) setup.
 #
-#   Use:
+#   Usage:
 #       1. switch every object that needs conversion to Object Mode
 #       2. select objects to convert (if not all scene objects are to be converted)
 #       3. set settings as necessary
@@ -30,7 +30,6 @@ class Settings:
 
 
 #   ---------------------------------------- LOGIC -----------------------------------------
-
 
 import math
 
