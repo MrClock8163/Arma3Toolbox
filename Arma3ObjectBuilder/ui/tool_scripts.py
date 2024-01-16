@@ -24,37 +24,34 @@ def get_scripts_directory():
     return os.path.join(utils.get_addon_directory(), "scripts")
 
 
+def add_operators(layout, files):
+    script_folder = get_scripts_directory()
+
+    for name in files:
+        op = layout.operator("text.open", text=name)
+        op.filepath = os.path.join(script_folder, files[name])
+        op.internal = True
+
+
 class A3OB_MT_scripts_import(bpy.types.Menu):
     bl_label = "Import"
 
     def draw(self, context):
-        layout = self.layout
-        scripts_vgroups = scripts["import"]
-
-        for item in scripts_vgroups:
-            layout.operator("text.open", text=item).filepath = os.path.join(get_scripts_directory(), scripts_vgroups[item])
+        add_operators(self.layout, scripts["import"])
 
 
 class A3OB_MT_scripts_vertex_groups(bpy.types.Menu):
     bl_label = "Vertex Groups"
 
     def draw(self, context):
-        layout = self.layout
-        scripts_vgroups = scripts["vertex_groups"]
-
-        for item in scripts_vgroups:
-            layout.operator("text.open", text=item).filepath = os.path.join(get_scripts_directory(), scripts_vgroups[item])
+        add_operators(self.layout, scripts["vertex_groups"])
 
 
 class A3OB_MT_scripts_misc(bpy.types.Menu):
     bl_label = "Misc"
 
     def draw(self, context):
-        layout = self.layout
-        scripts_vgroups = scripts["misc"]
-
-        for item in scripts_vgroups:
-            layout.operator("text.open", text=item).filepath = os.path.join(get_scripts_directory(), scripts_vgroups[item])
+        add_operators(self.layout, scripts["misc"])
 
 
 class A3OB_MT_scripts(bpy.types.Menu):

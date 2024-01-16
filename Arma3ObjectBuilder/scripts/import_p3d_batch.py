@@ -9,7 +9,7 @@
 #       included in the standard Blender menu.
 #
 #   Usage:
-#       1. copy the path to source folder
+#       1. copy the path of source folder
 #       2. set settings as necessary
 #       3. run script
 #   
