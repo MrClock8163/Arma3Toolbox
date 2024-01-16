@@ -221,6 +221,32 @@ class A3OB_OT_rtm_props_clear(bpy.types.Operator):
             
         return {'FINISHED'}
 
+
+class A3OB_OT_rtm_props_move(bpy.types.Operator):
+    """Move active property to selected frame index"""
+    
+    bl_idname = "a3ob.rtm_props_move"
+    bl_label = "Move Property"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        action = get_action(context.object)
+        if not action:
+            return False
+        
+        action_props = action.a3ob_properties_action
+        return utils.is_valid_idx(action_props.props_index, action_props.props)
+        
+    def execute(self, context):
+        action = get_action(context.object)
+        action_props = action.a3ob_properties_action
+        
+        item = action_props.props[action_props.props_index]
+        item.index = context.scene.frame_current
+            
+        return {'FINISHED'}
+
  
 class A3OB_UL_rtm_frames(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
@@ -247,8 +273,9 @@ class A3OB_UL_rtm_frames(bpy.types.UIList):
 class A3OB_UL_rtm_props(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         index = item.index
+        layout.alignment = 'LEFT'
         
-        layout.prop(item, "index", text="", emboss=False)
+        layout.label(text=" %d" % item.index)
         layout.prop(item, "name", text="", emboss=False)
         layout.prop(item, "value", text="", emboss=False)
         
@@ -367,6 +394,8 @@ class A3OB_PT_action_props(bpy.types.Panel):
         col_operators.operator("a3ob.rtm_props_add", text="", icon = 'ADD')
         col_operators.operator("a3ob.rtm_props_remove", text="", icon = 'REMOVE')
         col_operators.separator()
+        col_operators.operator("a3ob.rtm_props_move", text="", icon = 'NEXT_KEYFRAME')
+        col_operators.separator()
         col_operators.operator("a3ob.rtm_props_clear", text="", icon = 'TRASH')
 
 
@@ -378,6 +407,7 @@ classes = (
     A3OB_OT_rtm_props_add,
     A3OB_OT_rtm_props_remove,
     A3OB_OT_rtm_props_clear,
+    A3OB_OT_rtm_props_move,
     A3OB_UL_rtm_frames,
     A3OB_UL_rtm_props,
     A3OB_PT_action,
