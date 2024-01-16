@@ -193,9 +193,16 @@ def import_file(operator, context, file):
     logger.level_down()
     logger.level_down()
 
+    obj = context.active_object
+    if not obj or obj.type != 'ARMATURE':
+        logger.log("No target armature found, aborting import")
+        logger.level_down()
+        logger.step("RTM import finished")
+        return 0
+
     logger.log("Processing data:")
     logger.level_up()
-    obj = context.active_object
+    
     logger.log("Target armature: %s" % obj.name)
 
     action = create_action(operator, obj)
