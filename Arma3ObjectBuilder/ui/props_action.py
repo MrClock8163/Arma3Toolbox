@@ -5,6 +5,13 @@ import bpy
 from ..utilities import generic as utils
 
 
+def get_action(obj):
+    if not obj or obj.type != 'ARMATURE' or not obj.animation_data:
+        return None
+    
+    return obj.animation_data.action
+
+
 class A3OB_OT_rtm_frames_add(bpy.types.Operator):
     """Add current frame to list of RTM frames"""
     
@@ -14,10 +21,10 @@ class A3OB_OT_rtm_frames_add(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return context.active_action
+        return get_action(context.object)
         
     def execute(self, context):
-        action = context.active_action
+        action = get_action(context.object)
         action_props = action.a3ob_properties_action
         
         for frame in action_props.frames:
@@ -40,14 +47,15 @@ class A3OB_OT_rtm_frames_remove(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        if not context.active_action:
+        action = get_action(context.object)
+        if action:
             return False
         
-        action_props = context.active_action.a3ob_properties_action
+        action_props = action.a3ob_properties_action
         return utils.is_valid_idx(action_props.frames_index, action_props.frames)
         
     def execute(self, context):
-        action_props = context.active_action.a3ob_properties_action
+        action_props = get_action(context.object).a3ob_properties_action
         
         action_props.frames.remove(action_props.frames_index)
         if len(action_props.frames) == 0:
@@ -67,10 +75,11 @@ class A3OB_OT_rtm_frames_clear(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return context.active_action and len(context.active_action.a3ob_properties_action.frames) > 0
+        action = get_action(context.object)
+        return action and len(action.a3ob_properties_action.frames) > 0
         
     def execute(self, context):
-        action_props = context.active_action.a3ob_properties_action
+        action_props = get_action(context.object).a3ob_properties_action
         
         action_props.frames.clear()
         action_props.frames_index = -1
@@ -111,10 +120,10 @@ class A3OB_OT_rtm_frames_add_range(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return context.active_action
+        return get_action(context.object)
 
     def invoke(self, context, event):
-        action = context.active_action
+        action = get_action(context.object)
         frame_range = action.frame_range
         self.start = floor(frame_range[0])
         self.end = ceil(frame_range[1])
@@ -122,7 +131,7 @@ class A3OB_OT_rtm_frames_add_range(bpy.types.Operator):
         return self.execute(context)
         
     def execute(self, context):
-        action = context.active_action
+        action = get_action(context.object)
         action_props = action.a3ob_properties_action
 
         current_frames = [frame.index for frame in action_props.frames]
@@ -152,10 +161,10 @@ class A3OB_OT_rtm_props_add(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return context.active_action
+        return get_action(context.object)
         
     def execute(self, context):
-        action = context.active_action
+        action = get_action(context.object)
         action_props = action.a3ob_properties_action
         
         item = action_props.props.add()
@@ -173,14 +182,15 @@ class A3OB_OT_rtm_props_remove(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        if not context.active_action:
+        action = get_action(context.object)
+        if not action:
             return False
         
-        action_props = context.active_action.a3ob_properties_action
+        action_props = action.a3ob_properties_action
         return utils.is_valid_idx(action_props.props_index, action_props.props)
         
     def execute(self, context):
-        action_props = context.active_action.a3ob_properties_action
+        action_props = get_action(context.object).a3ob_properties_action
         
         action_props.props.remove(action_props.props_index)
         if len(action_props.props) == 0:
@@ -200,10 +210,11 @@ class A3OB_OT_rtm_props_clear(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return context.active_action and len(context.active_action.a3ob_properties_action.props) > 0
+        action = get_action(context.object)
+        return action and len(action.a3ob_properties_action.props) > 0
         
     def execute(self, context):
-        action_props = context.active_action.a3ob_properties_action
+        action_props = get_action(context.object).a3ob_properties_action
         
         action_props.props.clear()
         action_props.props_index = -1
@@ -261,7 +272,7 @@ class A3OB_PT_action(bpy.types.Panel):
     
     @classmethod
     def poll(cls, context):
-        return context.active_action
+        return get_action(context.object)
         
     def draw_header(self, context):
         if not utils.get_addon_preferences().show_info_links:
@@ -272,7 +283,7 @@ class A3OB_PT_action(bpy.types.Panel):
         row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/rtm"
         
     def draw(self, context):
-        action = context.active_action
+        action = get_action(context.object)
         action_props = action.a3ob_properties_action
         
         layout = self.layout
@@ -298,13 +309,14 @@ class A3OB_PT_action_frames(bpy.types.Panel):
     bl_label = "Frames"
     bl_context = "data"
     bl_parent_id = "A3OB_PT_action"
+    bl_options = {'DEFAULT_CLOSED'}
     
     @classmethod
     def poll(cls, context):
-        return context.active_action
+        return get_action(context.object)
         
     def draw(self, context):
-        action = context.active_action
+        action = get_action(context.object)
         action_props = action.a3ob_properties_action
         
         layout = self.layout
@@ -331,13 +343,14 @@ class A3OB_PT_action_props(bpy.types.Panel):
     bl_label = "Properties"
     bl_context = "data"
     bl_parent_id = "A3OB_PT_action"
+    bl_options = {'DEFAULT_CLOSED'}
     
     @classmethod
     def poll(cls, context):
-        return context.active_action
+        return get_action(context.object)
     
     def draw(self, context):
-        action = context.active_action
+        action = get_action(context.object)
         action_props = action.a3ob_properties_action
 
         layout = self.layout
