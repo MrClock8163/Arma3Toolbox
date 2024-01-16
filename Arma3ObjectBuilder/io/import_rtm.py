@@ -4,7 +4,7 @@
 
 
 import os
-from math import floor, ceil, isclose
+from math import floor, ceil
 from itertools import chain
 
 import bpy
@@ -66,20 +66,21 @@ def build_frame_mapping(operator, rtm_0101):
     if operator.mapping_mode == 'FPS':
         frame_start = 1
         frame_end = operator.fps * operator.time + 1
-    elif operator.mapping_mode == 'DIRECT':
+
+    frames = {}
+
+    if operator.mapping_mode == 'DIRECT':
         frame_start = 1
         frame_end = len(rtm_0101.frames)
-
-    for i, frame in enumerate(rtm_0101.frames):
-        frames[i] = frame.phase * frame_end + (1 - frame.phase) * frame_start
+        frames = {i: i for i in range(len(rtm_0101.frames))}
+    else:
+        for i, frame in enumerate(rtm_0101.frames):
+            frames[i] = frame.phase * frame_end + (1 - frame.phase) * frame_start
     
     if operator.mapping_mode != 'DIRECT' or operator.round_frames:
         frames = {i: round(frames[i]) for i in frames}
-    
-    # phase -> frame mapping is needed when matching the frame properties to the frames
-    phases = {round(frame.phase, 4): frames[i] for i, frame in enumerate(rtm_0101.frames)}
 
-    return frames, phases
+    return frames
 
 
 def build_fcurves(action, pose_bone):
@@ -206,7 +207,7 @@ def import_file(operator, context, file):
     motion = build_motion_lookup(operator, rtm_0101)
     logger.log("Built motion lookup")
 
-    frames, phases = build_frame_mapping(operator, rtm_0101)
+    frames = build_frame_mapping(operator, rtm_0101)
     logger.log("Built frame mapping")
 
     if operator.mute_constraints:
@@ -224,12 +225,8 @@ def import_file(operator, context, file):
     if rtm_mdat:
         action_props = action.a3ob_properties_action
         for phase, name, value in rtm_mdat.items:
-            frame = phases.get(round(phase, 4))
-            if not frame:
-                continue
-
             new_item = action_props.props.add()
-            new_item.index = round(frame)
+            new_item.index = round(phase * operator.frame_end + (1 - phase) * operator.frame_start)
             new_item.name = name
             new_item.value = value
     
