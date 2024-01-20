@@ -49,6 +49,7 @@
 - fixed possible issue in P3D export when the material index of a face is out of the material range for some reason
 
 ### Removed:
+- Conversion tool was removed (conversion was made available as a ready-to-run template script instead)
 - RTM Frames tool was removed
 - RTM Properties panel was removed from Armature objects
 

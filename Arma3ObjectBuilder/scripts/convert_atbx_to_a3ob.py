@@ -20,7 +20,7 @@
 
 class Settings:
     # Convert only selected objects
-    only_selected = True
+    only_selected = False
     # Clean up ATBX properties
     cleanup = True
     # Convert LOD objects
