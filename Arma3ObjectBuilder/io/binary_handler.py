@@ -103,11 +103,8 @@ def read_lascii(file):
     
     return value.decode('ascii')
     
-def write_byte(file, value):
-    file.write(struct.pack('B', value))
-    
-def write_bytes(file, values):
-    file.write(struct.pack('%dB' % len(values), *values))
+def write_byte(file, *args):
+    file.write(struct.pack('%dB' % len(args), *args))
     
 def write_bool(file, value):
     write_byte(file, value)
