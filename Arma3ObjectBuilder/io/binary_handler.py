@@ -102,15 +102,6 @@ def read_lascii(file):
         raise EOFError("LASCII string ran into unexpected EOF")
     
     return value.decode('ascii')
-
-def read_asciiz_padded(file, max_len = 0):
-    value = read_asciiz(file)
-
-    diff = max_len - (len(value) + 1)
-    if diff > 0:
-        file.read(diff)
-
-    return value
     
 def write_byte(file, value):
     file.write(struct.pack('B', value))

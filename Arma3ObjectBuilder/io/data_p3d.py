@@ -66,8 +66,8 @@ class P3D_TAGG_DataProperty():
     def read(cls, file):
         output = cls()
         
-        output.key = binary.read_char(file, 64)
-        output.value = binary.read_char(file, 64)
+        output.key = binary.read_asciiz_field(file, 64)
+        output.value = binary.read_asciiz_field(file, 64)
         
         return output
     
@@ -75,8 +75,8 @@ class P3D_TAGG_DataProperty():
         return 128
     
     def write(self, file):
-        file.write(struct.pack('<64s', self.key.encode('ASCII')))
-        file.write(struct.pack('<64s', self.value.encode('ASCII')))
+        binary.write_asciiz_field(file, self.key, 64)
+        binary.write_asciiz_field(file, self.value, 64)
 
 
 class P3D_TAGG_DataMass():
@@ -407,7 +407,7 @@ class P3D_LOD_Resolution():
 
 class P3D_LOD():
     def __init__(self):
-        self.signature = "P3DM"
+        self.signature = b"P3DM"
         self.version = (28, 256)
         self.flags = 0x00000000
         self.resolution = P3D_LOD_Resolution()
@@ -421,22 +421,25 @@ class P3D_LOD():
         return type(other) is type(self) and other.resolution == self.resolution
     
     # Reading
-    
-    def read_vert(self, file):
+
+    @staticmethod
+    def read_vert(file):
         x, z, y, flag = struct.unpack('<fffI', file.read(16))
         return x, y, z, flag
     
     def read_verts(self, file, count_verts):
         self.verts = {i: self.read_vert(file) for i in range(count_verts)}
 
-    def read_normal(self, file):
+    @staticmethod
+    def read_normal(file):
         x, z, y = struct.unpack('<fff', file.read(12))
         return -x, -y, -z
     
     def read_normals(self, file, count_normals):
         self.normals = {i: self.read_normal(file) for i in range(count_normals)}
     
-    def read_face(self, file):
+    @staticmethod
+    def read_face(file):
         count_sides = binary.read_ulong(file)
         vertices = []
         normals = []
@@ -463,16 +466,15 @@ class P3D_LOD():
     @classmethod
     def read(cls, file):
 
-        signature = binary.read_char(file, 4)
-        if signature != "P3DM":
-            raise errors.P3DError("Unsupported LOD type: %s" % signature)
+        signature = file.read(4)
+        if signature != b"P3DM":
+            raise errors.P3DError("Unsupported LOD type: %s" % str(signature))
         
         version = binary.read_ulongs(file, 2)
         if version != (0x1c, 0x100):
             raise errors.P3DError("Unsupported LOD version: %d.%d" % (version[0], version[1]))
 
         output = cls()
-        output.signature = signature
         output.version = version
         
         count_verts, count_normals, count_faces, flags = binary.read_ulongs(file, 4)
@@ -535,7 +537,7 @@ class P3D_LOD():
 
 
     def write(self, file):
-        binary.write_chars(file, self.signature)
+        file.write(self.signature)
         binary.write_ulong(file, *self.version)
         
         count_verts = len(self.verts)
@@ -740,23 +742,22 @@ class P3D_MLOD():
     def __init__(self):
         self.source = ""
         self.version = 257
-        self.signature = "MLOD"
+        self.signature = b"MLOD"
         
         self.lods = []
     
     @classmethod
     def read(cls, file, first_lod_only = False):
         
-        signature = binary.read_char(file, 4)
-        if signature != "MLOD":
-            raise errors.P3DError("Invalid MLOD signature: %s" % signature)
+        signature = file.read(4)
+        if signature != b"MLOD":
+            raise errors.P3DError("Invalid MLOD signature: %s" % str(signature))
 
         version = binary.read_ulong(file)
         if version != 257:
             raise errors.P3DError("Unsupported MLOD version: %d" % version)
 
         output = cls()
-        output.signature = signature
         output.version = version
 
         count_lods = binary.read_ulong(file)
@@ -778,7 +779,7 @@ class P3D_MLOD():
         return output
     
     def write(self, file):
-        binary.write_chars(file, self.signature)
+        file.write(self.signature)
         binary.write_ulong(file, self.version)
 
         if len(self.lods) == 0:
