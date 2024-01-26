@@ -12,7 +12,8 @@ scripts = {
     },
     "import": {
         "P3D batch": "import_p3d_batch.py",
-        "RTM batch": "import_rtm_batch.py"
+        "RTM batch": "import_rtm_batch.py",
+        "OFP2_ManSkeleton": "ofp2_manskeleton.py"
     },
     "misc": {
         "Convert ATBX to A3OB": "convert_atbx_to_a3ob.py"
