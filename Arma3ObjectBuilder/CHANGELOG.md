@@ -30,12 +30,12 @@
 - tools:
   - Validation logic was completely overhauled for better extensibility
   - Weight Painting tool was reworked and moved under the new Rigging tool panel
-  - Utility functions in the Vertex Groups panel was moved to a menu
+  - Utility functions in the Vertex Groups panel were moved to a menu
 - import-export:
   - P3D:
     - split normals are now only imported for visual LODs
     - split normals are now only exported for visual LODs
-    - when custom normalsa are not exported, they are now replaced with weighted normals automatically
+    - when custom normals are not exported, they are now replaced with weighted normals automatically
     - shadow LODs are now imported as flat shaded
   - RTM:
     - export now requires a skeleton definition to filter out control bones
@@ -47,6 +47,8 @@
 - LOD type would be detected incorrectly for Shadow Volume - View Cargo when the resolution is higher than 4
 - LOD resolution would be incorrectly exported for Shadow Volume - View Cargo
 - fixed possible issue in P3D export when the material index of a face is out of the material range for some reason
+- add-on installation would fail on non-windows systems
+- ASC import would delete source file if an error occured during importing
 
 ### Removed:
 - Conversion tool was removed (conversion was made available as a ready-to-run template script instead)
