@@ -206,6 +206,10 @@ def get_addon_directory():
     return os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 
 
+def get_cfg_convert():
+    return os.path.join(get_addon_preferences().a3_tools, "cfgconvert/cfgconvert.exe")
+
+
 def get_common(name):
     prefs = get_addon_preferences()
     custom_path = abspath(prefs.custom_data)
@@ -243,7 +247,7 @@ def get_icon(name):
 def register_icons():
     import bpy.utils.previews
     
-    themes_dir = os.path.join(os.path.dirname(__file__), "..\icons")
+    themes_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../icons"))
     for theme in os.listdir(themes_dir):
         theme_icons = bpy.utils.previews.new()
         

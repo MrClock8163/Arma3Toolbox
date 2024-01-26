@@ -28,8 +28,7 @@ class A3OB_OP_import_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
     @classmethod
     def poll(cls, context):
-        exepath = os.path.join(utils.abspath(utils.get_addon_preferences().a3_tools), "cfgconvert/cfgconvert.exe")
-        return os.path.isfile(exepath)
+        return os.path.isfile(utils.get_cfg_convert())
 
     def draw(self, context):
         pass

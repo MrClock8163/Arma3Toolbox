@@ -17,15 +17,12 @@ if "bpy" in locals():
     
     importlib.reload(props)
     importlib.reload(ui)
-    importlib.reload(utilities.flags)
+    importlib.reload(flagutils)
 
 else:
     from . import props
     from . import ui
     from .utilities import flags as flagutils
-
-
-import winreg
 
 import bpy
 
@@ -40,7 +37,7 @@ def outliner_enable_update(self, context):
 
 
 class A3OB_OT_prefs_find_a3_tools(bpy.types.Operator):
-    """Find the Arma 3 Tools installation through the registry"""
+    """Find the Arma 3 Tools installation through the Windows registry"""
     
     bl_idname = "a3ob.prefs_find_a3_tools"
     bl_label = "Find Arma 3 Tools"
@@ -52,8 +49,9 @@ class A3OB_OT_prefs_find_a3_tools(bpy.types.Operator):
     
     def execute(self, context):
         try:
-            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"software\bohemia interactive\arma 3 tools")
-            value, _type = winreg.QueryValueEx(key, "path")
+            from winreg import OpenKey, QueryValueEx, HKEY_CURRENT_USER
+            key = OpenKey(HKEY_CURRENT_USER, r"software\bohemia interactive\arma 3 tools")
+            value, _type = QueryValueEx(key, "path")
             prefs = context.preferences.addons["Arma3ObjectBuilder"].preferences
             prefs.a3_tools = value
             

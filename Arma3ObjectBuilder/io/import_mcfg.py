@@ -60,7 +60,7 @@ def cfgconvert(filepath, exepath):
 
 # Derapify the previously converted model.cfg.
 def read_mcfg(filepath):
-    exepath = os.path.join(utils.abspath(utils.get_addon_preferences().a3_tools), "cfgconvert/cfgconvert.exe")
+    exepath = utils.get_cfg_convert()
     if not os.path.isfile(exepath):
         return None
 
