@@ -6,6 +6,7 @@
 import bpy
 
 from ..utilities.logger import ProcessLogger
+from ..utilities import errors
 
 
 def read_parameter(file):
