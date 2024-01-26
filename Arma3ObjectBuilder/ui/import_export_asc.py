@@ -28,25 +28,14 @@ class A3OB_OP_import_asc(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         max = 1000.0
     )
     
-    def execute(self, context):
-        temppath = self.filepath + ".temp"
-        success = False
-        
+    def execute(self, context):        
         with open(self.filepath) as file:
             try:
                 import_asc.read_file(self, context, file)
-                success = True
+                self.report({'INFO'}, "Successfully imported DEM")
             except Exception as ex:
                 self.report({'ERROR'}, str(ex))
                 traceback.print_exc()
-        
-        if success:
-            if os.path.isfile(self.filepath):
-                os.remove(self.filepath)
-                
-            os.rename(temppath, os.path.splitext(temppath)[0])
-        elif not success and not utils.get_addon_preferences().preserve_faulty_output:
-            os.remove(temppath)
         
         return {'FINISHED'}
 
