@@ -31,7 +31,7 @@ class A3OB_OT_rename_path_item(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         scene_props = context.scene.a3ob_renaming
-        return scene_props.path_list_index in range(len(scene_props.path_list))
+        return utils.is_valid_idx(scene_props.path_list_index, scene_props.path_list)
         
     def execute(self, context):
         renameutils.rename_path(context)
@@ -115,7 +115,7 @@ class A3OB_PT_renaming_paths_bulk(bpy.types.Panel):
         row_filter.operator("a3ob.rename_list_refresh", text="", icon_value=utils.get_icon("op_refresh"))
         row_filter.prop(scene_props, "source_filter")
         
-        if scene_props.path_list_index in range(len(scene_props.path_list)):
+        if utils.is_valid_idx(scene_props.path_list_index, scene_props.path_list):
             col_edit = layout.column(align=True)
             col_edit.prop(scene_props.path_list[scene_props.path_list_index], "path", text="")
             col_edit.prop(scene_props, "new_path", text="")

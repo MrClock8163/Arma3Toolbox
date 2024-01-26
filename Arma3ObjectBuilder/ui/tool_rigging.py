@@ -169,7 +169,7 @@ class A3OB_OT_rigging_skeletons_bones_remove(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         scene_props = context.scene.a3ob_rigging
-        if scene_props.skeletons_index not in range(len(scene_props.skeletons)):
+        if not utils.is_valid_idx(scene_props.skeletons_index, scene_props.skeletons):
             return False
         
         skeleton = scene_props.skeletons[scene_props.skeletons_index]
@@ -194,7 +194,7 @@ class A3OB_OT_rigging_skeletons_bones_clear(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         scene_props = context.scene.a3ob_rigging
-        if scene_props.skeletons_index not in range(len(scene_props.skeletons)):
+        if not utils.is_valid_idx(scene_props.skeletons_index, scene_props.skeletons):
             return False
         
         skeleton = scene_props.skeletons[scene_props.skeletons_index]
@@ -220,7 +220,7 @@ class A3OB_OT_rigging_skeletons_bones_lowercase(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         scene_props = context.scene.a3ob_rigging
-        if scene_props.skeletons_index not in range(len(scene_props.skeletons)):
+        if not utils.is_valid_idx(scene_props.skeletons_index, scene_props.skeletons):
             return False
         
         skeleton = scene_props.skeletons[scene_props.skeletons_index]
@@ -248,7 +248,7 @@ class A3OB_OT_rigging_skeletons_bones_check_hierarchy(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         scene_props = context.scene.a3ob_rigging
-        if scene_props.skeletons_index not in range(len(scene_props.skeletons)):
+        if not utils.is_valid_idx(scene_props.skeletons_index, scene_props.skeletons):
             return False
         
         skeleton = scene_props.skeletons[scene_props.skeletons_index]
@@ -280,7 +280,7 @@ class A3OB_OT_rigging_pivots_from_armature(bpy.types.Operator):
         scene_props = context.scene.a3ob_rigging
         obj = context.active_object
 
-        if scene_props.skeletons_index not in range(len(scene_props.skeletons)):
+        if not utils.is_valid_idx(scene_props.skeletons_index, scene_props.skeletons):
             return False
         
         skeleton = scene_props.skeletons[scene_props.skeletons_index]
@@ -525,7 +525,7 @@ class A3OB_PT_rigging_skeletons(bpy.types.Panel):
         row_bones = layout.row()
         col_bones_list = row_bones.column()
 
-        if scene_props.skeletons_index in range(len(scene_props.skeletons)):
+        if utils.is_valid_idx(scene_props.skeletons_index, scene_props.skeletons):
             col_bones_list.template_list("A3OB_UL_rigging_bones", "A3OB_rigging_bones", scene_props.skeletons[scene_props.skeletons_index], "bones", scene_props.skeletons[scene_props.skeletons_index], "bones_index", rows=4)
         else:
             col_bones_list.template_list("A3OB_UL_rigging_bones", "A3OB_rigging_bones", scene_props, "bones", scene_props, "bones_index", rows=4)

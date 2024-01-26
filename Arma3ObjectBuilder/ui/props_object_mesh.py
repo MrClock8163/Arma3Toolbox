@@ -109,7 +109,7 @@ class A3OB_OT_paste_common_proxy(bpy.types.Operator):
         layout.template_list("A3OB_UL_common_proxies", "A3OB_proxies_common", scene_props, "proxies", scene_props, "proxies_index")
         
         selection_index = scene_props.proxies_index
-        if selection_index in range(len(scene_props.proxies)):
+        if utils.is_valid_idx(selection_index, scene_props.proxies):
             row = layout.row()
             item = scene_props.proxies[selection_index]
             row.prop(item, "path", text="")
@@ -123,7 +123,7 @@ class A3OB_OT_paste_common_proxy(bpy.types.Operator):
 
         scene_props = context.scene.a3ob_commons
         
-        if scene_props.proxies_index in range(len(scene_props.proxies)):
+        if utils.is_valid_idx(scene_props.proxies_index, scene_props.proxies):
             new_item = scene_props.proxies[scene_props.proxies_index]
             obj.a3ob_properties_object_proxy.proxy_path = new_item.path
             
@@ -219,7 +219,7 @@ class A3OB_OT_paste_common_namedprop(bpy.types.Operator):
         obj = context.object
         scene_props = context.scene.a3ob_commons
         
-        if scene_props.namedprops_index in range(len(scene_props.namedprops)):
+        if utils.is_valid_idx(scene_props.namedprops_index, scene_props.namedprops):
             new_item = scene_props.namedprops[scene_props.namedprops_index]
             object_props = obj.a3ob_properties_object
             item = object_props.properties.add()
@@ -263,7 +263,7 @@ class A3OB_OT_flags_vertex_remove(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'MESH' and obj.a3ob_properties_object_flags.vertex_index in range(len(obj.a3ob_properties_object_flags.vertex))
+        return obj and obj.type == 'MESH' and utils.is_valid_idx(obj.a3ob_properties_object_flags.vertex_index, obj.a3ob_properties_object_flags.vertex)
         
     def execute(self, context):
         obj = context.object
@@ -288,7 +288,7 @@ class A3OB_OT_flags_vertex_assign(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and obj.a3ob_properties_object_flags.vertex_index in range(len(obj.a3ob_properties_object_flags.vertex))
+        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and utils.is_valid_idx(obj.a3ob_properties_object_flags.vertex_index, obj.a3ob_properties_object_flags.vertex)
     
     def execute(self, context):
         obj = context.object
@@ -308,7 +308,7 @@ class A3OB_OT_flags_vertex_select(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and obj.a3ob_properties_object_flags.vertex_index in range(len(obj.a3ob_properties_object_flags.vertex))
+        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and utils.is_valid_idx(obj.a3ob_properties_object_flags.vertex_index, obj.a3ob_properties_object_flags.vertex)
     
     def execute(self, context):
         obj = context.object
@@ -329,7 +329,7 @@ class A3OB_OT_flags_vertex_deselect(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and obj.a3ob_properties_object_flags.vertex_index in range(len(obj.a3ob_properties_object_flags.vertex))
+        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and utils.is_valid_idx(obj.a3ob_properties_object_flags.vertex_index, obj.a3ob_properties_object_flags.vertex)
     
     def execute(self, context):
         obj = context.object
@@ -392,7 +392,7 @@ class A3OB_OT_flags_face_remove(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'MESH' and obj.a3ob_properties_object_flags.face_index in range(len(obj.a3ob_properties_object_flags.face))
+        return obj and obj.type == 'MESH' and utils.is_valid_idx(obj.a3ob_properties_object_flags.face_index, obj.a3ob_properties_object_flags.face)
         
     def execute(self, context):
         obj = context.object
@@ -417,7 +417,7 @@ class A3OB_OT_flags_face_assign(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and obj.a3ob_properties_object_flags.face_index in range(len(obj.a3ob_properties_object_flags.face))
+        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and utils.is_valid_idx(obj.a3ob_properties_object_flags.face_index, obj.a3ob_properties_object_flags.face)
     
     def execute(self, context):
         obj = context.object
@@ -437,7 +437,7 @@ class A3OB_OT_flags_face_select(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and obj.a3ob_properties_object_flags.face_index in range(len(obj.a3ob_properties_object_flags.face))
+        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and utils.is_valid_idx(obj.a3ob_properties_object_flags.face_index, obj.a3ob_properties_object_flags.face)
     
     def execute(self, context):
         obj = context.object
@@ -458,7 +458,7 @@ class A3OB_OT_flags_face_deselect(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and obj.a3ob_properties_object_flags.face_index in range(len(obj.a3ob_properties_object_flags.face))
+        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and utils.is_valid_idx(obj.a3ob_properties_object_flags.face_index, obj.a3ob_properties_object_flags.face)
     
     def execute(self, context):
         obj = context.object
@@ -624,7 +624,7 @@ class A3OB_PT_object_mesh_proxies(bpy.types.Panel):
         op_add.parent = context.object.name
         op_remove = col_operators.operator("a3ob.proxy_remove", text="", icon='REMOVE')
 
-        if scene_props.proxies_index not in range(len(scene_props.proxies)):
+        if not utils.is_valid_idx(scene_props.proxies_index, scene_props.proxies):
             return
         
         proxy = context.scene.objects.get(scene_props.proxies[scene_props.proxies_index].obj)
@@ -689,7 +689,7 @@ class A3OB_PT_object_mesh_flags_vertex(bpy.types.Panel):
         layout.use_property_split = True
         layout.use_property_decorate = False
         
-        if flag_props.vertex_index in range(len(flag_props.vertex)):
+        if utils.is_valid_idx(flag_props.vertex_index, flag_props.vertex):
             if obj.mode == 'EDIT':
                 row_operators = layout.row(align=True)
                 row_operators.operator("a3ob.flags_vertex_assign")
@@ -736,7 +736,7 @@ class A3OB_PT_object_mesh_flags_face(bpy.types.Panel):
         layout.use_property_split = True
         layout.use_property_decorate = False
         
-        if flag_props.face_index in range(len(flag_props.face)):
+        if utils.is_valid_idx(flag_props.face_index, flag_props.face):
             if obj.mode == 'EDIT':
                 row_operators = layout.row(align=True)
                 row_operators.operator("a3ob.flags_face_assign")

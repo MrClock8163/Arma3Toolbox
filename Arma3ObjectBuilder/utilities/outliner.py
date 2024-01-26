@@ -1,6 +1,9 @@
 # Backend functions for the LOD object outliner panel.
 
 
+from . import generic as utils
+
+
 def update_outliner(scene):
     scene_props = scene.a3ob_outliner
     
@@ -25,7 +28,7 @@ def update_outliner(scene):
             else:
                 item.subobject_count += 1
     
-    if not scene_props.lods_index in range(len(scene_props.lods)):
+    if not utils.is_valid_idx(scene_props.lods_index, scene_props.lods):
         return
     
     lod = scene.objects[scene_props.lods[scene_props.lods_index].obj]

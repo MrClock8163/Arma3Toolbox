@@ -41,8 +41,8 @@ def get_addon_preferences():
     return bpy.context.preferences.addons["Arma3ObjectBuilder"].preferences
 
 
-def is_valid_idx(index, iterable):
-    return 0 <= index < len(iterable)
+def is_valid_idx(index, subscriptable):
+    return 0 <= index < len(subscriptable)
 
 
 @contextmanager

@@ -130,7 +130,7 @@ class A3OB_PT_outliner(bpy.types.Panel):
         box_proxy = row_counts.box()
         box_subobject = row_counts.box()
 
-        if scene_props.lods_index in range(len(scene_props.lods)):
+        if utils.is_valid_idx(scene_props.lods_index, scene_props.lods):
             item = scene_props.lods[scene_props.lods_index]
             box_proxy.label(text="%d" % item.proxy_count, icon='PMARKER_ACT')
             box_subobject.label(text="%d" % item.subobject_count, icon='MESH_CUBE')
