@@ -148,6 +148,7 @@ def main():
     scene_props = bpy.context.scene.a3ob_rigging
     skeleton = scene_props.skeletons.add()
     skeleton.name = "ofp2_manskeleton" if Settings.force_lowercase else "OFP2_ManSkeleton"
+    skeleton.protected = True
 
     for bone, parent in bones:
         item = skeleton.bones.add()

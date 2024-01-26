@@ -173,6 +173,7 @@ def read_file(operator, context):
     for skelly in skeletons:
         new_skelly = scene_props.skeletons.add()
         new_skelly.name = skelly.name.lower() if operator.force_lowercase else skelly.name
+        new_skelly.protected = operator.protected
         
         cfgbones = get_bones_compiled(data, skelly.name)
         logger.log("%s: %d compiled bones" % (skelly.name, len(cfgbones)))

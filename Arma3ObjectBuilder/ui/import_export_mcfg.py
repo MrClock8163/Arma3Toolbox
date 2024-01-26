@@ -25,6 +25,11 @@ class A3OB_OP_import_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         description = "Import all bone names as lowercase",
         default = True
     )
+    protected: bpy.props.BoolProperty(
+        name = "Protected",
+        description = "Import skeletons as protected",
+        default = True
+    )
 
     @classmethod
     def poll(cls, context):
@@ -69,6 +74,7 @@ class A3OB_PT_import_mcfg_main(bpy.types.Panel):
         operator = sfile.active_operator
 
         layout.prop(operator, "force_lowercase")
+        layout.prop(operator, "protected")
 
 
 class A3OB_OP_export_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
@@ -143,7 +149,7 @@ class A3OB_PT_export_mcfg_main(bpy.types.Panel):
         operator = sfile.active_operator
         scene_props = context.scene.a3ob_rigging
 
-        layout.template_list("A3OB_UL_rigging_skeletons_protected", "A3OB_armature_skeletons", scene_props, "skeletons", operator, "skeleton_index", rows=3)
+        layout.template_list("A3OB_UL_rigging_skeletons_noedit", "A3OB_armature_skeletons", scene_props, "skeletons", operator, "skeleton_index", rows=3)
         layout.prop(operator, "force_lowercase")
 
 

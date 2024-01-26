@@ -532,6 +532,7 @@ class A3OB_PG_rigging_bone(bpy.types.PropertyGroup):
 
 class A3OB_PG_rigging_skeleton(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Name", description="Name of the skeleton")
+    protected: bpy.props.BoolProperty(name="Protected", description="Skeleton is protected and cannot be modified")
     bones: bpy.props.CollectionProperty(type=A3OB_PG_rigging_bone)
     bones_index: bpy.props.IntProperty(name="Selection Index")
 

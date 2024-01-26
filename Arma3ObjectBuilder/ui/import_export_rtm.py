@@ -138,7 +138,7 @@ class A3OB_PT_export_rtm_main(bpy.types.Panel):
         
         layout.prop(operator, "static_pose")
         layout.prop(operator, "force_lowercase")
-        layout.template_list("A3OB_UL_rigging_skeletons_protected", "A3OB_rtm_skeletons", scene_props, "skeletons", operator, "skeleton_index", rows=3)
+        layout.template_list("A3OB_UL_rigging_skeletons_noedit", "A3OB_rtm_skeletons", scene_props, "skeletons", operator, "skeleton_index", rows=3)
 
 
 class A3OB_PT_export_rtm_frames(bpy.types.Panel):
