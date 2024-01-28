@@ -22,7 +22,7 @@ def write_file(operator, skeleton, file):
         logger.log("Force lowercase")
         bones_parents = {k.lower(): v.lower() for k, v in bones_parents.items()}
     
-    printer = rap.CfgFormatter(file)
+    printer = rap.CFG_Formatter(file)
 
     printer.class_open("CfgSkeletons")
     printer.class_open(skeleton.name)

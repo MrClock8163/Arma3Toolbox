@@ -8,7 +8,10 @@
 import struct
 
 from . import binary_handler as binary
-from ..utilities import errors
+
+
+class RTM_Error(Exception):
+    pass
 
 
 class RTM_Transform():
@@ -82,7 +85,7 @@ class RTM_MDAT():
         if not skip_signature:
             signature = file.read(8)
             if signature != b"RTM_MDAT":
-                raise errors.RTMError("Invalid MDAT signature: %s" % str(signature))
+                raise RTM_Error("Invalid MDAT signature: %s" % str(signature))
 
         file.read(4) # padding
         count_items = binary.read_ulong(file)
@@ -120,7 +123,7 @@ class RTM_0101():
         if not skip_signature:
             signature = file.read(8)
             if signature != b"RTM_0101":
-                raise errors.RTMError("Invalid header signature: %s" % signature)
+                raise RTM_Error("Invalid header signature: %s" % signature)
 
         x, y, z = struct.unpack('<fff', file.read(12))
         output.motion = (x, y, z)
@@ -177,7 +180,7 @@ class RTM_File():
             elif signature == b"RTM_MDAT":
                 output.props = RTM_MDAT.read(file, True)
             else:
-                raise errors.RTMError("Unknown datablock signature: %s" % str(signature))
+                raise RTM_Error("Unknown datablock signature: %s" % str(signature))
         
         return output
     
@@ -194,6 +197,6 @@ class RTM_File():
             self.props.write(file)
         
         if not self.anim:
-            raise errors.RTMError("Cannot export RTM without animation data")
+            raise RTM_Error("Cannot export RTM without animation data")
         
         self.anim.write(file)

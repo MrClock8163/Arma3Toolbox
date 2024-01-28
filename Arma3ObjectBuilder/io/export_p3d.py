@@ -13,7 +13,6 @@ from ..utilities import generic as utils
 from ..utilities import lod as lodutils
 from ..utilities import flags as flagutils
 from ..utilities import compat as computils
-from ..utilities import errors
 from ..utilities import data
 from ..utilities.logger import ProcessLogger, ProcessLoggerNull
 from ..utilities.validator import Validator
@@ -580,7 +579,7 @@ def write_file(operator, context, file):
         wm.progress_update(i + 1)
 
     if len(mlod_lods) == 0:
-        raise errors.P3DError("All LODs had n-gons/failed validation, cannot write P3D with 0 LODs")
+        raise p3d.P3D_Error("All LODs had n-gons/failed validation, cannot write P3D with 0 LODs")
 
     # LODs should be sorted by their resolution signature.
     mlod_lods.sort(key=lambda lod: float(lod.resolution))

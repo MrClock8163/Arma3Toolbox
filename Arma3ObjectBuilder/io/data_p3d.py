@@ -10,7 +10,10 @@ import re
 from decimal import Decimal, Context
 
 from . import binary_handler as binary
-from ..utilities import errors
+
+
+class P3D_Error(Exception):
+    pass
 
 
 # Generic class to consume unneeded TAGG types (eg.: #Hidden#, #Selected#).
@@ -212,14 +215,14 @@ class P3D_TAGG():
         
         if output.name == "#EndOfFile#":
             if length != 0:
-                raise errors.P3DError("Invalid EOF")
+                raise P3D_Error("Invalid EOF")
             
             output.active = False
         elif output.name == "#SharpEdges#":
             output.data = P3D_TAGG_DataSharpEdges.read(file, length)
         elif output.name == "#Property#":
             if length != 128:
-                raise errors.P3DError("Invalid name property length: %d" % length)
+                raise P3D_Error("Invalid name property length: %d" % length)
             
             output.data = P3D_TAGG_DataProperty.read(file)
         elif output.name == "#Mass#":
@@ -468,11 +471,11 @@ class P3D_LOD():
 
         signature = file.read(4)
         if signature != b"P3DM":
-            raise errors.P3DError("Unsupported LOD type: %s" % str(signature))
+            raise P3D_Error("Unsupported LOD type: %s" % str(signature))
         
         version = binary.read_ulongs(file, 2)
         if version != (0x1c, 0x100):
-            raise errors.P3DError("Unsupported LOD version: %d.%d" % (version[0], version[1]))
+            raise P3D_Error("Unsupported LOD version: %d.%d" % (version[0], version[1]))
 
         output = cls()
         output.version = version
@@ -487,7 +490,7 @@ class P3D_LOD():
 
         tagg_signature = binary.read_char(file, 4)
         if tagg_signature != "TAGG":
-            raise errors.P3DError("Invalid TAGG section signature: %s" % tagg_signature)
+            raise P3D_Error("Invalid TAGG section signature: %s" % tagg_signature)
         
         while True:
             tagg = P3D_TAGG.read(file, count_verts, count_faces)
@@ -751,11 +754,11 @@ class P3D_MLOD():
         
         signature = file.read(4)
         if signature != b"MLOD":
-            raise errors.P3DError("Invalid MLOD signature: %s" % str(signature))
+            raise P3D_Error("Invalid MLOD signature: %s" % str(signature))
 
         version = binary.read_ulong(file)
         if version != 257:
-            raise errors.P3DError("Unsupported MLOD version: %d" % version)
+            raise P3D_Error("Unsupported MLOD version: %d" % version)
 
         output = cls()
         output.version = version
@@ -779,18 +782,14 @@ class P3D_MLOD():
         return output
     
     def write(self, file):
+        if len(self.lods) == 0:
+            raise P3D_Error("Cannot write file with no LODs")
+        
         file.write(self.signature)
         binary.write_ulong(file, self.version)
-
-        if len(self.lods) == 0:
-            dummy_lod = P3D_LOD()
-
-            binary.write_ulong(file, 1)
-            dummy_lod.write(file)
-        else:
-            binary.write_ulong(file, len(self.lods))
-            for lod in self.lods:
-                lod.write(file)
+        binary.write_ulong(file, len(self.lods))
+        for lod in self.lods:
+            lod.write(file)
     
     def write_file(self, filepath):
         with open(filepath, "wb") as file:

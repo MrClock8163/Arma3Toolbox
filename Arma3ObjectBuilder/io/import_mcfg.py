@@ -69,7 +69,7 @@ def read_mcfg(filepath):
     if temppath == "":
         return None
     
-    data = rap.CFGReader.derapify(temppath)
+    data = rap.RAP_Reader.derapify(temppath)
     
     os.remove(temppath)
     
@@ -81,7 +81,7 @@ def read_mcfg(filepath):
 # the inheritance tree has to be traversed to query properties.
 def get_prop_compiled(mcfg, classname, propname):
     entry = mcfg.body.find(classname)
-    if not entry or entry.type != rap.Cfg.EntryType.CLASS:
+    if not entry or entry.type != rap.RAP.EntryType.CLASS:
         return None
     
     prop = entry.body.find(propname)
@@ -103,7 +103,7 @@ def get_skeletons(mcfg):
 
 
 def get_bones(skeleton):
-    if skeleton.type == rap.Cfg.EntryType.EXTERN:
+    if skeleton.type == rap.RAP.EntryType.EXTERN:
         return []
     
     bones = skeleton.body.find("skeletonBones")
@@ -126,11 +126,11 @@ def get_bones_compiled(mcfg, skeleton_name):
     cfg_skeletons = mcfg.body.find("CfgSkeletons")
     output = []
     
-    if not cfg_skeletons or cfg_skeletons.type != rap.Cfg.EntryType.CLASS:
+    if not cfg_skeletons or cfg_skeletons.type != rap.RAP.EntryType.CLASS:
         return []
         
     skeleton = cfg_skeletons.body.find(skeleton_name)
-    if not skeleton or skeleton.type != rap.Cfg.EntryType.CLASS:
+    if not skeleton or skeleton.type != rap.RAP.EntryType.CLASS:
         return []
     
     inherit_bones = get_prop_compiled(cfg_skeletons, skeleton_name, "skeletonInherit")
