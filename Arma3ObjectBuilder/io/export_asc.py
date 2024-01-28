@@ -1,111 +1,103 @@
-# Writer functions to export a single DEM mesh to the ASCII
-# Esri GRID raster format, for use in terrain creation.
-# https://en.wikipedia.org/wiki/Esri_grid
+# Processing functions to export DTM data to ESRI ASCII grid (*.asc) files.
+# The actual file handling is implemented in the data_asc module.
 
 
 import math
+import time
 
+from . import data_asc as asc
 from ..utilities.logger import ProcessLogger
 
 
-# The exporter only supports square rasters,
-# so the resolution must be checked before export.
-def valid_resolution(operator, context, obj):
-    if operator.apply_modifiers:
-        obj = obj.evaluated_get(context.evaluated_depsgraph_get())
-    
-    mesh = obj.data
-    resolution = int(math.sqrt(len(mesh.vertices)))
-    return len(mesh.vertices) == resolution**2
+def calc_resolution(operator, count_vertex):
+    nrows = 0
+    ncols = 0
 
-
-def write_header(file, cellsize, easting, northing, centered, resolution, nodata, logger):
-    logger.step("Header parameters:")
-    logger.level_up()
-    
-    logger.step("ncols, nrows: %d" % resolution)
-    file.write("ncols         " + str(resolution) + "\n")
-    file.write("nrows         " + str(resolution) + "\n")
-    
-    if centered:
-        logger.step("xllcenter: %f" % easting)
-        logger.step("yllcenter: %f" % northing)
-        file.write("xllcenter     " + str(easting) + "\n")
-        file.write("yllcenter     " + str(northing) + "\n")
+    if operator.dimensions == 'SQUARE':
+        nrows = ncols = int(math.sqrt(count_vertex))
+    elif operator.dimensions == 'LANDSCAPE':
+        nrows = int(math.sqrt(count_vertex / 2))
+        ncols = 2 * nrows
+    elif operator.dimensions == 'PORTRAIT':
+        ncols = int(math.sqrt(count_vertex / 2))
+        nrows = 2 * ncols
     else:
-        logger.step("xllcorner: %f" % easting)
-        logger.step("yllcorner: %f" % northing)
-        file.write("xllcorner     " + str(easting) + "\n")
-        file.write("yllcorner     " + str(northing) + "\n")
-        
-    logger.step("cellsize: %f" % cellsize)
-    logger.step("NODATA_value: %f" % nodata)
-    file.write("cellsize      " + str(cellsize) + "\n")
-    file.write("NODATA_value  " + str(nodata) + "\n")
+        nrows = operator.rows
+        ncols = operator.columns
     
-    logger.level_down()
+    return nrows, ncols
 
 
-# The order of vertices in a mesh is virtually random
-# so they need to be sorted along the Y and then X axes
-# before export.
-def sort_points(mesh, resolution, logger):
-    points = [vertex.co for vertex in mesh.vertices]
-    points.sort(reverse=True, key=lambda vert: vert[1])
-    
-    rows = []
-    for i in range(resolution):
-        row = points[i*resolution : (i + 1)*resolution]
+def get_points(vertices, nrows, ncols):
+    points = [vertex.co for vertex in vertices]
+    points.sort(key=lambda vert: vert[1], reverse=True)
+
+    data = []
+    for i in range(nrows):
+        row = points[i * ncols : (i + 1) * ncols]
         row.sort(key=lambda vert: vert[0])
-        rows.append(row)
-        
-    logger.step("Sorted points: %d" % len(points))
-    logger.step("Sorted rows: %d" % len(rows))
-        
-    return rows
-
-
-def write_raster(file, rows, logger):
-    for row in rows:
-        row_string = []
-        for value in row:
-            row_string.append("%.4f" % value[2])
-            
-        file.write(" ".join(row_string) + "\n")
+        data.append([vert[2] for vert in row])
     
-    logger.step("Wrote raster values")
+    assert len(data) == nrows
+
+    return data
 
 
 def write_file(operator, context, file, obj):
     logger = ProcessLogger()
+    time_start = time.time()
     logger.step("ASC raster export to %s" % operator.filepath)
     logger.level_up()
 
     obj = context.active_object
     if obj.mode == 'EDIT':
         obj.update_from_editmode()
+
+    logger.step("Processing data:")
+    logger.level_up()
         
     if operator.apply_modifiers:
         obj = obj.evaluated_get(context.evaluated_depsgraph_get())
+        logger.step("Applied modifiers")
         
     mesh = obj.data
     object_props = obj.a3ob_properties_object_dtm
     
+    raster = asc.ASC_File()
+    pos_type = asc.ASC_File.POS_CENTER if object_props.origin == 'CENTER' else asc.ASC_File.POS_CORNER
+    raster.pos = (pos_type, object_props.easting, object_props.northing)
+    raster.nodata = object_props.nodata
+
+    count_vertex = len(mesh.vertices)
+    nrows, ncols = calc_resolution(operator, count_vertex)
+    if count_vertex != (nrows * ncols):
+        raise asc.ASC_Error("Invalid dimensions: %d x %d (vertex count: %d)" % (nrows, ncols, count_vertex))
+    
+    logger.step("Calculated dimensions")
+
+    raster.data = get_points(mesh.vertices, nrows, ncols)
+    logger.step("Collected data")
+    
     cellsize = object_props.cellsize
-    easting = object_props.easting
-    northing = object_props.northing
-    centered = object_props.origin == 'CENTER'
-    nodata = object_props.nodata
-    resolution = int(math.sqrt(len(mesh.vertices)))
-    
-    rows = sort_points(mesh, resolution, logger)
-    
-    if object_props.cellsize_source == 'CALCULATED' and resolution != 1:
-        cellsize = rows[0][1][0] - rows[0][0][0]
-    
-    write_header(file, cellsize, easting, northing, centered, resolution, nodata, logger)
-    write_raster(file, rows, logger)
+    if object_props.cellsize_source == 'CALCULATED' and count_vertex > 1:
+        cellsize = raster.get_cellsize_from_data()
+        if cellsize is None:
+            raise asc.ASC_Error("Could not calculate cellsize")
+        logger.step("Calculated cellsize")
+        
+    raster.cellsize = cellsize
+    logger.level_down()
+
+    logger.step("File report:")
+    logger.level_up()
+    logger.step("Dimensions: %d x %d" % (nrows, ncols))
+    logger.step("DTM type: %s" % ("raster" if pos_type == asc.ASC_File.POS_CENTER else "grid"))
+    logger.step("Easting: %f" % object_props.easting)
+    logger.step("Northing: %f" % object_props.northing)
+    logger.step("NULL indicator: %f" % object_props.nodata)
+    logger.level_down()
+
+    raster.write(file)
     
     logger.level_down()
-    logger.step("")
-    logger.step("ASC export finished")
+    logger.step("ASC export finished in %f sec" % (time.time() - time_start))

@@ -52,7 +52,7 @@ def read_file(operator, context, file):
     logger.step("File report:")
     logger.level_up()
     logger.step("Dimensions: %d x %d" % (nrows, ncols))
-    logger.step("Data type: %s" % ("raster" if pos_type == asc.ASC_File.POS_CENTER else "grid"))
+    logger.step("DTM type: %s" % ("raster" if pos_type == asc.ASC_File.POS_CENTER else "grid"))
     logger.step("Easting: %f" % east)
     logger.step("Northing: %f" % north)
     logger.level_down()

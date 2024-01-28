@@ -87,6 +87,25 @@ class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         description = "Apply the assigned modifiers to the DTM object during export",
         default = True
     )
+    dimensions: bpy.props.EnumProperty(
+        name = "Dimensions",
+        description = "Raster dimensions (the number of vertices must match the calulcated rows x columns size)",
+        items = (
+            ("SQUARE", "1:1", "Calculate dimensions from 1:1 rows-columns ratio"),
+            ("LANDSCAPE", "1:2", "Calculate dimensions from 1:2 rows-columns ratio"),
+            ("PORTRAIT", "2:1", "Calculate dimensions from 2:1 rows-columns ratio"),
+            ("CUSTOM", "Custom", "Specify custom dimensions")
+        ),
+        default = 'SQUARE'
+    )
+    rows: bpy.props.IntProperty(
+        name = "Rows",
+        min = 1
+    )
+    columns: bpy.props.IntProperty(
+        name = "Columns",
+        min = 1
+    )
     
     @classmethod
     def poll(cls, context):
@@ -94,23 +113,17 @@ class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         return obj and obj.type == 'MESH' and len(obj.data.vertices) > 0
     
     def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False
-        layout.prop(self, "apply_modifiers")
+        pass
     
     def execute(self, context):
         obj = context.active_object
-        
-        if not export_asc.valid_resolution(self, context, obj):
-            self.report({'ERROR'}, "Cannot export irregular raster, raster resolutions must be equal in X and Y directions")
-            return {'FINISHED'}
         
         output = utils.OutputManager(self.filepath, "w")
         with output as file:
             try:
                 export_asc.write_file(self, context, file, obj)
                 output.success = True
+                self.report({'INFO'}, "Successfuly exported DTM")
             except Exception as ex:
                 self.report({'ERROR'}, "%s (check the system console)" % str(ex))
                 traceback.print_exc()
@@ -118,10 +131,62 @@ class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         return {'FINISHED'}
 
 
+class A3OB_PT_export_asc_main(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Main"
+    bl_parent_id = "FILE_PT_operator"
+    bl_options = {'HIDE_HEADER'}
+    
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        return operator.bl_idname == "A3OB_OT_export_asc"
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        layout.prop(operator, "apply_modifiers")
+
+
+class A3OB_PT_export_asc_dimensions(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Dimensions"
+    bl_parent_id = "FILE_PT_operator"
+    
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        return operator.bl_idname == "A3OB_OT_export_asc"
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        layout.prop(operator, "dimensions")
+        if operator.dimensions == 'CUSTOM':
+            layout.prop(operator, "rows")
+            layout.prop(operator, "columns")
+
+
 classes = (
     A3OB_OP_import_asc,
     A3OB_PT_import_asc_main,
-    A3OB_OP_export_asc
+    A3OB_OP_export_asc,
+    A3OB_PT_export_asc_main,
+    A3OB_PT_export_asc_dimensions
 )
 
 

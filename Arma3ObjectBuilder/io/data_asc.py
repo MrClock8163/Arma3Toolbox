@@ -124,3 +124,13 @@ class ASC_File():
         ncols = len(self.data[0])
 
         return nrows, ncols
+    
+    def get_cellsize_from_data(self):
+        nrows, ncols = self.get_dimensions()
+
+        if ncols > 1:
+            return self.data[0][1][0] - self.data[0][0][0]
+        elif nrows > 1:
+            return self.data[1][0][0] - self.data[0][0][0]
+        else:
+            return None
