@@ -1,5 +1,4 @@
 import traceback
-import os
 
 import bpy
 import bpy_extras
@@ -20,13 +19,21 @@ class A3OB_OP_import_asc(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         default = "*.asc",
         options = {'HIDDEN'}
     )
-    vertical_scale: bpy.props.FloatProperty(
-        name = "Vertical Scaling",
-        description = "Vertical scaling coefficient",
+    hscale: bpy.props.FloatProperty(
+        name = "Horizontal Scale",
         default = 1.0,
         min = -0.001,
-        max = 1000.0
+        max = 1000
     )
+    vscale: bpy.props.FloatProperty(
+        name = "Vertical Scale",
+        default = 1.0,
+        min = -0.001,
+        max = 1000
+    )
+
+    def draw(self, context):
+        pass
     
     def execute(self, context):        
         with open(self.filepath) as file:
@@ -38,6 +45,30 @@ class A3OB_OP_import_asc(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 traceback.print_exc()
         
         return {'FINISHED'}
+
+
+class A3OB_PT_import_asc_main(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Main"
+    bl_parent_id = "FILE_PT_operator"
+    bl_options = {'HIDE_HEADER'}
+    
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        return operator.bl_idname == "A3OB_OT_import_asc"
+    
+    def draw(self, context):
+        layout = self.layout
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        col = layout.column(align=True, heading="Scale:")
+        col.prop(operator, "hscale", text="Horizontal")
+        col.prop(operator, "vscale", text="Vertical")
 
 
 class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
@@ -89,6 +120,7 @@ class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
 classes = (
     A3OB_OP_import_asc,
+    A3OB_PT_import_asc_main,
     A3OB_OP_export_asc
 )
 

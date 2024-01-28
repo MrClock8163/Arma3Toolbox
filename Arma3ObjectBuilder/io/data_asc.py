@@ -77,6 +77,9 @@ class ASC_File():
             else:
                 data.extend([float(item) for item in values])
         
+        if not len(data) > 0:
+            raise ASC_Error("Cannot import raster without data")
+        
         nrows, ncols = output.assign_props(props)
         output.assign_data(nrows, ncols, data)
         
@@ -112,3 +115,12 @@ class ASC_File():
     def write_file(self, filepath):
         with open(filepath, "wt") as file:
             self.write(file)
+
+    def get_dimensions(self):
+        nrows = len(self.data)
+        if nrows == 0:
+            return 0, 0
+        
+        ncols = len(self.data[0])
+
+        return nrows, ncols

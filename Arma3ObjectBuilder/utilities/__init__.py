@@ -2,7 +2,6 @@ from . import clouds
 from . import colors
 from . import compat
 from . import data
-from . import errors
 from . import flags
 from . import generic
 from . import lod
