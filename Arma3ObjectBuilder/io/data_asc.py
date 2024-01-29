@@ -8,14 +8,15 @@ class ASC_Error(Exception):
 
 
 class ASC_File():
-    POS_CORNER = 0
-    POS_CENTER = 1
+    TYPE_RASTER = 0
+    TYPE_GRID = 1
 
     def __init__(self):
-        self.pos = (self.POS_CORNER, 0, 0) # type, x, y
+        self.pos = (0, 0)
         self.cellsize = 1
         self.nodata = None
         self.data = []
+        self.type = self.TYPE_RASTER
     
     def assign_props(self, props):
         nrows = props.get("nrows")
@@ -28,20 +29,22 @@ class ASC_File():
         nodata = props.get("nodata_value")
 
         if ncols is None:
-            raise ASC_Error("Missing ncols property")
+            raise ASC_Error("Missing column count property")
         if nrows is None:
-            raise ASC_Error("Missing nrows property")
+            raise ASC_Error("Missing row count property")
         if cellsize is None:
-            raise ASC_Error("Missing cellsize property")
+            raise ASC_Error("Missing cell size property")
         elif cellsize <= 0:
-            raise ASC_Error("Invalid cellsize property")
+            raise ASC_Error("Invalid cell size property")
         
         self.cellsize = cellsize
 
         if xllcorner is not None and yllcorner is not None:
-            self.pos = (self.POS_CORNER, xllcorner, yllcorner)
+            self.type = self.TYPE_GRID
+            self.pos = (xllcorner, yllcorner)
         elif xllcenter is not None and yllcenter is not None:
-            self.pos = (self.POS_CENTER, xllcenter, yllcenter)
+            self.type = self.TYPE_RASTER
+            self.pos = (xllcenter, yllcenter)
         else:
             raise ASC_Error("Missing valid georeference")
         
@@ -52,7 +55,7 @@ class ASC_File():
 
     def assign_data(self, nrows, ncols, data):
         if len(data) != (nrows * ncols):
-            raise ASC_Error("Data length not matching raster dimensions")
+            raise ASC_Error("Data length (%d) not matching raster dimensions (%d x %d)" % (len(data), nrows, ncols))
 
         row = []
         for item in data:
@@ -96,11 +99,11 @@ class ASC_File():
     def write(self, file):
         file.write("nrows %d\n" % len(self.data))
         file.write("ncols %d\n" % len(self.data[0]))
-        pos_type, x, y = self.pos
-        if pos_type == self.POS_CENTER:
+        x, y = self.pos
+        if self.type == self.TYPE_RASTER:
             file.write("xllcenter %s\n" % str(x))
             file.write("yllcenter %s\n" % str(y))
-        elif pos_type == self.POS_CORNER:
+        elif self.type == self.TYPE_GRID:
             file.write("xllcorner %s\n" % str(x))
             file.write("yllcorner %s\n" % str(y))
         file.write("cellsize %s\n" % str(self.cellsize))
@@ -124,13 +127,3 @@ class ASC_File():
         ncols = len(self.data[0])
 
         return nrows, ncols
-    
-    def get_cellsize_from_data(self):
-        nrows, ncols = self.get_dimensions()
-
-        if ncols > 1:
-            return self.data[0][1][0] - self.data[0][0][0]
-        elif nrows > 1:
-            return self.data[1][0][0] - self.data[0][0][0]
-        else:
-            return None

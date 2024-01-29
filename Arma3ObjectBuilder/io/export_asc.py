@@ -28,6 +28,15 @@ def calc_resolution(operator, count_vertex):
     return nrows, ncols
 
 
+def calc_cellsize(data, nrows, ncols):
+    if ncols > 1:
+        return round(data[0][1][0] - data[0][0][0], 3)
+    elif nrows > 1:
+        return round(data[1][0][1] - data[0][0][1], 3)
+    else:
+        return None
+
+
 def get_points(vertices, nrows, ncols):
     points = [vertex.co for vertex in vertices]
     points.sort(key=lambda vert: vert[1], reverse=True)
@@ -36,7 +45,7 @@ def get_points(vertices, nrows, ncols):
     for i in range(nrows):
         row = points[i * ncols : (i + 1) * ncols]
         row.sort(key=lambda vert: vert[0])
-        data.append([vert[2] for vert in row])
+        data.append(row)
     
     assert len(data) == nrows
 
@@ -46,7 +55,7 @@ def get_points(vertices, nrows, ncols):
 def write_file(operator, context, file, obj):
     logger = ProcessLogger()
     time_start = time.time()
-    logger.step("ASC raster export to %s" % operator.filepath)
+    logger.step("ASC DTM export to %s" % operator.filepath)
     logger.level_up()
 
     obj = context.active_object
@@ -64,8 +73,8 @@ def write_file(operator, context, file, obj):
     object_props = obj.a3ob_properties_object_dtm
     
     raster = asc.ASC_File()
-    pos_type = asc.ASC_File.POS_CENTER if object_props.origin == 'CENTER' else asc.ASC_File.POS_CORNER
-    raster.pos = (pos_type, object_props.easting, object_props.northing)
+    raster.type = asc.ASC_File.TYPE_RASTER if object_props.data_type == 'RASTER' else asc.ASC_File.TYPE_GRID
+    raster.pos = (object_props.easting, object_props.northing)
     raster.nodata = object_props.nodata
 
     count_vertex = len(mesh.vertices)
@@ -75,12 +84,13 @@ def write_file(operator, context, file, obj):
     
     logger.step("Calculated dimensions")
 
-    raster.data = get_points(mesh.vertices, nrows, ncols)
+    data = get_points(mesh.vertices, nrows, ncols)
+    raster.data = [[vert[2] for vert in row] for row in data]
     logger.step("Collected data")
     
     cellsize = object_props.cellsize
     if object_props.cellsize_source == 'CALCULATED' and count_vertex > 1:
-        cellsize = raster.get_cellsize_from_data()
+        cellsize = calc_cellsize(data, nrows, ncols)
         if cellsize is None:
             raise asc.ASC_Error("Could not calculate cellsize")
         logger.step("Calculated cellsize")
@@ -91,7 +101,8 @@ def write_file(operator, context, file, obj):
     logger.step("File report:")
     logger.level_up()
     logger.step("Dimensions: %d x %d" % (nrows, ncols))
-    logger.step("DTM type: %s" % ("raster" if pos_type == asc.ASC_File.POS_CENTER else "grid"))
+    logger.step("Cell size: %f" % cellsize)
+    logger.step("DTM type: %s" % ("raster" if raster.type == asc.ASC_File.TYPE_RASTER else "grid"))
     logger.step("Easting: %f" % object_props.easting)
     logger.step("Northing: %f" % object_props.northing)
     logger.step("NULL indicator: %f" % object_props.nodata)

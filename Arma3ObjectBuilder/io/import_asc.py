@@ -15,7 +15,7 @@ def build_points(raster, hscale = 1, vscale = 1):
 
     start_x = 0
     start_y = 0
-    if raster.pos[0] != asc.ASC_File.POS_CENTER:
+    if raster.type == asc.ASC_File.TYPE_RASTER:
         start_x = start_y = cellsize / 2
     
     start_y += (len(raster.data) - 1) * cellsize
@@ -43,16 +43,17 @@ def build_faces(nrows, ncols):
 def read_file(operator, context, file):
     logger = ProcessLogger()
     time_start = time.time()
-    logger.step("ASC raster import from %s" % operator.filepath)
+    logger.step("ASC DTM import from %s" % operator.filepath)
     logger.level_up()
 
     raster = asc.ASC_File.read(file)
     nrows, ncols = raster.get_dimensions()
-    pos_type, east, north = raster.pos
+    east, north = raster.pos
     logger.step("File report:")
     logger.level_up()
     logger.step("Dimensions: %d x %d" % (nrows, ncols))
-    logger.step("DTM type: %s" % ("raster" if pos_type == asc.ASC_File.POS_CENTER else "grid"))
+    logger.step("Cell size: %f" % raster.cellsize)
+    logger.step("DTM type: %s" % ("raster" if raster.type == asc.ASC_File.TYPE_RASTER else "grid"))
     logger.step("Easting: %f" % east)
     logger.step("Northing: %f" % north)
     logger.level_down()
@@ -76,10 +77,10 @@ def read_file(operator, context, file):
     object_props.cellsize_source = 'MANUAL'
     object_props.cellsize = raster.cellsize
     
-    if pos_type == asc.ASC_File.POS_CENTER:
-        object_props.origin = 'CENTER'
+    if raster.type == asc.ASC_File.TYPE_RASTER:
+        object_props.data_type = 'RASTER'
     else:
-        object_props.origin = 'CORNER'
+        object_props.data_type = 'GRID'
 
     object_props.easting = east
     object_props.northing = north

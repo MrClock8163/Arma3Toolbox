@@ -808,7 +808,7 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
 class A3OB_PT_object_dtm(bpy.types.Panel):
     bl_region_type = 'WINDOW'
     bl_space_type = 'PROPERTIES'
-    bl_label = "Object Builder: Raster DTM Properties"
+    bl_label = "Object Builder: DTM Properties"
     bl_context = "data"
     bl_options = {'DEFAULT_CLOSED'}
     
@@ -836,13 +836,14 @@ class A3OB_PT_object_dtm(bpy.types.Panel):
         
         col_cellsize = layout.column(align=True)
         row_cellsize_source = col_cellsize.row(align=True)
-        row_cellsize_source.prop(object_props, "cellsize_source", text="Raster Spacing", expand=True)
+        row_cellsize_source.prop(object_props, "cellsize_source", text="Cell Size", expand=True)
         if object_props.cellsize_source == 'MANUAL':
             col_cellsize.prop(object_props, "cellsize", text=" ")
         
+        row_type = layout.row(align=True)
+        row_type.prop(object_props, "data_type", expand=True)
+
         col_origin = layout.column(align=True)
-        row_origin = col_origin.row(align=True)
-        row_origin.prop(object_props, "origin", text="Reference Point", expand=True)
         col_origin.prop(object_props, "easting")
         col_origin.prop(object_props, "northing")
         layout.prop(object_props, "nodata")
