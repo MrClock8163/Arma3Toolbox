@@ -394,7 +394,7 @@ class RAP_Reader():
         return output
     
     @classmethod
-    def derapify(cls, filepath):
+    def read_file(cls, filepath):
         output = RAP.Root()
         
         with open(filepath, "rb") as file:
