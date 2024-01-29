@@ -21,6 +21,7 @@
     - Remove Proxy
 - import-export:
   - new options in RTM export (sampling options)
+  - new options in ASC import and export
   - RTM import
   - Skeleton import (from model.cfg)
   - Armature import (from pivots.p3d and selected skeleton definition)
@@ -41,6 +42,10 @@
     - export now requires a skeleton definition to filter out control bones
 - properties:
   - RTM properties were moved from the armature, to the active animation action
+  - DTM:
+    - properties panel was renamed to DTM Properties
+    - Raster Spacing property was renamed to Cell Size
+    - Reference Point property was changed to Data Type
 
 ### Fixed:
 - LOD validation would produce false negatives when proxies were used
