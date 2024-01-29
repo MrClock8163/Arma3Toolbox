@@ -47,6 +47,8 @@ def read_file(operator, context, file):
     logger.level_up()
 
     raster = asc.ASC_File.read(file)
+    logger.step("File reading done in %f sec" % (time.time() - time_start))
+    
     nrows, ncols = raster.get_dimensions()
     east, north = raster.pos
     logger.step("File report:")

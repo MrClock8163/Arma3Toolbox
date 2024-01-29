@@ -94,6 +94,8 @@ def write_file(operator, context, file, obj):
         if cellsize is None:
             raise asc.ASC_Error("Could not calculate cellsize")
         logger.step("Calculated cellsize")
+    
+    logger.step("Done in %f sec" % (time.time() - time_start))
         
     raster.cellsize = cellsize
     logger.level_down()
