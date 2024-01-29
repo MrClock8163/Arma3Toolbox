@@ -21,6 +21,11 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         default = "*.p3d",
         options = {'HIDDEN'}
     )
+    absolute_paths: bpy.props.BoolProperty(
+        name = "Absolute Paths",
+        description = "Try to restore absolute paths by appending the read path to the project root",
+        default = True
+    )
     enclose: bpy.props.BoolProperty(
         name = "Enclose In Collection",
         description = "Enclose LODs in collection named after the original file",
@@ -115,6 +120,7 @@ class A3OB_PT_import_p3d_main(bpy.types.Panel):
         operator = sfile.active_operator
         
         layout.prop(operator, "first_lod_only")
+        layout.prop(operator, "absolute_paths")
         layout.prop(operator, "validate_meshes")
 
 
@@ -214,6 +220,11 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         default = "*.p3d",
         options = {'HIDDEN'}
     )
+    relative_paths: bpy.props.BoolProperty(
+        name = "Relative Paths",
+        description = "Try to make file paths relative to the project root (at the very least, the drive letter is stripped)",
+        default = True
+    )
     preserve_normals: bpy.props.BoolProperty(
         name = "Custom Normals",
         description = "Export the custom split edge normals",
@@ -285,6 +296,30 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             self.report({'INFO'}, "There are no LODs to export")
         
         return {'FINISHED'}
+
+
+class A3OB_PT_export_p3d_main(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Include"
+    bl_parent_id = "FILE_PT_operator"
+    bl_options = {'HIDE_HEADER'}
+    
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        return operator.bl_idname == "A3OB_OT_export_p3d"
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.prop(operator, "relative_paths")
 
 
 class A3OB_PT_export_p3d_include(bpy.types.Panel):
@@ -401,6 +436,7 @@ classes = (
     A3OB_PT_import_p3d_data,
     A3OB_PT_import_p3d_proxies,
     A3OB_OP_export_p3d,
+    A3OB_PT_export_p3d_main,
     A3OB_PT_export_p3d_include,
     A3OB_PT_export_p3d_meshes,
     A3OB_PT_export_p3d_validate,

@@ -134,7 +134,7 @@ def merge_sub_objects(operator, main_obj, sub_objects):
         bpy.data.meshes.remove(obj.data, do_unlink=True)
 
 
-def merge_proxy_objects(operator, main_obj, proxy_objects):
+def merge_proxy_objects(main_obj, proxy_objects, relative):
     # Blender has a 63 character length limit on vertex group names,
     # so the proxy paths can't be written to the group name directly,
     # a placeholder name must be used, and added to a lookup dictionary.
@@ -145,7 +145,7 @@ def merge_proxy_objects(operator, main_obj, proxy_objects):
 
         placeholder = "@proxy_%d" % i
         utils.create_selection(proxy, placeholder)
-        proxy_lookup[placeholder] = proxy.a3ob_properties_object_proxy.to_placeholder()
+        proxy_lookup[placeholder] = proxy.a3ob_properties_object_proxy.to_placeholder(relative)
 
     all_objects = proxy_objects + [main_obj]
     for obj in proxy_objects:
@@ -213,7 +213,7 @@ def get_lod_data(operator, context, validator):
         merge_sub_objects(operator, main_obj, sub_objects)
         if validator:
             is_valid = validator.validate(main_obj, main_obj.a3ob_properties_object.lod, True, operator.validate_lods_warning_errors)
-        proxy_lookup = merge_proxy_objects(operator, main_obj, proxy_objects)
+        proxy_lookup = merge_proxy_objects(main_obj, proxy_objects, operator.relative_paths)
 
         if operator.apply_transforms:
             ctx = {
@@ -304,13 +304,13 @@ def process_normals(mesh):
 
 # Produce material lookup dictionary from the materials assigned to the object.
 # {material 0: (texture, material), ...: (..., ....), ...}
-def process_materials(obj):
+def process_materials(obj, relative):
     output = {0: ("", "")}
 
     for i, slot in enumerate(obj.material_slots):
         mat = slot.material
         if mat:
-            output[i] = mat.a3ob_properties_material.to_p3d()
+            output[i] = mat.a3ob_properties_material.to_p3d(relative)
         else:
             output[i] = ("", "")
 
@@ -319,10 +319,10 @@ def process_materials(obj):
 
 # Produce the face data dictionary from the obj and  bmesh data.
 # {face 0: ([vert 0, vert 1, vert 2], [normal 0, normal 1, normal 2], [(uv 0 0, uv 0 1), (...), ...], texture, material, flag), ...}
-def process_faces(obj, bm, normals_lookup):
+def process_faces(obj, bm, normals_lookup, relative):
     output = {}
     # Materials need to be precompiled to speed up the face access.
-    materials = process_materials(obj)
+    materials = process_materials(obj, relative)
 
     uv_layer = None
     if len(bm.loops.layers.uv.values()) > 0: # 1st UV set needs to be written into the face data section too
@@ -509,7 +509,7 @@ def process_lod(operator, obj, proxy_lookup, is_valid, logger):
 
     output.verts = process_vertices(bm)
     logger.log("Collected vertices")
-    output.faces = process_faces(obj, bm, normals_lookup_dict)
+    output.faces = process_faces(obj, bm, normals_lookup_dict, operator.relative_paths)
     logger.log("Collected faces")
     output.taggs = process_taggs(obj, bm, logger)
 

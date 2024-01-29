@@ -240,16 +240,6 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         default = "P:\\",
         subtype = 'DIR_PATH'
     )
-    export_relative: bpy.props.BoolProperty(
-        name = "Export Relative",
-        description = "Export file paths as relative to the project root",
-        default = True
-    )
-    import_absolute: bpy.props.BoolProperty(
-        name = "Reconstruct Absolute Paths",
-        description = "Attempt to reconstruct absolute file paths during import (based on the project root)",
-        default = True
-    )
     custom_data: bpy.props.StringProperty(
         name = "Custom Data",
         description = "Path to JSON file containing data for custom preset list items (common named properties and proxies)",
@@ -294,8 +284,6 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
             row_a3_tools.prop(self, "a3_tools", icon='TOOL_SETTINGS')
             row_a3_tools.operator("a3ob.prefs_find_a3_tools", text="", icon='VIEWZOOM')
             box.prop(self, "project_root", icon='DISK_DRIVE')
-            box.prop(self, "export_relative")
-            box.prop(self, "import_absolute")
             box.prop(self, "custom_data", icon='PRESET')
         
         elif self.tabs == 'DEFAULTS':

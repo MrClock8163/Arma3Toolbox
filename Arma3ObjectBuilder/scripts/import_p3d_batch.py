@@ -21,6 +21,8 @@
 class Settings:
     # Folder of P3D files
     filepath = r""
+    # Attempt to restore relative file paths
+    relative_paths = True
     # Create collection with P3D name
     enclose = True
     # Group LODs by: 'NONE' or 'TYPE'
