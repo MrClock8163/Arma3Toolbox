@@ -197,11 +197,11 @@ class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
         update = proxy_name_update
     )
     
-    def to_placeholder(self):
+    def to_placeholder(self, relative):
         addon_prefs = utils.get_addon_preferences()
 
-        path = utils.format_path(utils.abspath(self.proxy_path), utils.abspath(addon_prefs.project_root), addon_prefs.export_relative, False)
-        if len(path) > 0 and path[0] != "\\":
+        path = utils.format_path(utils.abspath(self.proxy_path), utils.abspath(addon_prefs.project_root), relative, False)
+        if relative and len(path) > 0 and path[0] != "\\":
             path = "\\" + path
         
         return path, self.proxy_index
