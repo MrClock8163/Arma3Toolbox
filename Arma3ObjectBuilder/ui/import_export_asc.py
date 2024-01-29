@@ -100,10 +100,12 @@ class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     )
     rows: bpy.props.IntProperty(
         name = "Rows",
+        default = 1,
         min = 1
     )
     columns: bpy.props.IntProperty(
         name = "Columns",
+        default = 1,
         min = 1
     )
     
