@@ -54,6 +54,7 @@
 - fixed possible issue in P3D export when the material index of a face is out of the material range for some reason
 - add-on installation would fail on non-windows systems
 - ASC import would delete source file if an error occured during importing
+- User value would not be displayed correctly in the default Face Flag editing options
 
 ### Removed:
 - Conversion tool was removed (conversion was made available as a ready-to-run template script instead)
