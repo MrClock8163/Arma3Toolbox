@@ -69,7 +69,7 @@ def read_mcfg(filepath):
     if temppath == "":
         return None
     
-    data = rap.RAP_Reader.derapify(temppath)
+    data = rap.RAP_Reader.read_file(temppath)
     
     os.remove(temppath)
     

@@ -217,14 +217,14 @@ class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
 
 
 class A3OB_PG_properties_object_dtm(bpy.types.PropertyGroup):
-    origin: bpy.props.EnumProperty(
-        name = "Origin",
-        description = "Origin point of DTM mesh",
+    data_type: bpy.props.EnumProperty(
+        name = "Data Type",
+        description = "Type of data arrengement",
         items = (
-            ('CENTER', "Center", "Center of the lower left cell"),
-            ('CORNER', "Corner", "Lower left corner of the lower left cell")
+            ('RASTER', "Raster", "Data points are cell centered"),
+            ('GRID', "Grid", "Data points are on cell corners")
         ),
-        default = 'CORNER'
+        default = 'GRID'
     )
     easting: bpy.props.FloatProperty(
         name = "Easting",
@@ -239,16 +239,16 @@ class A3OB_PG_properties_object_dtm(bpy.types.PropertyGroup):
     )
     cellsize_source: bpy.props.EnumProperty(
         name = "Source",
-        description = "Source of raster spacing",
+        description = "Source of cell size",
         items = (
-            ('MANUAL', "Manual", "The raster spacing is explicitly set"),
-            ('CALCULATED', "Calculated", "The raster spacing is from the distance of the first 2 points of the gird")
+            ('MANUAL', "Manual", "The cell size is explicitly set"),
+            ('CALCULATED', "Calculated", "The cell size is from the distance of the first 2 points of the gird")
         ),
         default = 'MANUAL'
     )
     cellsize: bpy.props.FloatProperty(
-        name = "Raster Spacing",
-        description = "Horizontal and vertical spacing between raster points",
+        name = "Cell Size",
+        description = "Horizontal and vertical space between raster points",
         unit = 'LENGTH',
         default = 1.0
     )

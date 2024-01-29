@@ -1,4 +1,5 @@
 from . import binary_handler
+from . import data_asc
 from . import data_p3d
 from . import data_rap
 from . import data_rtm

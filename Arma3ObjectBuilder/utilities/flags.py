@@ -95,8 +95,6 @@ def set_flag_vertex(props, value):
         
         if value & data.flag_vertex_hidden:
             props.hidden = True
-        
-        props.user = (value & data.flag_face_user_mask) >> 25
 
 
 def set_flag_face(props, value):
@@ -115,6 +113,8 @@ def set_flag_face(props, value):
         
         if value & data.flag_face_merging:
             props.merging = False
+        
+        props.user = (value & data.flag_face_user_mask) >> 25
 
 
 def remove_group_vertex(obj, group_id):
