@@ -399,24 +399,11 @@ class RAP_Reader():
         
         with open(filepath, "rb") as file:
             try:
-                # Do header validation
-                file.read(4)
+                signature = file.read(4)
+                if signature != b"\x00raP":
+                    raise RAP_Error("Invalid RAP signature: %s" % str(signature))
                 
-                padding1 = binary.read_ulong(file)
-                padding2 = binary.read_ulong(file)
-                
-                if not (padding1 == 0 and padding2 == 8):
-                    padding1 = binary.read_ulong(file)
-                    padding2 = binary.read_ulong(file)
-                       
-                    if not (padding1 == 0 and padding2 == 8):
-                        file.read(4)
-                        padding1 = binary.read_ulong(file)
-                        padding2 = binary.read_ulong(file)
-                        
-                        if not (padding1 == 0 and padding2 == 8):
-                            raise RAP_Error("Invalid file header padding")
-                
+                file.read(8)
                 output.enum_offset = binary.read_ulong(file)
                 
                 # Body
