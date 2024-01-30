@@ -156,7 +156,7 @@ def get_bones_compiled(mcfg, skeleton_name):
 def read_file(operator, context):
     logger = ProcessLogger()
     logger.step("Skeleton import from %s" % operator.filepath)
-    data = read_mcfg(utils.abspath(operator.filepath))
+    data = read_mcfg(operator.filepath)
     scene_props = context.scene.a3ob_rigging
 
     if not data:

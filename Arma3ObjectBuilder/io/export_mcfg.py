@@ -12,7 +12,7 @@ def write_file(operator, skeleton, file):
     logger.log("Skeleton definition: %s" % skeleton.name)
     bones_parents = riggingutils.bone_order_from_skeleton(skeleton)
     if bones_parents is None:
-        logger.log("Bone hierarchy is invalid (circular reference or typo)")
+        logger.log("Bone hierarchy is invalid (circular reference or undefined bone parents)")
         logger.step("Skeleton export finished")
         return False
 
@@ -34,7 +34,7 @@ def write_file(operator, skeleton, file):
     printer.array_items(["\"%s\", \"%s\"" % (k, v) for k, v in bones_parents.items()])
     printer.array_close()
     printer.comment("Path to the pivot points model has to be set manually")
-    printer.property_string("pivotsModel", "")
+    printer.comment("pivotsModel = \"path\\to\\pivots.p3d\";")
     
     printer.class_close()
     printer.class_close()

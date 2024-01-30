@@ -2,7 +2,6 @@
 
 
 import os
-import shutil
 import json
 from contextlib import contextmanager
 

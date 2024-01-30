@@ -44,7 +44,7 @@
     - when custom normals are not exported, they are now replaced with weighted normals automatically
     - shadow LODs are now imported as flat shaded
   - RTM:
-    - export now requires a skeleton definition to filter out control bones
+    - export now requires a skeleton definition to filter out control bones of IK rigs
 - properties:
   - RTM properties were moved from the armature, to the active animation action
   - DTM:
