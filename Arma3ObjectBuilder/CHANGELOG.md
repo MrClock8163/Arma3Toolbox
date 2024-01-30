@@ -23,6 +23,8 @@
 - import-export:
   - new options in RTM export (sampling options)
   - new options in ASC import and export
+  - new Absolute Paths option in P3D import
+  - new Relative Paths option in P3D export
   - RTM import
   - Skeleton import (from model.cfg)
   - Armature import (from pivots.p3d and selected skeleton definition)
@@ -64,6 +66,8 @@
 - Conversion tool was removed (conversion was made available as a ready-to-run template script instead)
 - RTM Frames tool was removed
 - RTM Properties panel was removed from Armature objects
+- Export Relative add-on option (option is now integrated into the P3D export options)
+- Reconstruct Absolute Paths add-on option (option is now integrated into the P3D import options)
 
 ## [v2.0.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.0.0) (Blender 2.90 -> 4.0)
 
