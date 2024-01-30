@@ -2,6 +2,7 @@
 
 
 import os
+import shutil
 import json
 from contextlib import contextmanager
 
@@ -97,17 +98,25 @@ class OutputManager():
 
     def __exit__(self, exc_type, exc_value, exc_tb):
         self.file.close()
+        addon_prefs = get_addon_preferences()
 
         if self.success:
-            if os.path.isfile(self.filepath):
-                os.remove(self.filepath)
-            
-            os.rename(self.temppath, self.filepath)
+            if os.path.isfile(self.filepath) and addon_prefs.create_backups:
+                self.force_rename(self.filepath, self.filepath + ".bak")
+
+            self.force_rename(self.temppath, self.filepath)
         
-        elif not self.success and not get_addon_preferences().preserve_faulty_output:
+        elif not addon_prefs.preserve_faulty_output:
             os.remove(self.temppath)
         
         return False
+    
+    @staticmethod
+    def force_rename(old, new):
+        if os.path.isfile(new):
+            os.remove(new)
+        
+        os.rename(old, new)
 
 
 def get_components(mesh):

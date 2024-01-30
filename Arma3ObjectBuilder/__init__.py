@@ -209,6 +209,10 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         name = "Preserve Faulty Output",
         description = "Preserve the .temp files if an export failed (could be useful to attach to a bug report)"
     )
+    create_backups: bpy.props.BoolProperty(
+        name = "Create Backups",
+        description = "When overwriting an existing output file, create a backup copy (.bak) of the original"
+    )
     icon_theme: bpy.props.EnumProperty(
         name = "Icon Theme",
         description = "Color theme of custom icons",
@@ -274,6 +278,7 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         if self.tabs == 'GENERAL':
             box.prop(self, "show_info_links")
             box.prop(self, "preserve_faulty_output")
+            box.prop(self, "create_backups")
             row_theme = box.row(align=True)
             row_theme.prop(self, "icon_theme", expand=True)
             row_outliner = box.row(align=True)

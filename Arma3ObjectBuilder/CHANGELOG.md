@@ -29,6 +29,7 @@
   - Skeleton import (from model.cfg)
   - Armature import (from pivots.p3d and selected skeleton definition)
 - template scripts (Text editor Templates menu)
+- Create Backups add-on option
 
 ### Changed
 
