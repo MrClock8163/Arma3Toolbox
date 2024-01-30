@@ -128,7 +128,7 @@ class A3OB_OT_rtm_frames_add_range(bpy.types.Operator):
         self.start = floor(frame_range[0])
         self.end = ceil(frame_range[1])
 
-        return self.execute(context)
+        return context.window_manager.invoke_props_dialog(self)
         
     def execute(self, context):
         action = get_action(context.object)
@@ -325,7 +325,7 @@ class A3OB_PT_action(bpy.types.Panel):
         else:
             obj = context.object
             if obj and obj.type == 'ARMATURE':
-                col.prop_search(action_props, "motion_bone", obj.data, "bones",  text="Reference", results_are_suggestions=True)
+                col.prop_search(action_props, "motion_bone", obj.data, "bones",  text="Reference")
             else:
                 col.prop(action_props, "motion_bone", icon='BONE_DATA')
 
