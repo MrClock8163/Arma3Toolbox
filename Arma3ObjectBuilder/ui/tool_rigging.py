@@ -493,21 +493,6 @@ class A3OB_PT_rigging(bpy.types.Panel):
         row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/rigging"
     
     def draw(self, context):
-        pass
-
-
-class A3OB_PT_rigging_skeletons(bpy.types.Panel):
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_category = "Object Builder"
-    bl_label = "Skeletons"
-    bl_parent_id = "A3OB_PT_rigging"
-    
-    @classmethod
-    def poll(cls, context):
-        return True
-    
-    def draw(self, context):
         layout = self.layout
         scene_props = context.scene.a3ob_rigging
 
@@ -560,12 +545,13 @@ class A3OB_PT_rigging_weights(bpy.types.Panel):
         col_select.operator("a3ob.rigging_weights_select_unnormalized", icon_value=utils.get_icon("op_weights_select_unnormalized"))
         
         col_edit = layout.column(align=True)
+        col_edit.operator("a3ob.rigging_weights_prune", icon_value=utils.get_icon("op_weights_prune"))
         col_edit.operator("a3ob.rigging_weights_prune_overdetermined", icon_value=utils.get_icon("op_weights_prune_overdetermined"))
         col_edit.operator("a3ob.rigging_weights_normalize", icon_value=utils.get_icon("op_weights_normalize"))
-        col_edit.operator("a3ob.rigging_weights_prune", icon_value=utils.get_icon("op_weights_prune"))
-        col_edit.prop(scene_props, "prune_threshold")
-        
+
         layout.operator("a3ob.rigging_weights_cleanup", icon_value=utils.get_icon("op_weights_cleanup"))
+
+        layout.prop(scene_props, "prune_threshold")
 
 
 classes = (
@@ -591,7 +577,6 @@ classes = (
     A3OB_MT_rigging_skeletons,
     A3OB_MT_rigging_bones,
     A3OB_PT_rigging,
-    A3OB_PT_rigging_skeletons,
     A3OB_PT_rigging_weights
 )
 

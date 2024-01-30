@@ -164,6 +164,7 @@ def pivots_from_armature(obj, bones_parents):
 
     mesh = bpy.data.meshes.new("%s pivots" % obj.name)
     pivots = bpy.data.objects.new("%s pivots" % obj.name, mesh)
+    pivots.matrix_world = obj.matrix_world
 
     pivots_coords = {}
     for bone in obj.data.bones:
