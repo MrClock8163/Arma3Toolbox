@@ -494,37 +494,6 @@ class A3OB_PG_colors(bpy.types.PropertyGroup):
     )
 
 
-class A3OB_PG_bone(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty(name="Name", description="Name of the bone item")
-    parent: bpy.props.StringProperty(name="Parent", description="Name of the parent bone")
-
-
-class A3OB_PG_skeleton(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty(name="Name", description="Name of the skeleton")
-    bones: bpy.props.CollectionProperty(type=A3OB_PG_bone)
-    bones_index: bpy.props.IntProperty(name="Selection Index")
-
-
-class A3OB_PG_weights(bpy.types.PropertyGroup):
-    filepath: bpy.props.StringProperty(
-        name = "File Path",
-        description = "File path of the model.cfg file",
-        subtype = 'FILE_PATH'
-    )
-    skeletons: bpy.props.CollectionProperty(type=A3OB_PG_skeleton)
-    skeletons_index: bpy.props.IntProperty(name="Active Skeleton Index")
-    bones: bpy.props.CollectionProperty(type=A3OB_PG_bone) # empty collection to show when no skeleton is selected
-    bones_index: bpy.props.IntProperty(name="Selection Index") # empty collection to show when no skeleton is selected
-    prune_threshold: bpy.props.FloatProperty(
-        name = "Threshold",
-        description = "Selection weight threshold",
-        min = 0.0,
-        max = 1.0,
-        default = 0.001,
-        precision = 3
-    )
-
-
 class A3OB_PG_rigging_bone(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Name", description="Name of the bone item")
     parent: bpy.props.StringProperty(name="Parent", description="Name of the parent bone")
@@ -540,11 +509,11 @@ class A3OB_PG_rigging_skeleton(bpy.types.PropertyGroup):
 class A3OB_PG_rigging(bpy.types.PropertyGroup):
     skeletons: bpy.props.CollectionProperty(type=A3OB_PG_rigging_skeleton)
     skeletons_index: bpy.props.IntProperty(name="Active Skeleton Index", description="Double click to rename")
-    bones: bpy.props.CollectionProperty(type=A3OB_PG_bone) # empty collection to show when no skeleton is selected
+    bones: bpy.props.CollectionProperty(type=A3OB_PG_rigging_bone) # empty collection to show when no skeleton is selected
     bones_index: bpy.props.IntProperty(name="Selection Index", description="Double click to rename or change parent") # empty collection to show when no skeleton is selected
     prune_threshold: bpy.props.FloatProperty(
         name = "Threshold",
-        description = "Selection weight threshold",
+        description = "Weight threshold for pruning selections",
         min = 0.0,
         max = 1.0,
         default = 0.001,
@@ -570,9 +539,6 @@ classes = (
     A3OB_PG_renamable,
     A3OB_PG_renaming,
     A3OB_PG_colors,
-    A3OB_PG_bone,
-    A3OB_PG_skeleton,
-    A3OB_PG_weights,
     A3OB_PG_rigging_bone,
     A3OB_PG_rigging_skeleton,
     A3OB_PG_rigging,
@@ -594,7 +560,6 @@ def register():
     bpy.types.Scene.a3ob_renaming = bpy.props.PointerProperty(type=A3OB_PG_renaming)
     bpy.types.Scene.a3ob_rigging = bpy.props.PointerProperty(type=A3OB_PG_rigging)
     bpy.types.Scene.a3ob_colors = bpy.props.PointerProperty(type=A3OB_PG_colors)
-    bpy.types.Scene.a3ob_weights = bpy.props.PointerProperty(type=A3OB_PG_weights)
     bpy.types.Scene.a3ob_proxy_access = bpy.props.PointerProperty(type=A3OB_PG_proxy_access)
     
     print("\t" + "Properties: scene")
@@ -602,7 +567,6 @@ def register():
     
 def unregister():
     del bpy.types.Scene.a3ob_proxy_access
-    del bpy.types.Scene.a3ob_weights
     del bpy.types.Scene.a3ob_colors
     del bpy.types.Scene.a3ob_rigging
     del bpy.types.Scene.a3ob_renaming
