@@ -2,6 +2,7 @@
 # The actual file handling is implemented in the data_rtm module.
 
 
+import time
 import mathutils
 
 from . import data_rtm as rtm
@@ -116,12 +117,16 @@ def process_props(operator, action_props):
 def write_file(operator, context, file, obj, action):
     logger = ProcessLogger()
     logger.step("RTM export to %s" % operator.filepath)
+
+    time_start = time.time()
     
     frame_start = operator.frame_start
     frame_end = operator.frame_end
     
     frame_mapping = build_frame_list(operator, action)
     static_pose = len(frame_mapping) < 2
+    if operator.force_lowercase:
+        logger.log("Force lowercase")
 
     if static_pose:
         logger.log("Exporting static pose")
@@ -180,5 +185,7 @@ def write_file(operator, context, file, obj, action):
     rtm_data.anim = rtm_0101
 
     rtm_data.write(file)
+
+    logger.step("RTM export finished in %f sec" % (time.time() - time_start))
 
     return static_pose, len(rtm_0101.frames)

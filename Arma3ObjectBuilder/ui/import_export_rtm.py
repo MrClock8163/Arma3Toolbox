@@ -71,7 +71,7 @@ class A3OB_OP_export_rtm(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'ARMATURE' and len(obj.pose.bones) > 0 and len(context.scene.a3ob_rigging.skeletons) > 0 and obj.animation_data and obj.animation_data.action
+        return obj and obj.type == 'ARMATURE' and len(obj.pose.bones) > 0 and len(context.scene.a3ob_rigging.skeletons) > 0
         
     def draw(self, context):
         pass
