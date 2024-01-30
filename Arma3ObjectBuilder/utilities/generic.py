@@ -157,9 +157,6 @@ def restore_absolute(path, extension = ""):
     path = replace_slashes(path.strip().lower())
     addon_prefs = get_addon_preferences()
     
-    if not addon_prefs.import_absolute:
-        return path
-    
     if path == "":
         return ""
     

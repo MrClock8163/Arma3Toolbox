@@ -50,7 +50,7 @@ def categorize_lods(operator, context, mlod):
     return [cat[1] for cat in categories.values()], lods
 
 
-def create_blender_materials(lookup):
+def create_blender_materials(lookup, absolute):
     materials = []
     
     for texture, material in lookup.keys():
@@ -59,7 +59,7 @@ def create_blender_materials(lookup):
             material_name = "P3D: no material"
             
         new_mat = bpy.data.materials.new(material_name)
-        new_mat.a3ob_properties_material.from_p3d(texture.strip(), material.strip())
+        new_mat.a3ob_properties_material.from_p3d(texture.strip(), material.strip(), absolute)
         materials.append(new_mat)
         
     return materials
@@ -250,7 +250,7 @@ def process_proxies(operator, obj, proxy_lookup, empty_material):
             
             path, index = proxy_lookup[vgroup.name]
             proxy_obj.vertex_groups.remove(vgroup)
-            proxy_obj.a3ob_properties_object_proxy.proxy_path = utils.restore_absolute(path, ".p3d")
+            proxy_obj.a3ob_properties_object_proxy.proxy_path = utils.restore_absolute(path, ".p3d") if operator.absolute_paths else path
             proxy_obj.a3ob_properties_object_proxy.proxy_index = index
 
             proxy_obj.a3ob_properties_object_flags.vertex.clear()
@@ -420,7 +420,7 @@ def read_file(operator, context, file):
     materials_lookup = None
     if 'MATERIALS' in operator.additional_data:
         materials_lookup = mlod.get_materials()
-        materials = create_blender_materials(materials_lookup)
+        materials = create_blender_materials(materials_lookup, operator.absolute_paths)
         logger.log("Number of unique materials: %d" % len(materials))
     
     logger.log("Processing mesh data:")
