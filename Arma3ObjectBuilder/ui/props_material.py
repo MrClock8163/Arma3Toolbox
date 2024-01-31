@@ -127,6 +127,8 @@ class A3OB_PT_material(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_label = "Object Builder: Material Properties"
     bl_context = "material"
+
+    doc_url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/material"
     
     @classmethod
     def poll(cls, context):
@@ -134,12 +136,7 @@ class A3OB_PT_material(bpy.types.Panel):
         return mat
         
     def draw_header(self, context):
-        if not utils.get_addon_preferences().show_info_links:
-            return
-            
-        layout = self.layout
-        row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/material"
+        utils.draw_panel_header(self)
         
     def draw(self, context):
         material = context.material

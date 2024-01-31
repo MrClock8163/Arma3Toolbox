@@ -27,18 +27,15 @@ class A3OB_PT_hitpoints(bpy.types.Panel):
     bl_category = "Object Builder"
     bl_label = "Hit Point Cloud"
     bl_options = {'DEFAULT_CLOSED'}
+
+    doc_url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/hit-point-cloud"
     
     @classmethod
     def poll(cls, context):
         return True
         
     def draw_header(self, context):
-        if not utils.get_addon_preferences().show_info_links:
-            return
-            
-        layout = self.layout
-        row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/hit-point-cloud"
+        utils.draw_panel_header(self)
         
     def draw(self, context):
         scene_props = context.scene.a3ob_hitpoint_generator

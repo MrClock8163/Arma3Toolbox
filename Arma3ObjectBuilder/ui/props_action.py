@@ -296,18 +296,15 @@ class A3OB_PT_action(bpy.types.Panel):
     bl_label = "RTM Properties"
     bl_context = "data"
     bl_category = "Object Builder"
+
+    doc_url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/rtm"
     
     @classmethod
     def poll(cls, context):
         return get_action(context.object)
         
     def draw_header(self, context):
-        if not utils.get_addon_preferences().show_info_links:
-            return
-            
-        layout = self.layout
-        row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/rtm"
+        utils.draw_panel_header(self)
         
     def draw(self, context):
         action = get_action(context.object)

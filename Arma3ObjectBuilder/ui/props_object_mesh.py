@@ -537,6 +537,8 @@ class A3OB_PT_object_mesh(bpy.types.Panel):
     bl_label = "Object Builder: LOD Properties"
     bl_context = "data"
     bl_options = {'DEFAULT_CLOSED'}
+
+    doc_url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/lod"
     
     @classmethod
     def poll(cls, context):
@@ -544,12 +546,7 @@ class A3OB_PT_object_mesh(bpy.types.Panel):
         return obj and obj.type == 'MESH' and not obj.a3ob_properties_object_proxy.is_a3_proxy
         
     def draw_header(self, context):
-        if not utils.get_addon_preferences().show_info_links:
-            return
-            
-        layout = self.layout
-        row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/lod"
+        utils.draw_panel_header(self)
         
     def draw(self, context):
         obj = context.object
@@ -647,18 +644,15 @@ class A3OB_PT_object_mesh_flags(bpy.types.Panel):
     bl_context = "data"
     bl_options = {'DEFAULT_CLOSED'}
 
+    doc_url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/flag-groups"
+
     @classmethod
     def poll(cls, context):
         obj = context.object
         return obj and obj.type == 'MESH'
     
     def draw_header(self, context):
-        if not utils.get_addon_preferences().show_info_links:
-            return
-            
-        layout = self.layout
-        row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/flag-groups"
+        utils.draw_panel_header(self)
 
     def draw(self, context):
         pass
@@ -763,6 +757,8 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
     bl_label = "Object Builder: Proxy Properties"
     bl_context = "data"
     bl_options = {'DEFAULT_CLOSED'}
+
+    doc_url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/proxy"
     
     @classmethod
     def poll(cls, context):
@@ -770,12 +766,7 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
         return obj and obj.type == 'MESH' and obj.a3ob_properties_object_proxy.is_a3_proxy and not obj.a3ob_properties_object.is_a3_lod
         
     def draw_header(self, context):
-        if not utils.get_addon_preferences().show_info_links:
-            return
-            
-        layout = self.layout
-        row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/proxy"
+        utils.draw_panel_header(self)
         
     def draw(self, context):
         obj = context.object
@@ -811,6 +802,8 @@ class A3OB_PT_object_dtm(bpy.types.Panel):
     bl_label = "Object Builder: DTM Properties"
     bl_context = "data"
     bl_options = {'DEFAULT_CLOSED'}
+
+    doc_url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/dtm"
     
     @classmethod
     def poll(cls, context):
@@ -818,12 +811,7 @@ class A3OB_PT_object_dtm(bpy.types.Panel):
         return obj and obj.type == 'MESH' and not obj.a3ob_properties_object_proxy.is_a3_proxy
         
     def draw_header(self, context):
-        if not utils.get_addon_preferences().show_info_links:
-            return
-            
-        layout = self.layout
-        row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/raster-dtm"
+        utils.draw_panel_header(self)
         
     def draw(self, context):
         obj = context.object

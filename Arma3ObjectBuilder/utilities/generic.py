@@ -45,6 +45,14 @@ def is_valid_idx(index, subscriptable):
     return 0 <= index < len(subscriptable)
 
 
+def draw_panel_header(panel):
+    if not get_addon_preferences().show_info_links:
+        return
+        
+    row = panel.layout.row(align=True)
+    row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = panel.doc_url
+
+
 @contextmanager
 def edit_bmesh(obj, loop_triangles = False, destructive = False):
     mesh = obj.data
