@@ -1,7 +1,8 @@
 import bpy
 
 from ..utilities import generic as utils
-from ..utilities import lod as lodutils
+from ..utilities.validator import Validator
+from ..utilities.logger import ProcessLogger
 
 
 class A3OB_OT_validate_lod(bpy.types.Operator):
@@ -28,9 +29,8 @@ class A3OB_OT_validate_lod(bpy.types.Operator):
                 self.report({'INFO'}, "No validation rules for detected LOD type")
                 return {'FINISHED'}
         
-        eval_obj = obj.evaluated_get(context.evaluated_depsgraph_get())
-        validator = lodutils.Validator(eval_obj, scene_props.warning_errors)
-        valid = validator.validate(scene_props.lod)
+        processor = Validator(ProcessLogger())
+        valid = processor.validate(obj, scene_props.lod, False, scene_props.warning_errors)
         if valid:
             self.report({'INFO'}, "Validation succeeded")
         else:
@@ -45,18 +45,15 @@ class A3OB_PT_validation(bpy.types.Panel):
     bl_category = "Object Builder"
     bl_label = "Validation"
     bl_options = {'DEFAULT_CLOSED'}
+
+    doc_url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/validation"
     
     @classmethod
     def poll(cls, context):
         return True
         
     def draw_header(self, context):
-        if not utils.get_addon_preferences().show_info_links:
-            return
-            
-        layout = self.layout
-        row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/validation"
+        utils.draw_panel_header(self)
         
     def draw(self, context):
         layout = self.layout

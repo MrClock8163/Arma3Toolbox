@@ -132,7 +132,7 @@ class A3OB_OT_proxy_extract(bpy.types.Operator):
         with open(self.filepath, "rb") as file:
             try:
                 lod_objects = import_p3d.read_file(self, context, file)
-                self.report({'INFO'}, "Succesfully extracted proxy (check the logs in the system console)")
+                self.report({'INFO'}, "Successfully extracted proxy (check the logs in the system console)")
             except struct.error as ex:
                 self.report({'ERROR'}, "Unexpected EndOfFile (check the system console)")
                 traceback.print_exc()
@@ -317,18 +317,15 @@ class A3OB_PT_proxies(bpy.types.Panel):
     bl_category = "Object Builder"
     bl_label = "Proxies"
     bl_options = {'DEFAULT_CLOSED'}
+
+    doc_url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/proxies"
     
     @classmethod
     def poll(cls, context):
         return True
         
     def draw_header(self, context):
-        if not utils.get_addon_preferences().show_info_links:
-            return
-            
-        layout = self.layout
-        row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/proxies"
+        utils.draw_panel_header(self)
         
     def draw(self, context):
         layout = self.layout

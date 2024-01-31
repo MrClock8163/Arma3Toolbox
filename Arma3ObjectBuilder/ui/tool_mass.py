@@ -104,15 +104,15 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
     bl_category = "Object Builder"
     bl_label = "Vertex Mass Editing"
     bl_options = {'DEFAULT_CLOSED'}
+
+    doc_url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/vertex-mass-editing"
     
     @classmethod
     def poll(cls, context):
         return True
         
     def draw_header(self, context):
-        row = self.layout.row(align=True)
-        if utils.get_addon_preferences().show_info_links:
-            row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/vertex-mass-editing"
+        utils.draw_panel_header(self)
         
     def draw(self, context):
         layout = self.layout

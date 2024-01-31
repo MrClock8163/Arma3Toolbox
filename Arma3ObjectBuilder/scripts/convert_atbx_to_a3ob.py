@@ -1,20 +1,48 @@
-# Functions to handle conversion from the ArmAToolbox style
-# setup and object properties, to the Arma3ObjectBuilder style.
+#   ---------------------------------------- HEADER ----------------------------------------
+#   
+#   Author: MrClock
+#   Add-on: Arma 3 Object Builder
+#   
+#   Description:
+#       The script converts objects set up with ATBX (ArmaToolbox) properties to the
+#       A3OB (Arma 3 Object Buikder) setup.
+#
+#   Usage:
+#       1. switch every object that needs conversion to Object Mode
+#       2. select objects to convert (if not all scene objects are to be converted)
+#       3. set settings as necessary
+#       4. run script
+#   
+#   ----------------------------------------------------------------------------------------
 
+
+#   --------------------------------------- SETTINGS ---------------------------------------
+
+class Settings:
+    # Convert only selected objects
+    only_selected = False
+    # Clean up ATBX properties
+    cleanup = True
+    # Convert LOD objects
+    convert_lod = True
+    # Convert DTM objects
+    convert_dtm = True
+
+
+#   ---------------------------------------- LOGIC -----------------------------------------
 
 import math
-import re
 
 import bpy
-import bmesh
 
-from . import structure as structutils
-from . import lod as lodutils
-from .logger import ProcessLogger
-from ..io import import_p3d
+from Arma3ObjectBuilder.utilities import generic as utils
+from Arma3ObjectBuilder.utilities import structure as structutils
+from Arma3ObjectBuilder.utilities import lod as lodutils
+from Arma3ObjectBuilder.utilities.logger import ProcessLogger
+from Arma3ObjectBuilder.io import import_p3d
 
 
-lod_conversion = {
+LOD_TYPE_MAPPING = {
     '-1.0': '0',
     '1.000e+3': '1',
     '1.200e+3': '3',
@@ -86,11 +114,11 @@ def convert_materials(obj, converted_materials, cleanup, logger):
     count = 0
     for slot in obj.material_slots:
         mat = slot.material
-        if not mat or mat and mat.name in converted_materials:
+        if not mat or mat.name in converted_materials:
             continue
         
-        converted_materials.add(mat.name)        
         convert_materials_item(mat, cleanup)
+        converted_materials.add(mat.name)
         count += 1
         
     if count > 0:
@@ -118,12 +146,13 @@ def convert_proxy_item(obj, selections, cleanup):
         
         if cleanup:
             obj.vertex_groups.remove(group)
+    
+    obj.data.materials.clear()
             
     a3ob_props.is_a3_proxy = True
 
 
 def convert_proxies(obj, cleanup, logger):
-    regex_proxy_placeholder = "@@armaproxy(\.\d+)?"
     proxy_selections = {proxy.name: (proxy.path, proxy.index) for proxy in obj.armaObjProps.proxyArray}
     if cleanup:
         obj.armaObjProps.proxyArray.clear()
@@ -131,12 +160,12 @@ def convert_proxies(obj, cleanup, logger):
     bpy.context.view_layer.objects.active = obj
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_all(action='DESELECT')
-    
-    for group in obj.vertex_groups:
-        selection = group.name
-        if not re.match(regex_proxy_placeholder, selection):
+
+    for item in proxy_selections:
+        group = obj.vertex_groups.get(item)
+        if not group:
             continue
-            
+
         obj.vertex_groups.active = group
         bpy.ops.object.vertex_group_select()
         bpy.ops.mesh.separate(type='SELECTED')
@@ -144,7 +173,7 @@ def convert_proxies(obj, cleanup, logger):
         
     bpy.ops.object.mode_set(mode='OBJECT')
     
-    proxy_objects = [proxy for proxy in bpy.context.selected_objects if proxy != obj]
+    proxy_objects = [proxy for proxy in bpy.context.selected_objects if proxy is not obj]
     
     for proxy in proxy_objects:
         proxy.parent = obj
@@ -173,7 +202,7 @@ def convert_lod_properties(obj, cleanup, logger):
     atbx_props = obj.armaObjProps
     
     try:
-        a3ob_props.lod = lod_conversion[atbx_props.lod]
+        a3ob_props.lod = LOD_TYPE_MAPPING[atbx_props.lod]
     except:
         a3ob_props.lod = '30'
         
@@ -195,73 +224,28 @@ def convert_lod_properties(obj, cleanup, logger):
 
 
 def convert_vertex_masses(obj, cleanup, logger):
-    bm = bmesh.new()
-    bm.from_mesh(obj.data)
-    
-    layer_atbx = bm.verts.layers.float.get("FHQWeights")
-    if layer_atbx:
-        layer_a3ob = bm.verts.layers.float.get("a3ob_mass")
-        if not layer_a3ob:
-            layer_a3ob = bm.verts.layers.float.new("a3ob_mass")
-            
-        for vertex in bm.verts:
-            vertex[layer_a3ob] = vertex[layer_atbx]
-            
-        if cleanup:
-            bm.verts.layers.float.remove(layer_atbx)
-            
-        logger.step("Vertex masses")
-    
-    bm.to_mesh(obj.data)
-    bm.free()
+
+    with utils.edit_bmesh(obj) as bm:    
+        layer_atbx = bm.verts.layers.float.get("FHQWeights")
+        if layer_atbx:
+            layer_a3ob = bm.verts.layers.float.get("a3ob_mass")
+            if not layer_a3ob:
+                layer_a3ob = bm.verts.layers.float.new("a3ob_mass")
+                
+            for vertex in bm.verts:
+                vertex[layer_a3ob] = vertex[layer_atbx]
+                
+            if cleanup:
+                bm.verts.layers.float.remove(layer_atbx)
+                
+            logger.step("Vertex masses")
 
 
 def convert_mesh(obj, converted_materials, cleanup, logger):
-    converted_materials = convert_materials(obj, converted_materials, cleanup, logger)        
+    convert_materials(obj, converted_materials, cleanup, logger)        
     convert_proxies(obj, cleanup, logger)
     convert_lod_properties(obj, cleanup, logger)
     convert_vertex_masses(obj, cleanup, logger)
-
-    return converted_materials
-
-
-def convert_motion(obj, cleanup, logger):
-    if obj.armaObjProps.centerBone == "":
-        obj.a3ob_properties_object_armature.motion_source = 'MANUAL'
-    else:
-        obj.a3ob_properties_object_armature.motion_source = 'CALCULATED'
-        
-    obj.a3ob_properties_object_armature.motion_bone = obj.armaObjProps.centerBone
-    obj.a3ob_properties_object_armature.motion_vector = obj.armaObjProps.motionVector
-    
-    if cleanup:
-        obj.armaObjProps.motionVector = (0, 0, 0)
-        obj.armaObjProps.centerBone = ""
-        
-    logger.step("Motion vector")
-
-
-def convert_frames(obj, cleanup, logger):
-    frames = [frame.timeIndex for frame in obj.armaObjProps.keyFrames]
-    frames.sort()
-    
-    object_props = obj.a3ob_properties_object_armature
-    for index in frames:
-        item = object_props.frames.add()
-        item.index = index
-        
-    if cleanup:
-        obj.armaObjProps.keyFrames.clear()
-        
-    logger.step("Frames: %d" % len(frames))
-
-
-def convert_armature(obj, cleanup, logger):
-    convert_motion(obj, cleanup, logger)
-    convert_frames(obj, cleanup, logger)
-    
-    if cleanup:
-        obj.armaObjProps.isArmaObject = False
 
 
 def convert_dtm(obj, cleanup, logger):
@@ -287,22 +271,18 @@ def convert_objects_item(obj, object_type, converted_materials, cleanup, logger)
     logger.level_up()
     
     if object_type == 'LOD':
-        converted_materials = convert_mesh(obj, converted_materials, cleanup, logger)
-    elif object_type == 'ARMATURE':
-        convert_armature(obj, cleanup, logger)
+        convert_mesh(obj, converted_materials, cleanup, logger)
     elif object_type == 'DTM':
         convert_dtm(obj, cleanup, logger)
         
     logger.level_down()
-        
-    return converted_materials
 
 
 def convert_objects(objects, cleanup):
     logger = ProcessLogger()
     logger.step("Converting ATBX setup to A3OB")
     logger.level_up()
-    categories = ('LOD', 'DTM', 'ARMATURE')
+    categories = ('LOD', 'DTM')
     
     converted_materials = set()
     for i, category in enumerate(objects):
@@ -311,10 +291,41 @@ def convert_objects(objects, cleanup):
         
         for obj in category:
             logger.step(str(obj.name))
-            converted_materials = convert_objects_item(obj, categories[i], converted_materials, cleanup, logger)
+            convert_objects_item(obj, categories[i], converted_materials, cleanup, logger)
             logger.step("")
             
         logger.level_down()
     
     logger.level_down()
     logger.step("Conversion finished")
+
+
+def start_conversion():
+    settings = Settings
+    context = bpy.context
+
+    object_pool = []
+    if settings.only_selected:
+        object_pool = context.selected_objects
+    else:
+        object_pool = context.scene.objects
+    
+    objects_lod = []
+    if settings.convert_lod:
+        objects_lod = [obj for obj in object_pool if obj.visible_get() and obj.type == 'MESH' and obj.armaObjProps.isArmaObject]
+    objects_dtm = []
+    if settings.convert_dtm:
+        objects_dtm = [obj for obj in object_pool if obj.visible_get() and obj.type == 'MESH' and obj.armaHFProps.isHeightfield]
+
+    objects = [objects_lod, objects_dtm]
+
+    for category in objects:
+        for obj in category:
+            if obj.mode != 'OBJECT':
+                raise Exception("All objects must be in object mode in order to perform the conversion")
+    
+    bpy.ops.object.select_all(action='DESELECT')
+    convert_objects(objects, settings.cleanup)
+
+
+start_conversion()

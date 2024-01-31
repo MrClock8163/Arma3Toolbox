@@ -23,7 +23,7 @@ class A3OB_UL_outliner_lods(bpy.types.UIList):
         flt_neworder = []
         
         sorter = [(index, frame) for index, frame in enumerate(getattr(data, propname))]
-        flt_neworder = helper_funcs.sort_items_helper(sorter, lambda f: f[1].signature, False)
+        flt_neworder = helper_funcs.sort_items_helper(sorter, lambda f: f[1].priority, False)
         
         return flt_flags, flt_neworder
 
@@ -103,18 +103,15 @@ class A3OB_PT_outliner(bpy.types.Panel):
     bl_category = "Object Builder"
     bl_label = "Outliner"
     bl_options = {'DEFAULT_CLOSED'}
+
+    doc_url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/outliner"
     
     @classmethod
     def poll(cls, context):
         return utils.get_addon_preferences().outliner == 'ENABLED'
     
     def draw_header(self, context):
-        if not utils.get_addon_preferences().show_info_links:
-            return
-            
-        layout = self.layout
-        row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/tools/outliner"
+        utils.draw_panel_header(self)
     
     def draw(self, context):
         layout = self.layout
@@ -130,7 +127,7 @@ class A3OB_PT_outliner(bpy.types.Panel):
         box_proxy = row_counts.box()
         box_subobject = row_counts.box()
 
-        if scene_props.lods_index in range(len(scene_props.lods)):
+        if utils.is_valid_idx(scene_props.lods_index, scene_props.lods):
             item = scene_props.lods[scene_props.lods_index]
             box_proxy.label(text="%d" % item.proxy_count, icon='PMARKER_ACT')
             box_subobject.label(text="%d" % item.subobject_count, icon='MESH_CUBE')

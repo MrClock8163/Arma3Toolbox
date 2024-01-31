@@ -40,7 +40,7 @@ class A3OB_PG_outliner_proxy(bpy.types.PropertyGroup):
 class A3OB_PG_outliner_lod(bpy.types.PropertyGroup):
     obj: bpy.props.StringProperty(name="Object Name")
     name: bpy.props.StringProperty(name="LOD Type")
-    signature: bpy.props.FloatProperty(name="LOD Signature")
+    priority: bpy.props.FloatProperty(name="LOD Priority")
     proxy_count: bpy.props.IntProperty(name="Proxy Count")
     subobject_count: bpy.props.IntProperty(name="Sub-object Count")
 
@@ -57,6 +57,11 @@ class A3OB_PG_outliner(bpy.types.PropertyGroup):
         self.lods_index = -1
         self.proxies.clear()
         self.proxies_index = -1
+
+
+class A3OB_PG_proxy_access(bpy.types.PropertyGroup):
+    proxies: bpy.props.CollectionProperty(type=A3OB_PG_outliner_proxy)
+    proxies_index: bpy.props.IntProperty(name="Selection Index")
 
 
 class A3OB_PG_lod_object(bpy.types.PropertyGroup):
@@ -299,37 +304,6 @@ class A3OB_PG_validation(bpy.types.PropertyGroup):
         default = True
     )
 
-
-class A3OB_PG_keyframes(bpy.types.PropertyGroup):
-    mode: bpy.props.EnumProperty(
-        name = "Mode",
-        description = "List mode",
-        items = (
-            ('TIMELINE', "Timeline", "Add keyframes from animation timeline"),
-            ('RANGE', "Range", "Add keyframes in range")
-        ),
-        default = 'RANGE'
-    )
-    clear: bpy.props.BoolProperty(name="Clear Existing", description="Clear existing frames before adding new")
-    range_start: bpy.props.IntProperty(
-        name = "Start",
-        description = "Start of frame range",
-        default = 0,
-        min = 0
-    )
-    range_end: bpy.props.IntProperty(
-        name = "End",
-        description = "End of frame range",
-        default = 100,
-        min = 0
-    )
-    range_step: bpy.props.IntProperty(
-        name = "Step",
-        description = "Step in frame range",
-        default = 5,
-        min = 1
-    )
-
  
 class A3OB_PG_conversion(bpy.types.PropertyGroup):
     use_selection: bpy.props.BoolProperty(name="Selected Only", description="Convert only selected objects")
@@ -338,11 +312,10 @@ class A3OB_PG_conversion(bpy.types.PropertyGroup):
         description = "Only convert object of the selected types",
         items = (
             ('MESH', "LOD", ""),
-            ('DTM', "DTM", ""),
-            ('ARMATURE', "Armature", "")
+            ('DTM', "DTM", "")
         ),
         options = {'ENUM_FLAG'},
-        default = {'MESH', 'DTM', 'ARMATURE'}
+        default = {'MESH', 'DTM'}
     )
     cleanup: bpy.props.BoolProperty(
         name = "Cleanup",
@@ -521,30 +494,26 @@ class A3OB_PG_colors(bpy.types.PropertyGroup):
     )
 
 
-class A3OB_PG_bone(bpy.types.PropertyGroup):
+class A3OB_PG_rigging_bone(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Name", description="Name of the bone item")
     parent: bpy.props.StringProperty(name="Parent", description="Name of the parent bone")
 
 
-class A3OB_PG_skeleton(bpy.types.PropertyGroup):
+class A3OB_PG_rigging_skeleton(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Name", description="Name of the skeleton")
-    bones: bpy.props.CollectionProperty(type=A3OB_PG_bone)
+    protected: bpy.props.BoolProperty(name="Protected", description="Skeleton is protected and cannot be modified")
+    bones: bpy.props.CollectionProperty(type=A3OB_PG_rigging_bone)
     bones_index: bpy.props.IntProperty(name="Selection Index")
 
 
-class A3OB_PG_weights(bpy.types.PropertyGroup):
-    filepath: bpy.props.StringProperty(
-        name = "File Path",
-        description = "File path of the model.cfg file",
-        subtype = 'FILE_PATH'
-    )
-    skeletons: bpy.props.CollectionProperty(type=A3OB_PG_skeleton)
-    skeletons_index: bpy.props.IntProperty(name="Active Skeleton Index")
-    bones: bpy.props.CollectionProperty(type=A3OB_PG_bone) # empty collection to show when no skeleton is selected
-    bones_index: bpy.props.IntProperty(name="Selection Index") # empty collection to show when no skeleton is selected
+class A3OB_PG_rigging(bpy.types.PropertyGroup):
+    skeletons: bpy.props.CollectionProperty(type=A3OB_PG_rigging_skeleton)
+    skeletons_index: bpy.props.IntProperty(name="Active Skeleton Index", description="Double click to rename")
+    bones: bpy.props.CollectionProperty(type=A3OB_PG_rigging_bone) # empty collection to show when no skeleton is selected
+    bones_index: bpy.props.IntProperty(name="Selection Index", description="Double click to rename or change parent") # empty collection to show when no skeleton is selected
     prune_threshold: bpy.props.FloatProperty(
         name = "Threshold",
-        description = "Selection weight threshold",
+        description = "Weight threshold for pruning selections",
         min = 0.0,
         max = 1.0,
         default = 0.001,
@@ -566,14 +535,14 @@ classes = (
     A3OB_PG_mass_editor,
     A3OB_PG_hitpoint_generator,
     A3OB_PG_validation,
-    A3OB_PG_keyframes,
     A3OB_PG_conversion,
     A3OB_PG_renamable,
     A3OB_PG_renaming,
     A3OB_PG_colors,
-    A3OB_PG_bone,
-    A3OB_PG_skeleton,
-    A3OB_PG_weights
+    A3OB_PG_rigging_bone,
+    A3OB_PG_rigging_skeleton,
+    A3OB_PG_rigging,
+    A3OB_PG_proxy_access
 )
 
 
@@ -587,22 +556,22 @@ def register():
     bpy.types.Scene.a3ob_mass_editor = bpy.props.PointerProperty(type=A3OB_PG_mass_editor)
     bpy.types.Scene.a3ob_hitpoint_generator = bpy.props.PointerProperty(type=A3OB_PG_hitpoint_generator)
     bpy.types.Scene.a3ob_validation = bpy.props.PointerProperty(type=A3OB_PG_validation)
-    bpy.types.Scene.a3ob_keyframes = bpy.props.PointerProperty(type=A3OB_PG_keyframes)
     bpy.types.Scene.a3ob_conversion = bpy.props.PointerProperty(type=A3OB_PG_conversion)
     bpy.types.Scene.a3ob_renaming = bpy.props.PointerProperty(type=A3OB_PG_renaming)
+    bpy.types.Scene.a3ob_rigging = bpy.props.PointerProperty(type=A3OB_PG_rigging)
     bpy.types.Scene.a3ob_colors = bpy.props.PointerProperty(type=A3OB_PG_colors)
-    bpy.types.Scene.a3ob_weights = bpy.props.PointerProperty(type=A3OB_PG_weights)
+    bpy.types.Scene.a3ob_proxy_access = bpy.props.PointerProperty(type=A3OB_PG_proxy_access)
     
     print("\t" + "Properties: scene")
     
     
 def unregister():
-    del bpy.types.Scene.a3ob_weights
+    del bpy.types.Scene.a3ob_proxy_access
     del bpy.types.Scene.a3ob_colors
+    del bpy.types.Scene.a3ob_rigging
     del bpy.types.Scene.a3ob_renaming
     del bpy.types.Scene.a3ob_conversion
     del bpy.types.Scene.a3ob_validation
-    del bpy.types.Scene.a3ob_keyframes
     del bpy.types.Scene.a3ob_hitpoint_generator
     del bpy.types.Scene.a3ob_mass_editor
     del bpy.types.Scene.a3ob_commons

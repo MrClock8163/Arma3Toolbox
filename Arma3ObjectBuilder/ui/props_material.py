@@ -40,7 +40,7 @@ class A3OB_OT_paste_common_material(bpy.types.Operator):
         layout.template_list("A3OB_UL_common_materials", "A3OB_common_materials", scene_props, "materials", scene_props, "materials_index")
 
         selection_index = scene_props.materials_index
-        if selection_index in range(len(scene_props.materials)):
+        if utils.is_valid_idx(selection_index, scene_props.materials):
             row = layout.row()
             item = scene_props.materials[selection_index]
             row.prop(item, "path", text="")
@@ -50,7 +50,7 @@ class A3OB_OT_paste_common_material(bpy.types.Operator):
         mat = context.material
         scene_props = context.scene.a3ob_commons
 
-        if scene_props.materials_index in range(len(scene_props.materials)):
+        if utils.is_valid_idx(scene_props.materials_index, scene_props.materials):
             new_item = scene_props.materials[scene_props.materials_index]
             mat_props = mat.a3ob_properties_material
             mat_props.material_path = new_item.path
@@ -94,7 +94,7 @@ class A3OB_OT_paste_common_procedural(bpy.types.Operator):
         layout.template_list("A3OB_UL_common_procedurals", "A3OB_common_procedurals", scene_props, "procedurals", scene_props, "procedurals_index")
 
         selection_index = scene_props.procedurals_index
-        if selection_index in range(len(scene_props.procedurals)):
+        if utils.is_valid_idx(selection_index, scene_props.procedurals):
             row = layout.row()
             item = scene_props.procedurals[selection_index]
             row.prop(item, "value", text="")
@@ -104,7 +104,7 @@ class A3OB_OT_paste_common_procedural(bpy.types.Operator):
         mat = context.material
         scene_props = context.scene.a3ob_commons
 
-        if scene_props.procedurals_index in range(len(scene_props.procedurals)):
+        if utils.is_valid_idx(scene_props.procedurals_index, scene_props.procedurals):
             new_item = scene_props.procedurals[scene_props.procedurals_index]
             mat_props = mat.a3ob_properties_material
             mat_props.color_raw = new_item.value
@@ -127,6 +127,8 @@ class A3OB_PT_material(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_label = "Object Builder: Material Properties"
     bl_context = "material"
+
+    doc_url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/material"
     
     @classmethod
     def poll(cls, context):
@@ -134,12 +136,7 @@ class A3OB_PT_material(bpy.types.Panel):
         return mat
         
     def draw_header(self, context):
-        if not utils.get_addon_preferences().show_info_links:
-            return
-            
-        layout = self.layout
-        row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/material"
+        utils.draw_panel_header(self)
         
     def draw(self, context):
         material = context.material

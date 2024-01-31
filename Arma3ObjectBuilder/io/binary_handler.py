@@ -24,7 +24,7 @@ def read_shorts(file, count = 1):
 def read_ushort(file):
     return struct.unpack('<H', file.read(2))[0]
 
-def read_shorts(file, count = 1):
+def read_ushorts(file, count = 1):
     return struct.unpack('<%dH' % count, file.read(2 * count))
 
 def read_long(file):
@@ -40,15 +40,14 @@ def read_ulongs(file, count = 1):
     return struct.unpack('<%dI' % count, file.read(4 * count))
 
 def read_compressed_uint(file):
-    output = 0
-    extra = 0
-    
     output = read_byte(file)
     extra = output
     
+    byte_idx = 1
     while extra & 0x80:
         extra = read_byte(file)
-        output += (extra - 1) * 0x80
+        output += (extra - 1) << (byte_idx * 7)
+        byte_idx += 1
     
     return output
     
@@ -73,18 +72,39 @@ def read_asciiz(file):
     
     while True:
         a = file.read(1)
-        if a == b'\x00':
+        if a == b'\x00' or a == b'':
             break
             
         res += a
     
     return res.decode('ascii')
+
+def read_asciiz_field(file, field_len):
+    field = file.read(field_len)
+    if len(field) < field_len:
+        raise EOFError("ASCIIZ field ran into unexpected EOF")
     
-def write_byte(file, value):
-    file.write(struct.pack('B', value))
+    result = bytearray()
+    for value in field:
+        if value == 0:
+            break
+            
+        result.append(value)
+    else:
+        raise ValueError("ASCIIZ field length overflow")
     
-def write_bytes(file, values):
-    file.write(struct.pack('%dB' % len(values), *values))
+    return result.decode('ascii')
+        
+def read_lascii(file):
+    length = read_byte(file)
+    value = file.read(length)
+    if len(value) != length:
+        raise EOFError("LASCII string ran into unexpected EOF")
+    
+    return value.decode('ascii')
+    
+def write_byte(file, *args):
+    file.write(struct.pack('%dB' % len(args), *args))
     
 def write_bool(file, value):
     write_byte(file, value)
@@ -100,6 +120,16 @@ def write_long(file, *args):
     
 def write_ulong(file, *args):
     file.write(struct.pack('<%dI' % len(args), *args))
+
+def write_compressed_uint(file, value):
+    temp = value
+    while True:
+        if temp < 128:
+            write_byte(file, temp)
+            break
+
+        write_byte(file, (temp & 127) + 128)
+        temp = temp >> 7
     
 def write_float(file, *args):
     file.write(struct.pack('<%df' % len(args), *args))
@@ -112,3 +142,16 @@ def write_chars(file, values):
     
 def write_asciiz(file, value):
     file.write(struct.pack('<%ds' % (len(value) + 1), value.encode('ascii')))
+
+def write_asciiz_field(file, value, field_len):
+    if (len(value) + 1) > field_len:
+        raise ValueError("ASCIIZ value is longer (%d + 1) than field length (%d)" % (len(value), field_len))
+
+    file.write(struct.pack('<%ds' % field_len, value.encode('ascii')))
+
+def write_lascii(file, value):
+    length = len(value)
+    if length > 255:
+        raise OverflowError("LASCII string cannot be longer than 255 characters")
+    
+    file.write(struct.pack('B%ds' % length, length, value.encode('ascii')))

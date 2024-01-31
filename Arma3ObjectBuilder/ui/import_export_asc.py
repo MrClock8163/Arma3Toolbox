@@ -1,5 +1,4 @@
 import traceback
-import os
 
 import bpy
 import bpy_extras
@@ -20,35 +19,56 @@ class A3OB_OP_import_asc(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         default = "*.asc",
         options = {'HIDDEN'}
     )
-    vertical_scale: bpy.props.FloatProperty(
-        name = "Vertical Scaling",
-        description = "Vertical scaling coefficient",
+    hscale: bpy.props.FloatProperty(
+        name = "Horizontal Scale",
         default = 1.0,
         min = -0.001,
-        max = 1000.0
+        max = 1000
     )
+    vscale: bpy.props.FloatProperty(
+        name = "Vertical Scale",
+        default = 1.0,
+        min = -0.001,
+        max = 1000
+    )
+
+    def draw(self, context):
+        pass
     
-    def execute(self, context):
-        temppath = self.filepath + ".temp"
-        success = False
-        
+    def execute(self, context):        
         with open(self.filepath) as file:
             try:
                 import_asc.read_file(self, context, file)
-                success = True
+                self.report({'INFO'}, "Successfully imported DEM")
             except Exception as ex:
                 self.report({'ERROR'}, str(ex))
                 traceback.print_exc()
         
-        if success:
-            if os.path.isfile(self.filepath):
-                os.remove(self.filepath)
-                
-            os.rename(temppath, os.path.splitext(temppath)[0])
-        elif not success and not utils.get_addon_preferences().preserve_faulty_output:
-            os.remove(temppath)
-        
         return {'FINISHED'}
+
+
+class A3OB_PT_import_asc_main(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Main"
+    bl_parent_id = "FILE_PT_operator"
+    bl_options = {'HIDE_HEADER'}
+    
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        return operator.bl_idname == "A3OB_OT_import_asc"
+    
+    def draw(self, context):
+        layout = self.layout
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        col = layout.column(align=True, heading="Scale:")
+        col.prop(operator, "hscale", text="Horizontal")
+        col.prop(operator, "vscale", text="Vertical")
 
 
 class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
@@ -67,6 +87,27 @@ class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         description = "Apply the assigned modifiers to the DTM object during export",
         default = True
     )
+    dimensions: bpy.props.EnumProperty(
+        name = "Dimensions",
+        description = "Raster dimensions (the number of vertices must match the calulcated rows x columns size)",
+        items = (
+            ("SQUARE", "1:1", "Calculate dimensions from 1:1 rows-columns ratio"),
+            ("LANDSCAPE", "1:2", "Calculate dimensions from 1:2 rows-columns ratio"),
+            ("PORTRAIT", "2:1", "Calculate dimensions from 2:1 rows-columns ratio"),
+            ("CUSTOM", "Custom", "Specify custom dimensions")
+        ),
+        default = 'SQUARE'
+    )
+    rows: bpy.props.IntProperty(
+        name = "Rows",
+        default = 1,
+        min = 1
+    )
+    columns: bpy.props.IntProperty(
+        name = "Columns",
+        default = 1,
+        min = 1
+    )
     
     @classmethod
     def poll(cls, context):
@@ -74,21 +115,17 @@ class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         return obj and obj.type == 'MESH' and len(obj.data.vertices) > 0
     
     def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False
-        layout.prop(self, "apply_modifiers")
+        pass
     
     def execute(self, context):
         obj = context.active_object
         
-        if not export_asc.valid_resolution(self, context, obj):
-            self.report({'ERROR'}, "Cannot export irregular raster, raster resolutions must be equal in X and Y directions")
-            return {'FINISHED'}
-            
-        with open(self.filepath, "wt") as file:
+        output = utils.OutputManager(self.filepath, "w")
+        with output as file:
             try:
                 export_asc.write_file(self, context, file, obj)
+                output.success = True
+                self.report({'INFO'}, "Successfuly exported DTM")
             except Exception as ex:
                 self.report({'ERROR'}, "%s (check the system console)" % str(ex))
                 traceback.print_exc()
@@ -96,9 +133,62 @@ class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         return {'FINISHED'}
 
 
+class A3OB_PT_export_asc_main(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Main"
+    bl_parent_id = "FILE_PT_operator"
+    bl_options = {'HIDE_HEADER'}
+    
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        return operator.bl_idname == "A3OB_OT_export_asc"
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        layout.prop(operator, "apply_modifiers")
+
+
+class A3OB_PT_export_asc_dimensions(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Dimensions"
+    bl_parent_id = "FILE_PT_operator"
+    
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        return operator.bl_idname == "A3OB_OT_export_asc"
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        layout.prop(operator, "dimensions")
+        if operator.dimensions == 'CUSTOM':
+            layout.prop(operator, "rows")
+            layout.prop(operator, "columns")
+
+
 classes = (
     A3OB_OP_import_asc,
-    A3OB_OP_export_asc
+    A3OB_PT_import_asc_main,
+    A3OB_OP_export_asc,
+    A3OB_PT_export_asc_main,
+    A3OB_PT_export_asc_dimensions
 )
 
 

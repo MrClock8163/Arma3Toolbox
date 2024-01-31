@@ -51,7 +51,7 @@ class A3OB_PG_properties_material(bpy.types.PropertyGroup):
         # description = "Name of the selection to create for the material (leave empty to not create selection)"
     # )
     
-    def from_p3d(self, texture, material):
+    def from_p3d(self, texture, material, absolute):
         regex_procedural = "#\(.*?\)\w+\(.*?\)"
         regex_procedural_color = "#\(argb,\d+,\d+,\d+\)color\((\d+.?\d*),(\d+.?\d*),(\d+.?\d*),(\d+.?\d*),([a-zA-Z]+)\)"
         
@@ -74,24 +74,24 @@ class A3OB_PG_properties_material(bpy.types.PropertyGroup):
                 self.color_raw = texture
             
         else:
-            self.texture_path = utils.restore_absolute(texture)
+            self.texture_path = utils.restore_absolute(texture) if absolute else texture
         
-        self.material_path = utils.restore_absolute(material)
+        self.material_path = utils.restore_absolute(material) if absolute else material
     
-    def to_p3d(self):
+    def to_p3d(self, relative):
         addon_prefs = utils.get_addon_preferences()
         texture = ""
         material = ""
 
         if self.texture_type == 'TEX':
-            texture = utils.format_path(utils.abspath(self.texture_path), utils.abspath(addon_prefs.project_root), addon_prefs.export_relative)
+            texture = utils.format_path(utils.abspath(self.texture_path), utils.abspath(addon_prefs.project_root), relative)
         elif self.texture_type == 'COLOR':
             color = self.color_value
             texture = "#(argb,8,8,3)color(%.3f,%.3f,%.3f,%.3f,%s)" % (color[0], color[1], color[2], color[3], self.color_type)
         else:
             texture = self.color_raw
         
-        material = utils.format_path(utils.abspath(self.material_path), utils.abspath(addon_prefs.project_root), addon_prefs.export_relative)
+        material = utils.format_path(utils.abspath(self.material_path), utils.abspath(addon_prefs.project_root), relative)
 
         return texture, material
 

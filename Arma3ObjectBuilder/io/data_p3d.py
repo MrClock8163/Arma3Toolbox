@@ -7,9 +7,13 @@
 import struct
 import math
 import re
+from decimal import Decimal, Context
 
 from . import binary_handler as binary
-from ..utilities import errors
+
+
+class P3D_Error(Exception):
+    pass
 
 
 # Generic class to consume unneeded TAGG types (eg.: #Hidden#, #Selected#).
@@ -65,8 +69,8 @@ class P3D_TAGG_DataProperty():
     def read(cls, file):
         output = cls()
         
-        output.key = binary.read_char(file, 64)
-        output.value = binary.read_char(file, 64)
+        output.key = binary.read_asciiz_field(file, 64)
+        output.value = binary.read_asciiz_field(file, 64)
         
         return output
     
@@ -74,8 +78,8 @@ class P3D_TAGG_DataProperty():
         return 128
     
     def write(self, file):
-        file.write(struct.pack('<64s', self.key.encode('ASCII')))
-        file.write(struct.pack('<64s', self.value.encode('ASCII')))
+        binary.write_asciiz_field(file, self.key, 64)
+        binary.write_asciiz_field(file, self.value, 64)
 
 
 class P3D_TAGG_DataMass():
@@ -211,14 +215,14 @@ class P3D_TAGG():
         
         if output.name == "#EndOfFile#":
             if length != 0:
-                raise errors.P3DError("Invalid EOF")
+                raise P3D_Error("Invalid EOF")
             
             output.active = False
         elif output.name == "#SharpEdges#":
             output.data = P3D_TAGG_DataSharpEdges.read(file, length)
         elif output.name == "#Property#":
             if length != 128:
-                raise errors.P3DError("Invalid name property length: %d" % length)
+                raise P3D_Error("Invalid name property length: %d" % length)
             
             output.data = P3D_TAGG_DataProperty.read(file)
         elif output.name == "#Mass#":
@@ -258,12 +262,158 @@ class P3D_TAGG():
         return not self.name.startswith("#") and not self.name.endswith("#")
 
 
+class P3D_LOD_Resolution():
+    VISUAL = 0
+    VIEW_GUNNER = 1
+    VIEW_PILOT = 2
+    VIEW_CARGO = 3
+    SHADOW = 4
+    EDIT = 5
+    GEOMETRY = 6
+    GEOMETRY_BUOY = 7
+    GEOMETRY_PHYSX = 8
+    MEMORY = 9
+    LANDCONTACT = 10
+    ROADWAY = 11
+    PATHS = 12
+    HITPOINTS = 13
+    VIEW_GEOMETRY = 14
+    FIRE_GEOMETRY = 15
+    VIEW_CARGO_GEOMERTRY = 16
+    VIEW_CARGO_FIRE_GEOMETRY = 17
+    VIEW_COMMANDER = 18
+    VIEW_COMMANDER_GEOMETRY = 19
+    VIEW_COMMANDER_FIRE_EOMETRY = 20
+    VIEW_PILOT_GEOMETRY = 21
+    VIEW_PILOT_FIRE_GEOMETRY = 22
+    VIEW_GUNNER_GEOMETRY = 23
+    VIEW_GUNNER_FIRE_GEOMETRY = 24
+    SUBPARTS = 25
+    SHADOW_VIEW_CARGO = 26
+    SHADOW_VIEW_PILOT = 27
+    SHADOW_VIEW_GUNNER = 28
+    WRECKAGE = 29
+    UNKNOWN = 30
+
+    INDEX_MAP = {
+        (0.0, 0): VISUAL, # Visual
+        (1.0, 3): VIEW_GUNNER, # View Gunner
+        (1.1, 3): VIEW_PILOT, # View Pilot
+        (1.2, 3): VIEW_CARGO, # View Cargo
+        (1.0, 4): SHADOW, # Shadow
+        (2.0, 4): EDIT, # Edit
+        (1.0, 13): GEOMETRY, # Geometry
+        (2.0, 13): GEOMETRY_BUOY, # Geometry Buoyancy
+        (4.0, 13): GEOMETRY_PHYSX, # Geometry PhysX
+        (1.0, 15): MEMORY, # Memory
+        (2.0, 15): LANDCONTACT, # Land Contact
+        (3.0, 15): ROADWAY, # Roadway
+        (4.0, 15): PATHS, # Paths
+        (5.0, 15): HITPOINTS, # Hit Points
+        (6.0, 15): VIEW_GEOMETRY, # View Geometry
+        (7.0, 15): FIRE_GEOMETRY, # Fire Geometry
+        (8.0, 15): VIEW_CARGO_GEOMERTRY, # View Cargo Geometry
+        (9.0, 15): VIEW_CARGO_FIRE_GEOMETRY, # View Cargo Fire Geometry
+        (1.0, 16): VIEW_COMMANDER, # View Commander
+        (1.1, 16): VIEW_COMMANDER_GEOMETRY, # View Commander Geometry
+        (1.2, 16): VIEW_COMMANDER_FIRE_EOMETRY, # View Commander Fire Geometry
+        (1.3, 16): VIEW_PILOT_GEOMETRY, # View Pilot Geometry
+        (1.4, 16): VIEW_PILOT_FIRE_GEOMETRY, # View Pilot Fire Geometry
+        (1.5, 16): VIEW_GUNNER_GEOMETRY, # View Gunner Geometry
+        (1.6, 16): VIEW_GUNNER_FIRE_GEOMETRY, # View Gunner Fire Geometry
+        (1.7, 16): SUBPARTS, # Sub Parts
+        (1.8, 16): SHADOW_VIEW_CARGO, # Cargo View Shadow Volume
+        (1.9, 16): SHADOW_VIEW_PILOT, # Pilot View Shadow Volume
+        (2.0, 16): SHADOW_VIEW_GUNNER, # Gunner View Shadow Volume
+        (2.1, 16): WRECKAGE, # Wreckage
+        (-1.0, 0): UNKNOWN # Unknown
+    }
+
+    RESOLUTION_POS = { # decimal places in normalized format
+        0: -1,
+        3: 3,
+        4: 4,
+        5: 4,
+        16: 2,
+        26: 3,
+        30: -1
+    }
+
+    def __init__(self, lod = 0, res = 0):
+        self.lod = lod
+        self.res = res
+        self.source = None # field to store the originally read float value for debug purposes
+    
+    def __eq__(self, other):
+        return type(self) is type(other) and self.lod == other.lod and self.res == other.res
+    
+    def __float__(self):
+        return float(self.encode(self.lod, self.res))
+
+    @classmethod
+    def encode(cls, lod, resolution):
+        if lod == 0:
+            return resolution 
+        
+        lookup = {v: k for k, v in cls.INDEX_MAP.items()}
+
+        coef, exp = lookup[lod]
+        pos = cls.RESOLUTION_POS.get(lod, None)
+
+        resolution_sign = 0
+        if pos is not None:
+            resolution_sign = resolution * 10**(exp - pos)
+        
+        return coef * 10**exp + resolution_sign
+
+    @classmethod
+    def decode(cls, signature):
+        if signature < 1e3:
+            return 0, round(signature)
+        elif 1e4 <= signature < 2e4:
+            return 4, round(signature - 1e4)
+        
+        num = Decimal(signature)
+        exp = num.normalize(Context(2)).adjusted()
+        
+        coef = float((num / 10**exp))
+        base = round(coef)
+        if exp in [3, 16]:
+            base = round(coef, 1)
+
+        lod = cls.INDEX_MAP.get((base, exp), 30)
+        pos = cls.RESOLUTION_POS.get(lod, None)
+
+        resolution = 0
+        if pos is not None:
+            resolution = int(round((coef - base) * 10**pos, pos))
+        
+        return lod, resolution
+    
+    @classmethod
+    def from_float(cls, value):
+        output = cls(*cls.decode(value))
+        output.source = value
+        return output
+    
+    def set_from_float(self, value):
+        self.lod, self.res = self.decode(value)
+        self.source = value
+    
+    def set(self, lod, res):
+        self.lod = lod
+        self.res = res
+    
+    def get(self):
+        return self.lod, self.res
+
+
 class P3D_LOD():
     def __init__(self):
-        self.signature = "P3DM"
+        self.signature = b"P3DM"
         self.version = (28, 256)
         self.flags = 0x00000000
-        self.resolution = 0
+        self.resolution = P3D_LOD_Resolution()
 
         self.verts = {}
         self.normals = {}
@@ -274,22 +424,25 @@ class P3D_LOD():
         return type(other) is type(self) and other.resolution == self.resolution
     
     # Reading
-    
-    def read_vert(self, file):
+
+    @staticmethod
+    def read_vert(file):
         x, z, y, flag = struct.unpack('<fffI', file.read(16))
         return x, y, z, flag
     
     def read_verts(self, file, count_verts):
         self.verts = {i: self.read_vert(file) for i in range(count_verts)}
 
-    def read_normal(self, file):
+    @staticmethod
+    def read_normal(file):
         x, z, y = struct.unpack('<fff', file.read(12))
         return -x, -y, -z
     
     def read_normals(self, file, count_normals):
         self.normals = {i: self.read_normal(file) for i in range(count_normals)}
     
-    def read_face(self, file):
+    @staticmethod
+    def read_face(file):
         count_sides = binary.read_ulong(file)
         vertices = []
         normals = []
@@ -316,16 +469,15 @@ class P3D_LOD():
     @classmethod
     def read(cls, file):
 
-        signature = binary.read_char(file, 4)
-        if signature != "P3DM":
-            raise errors.P3DError("Unsupported LOD type: %s" % signature)
+        signature = file.read(4)
+        if signature != b"P3DM":
+            raise P3D_Error("Unsupported LOD type: %s" % str(signature))
         
         version = binary.read_ulongs(file, 2)
         if version != (0x1c, 0x100):
-            raise errors.P3DError("Unsupported LOD version: %d.%d" % (version[0], version[1]))
+            raise P3D_Error("Unsupported LOD version: %d.%d" % (version[0], version[1]))
 
         output = cls()
-        output.signature = signature
         output.version = version
         
         count_verts, count_normals, count_faces, flags = binary.read_ulongs(file, 4)
@@ -338,7 +490,7 @@ class P3D_LOD():
 
         tagg_signature = binary.read_char(file, 4)
         if tagg_signature != "TAGG":
-            raise errors.P3DError("Invalid TAGG section signature: %s" % tagg_signature)
+            raise P3D_Error("Invalid TAGG section signature: %s" % tagg_signature)
         
         while True:
             tagg = P3D_TAGG.read(file, count_verts, count_faces)
@@ -348,7 +500,7 @@ class P3D_LOD():
             if tagg.active:
                 output.taggs.append(tagg)
         
-        output.resolution = binary.read_float(file)
+        output.resolution.set_from_float(binary.read_float(file))
         
         return output
     
@@ -388,7 +540,7 @@ class P3D_LOD():
 
 
     def write(self, file):
-        binary.write_chars(file, self.signature)
+        file.write(self.signature)
         binary.write_ulong(file, *self.version)
         
         count_verts = len(self.verts)
@@ -410,7 +562,7 @@ class P3D_LOD():
         eof.name = "#EndOfFile#"
         eof.write(file)
             
-        binary.write_float(file, self.resolution)
+        binary.write_float(file, float(self.resolution))
     
     # Operations
 
@@ -593,23 +745,22 @@ class P3D_MLOD():
     def __init__(self):
         self.source = ""
         self.version = 257
-        self.signature = "MLOD"
+        self.signature = b"MLOD"
         
         self.lods = []
     
     @classmethod
     def read(cls, file, first_lod_only = False):
         
-        signature = binary.read_char(file, 4)
-        if signature != "MLOD":
-            raise errors.P3DError("Invalid MLOD signature: %s" % signature)
+        signature = file.read(4)
+        if signature != b"MLOD":
+            raise P3D_Error("Invalid MLOD signature: %s" % str(signature))
 
         version = binary.read_ulong(file)
         if version != 257:
-            raise errors.P3DError("Unsupported MLOD version: %d" % version)
+            raise P3D_Error("Unsupported MLOD version: %d" % version)
 
         output = cls()
-        output.signature = signature
         output.version = version
 
         count_lods = binary.read_ulong(file)
@@ -631,18 +782,14 @@ class P3D_MLOD():
         return output
     
     def write(self, file):
-        binary.write_chars(file, self.signature)
-        binary.write_ulong(file, self.version)
-
         if len(self.lods) == 0:
-            dummy_lod = P3D_LOD()
-
-            binary.write_ulong(file, 1)
-            dummy_lod.write(file)
-        else:
-            binary.write_ulong(file, len(self.lods))
-            for lod in self.lods:
-                lod.write(file)
+            raise P3D_Error("Cannot write file with no LODs")
+        
+        file.write(self.signature)
+        binary.write_ulong(file, self.version)
+        binary.write_ulong(file, len(self.lods))
+        for lod in self.lods:
+            lod.write(file)
     
     def write_file(self, filepath):
         with open(filepath, "wb") as file:
@@ -663,3 +810,10 @@ class P3D_MLOD():
     def force_lowercase(self):
         for lod in self.lods:
             lod.force_lowercase()
+    
+    def find_lod(self, index = 0, resolution = 0):
+        for lod in self.lods:
+            if lod.resolution.get() == (index, resolution):
+                return lod
+        
+        return None

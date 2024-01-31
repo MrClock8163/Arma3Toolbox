@@ -7,24 +7,64 @@ from ..utilities import flags as flagutils
 
 
 class A3OB_OT_proxy_add(bpy.types.Operator):
-    """Add Arma 3 proxy object and parent to the active object"""
+    """Add an Arma 3 proxy object and parent to the active object"""
     
     bl_idname = "a3ob.proxy_add"
-    bl_label = "Arma 3 proxy"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_label = "Add Proxy"
+    bl_options = {'REGISTER'}
+
+    parent: bpy.props.StringProperty(
+        name = "Parent LOD Object",
+        description = "Name of the LOD object to parent the new proxy to"
+    )
+    path: bpy.props.StringProperty (
+        name = "Proxy Path",
+        description = "Proxy file path to assign to new proxy object"
+    )
     
     @classmethod
     def poll(cls, context):
-        obj = context.active_object
-        return obj and obj.type == 'MESH' and obj.mode == 'OBJECT' and obj.parent == None and not obj.a3ob_properties_object_proxy.is_a3_proxy
+        return True
         
     def execute(self, context):
-        obj = context.active_object
+        obj = context.scene.objects.get(self.parent, context.active_object)        
+        if not obj:
+            self.report({'INFO'}, "Cannot add new proxy object without parent")
+            return {'FINISHED'}
+
         proxy_object = proxyutils.create_proxy()
         proxy_object.location = context.scene.cursor.location
         obj.users_collection[0].objects.link(proxy_object)
         proxy_object.parent = obj
         proxy_object.matrix_parent_inverse = obj.matrix_world.inverted()
+        proxy_object.a3ob_properties_object_proxy.proxy_path = self.path
+        return {'FINISHED'}
+
+
+class A3OB_OT_proxy_remove(bpy.types.Operator):
+    """Remove an Arma 3 proxy object from the active object"""
+
+    bl_idname = "a3ob.proxy_remove"
+    bl_label = "Remove Proxy"
+    bl_options = {'REGISTER'}
+
+    obj: bpy.props.StringProperty(
+        name = "Proxy Object",
+        description = "Name of the proxy object to remove"
+    )
+
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    def execute(self, context):
+        obj = context.scene.objects.get(self.obj, context.active_object)
+        if not obj or obj.type != 'MESH' or not obj.a3ob_properties_object_proxy.is_a3_proxy:
+            self.report({'INFO'}, "Cannot remove proxy")
+            return {'FINISHED'}
+        
+        bpy.data.meshes.remove(obj.data)
+
         return {'FINISHED'}
 
 
@@ -33,13 +73,16 @@ class A3OB_OT_paste_common_proxy(bpy.types.Operator):
     
     bl_idname = "a3ob.paste_common_proxy"
     bl_label = "Paste Common Proxy"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER'}
+
+    obj: bpy.props.StringProperty(
+        name = "Proxy Object",
+        description = "Proxy object to assign path to"
+    )
     
     @classmethod
     def poll(cls, context):
-        obj = context.object
-        
-        return obj and obj.type == 'MESH' and obj.a3ob_properties_object_proxy.is_a3_proxy
+        return True
     
     def invoke(self, context, event):
         scene_props = context.scene.a3ob_commons
@@ -66,17 +109,21 @@ class A3OB_OT_paste_common_proxy(bpy.types.Operator):
         layout.template_list("A3OB_UL_common_proxies", "A3OB_proxies_common", scene_props, "proxies", scene_props, "proxies_index")
         
         selection_index = scene_props.proxies_index
-        if selection_index in range(len(scene_props.proxies)):
+        if utils.is_valid_idx(selection_index, scene_props.proxies):
             row = layout.row()
             item = scene_props.proxies[selection_index]
             row.prop(item, "path", text="")
             row.enabled = False
     
     def execute(self, context):
-        obj = context.object
+        obj = context.scene.objects.get(self.obj, context.object)
+        if not obj or obj.type != 'MESH' or not obj.a3ob_properties_object_proxy.is_a3_proxy:
+            self.report({'INFO'}, "No proxy object was selected")
+            return {'FINISHED'}
+
         scene_props = context.scene.a3ob_commons
         
-        if scene_props.proxies_index in range(len(scene_props.proxies)):
+        if utils.is_valid_idx(scene_props.proxies_index, scene_props.proxies):
             new_item = scene_props.proxies[scene_props.proxies_index]
             obj.a3ob_properties_object_proxy.proxy_path = new_item.path
             
@@ -172,7 +219,7 @@ class A3OB_OT_paste_common_namedprop(bpy.types.Operator):
         obj = context.object
         scene_props = context.scene.a3ob_commons
         
-        if scene_props.namedprops_index in range(len(scene_props.namedprops)):
+        if utils.is_valid_idx(scene_props.namedprops_index, scene_props.namedprops):
             new_item = scene_props.namedprops[scene_props.namedprops_index]
             object_props = obj.a3ob_properties_object
             item = object_props.properties.add()
@@ -216,7 +263,7 @@ class A3OB_OT_flags_vertex_remove(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'MESH' and obj.a3ob_properties_object_flags.vertex_index in range(len(obj.a3ob_properties_object_flags.vertex))
+        return obj and obj.type == 'MESH' and utils.is_valid_idx(obj.a3ob_properties_object_flags.vertex_index, obj.a3ob_properties_object_flags.vertex)
         
     def execute(self, context):
         obj = context.object
@@ -241,7 +288,7 @@ class A3OB_OT_flags_vertex_assign(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and obj.a3ob_properties_object_flags.vertex_index in range(len(obj.a3ob_properties_object_flags.vertex))
+        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and utils.is_valid_idx(obj.a3ob_properties_object_flags.vertex_index, obj.a3ob_properties_object_flags.vertex)
     
     def execute(self, context):
         obj = context.object
@@ -261,7 +308,7 @@ class A3OB_OT_flags_vertex_select(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and obj.a3ob_properties_object_flags.vertex_index in range(len(obj.a3ob_properties_object_flags.vertex))
+        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and utils.is_valid_idx(obj.a3ob_properties_object_flags.vertex_index, obj.a3ob_properties_object_flags.vertex)
     
     def execute(self, context):
         obj = context.object
@@ -282,7 +329,7 @@ class A3OB_OT_flags_vertex_deselect(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and obj.a3ob_properties_object_flags.vertex_index in range(len(obj.a3ob_properties_object_flags.vertex))
+        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and utils.is_valid_idx(obj.a3ob_properties_object_flags.vertex_index, obj.a3ob_properties_object_flags.vertex)
     
     def execute(self, context):
         obj = context.object
@@ -345,7 +392,7 @@ class A3OB_OT_flags_face_remove(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'MESH' and obj.a3ob_properties_object_flags.face_index in range(len(obj.a3ob_properties_object_flags.face))
+        return obj and obj.type == 'MESH' and utils.is_valid_idx(obj.a3ob_properties_object_flags.face_index, obj.a3ob_properties_object_flags.face)
         
     def execute(self, context):
         obj = context.object
@@ -370,7 +417,7 @@ class A3OB_OT_flags_face_assign(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and obj.a3ob_properties_object_flags.face_index in range(len(obj.a3ob_properties_object_flags.face))
+        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and utils.is_valid_idx(obj.a3ob_properties_object_flags.face_index, obj.a3ob_properties_object_flags.face)
     
     def execute(self, context):
         obj = context.object
@@ -390,7 +437,7 @@ class A3OB_OT_flags_face_select(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and obj.a3ob_properties_object_flags.face_index in range(len(obj.a3ob_properties_object_flags.face))
+        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and utils.is_valid_idx(obj.a3ob_properties_object_flags.face_index, obj.a3ob_properties_object_flags.face)
     
     def execute(self, context):
         obj = context.object
@@ -411,7 +458,7 @@ class A3OB_OT_flags_face_deselect(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and obj.a3ob_properties_object_flags.face_index in range(len(obj.a3ob_properties_object_flags.face))
+        return obj and obj.type == 'MESH' and obj.mode == 'EDIT' and utils.is_valid_idx(obj.a3ob_properties_object_flags.face_index, obj.a3ob_properties_object_flags.face)
     
     def execute(self, context):
         obj = context.object
@@ -466,12 +513,32 @@ class A3OB_UL_flags_face(bpy.types.UIList):
         layout.label(text=("%08x" % item.get_flag()))
 
 
+class A3OB_UL_proxy_access(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        row = layout.row(align=True)
+        op = row.operator("a3ob.select_object", text="", icon='RESTRICT_SELECT_OFF', emboss=False)
+        op.object_name = item.obj
+        row.label(text=" %s" % item.name)
+    
+    def filter_items(self, context, data, propname):
+        helper_funcs = bpy.types.UI_UL_list
+        flt_flags = []
+        flt_neworder = []
+        
+        sorter = getattr(data, propname)
+        flt_neworder = helper_funcs.sort_items_by_name(sorter, "name")
+        
+        return flt_flags, flt_neworder
+
+
 class A3OB_PT_object_mesh(bpy.types.Panel):
     bl_region_type = 'WINDOW'
     bl_space_type = 'PROPERTIES'
     bl_label = "Object Builder: LOD Properties"
     bl_context = "data"
     bl_options = {'DEFAULT_CLOSED'}
+
+    doc_url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/lod"
     
     @classmethod
     def poll(cls, context):
@@ -479,12 +546,7 @@ class A3OB_PT_object_mesh(bpy.types.Panel):
         return obj and obj.type == 'MESH' and not obj.a3ob_properties_object_proxy.is_a3_proxy
         
     def draw_header(self, context):
-        if not utils.get_addon_preferences().show_info_links:
-            return
-            
-        layout = self.layout
-        row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/lod"
+        utils.draw_panel_header(self)
         
     def draw(self, context):
         obj = context.object
@@ -499,7 +561,7 @@ class A3OB_PT_object_mesh(bpy.types.Panel):
         
         if object_props.is_a3_lod:
             layout.prop(object_props, "lod", text="Type")
-            if int(object_props.lod) in data.lod_resolution_position.keys():
+            if int(object_props.lod) in data.lod_resolution:
                 layout.prop(object_props, "resolution")
 
 
@@ -532,6 +594,49 @@ class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):
         col_operators.operator("a3ob.paste_common_namedprop", icon='PASTEDOWN', text="")
 
 
+class A3OB_PT_object_mesh_proxies(bpy.types.Panel):
+    bl_region_type = 'WINDOW'
+    bl_space_type = 'PROPERTIES'
+    bl_label = "Proxy Access"
+    bl_context = "data"
+    bl_parent_id = "A3OB_PT_object_mesh"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    @classmethod
+    def poll(cls, context):
+        obj = context.object
+        return obj and obj.type == 'MESH' and obj.a3ob_properties_object.is_a3_lod and not obj.a3ob_properties_object_proxy.is_a3_proxy
+    
+    def draw(self, context):
+        layout = self.layout
+        scene_props = context.scene.a3ob_proxy_access
+
+        layout = self.layout
+        row = layout.row()
+        col_list = row.column()
+        col_list.template_list("A3OB_UL_proxy_access", "A3OB_proxy_access", scene_props, "proxies", scene_props, "proxies_index")
+
+        col_operators = row.column(align=True)
+        op_add = col_operators.operator("a3ob.proxy_add", text="", icon='ADD')
+        op_add.parent = context.object.name
+        op_remove = col_operators.operator("a3ob.proxy_remove", text="", icon='REMOVE')
+
+        if not utils.is_valid_idx(scene_props.proxies_index, scene_props.proxies):
+            return
+        
+        proxy = context.scene.objects.get(scene_props.proxies[scene_props.proxies_index].obj)
+        if not proxy:
+            return
+        
+        op_remove.obj = proxy.name
+        proxy_props = proxy.a3ob_properties_object_proxy
+        row_path = col_list.row(align=True)
+        op_common = row_path.operator("a3ob.paste_common_proxy", text="", icon='PASTEDOWN')
+        op_common.obj = proxy.name
+        row_path.prop(proxy_props, "proxy_path", text="", icon='MESH_CUBE')
+        col_list.prop(proxy_props, "proxy_index")
+
+
 class A3OB_PT_object_mesh_flags(bpy.types.Panel):
     bl_region_type = 'WINDOW'
     bl_space_type = 'PROPERTIES'
@@ -539,18 +644,15 @@ class A3OB_PT_object_mesh_flags(bpy.types.Panel):
     bl_context = "data"
     bl_options = {'DEFAULT_CLOSED'}
 
+    doc_url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/flag-groups"
+
     @classmethod
     def poll(cls, context):
         obj = context.object
         return obj and obj.type == 'MESH'
     
     def draw_header(self, context):
-        if not utils.get_addon_preferences().show_info_links:
-            return
-            
-        layout = self.layout
-        row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/flag-groups"
+        utils.draw_panel_header(self)
 
     def draw(self, context):
         pass
@@ -581,7 +683,7 @@ class A3OB_PT_object_mesh_flags_vertex(bpy.types.Panel):
         layout.use_property_split = True
         layout.use_property_decorate = False
         
-        if flag_props.vertex_index in range(len(flag_props.vertex)):
+        if utils.is_valid_idx(flag_props.vertex_index, flag_props.vertex):
             if obj.mode == 'EDIT':
                 row_operators = layout.row(align=True)
                 row_operators.operator("a3ob.flags_vertex_assign")
@@ -628,7 +730,7 @@ class A3OB_PT_object_mesh_flags_face(bpy.types.Panel):
         layout.use_property_split = True
         layout.use_property_decorate = False
         
-        if flag_props.face_index in range(len(flag_props.face)):
+        if utils.is_valid_idx(flag_props.face_index, flag_props.face):
             if obj.mode == 'EDIT':
                 row_operators = layout.row(align=True)
                 row_operators.operator("a3ob.flags_face_assign")
@@ -655,6 +757,8 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
     bl_label = "Object Builder: Proxy Properties"
     bl_context = "data"
     bl_options = {'DEFAULT_CLOSED'}
+
+    doc_url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/proxy"
     
     @classmethod
     def poll(cls, context):
@@ -662,12 +766,7 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
         return obj and obj.type == 'MESH' and obj.a3ob_properties_object_proxy.is_a3_proxy and not obj.a3ob_properties_object.is_a3_lod
         
     def draw_header(self, context):
-        if not utils.get_addon_preferences().show_info_links:
-            return
-            
-        layout = self.layout
-        row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/proxy"
+        utils.draw_panel_header(self)
         
     def draw(self, context):
         obj = context.object
@@ -678,7 +777,14 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
         col_enable = row.column(align=True)
         col_enable.prop(object_props, "is_a3_proxy", text="Is P3D Proxy", toggle=True)
         col_enable.enabled = False
-        col_naming = row.column(align=True)
+        
+        row_select = layout.row(align=True)
+        op = row_select.operator("a3ob.select_object", text="Select Parent LOD", icon='RESTRICT_SELECT_OFF')
+        if obj.parent and obj.parent.type == 'MESH' and obj.parent.a3ob_properties_object.is_a3_lod:
+            op.object_name = obj.parent.name
+            op.identify_lod = False
+        else:
+            row_select.enabled = False
         
         layout.use_property_split = True
         layout.use_property_decorate = False
@@ -687,15 +793,17 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
         row_path = layout.row(align=True)
         row_path.operator("a3ob.paste_common_proxy", text="", icon='PASTEDOWN')
         row_path.prop(object_props, "proxy_path", text="", icon='MESH_CUBE')
-        layout.prop(object_props, "proxy_index", text="")
+        layout.prop(object_props, "proxy_index")
 
 
 class A3OB_PT_object_dtm(bpy.types.Panel):
     bl_region_type = 'WINDOW'
     bl_space_type = 'PROPERTIES'
-    bl_label = "Object Builder: Raster DTM Properties"
+    bl_label = "Object Builder: DTM Properties"
     bl_context = "data"
     bl_options = {'DEFAULT_CLOSED'}
+
+    doc_url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/dtm"
     
     @classmethod
     def poll(cls, context):
@@ -703,12 +811,7 @@ class A3OB_PT_object_dtm(bpy.types.Panel):
         return obj and obj.type == 'MESH' and not obj.a3ob_properties_object_proxy.is_a3_proxy
         
     def draw_header(self, context):
-        if not utils.get_addon_preferences().show_info_links:
-            return
-            
-        layout = self.layout
-        row = layout.row(align=True)
-        row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = "https://mrcmodding.gitbook.io/arma-3-object-builder/properties/raster-dtm"
+        utils.draw_panel_header(self)
         
     def draw(self, context):
         obj = context.object
@@ -721,13 +824,14 @@ class A3OB_PT_object_dtm(bpy.types.Panel):
         
         col_cellsize = layout.column(align=True)
         row_cellsize_source = col_cellsize.row(align=True)
-        row_cellsize_source.prop(object_props, "cellsize_source", text="Raster Spacing", expand=True)
+        row_cellsize_source.prop(object_props, "cellsize_source", text="Cell Size", expand=True)
         if object_props.cellsize_source == 'MANUAL':
             col_cellsize.prop(object_props, "cellsize", text=" ")
         
+        row_type = layout.row(align=True)
+        row_type.prop(object_props, "data_type", expand=True)
+
         col_origin = layout.column(align=True)
-        row_origin = col_origin.row(align=True)
-        row_origin.prop(object_props, "origin", text="Reference Point", expand=True)
         col_origin.prop(object_props, "easting")
         col_origin.prop(object_props, "northing")
         layout.prop(object_props, "nodata")
@@ -735,11 +839,12 @@ class A3OB_PT_object_dtm(bpy.types.Panel):
 
 def menu_func(self, context):
     self.layout.separator()
-    self.layout.operator(A3OB_OT_proxy_add.bl_idname, icon_value=utils.get_icon("op_proxy_add"))
+    self.layout.operator(A3OB_OT_proxy_add.bl_idname, text="Arma 3 Proxy", icon_value=utils.get_icon("op_proxy_add"))
 
 
 classes = (
     A3OB_OT_proxy_add,
+    A3OB_OT_proxy_remove,
     A3OB_OT_paste_common_proxy,
     A3OB_OT_namedprops_add,
     A3OB_OT_namedprops_remove,
@@ -760,12 +865,14 @@ classes = (
     A3OB_UL_common_proxies,
     A3OB_UL_flags_vertex,
     A3OB_UL_flags_face,
+    A3OB_UL_proxy_access,
     A3OB_PT_object_mesh,
     A3OB_PT_object_mesh_namedprops,
+    A3OB_PT_object_mesh_proxies,
+    A3OB_PT_object_proxy,
     A3OB_PT_object_mesh_flags,
     A3OB_PT_object_mesh_flags_vertex,
     A3OB_PT_object_mesh_flags_face,
-    A3OB_PT_object_proxy,
     A3OB_PT_object_dtm
 )
 

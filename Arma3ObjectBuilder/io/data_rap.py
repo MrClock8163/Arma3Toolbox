@@ -5,11 +5,94 @@
 from enum import Enum
 
 from . import binary_handler as binary
-from ..utilities import errors
+
+
+class RAP_Error(Exception):
+    pass
+
+
+class CFG_Formatter():
+    def __init__(self, file):
+        self.indent = 0
+        self.file = file
+    
+    def write(self, value):
+        self.file.write(self.indented(value) + "\n")
+    
+    def indented(self, value):
+        return self.indent * "\t" + value
+    
+    @staticmethod
+    def quoted(value):
+        return "\"%s\"" % value
+    
+    def comment(self, content):
+        self.write("// %s" % content)
+
+    def class_delete(self, name):
+        self.write("del %s;" % name)
+
+    def class_reference(self, name):
+        self.write("class %s;" % name)
+    
+    def class_copy(self, name, parent):
+        self.write("class %s: %s {};" % (name, parent))
+    
+    def class_open(self, name, parent = ""):
+        self.write("class %s%s {" % (name, ": %s" % parent if parent != "" else ""))
+        self.indent += 1
+    
+    def class_close(self):
+        self.indent -= 1
+        self.write("};")
+    
+    def array_open(self, name):
+        self.write("%s[] = {" % name)
+        self.indent += 1
+    
+    def array_flagged_open(self, name):
+        self.write("%s[] += {" % name)
+        self.indent += 1
+    
+    def array_close(self):
+        self.indent -= 1
+        self.write("};")
+    
+    def array_empty(self, name):
+        self.write("%s[] = {};" % name)
+    
+    def array_items(self, values):
+        for item in values[:-1]:
+            self.write(item + ",")
+        
+        self.write(values[-1])
+    
+    def property_string(self, name, value):
+        self.write("%s = %s;" % (name, self.quoted(value)))
+    
+    def property_float(self, name, value):
+        self.write("%s = %f;" % (name, value))
+    
+    def property_int(self, name, value):
+        self.write("%s = %d;" % (name, value))
+    
+    def variable(self, name, value):
+        self.write("%s = %s;" % (name, value))
+    
+    def enum_open(self):
+        self.write("enum {")
+        self.indent += 1
+
+    def enum_close(self):
+        self.indent -= 1
+        self.write("};")
+    
+    def enum_item(self, name, value):
+        self.write("%s = %d;" % (name, value))
 
 
 # Internal data structure to store the read data.
-class Cfg():
+class RAP():
     class EntryType(Enum):
         CLASS = 0
         SCALAR = 1
@@ -50,19 +133,19 @@ class Cfg():
 
     class Entry():
         def __init__(self):
-            self.type = Cfg.EntryType.CLASS
-            self.subtype = Cfg.EntrySubType.NONE
+            self.type = RAP.EntryType.CLASS
+            self.subtype = RAP.EntrySubType.NONE
             self.name = ""
             self.value = ""
 
     class Class():
         def __init__(self):
-            self.type = Cfg.EntryType.CLASS
-            self.subtype = Cfg.EntrySubType.NONE
+            self.type = RAP.EntryType.CLASS
+            self.subtype = RAP.EntrySubType.NONE
             self.name = ""
             self.value = ""
             self.body_offset = 0
-            self.body = Cfg.ClassBody()
+            self.body = RAP.ClassBody()
         
         def __str__(self):
             if self.body:
@@ -71,15 +154,15 @@ class Cfg():
 
     class Scalar():
         def __init__(self):
-            self.type = Cfg.EntryType.SCALAR
-            self.subtype = Cfg.EntrySubType.NONE
+            self.type = RAP.EntryType.SCALAR
+            self.subtype = RAP.EntrySubType.NONE
             self.name = ""
             self.value = ""
 
     class String():
         def __init__(self):
-            self.type = Cfg.EntryType.SCALAR
-            self.subtype = Cfg.EntrySubType.STRING
+            self.type = RAP.EntryType.SCALAR
+            self.subtype = RAP.EntrySubType.STRING
             self.name = ""
             self.value = ""
         
@@ -90,8 +173,8 @@ class Cfg():
 
     class Float():
         def __init__(self):
-            self.type = Cfg.EntryType.SCALAR
-            self.subtype = Cfg.EntrySubType.FLOAT
+            self.type = RAP.EntryType.SCALAR
+            self.subtype = RAP.EntrySubType.FLOAT
             self.name = ""
             self.value = 0.0
         
@@ -102,8 +185,8 @@ class Cfg():
 
     class Long():
         def __init__(self):
-            self.type = Cfg.EntryType.SCALAR
-            self.subtype = Cfg.EntrySubType.LONG
+            self.type = RAP.EntryType.SCALAR
+            self.subtype = RAP.EntrySubType.LONG
             self.name = ""
             self.value = 0
         
@@ -114,8 +197,8 @@ class Cfg():
 
     class Variable():
         def __init__(self):
-            self.type = Cfg.EntryType.SCALAR
-            self.subtype = Cfg.EntrySubType.VARIABLE
+            self.type = RAP.EntryType.SCALAR
+            self.subtype = RAP.EntrySubType.VARIABLE
             self.name = ""
             self.value = ""
         
@@ -126,8 +209,8 @@ class Cfg():
 
     class ArrayBody():
         def __init__(self):
-            self.type = Cfg.EntryType.ARRAY
-            self.subtype = Cfg.EntrySubType.NONE
+            self.type = RAP.EntryType.ARRAY
+            self.subtype = RAP.EntrySubType.NONE
             self.name = ""
             self.value = ""
             self.element_count = 0
@@ -135,11 +218,11 @@ class Cfg():
 
     class Array():
         def __init__(self):
-            self.type = Cfg.EntryType.ARRAY
-            self.subtype = Cfg.EntrySubType.NONE
+            self.type = RAP.EntryType.ARRAY
+            self.subtype = RAP.EntrySubType.NONE
             self.name = ""
             self.value = ""
-            self.body = Cfg.ArrayBody()
+            self.body = RAP.ArrayBody()
             self.flag = None
         
         def __str__(self):
@@ -149,8 +232,8 @@ class Cfg():
 
     class External():
         def __init__(self):
-            self.type = Cfg.EntryType.EXTERN
-            self.subtype = Cfg.EntrySubType.NONE
+            self.type = RAP.EntryType.EXTERN
+            self.subtype = RAP.EntrySubType.NONE
             self.name = ""
             self.value = ""
         
@@ -159,8 +242,8 @@ class Cfg():
 
     class Delete():
         def __init__(self):
-            self.type = Cfg.EntryType.DELETE
-            self.subtype = Cfg.EntrySubType.NONE
+            self.type = RAP.EntryType.DELETE
+            self.subtype = RAP.EntrySubType.NONE
             self.name = ""
             self.value = ""
         
@@ -170,14 +253,14 @@ class Cfg():
     class Root():
         def __init__(self):
             self.enum_offset = 0
-            self.body = Cfg.ClassBody()
+            self.body = RAP.ClassBody()
             self.enums = []
 
 
-class CFGReader():
+class RAP_Reader():
     @classmethod
     def read_entry_class_body(cls, file, body_offset):
-        output = Cfg.ClassBody()
+        output = RAP.ClassBody()
         current_pos = file.tell()
         file.seek(body_offset, 0)
         
@@ -191,7 +274,7 @@ class CFGReader():
     
     @classmethod
     def read_entry_class(cls, file):
-        output = Cfg.Class()
+        output = RAP.Class()
         
         output.name = binary.read_asciiz(file)
         output.body_offset = binary.read_ulong(file)
@@ -201,25 +284,25 @@ class CFGReader():
     
     @classmethod
     def read_entry_value(cls, file, sign):
-        output = Cfg.Scalar()
+        output = RAP.Scalar()
         
         if sign == 0:
-            output = Cfg.String()
+            output = RAP.String()
             output.value = binary.read_asciiz(file)
         
         elif sign == 1:
-            output = Cfg.Float()
+            output = RAP.Float()
             output.value = binary.read_float(file)
         
         elif sign == 2:
-            output = Cfg.Long()
+            output = RAP.Long()
             output.value = binary.read_long(file)
         
         elif sign == 3:
             output = cls.read_entry_array_body(file)
             
         elif sign == 4:
-            output = Cfg.Variable()
+            output = RAP.Variable()
             output.value = binary.read_asciiz(file)
             
         return output
@@ -237,7 +320,7 @@ class CFGReader():
     
     @classmethod
     def read_entry_array_body(cls, file):
-        output = Cfg.ArrayBody()
+        output = RAP.ArrayBody()
         output.element_count = binary.read_compressed_uint(file)
         
         for i in range(output.element_count):
@@ -247,7 +330,7 @@ class CFGReader():
         
     @classmethod
     def read_entry_array(cls, file):
-        output = Cfg.Array()
+        output = RAP.Array()
         output.name = binary.read_asciiz(file)
         output.body = cls.read_entry_array_body(file)
         
@@ -255,7 +338,7 @@ class CFGReader():
     
     @classmethod
     def read_entry_array_flagged(cls, file):
-        output = Cfg.Array()
+        output = RAP.Array()
         output.flag = binary.read_long(file)
         output.name = binary.read_asciiz(file)
         output.body = cls.read_entry_array_body(file)
@@ -264,21 +347,21 @@ class CFGReader():
     
     @classmethod
     def read_entry_class_external(cls, file):
-        output = Cfg.External()
+        output = RAP.External()
         output.name = binary.read_asciiz(file)
         
         return output
     
     @classmethod
     def read_entry_class_delete(cls, file):
-        output = Cfg.Delete()
+        output = RAP.Delete()
         output.name = binary.read_asciiz(file)
         
         return output
     
     @classmethod
     def read_entry(cls, file):
-        output = Cfg.Entry()
+        output = RAP.Entry()
         entry_sign = binary.read_byte(file)
         
         if entry_sign == 0:
@@ -311,33 +394,20 @@ class CFGReader():
         return output
     
     @classmethod
-    def derapify(cls, filepath):
-        output = Cfg.Root()
+    def read_file(cls, filepath):
+        output = RAP.Root()
         
         with open(filepath, "rb") as file:
             try:
-                # Do header validation
-                file.read(4)
+                signature = file.read(4)
+                if signature != b"\x00raP":
+                    raise RAP_Error("Invalid RAP signature: %s" % str(signature))
                 
-                padding1 = binary.read_ulong(file)
-                padding2 = binary.read_ulong(file)
-                
-                if not (padding1 == 0 and padding2 == 8):
-                    padding1 = binary.read_ulong(file)
-                    padding2 = binary.read_ulong(file)
-                       
-                    if not (padding1 == 0 and padding2 == 8):
-                        file.read(4)
-                        padding1 = binary.read_ulong(file)
-                        padding2 = binary.read_ulong(file)
-                        
-                        if not (padding1 == 0 and padding2 == 8):
-                            raise errors.RAPError("Invalid file header padding")
-                
+                file.read(8)
                 output.enum_offset = binary.read_ulong(file)
                 
                 # Body
-                output_body = Cfg.ClassBody()
+                output_body = RAP.ClassBody()
                 output_body.inherits = binary.read_asciiz(file)
                 output_body.entry_count = binary.read_compressed_uint(file)
                 output_body.entries = cls.read_entries(file, output_body.entry_count)
@@ -348,13 +418,13 @@ class CFGReader():
                 file.seek(output.enum_offset)
                 enum_count = binary.read_ulong(file)
                 for i in range(enum_count):
-                    new_item = Cfg.EnumItem()
+                    new_item = RAP.EnumItem()
                     new_item.name = binary.read_asciiz(file)
                     new_item.value = binary.read_ulong(file)
                     output.enums.append(new_item)
                     
                 if file.peek():
-                    raise errors.RAPError("Invalid EOF")
+                    raise RAP_Error("Invalid EOF")
                 
             except:
                 output = None

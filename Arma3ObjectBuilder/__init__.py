@@ -2,7 +2,7 @@ bl_info = {
     "name": "Arma 3 Object Builder",
     "description": "Collection of tools for editing Arma 3 content",
     "author": "MrClock (present add-on), Hans-Joerg \"Alwarren\" Frieden (original ArmaToolbox add-on)",
-    "version": (2, 0, 0),
+    "version": (2, 1, 0),
     "blender": (2, 90, 0),
     "location": "Object Builder panels",
     "warning": "",
@@ -17,15 +17,12 @@ if "bpy" in locals():
     
     importlib.reload(props)
     importlib.reload(ui)
-    importlib.reload(utilities.flags)
+    importlib.reload(flagutils)
 
 else:
     from . import props
     from . import ui
     from .utilities import flags as flagutils
-
-
-import winreg
 
 import bpy
 
@@ -40,7 +37,7 @@ def outliner_enable_update(self, context):
 
 
 class A3OB_OT_prefs_find_a3_tools(bpy.types.Operator):
-    """Find the Arma 3 Tools installation through the registry"""
+    """Find the Arma 3 Tools installation through the Windows registry"""
     
     bl_idname = "a3ob.prefs_find_a3_tools"
     bl_label = "Find Arma 3 Tools"
@@ -52,8 +49,9 @@ class A3OB_OT_prefs_find_a3_tools(bpy.types.Operator):
     
     def execute(self, context):
         try:
-            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"software\bohemia interactive\arma 3 tools")
-            value, _type = winreg.QueryValueEx(key, "path")
+            from winreg import OpenKey, QueryValueEx, HKEY_CURRENT_USER
+            key = OpenKey(HKEY_CURRENT_USER, r"software\bohemia interactive\arma 3 tools")
+            value, _type = QueryValueEx(key, "path")
             prefs = context.preferences.addons["Arma3ObjectBuilder"].preferences
             prefs.a3_tools = value
             
@@ -211,6 +209,10 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         name = "Preserve Faulty Output",
         description = "Preserve the .temp files if an export failed (could be useful to attach to a bug report)"
     )
+    create_backups: bpy.props.BoolProperty(
+        name = "Create Backups",
+        description = "When overwriting an existing output file, create a backup copy (.bak) of the original"
+    )
     icon_theme: bpy.props.EnumProperty(
         name = "Icon Theme",
         description = "Color theme of custom icons",
@@ -241,16 +243,6 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         description = "Root directory of the project (should be P:\ for most cases)",
         default = "P:\\",
         subtype = 'DIR_PATH'
-    )
-    export_relative: bpy.props.BoolProperty(
-        name = "Export Relative",
-        description = "Export file paths as relative to the project root",
-        default = True
-    )
-    import_absolute: bpy.props.BoolProperty(
-        name = "Reconstruct Absolute Paths",
-        description = "Attempt to reconstruct absolute file paths during import (based on the project root)",
-        default = True
     )
     custom_data: bpy.props.StringProperty(
         name = "Custom Data",
@@ -286,6 +278,7 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         if self.tabs == 'GENERAL':
             box.prop(self, "show_info_links")
             box.prop(self, "preserve_faulty_output")
+            box.prop(self, "create_backups")
             row_theme = box.row(align=True)
             row_theme.prop(self, "icon_theme", expand=True)
             row_outliner = box.row(align=True)
@@ -296,8 +289,6 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
             row_a3_tools.prop(self, "a3_tools", icon='TOOL_SETTINGS')
             row_a3_tools.operator("a3ob.prefs_find_a3_tools", text="", icon='VIEWZOOM')
             box.prop(self, "project_root", icon='DISK_DRIVE')
-            box.prop(self, "export_relative")
-            box.prop(self, "import_absolute")
             box.prop(self, "custom_data", icon='PRESET')
         
         elif self.tabs == 'DEFAULTS':
@@ -322,11 +313,14 @@ modules = (
     props.object,
     props.material,
     props.scene,
+    props.action,
+    ui.props_action,
     ui.props_object_mesh,
-    ui.props_object_armature,
     ui.props_material,
     ui.import_export_p3d,
     ui.import_export_rtm,
+    ui.import_export_mcfg,
+    ui.import_export_armature,
     ui.import_export_asc,
     ui.tool_outliner,
     ui.tool_mass,
@@ -334,11 +328,10 @@ modules = (
     ui.tool_paths,
     ui.tool_proxies,
     ui.tool_validation,
-    ui.tool_rtm,
-    ui.tool_conversion,
     ui.tool_color,
-    ui.tool_weights,
-    ui.tool_utilities
+    ui.tool_rigging,
+    ui.tool_utilities,
+    ui.tool_scripts
 )
 
 

@@ -1,146 +1,9 @@
-# Backend functions of the weight painting tools.
+# Backend functions of the rigging painting tools.
 
 
-import os
-import tempfile
-import subprocess
+import bpy
 
-import bmesh
-
-from ..io import import_rap as rap
 from . import generic as utils
-
-
-class Bone():
-    def __init__(self):
-        self.name = ""
-        self.parent = ""
-    
-    def __eq__(self, other):
-        return isinstance(other, Bone) and self.name.lower() == other.name.lower()
-    
-    def __hash__(self):
-        return hash(self.name)
-    
-    def __repr__(self):
-        return "\"%s\"" % self.name
-
-
-# The model.cfg reading is dependent on the import_rap module,
-# so the model configs first needs to be rapified by the Arma 3 Tools.
-# Binary reading is far more reliable, and less messy than trying to
-# parse either the raw config syntax, or the XML output of cfgconvert.
-def cfgconvert(filepath, exepath):
-    current_dir = os.getcwd()
-    
-    if os.path.exists("P:\\"):
-        os.chdir("P:\\")
-    
-    destfile = tempfile.NamedTemporaryFile(mode="w+b", prefix="mcfg_", delete=False)
-    destfile.close()
-    
-    try:
-        results = subprocess.run([exepath, "-bin", "-dst", destfile.name, filepath], capture_output=True)
-        results.check_returncode()
-    except:
-        os.chdir(current_dir)
-        os.remove(destfile.name)
-        return ""
-        
-    os.chdir(current_dir)
-    
-    return destfile.name
-
-
-# Derapify the previously converted model.cfg.
-def read_mcfg(filepath, exepath):
-    temppath = cfgconvert(filepath, exepath)
-    
-    if temppath == "":
-        return None
-    
-    data = rap.CFGReader.derapify(temppath)
-    
-    os.remove(temppath)
-    
-    return data
-
-
-# Since the config syntax supports class inheritance, as well as
-# some additional annoying ways to combine skeletons in model.cfg files,
-# the inheritance tree has to be traversed to query properties.
-def get_prop_compiled(mcfg, classname, propname):
-    entry = mcfg.body.find(classname)
-    if not entry or entry.type != rap.Cfg.EntryType.CLASS:
-        return None
-    
-    prop = entry.body.find(propname)
-    if prop:
-        return prop.value
-    
-    if entry.body.inherits == "":
-        return None
-        
-    return get_prop_compiled(mcfg, entry.body.inherits, propname)
-
-
-# Like properties, bones can be inherited from other skeletons with the
-# skeletonInherit property, so the inheritance tree has to traversed again.
-def get_bones_compiled(mcfg, skeleton_name):
-    cfg_skeletons = mcfg.body.find("CfgSkeletons")
-    output = []
-    
-    if not cfg_skeletons or cfg_skeletons.type != rap.Cfg.EntryType.CLASS:
-        return []
-        
-    skeleton = cfg_skeletons.body.find(skeleton_name)
-    if not skeleton or skeleton.type != rap.Cfg.EntryType.CLASS:
-        return []
-    
-    inherit_bones = get_prop_compiled(cfg_skeletons, skeleton_name, "skeletonInherit")
-    if not inherit_bones:
-        inherit_bones = ""
-    
-    bones_self = get_bones(skeleton)
-    bones_inherit = []
-    
-    if not skeleton.body.find("skeletonBones") and skeleton.body.inherits != "":
-        parent = cfg_skeletons.body.find(skeleton.body.inherits)
-        if parent:
-            bones_self = get_bones(parent)
-        
-    if inherit_bones != "":
-        bones_inherit = get_bones_compiled(mcfg, inherit_bones)
-    
-    output = bones_self + bones_inherit
-        
-    return list(set(output))
-
-
-def get_bones(skeleton):
-    if skeleton.type == rap.Cfg.EntryType.EXTERN:
-        return []
-    
-    bones = skeleton.body.find("skeletonBones")
-    if not bones:
-        return []
-
-    output = []
-    for i in range(0, bones.body.element_count, 2):
-        new_bone = Bone()
-        new_bone.name = bones.body.elements[i].value
-        new_bone.parent = bones.body.elements[i + 1].value
-        output.append(new_bone)
-        
-    return output
-    
-
-def get_skeletons(mcfg):
-    skeletons = mcfg.body.find("CfgSkeletons")
-    if skeletons:
-        return skeletons.body.entries
-    
-    return []
 
 
 # It's easier to prepare a list of the vertex group indices that
@@ -272,3 +135,56 @@ def cleanup(obj, bone_indices, threshold):
     verts_normalized = normalize_weights(obj, bone_indices)
     
     return max(verts_prune_selection, verts_prune_overdetermined, verts_normalized)
+
+
+def bones_from_armature(obj):
+    return [(bone.name, bone.parent.name if bone.parent else "") for bone in obj.pose.bones]
+
+
+def bone_order_from_skeleton(skeleton):
+    if len(skeleton.bones) == 0:
+        return {}
+    
+    bones = {}
+    for i in range(len(skeleton.bones)):
+        for item in skeleton.bones:
+            if item.name in bones or item.parent != "" and item.parent not in bones:
+                continue
+            
+            bones[item.name] = item.parent
+
+        if len(bones) == len(skeleton.bones):
+            return bones
+    
+    return None
+    
+
+def pivots_from_armature(obj, bones_parents):    
+    bone_map = {item.lower(): item for item in bones_parents}
+
+    mesh = bpy.data.meshes.new("%s pivots" % obj.name)
+    pivots = bpy.data.objects.new("%s pivots" % obj.name, mesh)
+    pivots.matrix_world = obj.matrix_world
+
+    pivots_coords = {}
+    for bone in obj.data.bones:
+        if bone.name.lower() not in bone_map:
+            continue
+        
+        pivots_coords[bone_map[bone.name.lower()]] = tuple(bone.head_local)
+
+    mesh.from_pydata(list(pivots_coords.values()), [], [])
+
+    for i, item in enumerate(pivots_coords):
+        group = pivots.vertex_groups.new(name=item)
+        group.add([i], 1, 'REPLACE')
+    
+    pivots_props = pivots.a3ob_properties_object
+    pivots_props.lod = '9'
+    pivots_props.is_a3_lod = True
+
+    prop = pivots_props.properties.add()
+    prop.name = "autocenter"
+    prop.value = "0"
+
+    return pivots

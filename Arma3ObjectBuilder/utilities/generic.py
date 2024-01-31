@@ -1,7 +1,6 @@
 # Utility functions not exclusively related to a specific tool.
 
 
-import math
 import os
 import json
 from contextlib import contextmanager
@@ -42,6 +41,18 @@ def get_addon_preferences():
     return bpy.context.preferences.addons["Arma3ObjectBuilder"].preferences
 
 
+def is_valid_idx(index, subscriptable):
+    return 0 <= index < len(subscriptable)
+
+
+def draw_panel_header(panel):
+    if not get_addon_preferences().show_info_links:
+        return
+        
+    row = panel.layout.row(align=True)
+    row.operator("wm.url_open", text="", icon='HELP', emboss=False).url = panel.doc_url
+
+
 @contextmanager
 def edit_bmesh(obj, loop_triangles = False, destructive = False):
     mesh = obj.data
@@ -60,6 +71,61 @@ def edit_bmesh(obj, loop_triangles = False, destructive = False):
             bm.free()
 
 
+@contextmanager
+def query_bmesh(obj):
+    mesh = obj.data
+    if obj.mode == 'EDIT':
+        try:
+            bm = bmesh.from_edit_mesh(mesh)
+            yield bm
+        finally:
+            bm.free()
+    else:
+        try:
+            bm = bmesh.new()
+            bm.from_mesh(mesh)
+            yield bm
+        finally:
+            bm.free()
+
+
+class OutputManager():
+    def __init__(self, filepath, mode = "w"):
+        self.filepath = filepath
+        self.temppath = filepath + ".temp"
+        self.mode = mode
+        self.file = None
+        self.success = False
+
+    def __enter__(self):
+        file = open(self.temppath, self.mode)
+        self.file = file
+
+        return file
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        self.file.close()
+        addon_prefs = get_addon_preferences()
+
+        if self.success:
+            if os.path.isfile(self.filepath) and addon_prefs.create_backups:
+                self.force_rename(self.filepath, self.filepath + ".bak")
+
+            self.force_rename(self.temppath, self.filepath)
+        
+        elif not addon_prefs.preserve_faulty_output:
+            os.remove(self.temppath)
+        
+        return False
+    
+    @staticmethod
+    def force_rename(old, new):
+        if os.path.isfile(new):
+            os.remove(new)
+        
+        os.rename(old, new)
+
+
 def get_components(mesh):
     mesh.calc_loop_triangles()
     components = meshutils.mesh_linked_triangles(mesh)
@@ -76,25 +142,6 @@ def get_components(mesh):
     components.extend([[] for i in range(len(loose))])
     
     return component_lookup, components
-
-
-def normalize_float(number, precision = 4):
-    if number == 0:
-        return 0.0, 1
-    
-    base10 = math.log10(abs(number))
-    exponent = abs(math.floor(base10))
-    fraction = round(number / 10**exponent, precision)
-    
-    correction = 0
-    if fraction >= 10.0: # Rounding after normalization may break the normalization (eg: 9.99999 -> 10.0000)
-        fraction, correction = normalize_float(fraction, precision)
-
-    return round(fraction, precision), exponent + correction
-
-
-def floor(number, precision = 0):
-    return round(math.floor(number * 10**precision) / 10**precision, precision)
 
 
 def force_mode_object():
@@ -125,9 +172,6 @@ def replace_slashes(path):
 def restore_absolute(path, extension = ""):
     path = replace_slashes(path.strip().lower())
     addon_prefs = get_addon_preferences()
-    
-    if not addon_prefs.import_absolute:
-        return path
     
     if path == "":
         return ""
@@ -171,6 +215,14 @@ def format_path(path, root = "", to_relative = True, extension = True):
     return path
 
 
+def get_addon_directory():
+    return os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
+
+
+def get_cfg_convert():
+    return os.path.join(get_addon_preferences().a3_tools, "cfgconvert/cfgconvert.exe")
+
+
 def get_common(name):
     prefs = get_addon_preferences()
     custom_path = abspath(prefs.custom_data)
@@ -208,7 +260,7 @@ def get_icon(name):
 def register_icons():
     import bpy.utils.previews
     
-    themes_dir = os.path.join(os.path.dirname(__file__), "..\icons")
+    themes_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../icons"))
     for theme in os.listdir(themes_dir):
         theme_icons = bpy.utils.previews.new()
         

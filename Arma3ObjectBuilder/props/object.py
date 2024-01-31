@@ -1,6 +1,7 @@
 import os
 
 import bpy
+from bpy.app.handlers import persistent
 
 from ..utilities import generic as utils
 from ..utilities import masses as massutils
@@ -159,9 +160,6 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
     def get_name(self):
         return lodutils.format_lod_name(int(self.lod), self.resolution)
 
-    def get_signature(self):
-        return lodutils.get_lod_signature(int(self.lod), self.resolution)
-
 
 class A3OB_PG_properties_object_flags(bpy.types.PropertyGroup):
     vertex: bpy.props.CollectionProperty(
@@ -199,11 +197,11 @@ class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
         update = proxy_name_update
     )
     
-    def to_placeholder(self):
+    def to_placeholder(self, relative):
         addon_prefs = utils.get_addon_preferences()
 
-        path = utils.format_path(utils.abspath(self.proxy_path), utils.abspath(addon_prefs.project_root), addon_prefs.export_relative, False)
-        if len(path) > 0 and path[0] != "\\":
+        path = utils.format_path(utils.abspath(self.proxy_path), utils.abspath(addon_prefs.project_root), relative, False)
+        if relative and len(path) > 0 and path[0] != "\\":
             path = "\\" + path
         
         return path, self.proxy_index
@@ -219,14 +217,14 @@ class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
 
 
 class A3OB_PG_properties_object_dtm(bpy.types.PropertyGroup):
-    origin: bpy.props.EnumProperty(
-        name = "Origin",
-        description = "Origin point of DTM mesh",
+    data_type: bpy.props.EnumProperty(
+        name = "Data Type",
+        description = "Type of data arrengement",
         items = (
-            ('CENTER', "Center", "Center of the lower left cell"),
-            ('CORNER', "Corner", "Lower left corner of the lower left cell")
+            ('RASTER', "Raster", "Data points are cell centered"),
+            ('GRID', "Grid", "Data points are on cell corners")
         ),
-        default = 'CORNER'
+        default = 'GRID'
     )
     easting: bpy.props.FloatProperty(
         name = "Easting",
@@ -241,16 +239,16 @@ class A3OB_PG_properties_object_dtm(bpy.types.PropertyGroup):
     )
     cellsize_source: bpy.props.EnumProperty(
         name = "Source",
-        description = "Source of raster spacing",
+        description = "Source of cell size",
         items = (
-            ('MANUAL', "Manual", "The raster spacing is explicitly set"),
-            ('CALCULATED', "Calculated", "The raster spacing is from the distance of the first 2 points of the gird")
+            ('MANUAL', "Manual", "The cell size is explicitly set"),
+            ('CALCULATED', "Calculated", "The cell size is from the distance of the first 2 points of the gird")
         ),
         default = 'MANUAL'
     )
     cellsize: bpy.props.FloatProperty(
-        name = "Raster Spacing",
-        description = "Horizontal and vertical spacing between raster points",
+        name = "Cell Size",
+        description = "Horizontal and vertical space between raster points",
         unit = 'LENGTH',
         default = 1.0
     )
@@ -261,34 +259,28 @@ class A3OB_PG_properties_object_dtm(bpy.types.PropertyGroup):
     )
 
 
-class A3OB_PG_properties_keyframe(bpy.types.PropertyGroup):
-    index: bpy.props.IntProperty(name="Frame Index", description="Index of the keyframe to export")
+@persistent
+def depsgraph_update_post_handler(scene, depsgraph):  
+    scene_props = scene.a3ob_proxy_access
 
+    obj = None
+    try:
+        obj = bpy.context.object
+    except:
+        pass
+    
+    if not obj or obj.type != 'MESH' or not obj.a3ob_properties_object.is_a3_lod:
+        scene_props.proxies_index = -1
+        return
 
-class A3OB_PG_properties_object_armature(bpy.types.PropertyGroup):
-    motion_source: bpy.props.EnumProperty(
-        name = "Motion Source",
-        description = "Source of motion vector",
-        items = (
-            ('MANUAL', "Manual", "The motion vector is explicitly set"),
-            ('CALCULATED', "Calculated", "The motion vector is calculated from the motion of a specific bone during the animation")
-        ),
-        default = 'MANUAL'
-    )
-    motion_vector: bpy.props.FloatVectorProperty(
-        name = "Motion Vector",
-        description = "Total motion done during the animation",
-        default = (0, 0, 0),
-        subtype = 'XYZ',
-        unit = 'LENGTH'
-    )
-    motion_bone: bpy.props.StringProperty(name="Reference Bone", description="Bone to track for motion calculation")
-    frames: bpy.props.CollectionProperty(
-        name = "RTM keyframes",
-        description = "List of keyframes to export to RTM",
-        type = A3OB_PG_properties_keyframe
-    )
-    frames_index: bpy.props.IntProperty(name="Active Keyrame Index")
+    scene_props.proxies.clear()
+    for child in obj.children:
+        if child.type != 'MESH' or not child.a3ob_properties_object_proxy.is_a3_proxy:
+            continue
+        
+        item = scene_props.proxies.add()
+        item.obj = child.name
+        item.name = child.a3ob_properties_object_proxy.get_name()
 
 
 classes = (
@@ -298,9 +290,7 @@ classes = (
     A3OB_PG_properties_object_mesh,
     A3OB_PG_properties_object_flags,
     A3OB_PG_properties_object_proxy,
-    A3OB_PG_properties_object_dtm,
-    A3OB_PG_properties_keyframe,
-    A3OB_PG_properties_object_armature
+    A3OB_PG_properties_object_dtm
 )
 
 
@@ -312,7 +302,6 @@ def register():
     bpy.types.Object.a3ob_properties_object_flags = bpy.props.PointerProperty(type=A3OB_PG_properties_object_flags)
     bpy.types.Object.a3ob_properties_object_proxy = bpy.props.PointerProperty(type=A3OB_PG_properties_object_proxy)
     bpy.types.Object.a3ob_properties_object_dtm = bpy.props.PointerProperty(type=A3OB_PG_properties_object_dtm)
-    bpy.types.Object.a3ob_properties_object_armature = bpy.props.PointerProperty(type=A3OB_PG_properties_object_armature)
     bpy.types.Object.a3ob_selection_mass = bpy.props.FloatProperty( # Can't be in property group due to reference requirements
         name = "Current Mass",
         description = "Total mass of current selection",
@@ -325,13 +314,16 @@ def register():
         get = massutils.get_selection_mass,
         set = massutils.set_selection_mass
     )
+
+    bpy.app.handlers.depsgraph_update_post.append(depsgraph_update_post_handler)
     
     print("\t" + "Properties: object")
 
 
 def unregister():
+    bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update_post_handler)
+
     del bpy.types.Object.a3ob_selection_mass
-    del bpy.types.Object.a3ob_properties_object_armature
     del bpy.types.Object.a3ob_properties_object_dtm
     del bpy.types.Object.a3ob_properties_object_proxy
     del bpy.types.Object.a3ob_properties_object_flags

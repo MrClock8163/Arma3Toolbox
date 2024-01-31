@@ -3,7 +3,6 @@
 # in the data_p3d module.
 
 
-import math
 import time
 import os
 
@@ -33,11 +32,11 @@ def categorize_lods(operator, context, mlod):
     
     if operator.groupby == 'NONE':
         categories["None"] = [0, root]
-        lods = [[*lodutils.get_lod_id(lod.resolution), 0] for lod in mlod.lods]
+        lods = [[*lod.resolution.get(), 0] for lod in mlod.lods]
 
     else:
         for lod in mlod.lods:
-            lod_index, lod_resolution = lodutils.get_lod_id(lod.resolution)
+            lod_index, lod_resolution = lod.resolution.get()
             group_dict = data.lod_groups[operator.groupby]
             group_name = group_dict[lod_index]
 
@@ -51,7 +50,7 @@ def categorize_lods(operator, context, mlod):
     return [cat[1] for cat in categories.values()], lods
 
 
-def create_blender_materials(lookup):
+def create_blender_materials(lookup, absolute):
     materials = []
     
     for texture, material in lookup.keys():
@@ -60,7 +59,7 @@ def create_blender_materials(lookup):
             material_name = "P3D: no material"
             
         new_mat = bpy.data.materials.new(material_name)
-        new_mat.a3ob_properties_material.from_p3d(texture.strip(), material.strip())
+        new_mat.a3ob_properties_material.from_p3d(texture.strip(), material.strip(), absolute)
         materials.append(new_mat)
         
     return materials
@@ -251,7 +250,7 @@ def process_proxies(operator, obj, proxy_lookup, empty_material):
             
             path, index = proxy_lookup[vgroup.name]
             proxy_obj.vertex_groups.remove(vgroup)
-            proxy_obj.a3ob_properties_object_proxy.proxy_path = utils.restore_absolute(path, ".p3d")
+            proxy_obj.a3ob_properties_object_proxy.proxy_path = utils.restore_absolute(path, ".p3d") if operator.absolute_paths else path
             proxy_obj.a3ob_properties_object_proxy.proxy_index = index
 
             proxy_obj.a3ob_properties_object_flags.vertex.clear()
@@ -284,7 +283,7 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
 
     logger.step("File report:")
     logger.log("Name: %s" % lod_name)
-    logger.log("Signature: %d" % lod.resolution)
+    logger.log("Signature: %d" % lod.resolution.source)
     logger.log("Type: P3DM")
     logger.log("Version: 28.256")
     logger.log("Vertices: %d" % len(lod.verts))
@@ -295,8 +294,6 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
     logger.step("Processing data:")
     
     mesh = bpy.data.meshes.new(lod_name)
-    mesh.use_auto_smooth = True
-    mesh.auto_smooth_angle = math.radians(180)
     
     mesh.from_pydata(*lod.pydata())
     mesh.update(calc_edges=True)
@@ -314,11 +311,13 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
         
     object_props.resolution = lod_resolution
 
+    if lod_index not in data.lod_shadows:
+        for face in mesh.polygons:
+            face.use_smooth = True
+        mesh.use_auto_smooth = True
+        mesh.auto_smooth_angle = 3.141592654
     
-    for face in mesh.polygons:
-        face.use_smooth = True
-    
-    if 'NORMALS' in operator.additional_data:
+    if 'NORMALS' in operator.additional_data and lod_index in data.lod_visuals:
         if process_normals(mesh, lod):
             logger.log("Applied split normals")
         else:
@@ -349,7 +348,7 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
         process_materials(mesh, bm, lod, materials, materials_lookup)
         logger.log("Assigned materials")
     
-    if 'MASS' in operator.additional_data:
+    if lod_index == 6 and 'MASS' in operator.additional_data:
         process_mass(bm, lod)
         logger.log("Added vertex masses")
     
@@ -421,7 +420,7 @@ def read_file(operator, context, file):
     materials_lookup = None
     if 'MATERIALS' in operator.additional_data:
         materials_lookup = mlod.get_materials()
-        materials = create_blender_materials(materials_lookup)
+        materials = create_blender_materials(materials_lookup, operator.absolute_paths)
         logger.log("Number of unique materials: %d" % len(materials))
     
     logger.log("Processing mesh data:")
@@ -439,6 +438,6 @@ def read_file(operator, context, file):
 
     logger.level_down()
 
-    print("P3D import finished in %f sec" % (time.time() - time_file_start))
+    logger.step("P3D import finished in %f sec" % (time.time() - time_file_start))
     
     return lod_objects

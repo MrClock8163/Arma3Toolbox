@@ -21,6 +21,11 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         default = "*.p3d",
         options = {'HIDDEN'}
     )
+    absolute_paths: bpy.props.BoolProperty(
+        name = "Absolute Paths",
+        description = "Try to restore absolute paths by appending the read path to the project root",
+        default = True
+    )
     enclose: bpy.props.BoolProperty(
         name = "Enclose In Collection",
         description = "Enclose LODs in collection named after the original file",
@@ -82,7 +87,7 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         with open(self.filepath, "rb") as file:
             try:
                 lod_objects = import_p3d.read_file(self, context, file)
-                self.report({'INFO'}, "Succesfully imported %d LODs (check the logs in the system console)" % len(lod_objects))
+                self.report({'INFO'}, "Successfully imported %d LODs (check the logs in the system console)" % len(lod_objects))
             except struct.error as ex:
                 self.report({'ERROR'}, "Unexpected EndOfFile (check the system console)")
                 traceback.print_exc()
@@ -115,6 +120,7 @@ class A3OB_PT_import_p3d_main(bpy.types.Panel):
         operator = sfile.active_operator
         
         layout.prop(operator, "first_lod_only")
+        layout.prop(operator, "absolute_paths")
         layout.prop(operator, "validate_meshes")
 
 
@@ -214,6 +220,11 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         default = "*.p3d",
         options = {'HIDDEN'}
     )
+    relative_paths: bpy.props.BoolProperty(
+        name = "Relative Paths",
+        description = "Try to make file paths relative to the project root (at the very least, the drive letter is stripped)",
+        default = True
+    )
     preserve_normals: bpy.props.BoolProperty(
         name = "Custom Normals",
         description = "Export the custom split edge normals",
@@ -270,31 +281,45 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         pass
     
     def execute(self, context):
-        if export_p3d.can_export(self, context):
-            temppath = self.filepath + ".temp"
-            success = False
-            
-            with open(temppath, "wb") as file:
+        if export_p3d.can_export(self, context):            
+            output = utils.OutputManager(self.filepath, "wb")            
+            with output as file:
                 try:
                     lod_count, exported_count = export_p3d.write_file(self, context, file)
-                    self.report({'INFO'}, "Succesfully exported %d/%d LODs (check the logs in the system console)" % (exported_count, lod_count))
-                    success = True
+                    self.report({'INFO'}, "Successfully exported %d/%d LODs (check the logs in the system console)" % (exported_count, lod_count))
+                    output.success = True
                 except Exception as ex:
                     self.report({'ERROR'}, "%s (check the system console)" % str(ex))
                     traceback.print_exc()
-            
-            if success:
-                if os.path.isfile(self.filepath):
-                    os.remove(self.filepath)
-                    
-                os.rename(temppath, os.path.splitext(temppath)[0])
-            elif not success and not utils.get_addon_preferences().preserve_faulty_output:
-                os.remove(temppath)
                 
         else:
             self.report({'INFO'}, "There are no LODs to export")
         
         return {'FINISHED'}
+
+
+class A3OB_PT_export_p3d_main(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Include"
+    bl_parent_id = "FILE_PT_operator"
+    bl_options = {'HIDE_HEADER'}
+    
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        
+        return operator.bl_idname == "A3OB_OT_export_p3d"
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.prop(operator, "relative_paths")
 
 
 class A3OB_PT_export_p3d_include(bpy.types.Panel):
@@ -411,6 +436,7 @@ classes = (
     A3OB_PT_import_p3d_data,
     A3OB_PT_import_p3d_proxies,
     A3OB_OP_export_p3d,
+    A3OB_PT_export_p3d_main,
     A3OB_PT_export_p3d_include,
     A3OB_PT_export_p3d_meshes,
     A3OB_PT_export_p3d_validate,

@@ -1,60 +1,9 @@
+import os
+
 import bpy
 
 from ..utilities import structure as structutils
 from ..utilities import generic as utils
-
-
-class A3OB_MT_object_builder_topo(bpy.types.Menu):
-    """Object Builder topology functions"""
-    
-    bl_label = "Topology"
-    
-    def draw(self, context):
-        self.layout.operator("a3ob.find_non_closed")
-        self.layout.operator("a3ob.find_components")
-
-
-class A3OB_MT_object_builder_convexity(bpy.types.Menu):
-    """Object Builder convexity functions"""
-    
-    bl_label = "Convexity"
-    
-    def draw(self, context):
-        self.layout.operator("a3ob.find_non_convexities")
-        self.layout.operator("a3ob.convex_hull")
-        self.layout.operator("a3ob.component_convex_hull")
-
-
-class A3OB_MT_object_builder_faces(bpy.types.Menu):
-    """Object Builder face functions"""
-    
-    bl_label = "Faces"
-    
-    def draw(self, context):
-        self.layout.operator("a3ob.move_top")
-        self.layout.operator("a3ob.move_bottom")
-        self.layout.operator("a3ob.recalculate_normals")
-
-
-class A3OB_MT_object_builder_misc(bpy.types.Menu):
-    """Object Builder miscellaneous functions"""
-    
-    bl_label = "Misc"
-    
-    def draw(self, context):
-        self.layout.operator("a3ob.vertex_groups_cleanup")
-
-
-class A3OB_MT_object_builder(bpy.types.Menu):
-    """Arma 3 Object Builder utility functions"""
-    
-    bl_label = "Object Builder"
-    
-    def draw(self, context):
-        self.layout.menu("A3OB_MT_object_builder_topo")
-        self.layout.menu("A3OB_MT_object_builder_convexity")
-        self.layout.menu("A3OB_MT_object_builder_faces")
-        self.layout.menu("A3OB_MT_object_builder_misc")
 
 
 class A3OB_OT_check_convexity(bpy.types.Operator):
@@ -248,6 +197,105 @@ class A3OB_OT_redefine_vertex_group(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class A3OB_OT_open_changelog(bpy.types.Operator):
+    """Open Arma 3 Object Builder add-on changelog"""
+
+    bl_label = "Open Changelog"
+    bl_idname = "a3ob.open_changelog"
+
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    def execute(self, context):
+        path = os.path.join(utils.get_addon_directory(), "CHANGELOG.md")
+        bpy.ops.text.open(filepath=path, internal=True)
+        self.report({'INFO'}, "See CHANGELOG.md text block")
+
+        return {'FINISHED'}
+
+
+class A3OB_MT_object_builder_topo(bpy.types.Menu):
+    """Object Builder topology functions"""
+    
+    bl_label = "Topology"
+    
+    def draw(self, context):
+        self.layout.operator("a3ob.find_non_closed")
+        self.layout.operator("a3ob.find_components")
+
+
+class A3OB_MT_object_builder_convexity(bpy.types.Menu):
+    """Object Builder convexity functions"""
+    
+    bl_label = "Convexity"
+    
+    def draw(self, context):
+        self.layout.operator("a3ob.find_non_convexities")
+        self.layout.operator("a3ob.convex_hull")
+        self.layout.operator("a3ob.component_convex_hull")
+
+
+class A3OB_MT_object_builder_faces(bpy.types.Menu):
+    """Object Builder face functions"""
+    
+    bl_label = "Faces"
+    
+    def draw(self, context):
+        self.layout.operator("a3ob.move_top")
+        self.layout.operator("a3ob.move_bottom")
+        self.layout.operator("a3ob.recalculate_normals")
+
+
+class A3OB_MT_object_builder_misc(bpy.types.Menu):
+    """Object Builder miscellaneous functions"""
+    
+    bl_label = "Misc"
+    
+    def draw(self, context):
+        self.layout.operator("a3ob.vertex_groups_cleanup")
+
+
+class A3OB_MT_object_builder(bpy.types.Menu):
+    """Arma 3 Object Builder utility functions"""
+    
+    bl_label = "Object Builder"
+    
+    def draw(self, context):
+        self.layout.menu("A3OB_MT_object_builder_topo")
+        self.layout.menu("A3OB_MT_object_builder_convexity")
+        self.layout.menu("A3OB_MT_object_builder_faces")
+        self.layout.menu("A3OB_MT_object_builder_misc")
+
+
+class A3OB_MT_vertex_groups(bpy.types.Menu):
+    """Object Builder utility functions"""
+
+    bl_label = "Utilities"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator("a3ob.find_components", icon='STICKY_UVS_DISABLE')
+        layout.operator("a3ob.vertex_group_redefine", icon='FILE_REFRESH')
+        layout.operator("a3ob.vertex_groups_cleanup", icon='TRASH')
+
+
+class A3OB_MT_help(bpy.types.Menu):
+    """Object Builder add-on docs"""
+
+    bl_label = "Object Builder"
+
+    def draw(self, context):
+        layout = self.layout
+
+        layout.operator("wm.url_open", text="Documentation", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/home"
+        layout.operator("wm.url_open", text="Quick Start Reference", icon='URL').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/quick-start-reference"
+        layout.separator()
+        layout.operator("wm.url_open", text="Releases", icon='URL').url = "https://github.com/MrClock8163/Arma3ObjectBuilder/releases"
+        layout.operator("wm.url_open", text="Issue Tracker", icon='URL').url = "https://github.com/MrClock8163/Arma3ObjectBuilder/issues"
+        layout.operator("a3ob.open_changelog", text="Changelog", icon='TEXT')
+
+
 classes = (
     A3OB_OT_check_convexity,
     A3OB_OT_check_closed,
@@ -259,26 +307,34 @@ classes = (
     A3OB_OT_recalculate_normals,
     A3OB_OT_cleanup_vertex_groups,
     A3OB_OT_redefine_vertex_group,
+    A3OB_OT_open_changelog,
     A3OB_MT_object_builder,
     A3OB_MT_object_builder_topo,
     A3OB_MT_object_builder_faces,
     A3OB_MT_object_builder_convexity,
-    A3OB_MT_object_builder_misc
+    A3OB_MT_object_builder_misc,
+    A3OB_MT_vertex_groups,
+    A3OB_MT_help
 )
 
 
 def menu_func(self, context):
     self.layout.separator()
-    self.layout.menu("A3OB_MT_object_builder")
+    col = self.layout.column()
+    col.ui_units_x = 5.2
+    col.menu("A3OB_MT_object_builder", icon_value=utils.get_icon("addon"))
 
 
 def vertex_groups_func(self, context):
     layout = self.layout
     row = layout.row(align=True)
     row.alignment = 'RIGHT'
-    row.operator("a3ob.find_components", text="", icon='STICKY_UVS_DISABLE')
-    row.operator("a3ob.vertex_group_redefine", text="", icon='PASTEDOWN')
-    row.operator("a3ob.vertex_groups_cleanup", text="", icon='TRASH')
+    row.menu("A3OB_MT_vertex_groups", text="", icon_value=utils.get_icon("addon"))
+
+
+def menu_help_func(self, context):
+    self.layout.separator()
+    self.layout.menu("A3OB_MT_help", icon_value=utils.get_icon("addon"))
 
 
 def register():
@@ -289,13 +345,15 @@ def register():
     
     bpy.types.VIEW3D_MT_editor_menus.append(menu_func)
     bpy.types.DATA_PT_vertex_groups.append(vertex_groups_func)
+    bpy.types.TOPBAR_MT_help.append(menu_help_func)
     
     print("\t" + "UI: Utility functions")
 
 
 def unregister():
     from bpy.utils import unregister_class
-            
+
+    bpy.types.TOPBAR_MT_help.remove(menu_help_func)
     bpy.types.DATA_PT_vertex_groups.remove(vertex_groups_func)
     bpy.types.VIEW3D_MT_editor_menus.remove(menu_func)
 
