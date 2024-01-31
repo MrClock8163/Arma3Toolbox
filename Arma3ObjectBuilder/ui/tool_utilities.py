@@ -1,3 +1,5 @@
+import os
+
 import bpy
 
 from ..utilities import structure as structutils
@@ -195,6 +197,24 @@ class A3OB_OT_redefine_vertex_group(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class A3OB_OT_open_changelog(bpy.types.Operator):
+    """Open Arma 3 Object Builder add-on changelog"""
+
+    bl_label = "Open Changelog"
+    bl_idname = "a3ob.open_changelog"
+
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    def execute(self, context):
+        path = os.path.join(utils.get_addon_directory(), "CHANGELOG.md")
+        bpy.ops.text.open(filepath=path, internal=True)
+        self.report({'INFO'}, "See CHANGELOG.md text block")
+
+        return {'FINISHED'}
+
+
 class A3OB_MT_object_builder_topo(bpy.types.Menu):
     """Object Builder topology functions"""
     
@@ -260,6 +280,22 @@ class A3OB_MT_vertex_groups(bpy.types.Menu):
         layout.operator("a3ob.vertex_groups_cleanup", icon='TRASH')
 
 
+class A3OB_MT_help(bpy.types.Menu):
+    """Object Builder add-on docs"""
+
+    bl_label = "Object Builder"
+
+    def draw(self, context):
+        layout = self.layout
+
+        layout.operator("wm.url_open", text="Documentation", icon='HELP').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/home"
+        layout.operator("wm.url_open", text="Quick Start Reference", icon='URL').url = "https://mrcmodding.gitbook.io/arma-3-object-builder/quick-start-reference"
+        layout.separator()
+        layout.operator("wm.url_open", text="Releases", icon='URL').url = "https://github.com/MrClock8163/Arma3ObjectBuilder/releases"
+        layout.operator("wm.url_open", text="Issue Tracker", icon='URL').url = "https://github.com/MrClock8163/Arma3ObjectBuilder/issues"
+        layout.operator("a3ob.open_changelog", text="Changelog", icon='TEXT')
+
+
 classes = (
     A3OB_OT_check_convexity,
     A3OB_OT_check_closed,
@@ -271,12 +307,14 @@ classes = (
     A3OB_OT_recalculate_normals,
     A3OB_OT_cleanup_vertex_groups,
     A3OB_OT_redefine_vertex_group,
+    A3OB_OT_open_changelog,
     A3OB_MT_object_builder,
     A3OB_MT_object_builder_topo,
     A3OB_MT_object_builder_faces,
     A3OB_MT_object_builder_convexity,
     A3OB_MT_object_builder_misc,
-    A3OB_MT_vertex_groups
+    A3OB_MT_vertex_groups,
+    A3OB_MT_help
 )
 
 
@@ -294,6 +332,11 @@ def vertex_groups_func(self, context):
     row.menu("A3OB_MT_vertex_groups", text="", icon_value=utils.get_icon("addon"))
 
 
+def menu_help_func(self, context):
+    self.layout.separator()
+    self.layout.menu("A3OB_MT_help", icon_value=utils.get_icon("addon"))
+
+
 def register():
     from bpy.utils import register_class
     
@@ -302,13 +345,15 @@ def register():
     
     bpy.types.VIEW3D_MT_editor_menus.append(menu_func)
     bpy.types.DATA_PT_vertex_groups.append(vertex_groups_func)
+    bpy.types.TOPBAR_MT_help.append(menu_help_func)
     
     print("\t" + "UI: Utility functions")
 
 
 def unregister():
     from bpy.utils import unregister_class
-            
+
+    bpy.types.TOPBAR_MT_help.remove(menu_help_func)
     bpy.types.DATA_PT_vertex_groups.remove(vertex_groups_func)
     bpy.types.VIEW3D_MT_editor_menus.remove(menu_func)
 
