@@ -23,6 +23,9 @@ def can_edit_mass(context):
 # and no issues were observed so far (geometry LOD
 # meshes are relatively simple).
 def get_selection_mass(self):
+    if self.type != 'MESH' or self.mode != 'EDIT':
+        return 0
+    
     mesh = self.data
     
     bm = bmesh.from_edit_mesh(mesh)
@@ -41,6 +44,9 @@ def get_selection_mass(self):
 # vertices, then the difference of the sum and the target
 # value is distributed equally to the selected vertices.
 def set_selection_mass(self, value):
+    if self.type != 'MESH' or self.mode != 'EDIT':
+        return
+    
     with utils.edit_bmesh(self) as bm:
     
         layer = bm.verts.layers.float.get("a3ob_mass")
