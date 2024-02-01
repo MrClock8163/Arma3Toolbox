@@ -3,6 +3,91 @@ import bpy
 from ..utilities import generic as utils
 
 
+class A3OB_OT_proxy_vgroup_add(bpy.types.Operator):
+    """Add vertex group to Arma 3 proxy"""
+
+    bl_idname = "a3ob.proxy_vgroups_add"
+    bl_label = "Add Vertex Group"
+    bl_options = {'REGISTER'}
+
+    obj: bpy.props.StringProperty(
+        name = "Proxy Object",
+        description = "Proxy object to add vertex group to"
+    )
+
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    def execute(self, context):
+        obj = context.scene.objects.get(self.obj, context.active_object)
+        if not obj or obj.type != 'EMPTY' or not obj.a3ob_properties_object_proxy.is_a3_proxy:
+            self.report({'INFO'}, "Cannot add vertex group")
+            return {'FINISHED'}
+        
+        obj.a3ob_properties_object_proxy.vgroups.add().name = "Group"
+
+        return {'FINISHED'}
+
+
+class A3OB_OT_proxy_vgroup_remove(bpy.types.Operator):
+    """Remove vertex group from Arma 3 proxy"""
+
+    bl_idname = "a3ob.proxy_vgroups_remove"
+    bl_label = "Remove Vertex Group"
+    bl_options = {'REGISTER'}
+
+    obj: bpy.props.StringProperty(
+        name = "Proxy Object",
+        description = "Proxy object to remove vertex group from"
+    )
+
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    def execute(self, context):
+        obj = context.scene.objects.get(self.obj, context.active_object)
+        if not obj or obj.type != 'EMPTY' or not obj.a3ob_properties_object_proxy.is_a3_proxy:
+            self.report({'ERROR'}, "Object is not proxy")
+            return {'FINISHED'}
+        
+        proxy_props = obj.a3ob_properties_object_proxy
+        if not utils.is_valid_idx(proxy_props.vgroups_index, proxy_props.vgroups):
+            return {'FINISHED'}
+        
+        proxy_props.vgroups.remove(proxy_props.vgroups_index)
+
+        return {'FINISHED'}
+
+
+class A3OB_OT_proxy_vgroup_clear(bpy.types.Operator):
+    """Clear all vertex group from Arma 3 proxy"""
+
+    bl_idname = "a3ob.proxy_vgroups_clear"
+    bl_label = "Clear Vertex Groups"
+    bl_options = {'REGISTER'}
+
+    obj: bpy.props.StringProperty(
+        name = "Proxy Object",
+        description = "Proxy object to clear vertex groups from"
+    )
+
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    def execute(self, context):
+        obj = context.scene.objects.get(self.obj, context.active_object)
+        if not obj or obj.type != 'EMPTY' or not obj.a3ob_properties_object_proxy.is_a3_proxy:
+            self.report({'ERROR'}, "Object is not proxy")
+            return {'FINISHED'}
+        
+        obj.a3ob_properties_object_proxy.vgroups.clear()
+
+        return {'FINISHED'}
+
+
 class A3OB_OT_proxy_add(bpy.types.Operator):
     """Add an Arma 3 proxy object and parent to the active object"""
     
@@ -24,7 +109,7 @@ class A3OB_OT_proxy_add(bpy.types.Operator):
         return True
         
     def execute(self, context):
-        obj = context.scene.objects.get(self.parent, context.active_object)        
+        obj = context.scene.objects.get(self.parent, context.active_object)
         if not obj:
             self.report({'INFO'}, "Cannot add new proxy object without parent")
             return {'FINISHED'}
@@ -36,6 +121,7 @@ class A3OB_OT_proxy_add(bpy.types.Operator):
         proxy_object.parent = obj
         proxy_object.matrix_parent_inverse = obj.matrix_world.inverted()
         proxy_object.a3ob_properties_object_proxy.proxy_path = self.path
+        proxy_object.a3ob_properties_object_proxy.is_a3_proxy = True
         return {'FINISHED'}
 
 
@@ -58,7 +144,7 @@ class A3OB_OT_proxy_remove(bpy.types.Operator):
     def execute(self, context):
         obj = context.scene.objects.get(self.obj, context.active_object)
         if not obj or obj.type != 'EMPTY' or not obj.a3ob_properties_object_proxy.is_a3_proxy:
-            self.report({'INFO'}, "Cannot remove proxy")
+            self.report({'ERROR'}, "Cannot remove proxy")
             return {'FINISHED'}
         
         bpy.data.meshes.remove(obj.data)
@@ -128,6 +214,21 @@ class A3OB_OT_paste_common_proxy(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class A3OB_UL_proxy_vertex_groups(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        layout.prop(item, "name", text="", icon='GROUP_VERTEX', emboss=False)
+    
+    def filter_items(self, context, data, propname):
+        helper_funcs = bpy.types.UI_UL_list
+        flt_flags = []
+        flt_neworder = []
+        
+        sorter = getattr(data, propname)
+        flt_neworder = helper_funcs.sort_items_by_name(sorter, "name")
+        
+        return flt_flags, flt_neworder
+
+
 class A3OB_PT_object_empty_proxy(bpy.types.Panel):
     bl_region_type = 'WINDOW'
     bl_space_type = 'PROPERTIES'
@@ -163,14 +264,21 @@ class A3OB_PT_object_empty_proxy(bpy.types.Panel):
         else:
             row_select.enabled = False
         
-        layout.use_property_split = True
-        layout.use_property_decorate = False
-        
         layout.separator()
         row_path = layout.row(align=True)
         row_path.operator("a3ob.paste_common_proxy", text="", icon='PASTEDOWN')
         row_path.prop(object_props, "proxy_path", text="", icon='MESH_CUBE')
         layout.prop(object_props, "proxy_index")
+
+        row_vgroups = layout.row()
+        col_list = row_vgroups.column()
+        col_list.template_list("A3OB_UL_proxy_vertex_groups", "A3OB_proxy_groups", object_props, "vgroups", object_props, "vgroups_index")
+
+        col_operators = row_vgroups.column(align=True)
+        col_operators.operator("a3ob.proxy_vgroups_add", text="", icon='ADD')
+        col_operators.operator("a3ob.proxy_vgroups_remove", text="", icon='REMOVE')
+        col_operators.separator()
+        col_operators.operator("a3ob.proxy_vgroups_clear", icon='TRASH', text="")
 
 
 def menu_func(self, context):
@@ -179,9 +287,13 @@ def menu_func(self, context):
 
 
 classes = (
+    A3OB_OT_proxy_vgroup_add,
+    A3OB_OT_proxy_vgroup_remove,
+    A3OB_OT_proxy_vgroup_clear,
     A3OB_OT_proxy_add,
     A3OB_OT_proxy_remove,
     A3OB_OT_paste_common_proxy,
+    A3OB_UL_proxy_vertex_groups,
     A3OB_PT_object_empty_proxy,
 )
 

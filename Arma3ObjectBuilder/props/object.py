@@ -34,6 +34,13 @@ class A3OB_PG_properties_named_property(bpy.types.PropertyGroup):
     )
 
 
+class A3OB_PG_properties_vertex_group(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty(
+        name = "Name",
+        description = "Name of the vertex group"
+    )
+
+
 class A3OB_PG_properties_flag_vertex(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Name", description="Name of the vertex flag group")
     surface: bpy.props.EnumProperty(
@@ -195,6 +202,12 @@ class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
         max = 999,
         update = proxy_name_update
     )
+    vgroups: bpy.props.CollectionProperty(
+        name = "Vertex Groups",
+        description = "Selections that the proxy belongs to",
+        type = A3OB_PG_properties_vertex_group
+    )
+    vgroups_index: bpy.props.IntProperty(name="Active Vertex Group Index")
     
     def to_placeholder(self, relative):
         addon_prefs = utils.get_addon_preferences()
@@ -284,6 +297,7 @@ def depsgraph_update_post_handler(scene, depsgraph):
 
 classes = (
     A3OB_PG_properties_named_property,
+    A3OB_PG_properties_vertex_group,
     A3OB_PG_properties_flag_vertex,
     A3OB_PG_properties_flag_face,
     A3OB_PG_properties_object_mesh,
