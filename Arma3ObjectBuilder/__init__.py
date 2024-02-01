@@ -316,6 +316,7 @@ modules = (
     props.action,
     ui.props_action,
     ui.props_object_mesh,
+    ui.props_object_empty,
     ui.props_material,
     ui.import_export_p3d,
     ui.import_export_rtm,

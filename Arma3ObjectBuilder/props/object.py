@@ -17,7 +17,6 @@ def proxy_name_update(self, context):
     name = "proxy: %s" % self.get_name()
     obj = self.id_data
     obj.name = name
-    obj.data.name = name
 
 
 class A3OB_PG_properties_named_property(bpy.types.PropertyGroup):

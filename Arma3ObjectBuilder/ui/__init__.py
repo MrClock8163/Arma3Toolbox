@@ -6,6 +6,7 @@ from . import import_export_rtm
 from . import props_action
 from . import props_material
 from . import props_object_mesh
+from . import props_object_empty
 from . import tool_outliner
 from . import tool_color
 from . import tool_hitpoint
