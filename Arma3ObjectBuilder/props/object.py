@@ -287,7 +287,7 @@ def depsgraph_update_post_handler(scene, depsgraph):
 
     scene_props.proxies.clear()
     for child in obj.children:
-        if child.type != 'MESH' or not child.a3ob_properties_object_proxy.is_a3_proxy:
+        if child.type != 'EMPTY' or not child.a3ob_properties_object_proxy.is_a3_proxy:
             continue
         
         item = scene_props.proxies.add()

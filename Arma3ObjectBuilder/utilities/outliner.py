@@ -20,7 +20,7 @@ def update_outliner(scene):
         item.priority = int(obj.a3ob_properties_object.lod) * 1e5 + obj.a3ob_properties_object.resolution
 
         for child in obj.children:
-            if child.type != 'MESH':
+            if child.type not in ('MESH', 'EMPTY'):
                 continue
                 
             if child.a3ob_properties_object_proxy.is_a3_proxy:
@@ -33,7 +33,7 @@ def update_outliner(scene):
     
     lod = scene.objects[scene_props.lods[scene_props.lods_index].obj]
     for child in lod.children:
-        if child.type != 'MESH' or not child.a3ob_properties_object_proxy.is_a3_proxy:
+        if child.type != 'EMPTY' or not child.a3ob_properties_object_proxy.is_a3_proxy:
             continue
 
         item = scene_props.proxies.add()
