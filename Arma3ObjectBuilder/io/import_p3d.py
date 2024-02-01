@@ -209,6 +209,16 @@ def transform_proxy(obj):
     obj.data.update()
 
 
+def get_proxy_transform(obj):
+    if len(obj.data.vertices) < 3:
+        return mathutils.Matrix(), mathutils.Vector()
+
+    rotation = proxyutils.get_transform_rotation(obj).inverted()
+    translation = proxyutils.find_axis_vertices(obj.data)[0].co
+
+    return rotation, translation
+
+
 def process_proxies(operator, obj, proxy_lookup, empty_material):
     bpy.context.view_layer.objects.active = obj
     bpy.ops.object.mode_set(mode='EDIT')
@@ -241,7 +251,7 @@ def process_proxies(operator, obj, proxy_lookup, empty_material):
         for i, proxy_obj in enumerate(proxy_objects):
             proxy_obj.a3ob_properties_object.is_a3_lod = False
 
-            transform_proxy(proxy_obj)
+            rot, loc = get_proxy_transform(proxy_obj)
             structutils.cleanup_vertex_groups(proxy_obj) # need to remove the unused groups leftover from the separation
 
             vgroup = proxy_obj.vertex_groups.get("@proxy_%d" % i)
@@ -250,28 +260,26 @@ def process_proxies(operator, obj, proxy_lookup, empty_material):
             
             path, index = proxy_lookup[vgroup.name]
             proxy_obj.vertex_groups.remove(vgroup)
-            proxy_obj.a3ob_properties_object_proxy.proxy_path = utils.restore_absolute(path, ".p3d") if operator.absolute_paths else path
-            proxy_obj.a3ob_properties_object_proxy.proxy_index = index
 
-            proxy_obj.a3ob_properties_object_flags.vertex.clear()
-            proxy_obj.a3ob_properties_object_flags.face.clear()
+            proxy_empty = bpy.data.objects.new("proxy", None)
+            proxy_empty.matrix_world @= rot
+            proxy_empty.location += loc
+            proxy_empty.empty_display_type = 'ARROWS'
+            proxy_empty.empty_display_size = 0.5
 
-            bm = bmesh.new()
-            bm.from_mesh(proxy_obj.data)
 
-            flagutils.clear_layer_flags_vertex(bm)
-            flagutils.clear_layer_flags_face(bm)
+            proxy_empty.a3ob_properties_object_proxy.proxy_path = utils.restore_absolute(path, ".p3d") if operator.absolute_paths else path
+            proxy_empty.a3ob_properties_object_proxy.proxy_index = index
 
-            bm.to_mesh(proxy_obj.data)
-            bm.free()
+            for item in proxy_obj.vertex_groups:
+                proxy_empty.a3ob_properties_object_proxy.vgroups.add().name = item.name
+            
+            proxy_obj.users_collection[0].objects.link(proxy_empty)
 
-            proxy_obj.a3ob_properties_object_proxy.is_a3_proxy = True
-            proxy_obj.data.materials.clear()
-            proxy_obj.data.materials.append(empty_material)
-            proxy_obj.parent = obj
-            name = "proxy: %s" % proxy_obj.a3ob_properties_object_proxy.get_name()
-            proxy_obj.name = name
-            proxy_obj.data.name = name
+            bpy.data.meshes.remove(proxy_obj.data)
+
+            proxy_empty.a3ob_properties_object_proxy.is_a3_proxy = True
+            proxy_empty.parent = obj
 
 
 def process_lod(operator, logger, lod, materials, materials_lookup, categories, lod_links):
