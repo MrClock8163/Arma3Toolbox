@@ -505,12 +505,6 @@ class A3OB_PT_object_mesh_proxies(bpy.types.Panel):
             return
         
         op_remove.obj = proxy.name
-        proxy_props = proxy.a3ob_properties_object_proxy
-        row_path = col_list.row(align=True)
-        op_common = row_path.operator("a3ob.paste_common_proxy", text="", icon='PASTEDOWN')
-        op_common.obj = proxy.name
-        row_path.prop(proxy_props, "proxy_path", text="", icon='MESH_CUBE')
-        col_list.prop(proxy_props, "proxy_index")
 
 
 class A3OB_PT_object_mesh_flags(bpy.types.Panel):

@@ -147,7 +147,7 @@ class A3OB_OT_proxy_remove(bpy.types.Operator):
             self.report({'ERROR'}, "Cannot remove proxy")
             return {'FINISHED'}
         
-        bpy.data.meshes.remove(obj.data)
+        bpy.data.objects.remove(obj)
 
         return {'FINISHED'}
 
