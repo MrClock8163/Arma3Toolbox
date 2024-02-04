@@ -272,7 +272,7 @@ class ValidatorShadow(ValidatorComponent):
                 materials[i] = ("", "")
                 continue
 
-            materials[i] = mat.a3ob_properties_material.to_p3d()
+            materials[i] = mat.a3ob_properties_material.to_p3d(False)
         
         if len(materials) > 0:
             for face in self.bm.faces:
@@ -350,7 +350,7 @@ class ValidatorRoadway(ValidatorComponent):
                 textures[i] = ""
                 continue
                 
-            textures[i] = mat.a3ob_properties_material.to_p3d()[0]
+            textures[i] = mat.a3ob_properties_material.to_p3d(False)[0]
         
         if len(textures) == 0:
             result = False, "mesh has no sound textures assigned"
