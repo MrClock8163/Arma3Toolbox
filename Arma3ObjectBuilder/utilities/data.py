@@ -363,7 +363,13 @@ common_data = {
     "materials": {
         "Glass": r"P:\a3\data_f\glass_veh.rvmat",
         "Collimator": r"P:\a3\weapons_f\acc\data\collimdot_cshader.rvmat",
-        "VR Armor Emissive": r"P:\a3\characters_f_bootcamp\common\data\vrarmoremmisive.rvmat"
+        "VR Armor Emissive": r"P:\a3\characters_f_bootcamp\common\data\vrarmoremmisive.rvmat",
+        "(Pen) Armor": r"P:\a3\data_f\penetration\armour.rvmat",
+        "(Pen) Armor Plate": r"P:\a3\data_f\penetration\armour_plate.rvmat",
+        "(Pen) Engine": r"P:\a3\data_f\penetration\engine.rvmat",
+        "(Pen) Fuel tank": r"P:\a3\data_f\penetration\fueltank.rvmat",
+        "(Pen) Glass": r"P:\a3\data_f\penetration\glass.rvmat",
+        "(Pen) Interior": r"P:\a3\data_f\penetration\vehicle_interior.rvmat"
     },
     "procedurals": {
         "PIP": "#(argb,512,512,1)r2t(rendertarget0,1.0)"
