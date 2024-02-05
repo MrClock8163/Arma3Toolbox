@@ -243,6 +243,11 @@ class A3OB_UL_common_data_base(bpy.types.UIList):
         name = "Invert",
         description = "Invert name filtering"
     )
+    use_filter_sort_alpha: bpy.props.BoolProperty(
+        name = "Sort By Name",
+        description = "Sort items by their name",
+        default = True
+    )
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         text = item.name
@@ -304,6 +309,11 @@ class A3OB_UL_common_data_materials(A3OB_UL_common_data_base):
         name = "Invert",
         description = "Invert name filtering"
     )
+    use_filter_sort_alpha: bpy.props.BoolProperty(
+        name = "Sort By Name",
+        description = "Sort items by their name",
+        default = True
+    )
 
 
 class A3OB_UL_common_data_namedprops(A3OB_UL_common_data_base):
@@ -317,6 +327,11 @@ class A3OB_UL_common_data_namedprops(A3OB_UL_common_data_base):
     use_filter_name_invert: bpy.props.BoolProperty(
         name = "Invert",
         description = "Invert name filtering"
+    )
+    use_filter_sort_alpha: bpy.props.BoolProperty(
+        name = "Sort By Name",
+        description = "Sort items by their name",
+        default = True
     )
     def draw_filter(self, context, layout):
         self.draw_filter_name(layout)
@@ -334,6 +349,11 @@ class A3OB_UL_common_data_procedurals(A3OB_UL_common_data_base):
         name = "Invert",
         description = "Invert name filtering"
     )
+    use_filter_sort_alpha: bpy.props.BoolProperty(
+        name = "Sort By Name",
+        description = "Sort items by their name",
+        default = True
+    )
     def draw_filter(self, context, layout):
         self.draw_filter_name(layout)
 
@@ -349,6 +369,11 @@ class A3OB_UL_common_data_proxies(A3OB_UL_common_data_base):
     use_filter_name_invert: bpy.props.BoolProperty(
         name = "Invert",
         description = "Invert name filtering"
+    )
+    use_filter_sort_alpha: bpy.props.BoolProperty(
+        name = "Sort By Name",
+        description = "Sort items by their name",
+        default = True
     )
     def draw_filter(self, context, layout):
         self.draw_filter_name(layout)
