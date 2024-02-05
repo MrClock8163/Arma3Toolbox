@@ -351,12 +351,9 @@ common_data = {
     "namedprops": {
         "autocenter": "0",
         "buoyancy": "1",
-        "class": "building",
         "class": "house",
         "forcenotalpha": "1",
         "lodnoshadow": "1",
-        "map": "building",
-        "map": "hide",
         "map": "house",
         "prefershadowvolume": "1"
     },
