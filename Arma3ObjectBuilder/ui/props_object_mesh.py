@@ -90,7 +90,7 @@ class A3OB_OT_paste_common_proxy(bpy.types.Operator):
         
         proxies, custom = utils.get_common("proxies")
         if custom is None:
-            self.report({'ERROR'}, "Custom data JSON could not be loaded")
+            self.report({'INFO'}, "Custom data JSON could not be loaded")
         else:
             proxies.update(custom)
 
@@ -197,7 +197,7 @@ class A3OB_OT_paste_common_namedprop(bpy.types.Operator):
         
         namedprops, custom = utils.get_common("namedprops")
         if custom is None:
-            self.report({'ERROR'}, "Custom data JSON could not be loaded")
+            self.report({'INFO'}, "Custom data JSON could not be loaded")
         else:
             namedprops.update(custom)
 

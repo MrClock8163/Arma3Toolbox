@@ -19,16 +19,28 @@ class A3OB_OT_paste_common_material(bpy.types.Operator):
         scene_props = context.scene.a3ob_commons
         scene_props.materials.clear()
 
-        materials, custom = utils.get_common("materials")
-        if custom is None:
-            self.report({'ERROR'}, "Custom data JSON could not be loaded")
-        else:
-            materials.update(custom)
+        builtin_vis, custom_vis = utils.get_common("materials")
+        builtin_pen, custom_pen = utils.get_common("materials_penetration")
+
+        if custom_vis is None or custom_pen is None:
+            self.report({'INFO'}, "Custom data JSON could not be loaded")
         
-        for name in materials:
+        if custom_vis is not None:
+            builtin_vis.update(custom_vis)
+
+        if custom_pen is not None:
+            builtin_pen.update(custom_pen)
+        
+        for name in builtin_vis:
             item = scene_props.materials.add()
             item.name = name
-            item.path = utils.replace_slashes(materials[name])
+            item.path = utils.replace_slashes(builtin_vis[name])
+        
+        for name in builtin_pen:
+            item = scene_props.materials.add()
+            item.name = name
+            item.path = utils.replace_slashes(builtin_pen[name])
+            item.type = 'PENETRATION'
         
         scene_props.materials_index = 0
 
@@ -37,14 +49,7 @@ class A3OB_OT_paste_common_material(bpy.types.Operator):
     def draw(self, context):
         scene_props = context.scene.a3ob_commons
         layout = self.layout
-        layout.template_list("A3OB_UL_common_materials", "A3OB_common_materials", scene_props, "materials", scene_props, "materials_index")
-
-        selection_index = scene_props.materials_index
-        if utils.is_valid_idx(selection_index, scene_props.materials):
-            row = layout.row()
-            item = scene_props.materials[selection_index]
-            row.prop(item, "path", text="")
-            row.enabled = False
+        layout.template_list("A3OB_UL_common_materials", "A3OB_common_materials", scene_props, "materials", scene_props, "materials_index", item_dyntip_propname="path")
 
     def execute(self, context):
         mat = context.material
@@ -75,7 +80,7 @@ class A3OB_OT_paste_common_procedural(bpy.types.Operator):
 
         procedurals, custom = utils.get_common("procedurals")
         if custom is None:
-            self.report({'ERROR'}, "Custom data JSON could not be loaded")
+            self.report({'INFO'}, "Custom data JSON could not be loaded")
         else:
             procedurals.update(custom)
         
@@ -113,8 +118,58 @@ class A3OB_OT_paste_common_procedural(bpy.types.Operator):
 
 
 class A3OB_UL_common_materials(bpy.types.UIList):
+    filter_type: bpy.props.EnumProperty(
+        name = "Type",
+        items = (
+            ('ALL', "All", "No filtering", 'NONE', 0),
+            ('VISUAL', "Visual", "Visual materials", 'MATERIAL', 1),
+            ('PENETRATION', "Penetration", "Penetration materials", 'SNAP_VOLUME', 2)
+        ),
+        default = 'ALL'
+    )
+
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
-        layout.label(text=item.name)
+        icon = 'MATERIAL'
+        if item.type == 'PENETRATION':
+            icon = 'SNAP_VOLUME'
+
+        layout.label(text=item.name, icon=icon)
+    
+    def draw_filter(self, context, layout):
+        row_filter = layout.row(align=True)
+        row_filter.prop(self, "filter_type", text=" ", expand=True)
+
+        row_order = layout.row(align=True)
+        row_order.prop(self, "filter_name", text="")
+        row_order.prop(self, "use_filter_invert", text="", icon='ARROW_LEFTRIGHT')
+        row_order.separator()
+        row_order.prop(self, "use_filter_sort_alpha", text="", icon='SORTALPHA')
+        row_order.prop(self, "use_filter_sort_reverse", text="", icon='SORT_DESC' if self.use_filter_sort_reverse else 'SORT_ASC')
+    
+    def filter_items(self, context, data, property):
+        mats = getattr(data, property)
+
+        helper_funcs = bpy.types.UI_UL_list
+        flt_flags = []
+        flt_neworder = []
+
+        if self.filter_name:
+            flt_flags = helper_funcs.filter_items_by_name(self.filter_name, self.bitflag_filter_item, mats, "name")
+        
+        if not flt_flags:
+            flt_flags = [self.bitflag_filter_item] * len(mats)
+
+        if self.filter_type != 'ALL':
+            for i, mat in enumerate(mats):
+                if mat.type == self.filter_type:
+                    continue
+                
+                flt_flags[i] &= ~self.bitflag_filter_item
+
+        if self.use_filter_sort_alpha:
+            flt_neworder = helper_funcs.sort_items_by_name(mats, "name")
+
+        return flt_flags, flt_neworder
 
 
 class A3OB_UL_common_procedurals(bpy.types.UIList):

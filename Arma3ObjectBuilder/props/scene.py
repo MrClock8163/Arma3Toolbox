@@ -83,6 +83,14 @@ class A3OB_PG_common_proxy(bpy.types.PropertyGroup):
 class A3OB_PG_common_material(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Name", description="Descriptive name of the common material")
     path: bpy.props.StringProperty(name="Path", description="File path of the material")
+    type: bpy.props.EnumProperty(
+        name = "Type",
+        items = (
+            ('VISUAL', "Visual", "Visual material"),
+            ('PENETRATION', "Penetration", "Penetration material")
+        ),
+        default = 'VISUAL'
+    )
 
 
 class A3OB_PG_common_procedural(bpy.types.PropertyGroup):
