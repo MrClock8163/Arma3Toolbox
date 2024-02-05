@@ -127,6 +127,10 @@ class A3OB_UL_common_materials(bpy.types.UIList):
         ),
         default = 'ALL'
     )
+    use_filter_name_invert: bpy.props.BoolProperty(
+        name = "Invert",
+        description = "Invert name filtering"
+    )
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         icon = 'MATERIAL'
@@ -141,7 +145,7 @@ class A3OB_UL_common_materials(bpy.types.UIList):
 
         row_order = layout.row(align=True)
         row_order.prop(self, "filter_name", text="")
-        row_order.prop(self, "use_filter_invert", text="", icon='ARROW_LEFTRIGHT')
+        row_order.prop(self, "use_filter_name_invert", text="", icon='ARROW_LEFTRIGHT')
         row_order.separator()
         row_order.prop(self, "use_filter_sort_alpha", text="", icon='SORTALPHA')
         row_order.prop(self, "use_filter_sort_reverse", text="", icon='SORT_DESC' if self.use_filter_sort_reverse else 'SORT_ASC')
@@ -154,7 +158,7 @@ class A3OB_UL_common_materials(bpy.types.UIList):
         flt_neworder = []
 
         if self.filter_name:
-            flt_flags = helper_funcs.filter_items_by_name(self.filter_name, self.bitflag_filter_item, mats, "name")
+            flt_flags = helper_funcs.filter_items_by_name(self.filter_name, self.bitflag_filter_item, mats, "name", reverse=self.use_filter_name_invert)
         
         if not flt_flags:
             flt_flags = [self.bitflag_filter_item] * len(mats)
@@ -163,8 +167,8 @@ class A3OB_UL_common_materials(bpy.types.UIList):
             for i, mat in enumerate(mats):
                 if mat.type == self.filter_type:
                     continue
-                
-                flt_flags[i] &= ~self.bitflag_filter_item
+
+                flt_flags[i] = 0
 
         if self.use_filter_sort_alpha:
             flt_neworder = helper_funcs.sort_items_by_name(mats, "name")
