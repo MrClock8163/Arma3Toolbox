@@ -33,6 +33,7 @@ class A3OB_OT_proxy_add(bpy.types.Operator):
             return {'FINISHED'}
 
         proxy_object = proxyutils.create_proxy()
+        proxy_object.display_type = 'WIRE'
         proxy_object.location = context.scene.cursor.location
         obj.users_collection[0].objects.link(proxy_object)
         proxy_object.parent = obj
@@ -612,7 +613,7 @@ class A3OB_PT_object_mesh_flags(bpy.types.Panel):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'MESH'
+        return obj and obj.type == 'MESH' and not obj.a3ob_properties_object_proxy.is_a3_proxy
     
     def draw_header(self, context):
         utils.draw_panel_header(self)
@@ -632,7 +633,7 @@ class A3OB_PT_object_mesh_flags_vertex(bpy.types.Panel):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'MESH'
+        return obj and obj.type == 'MESH' and not obj.a3ob_properties_object_proxy.is_a3_proxy
     
     def draw(self, context):
         obj = context.object
@@ -679,7 +680,7 @@ class A3OB_PT_object_mesh_flags_face(bpy.types.Panel):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'MESH'
+        return obj and obj.type == 'MESH' and not obj.a3ob_properties_object_proxy.is_a3_proxy
     
     def draw(self, context):
         obj = context.object
@@ -748,9 +749,6 @@ class A3OB_PT_object_proxy(bpy.types.Panel):
             op.identify_lod = False
         else:
             row_select.enabled = False
-        
-        layout.use_property_split = True
-        layout.use_property_decorate = False
         
         layout.separator()
         row_path = layout.row(align=True)
