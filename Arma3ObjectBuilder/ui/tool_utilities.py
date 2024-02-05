@@ -215,6 +215,145 @@ class A3OB_OT_open_changelog(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class A3OB_UL_common_data_base(bpy.types.UIList):
+    icons = {
+        'MATERIALS': 'MATERIAL',
+        'NAMEDPROPS': 'PROPERTIES',
+        'MATERIALS_PENETRATION': 'SNAP_VOLUME',
+        'PROCEDURALS': 'NODE_TEXTURE',
+        'PROXIES': 'EMPTY_AXIS'
+    }
+    # For some reason, these custom properties need to be defined on all
+    # subclasses as well, otherwise they are not found and result in exceptions.
+    # Most likely some issue with instantiating inherited bpy props.
+    # Not an issue in newer API versions, but need to be accounted for for compatibility.
+    filter_type: bpy.props.EnumProperty(
+        name = "Type",
+        items = (
+            ('ALL', "All", "No filtering", 'NONE', 0),
+            ('MATERIALS', "Material", "Visual materials", 'MATERIAL', 1),
+            ('NAMEDPROPS', "Named Property", "Named properties", 'PROPERTIES', 2),
+            ('MATERIALS_PENETRATION', "Penetration", "Penetration materials", 'SNAP_VOLUME', 4),
+            ('PROCEDURALS', "Procedural", "Procedural texture strings", 'NODE_TEXTURE', 8),
+            ('PROXIES', "Proxies", "Proxy models", 'EMPTY_AXIS', 16)
+        ),
+        default = 'ALL'
+    )
+    use_filter_name_invert: bpy.props.BoolProperty(
+        name = "Invert",
+        description = "Invert name filtering"
+    )
+
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        text = item.name
+        if item.type == 'NAMEDPROPS':
+            text = "%s = %s" % (item.name, item.value)
+
+        layout.label(text=text, icon=self.icons.get(item.type, 'NONE'))
+    
+    def draw_filter_name(self, layout):
+        row = layout.row(align=True)
+        row.prop(self, "filter_name", text="")
+        row.prop(self, "use_filter_name_invert", text="", icon='ARROW_LEFTRIGHT')
+        row.separator()
+        row.prop(self, "use_filter_sort_alpha", text="", icon='SORTALPHA')
+        row.prop(self, "use_filter_sort_reverse", text="", icon='SORT_DESC' if self.use_filter_sort_reverse else 'SORT_ASC')
+    
+    def draw_filter(self, context, layout):
+        row_filter = layout.row(align=True)
+        row_filter.prop(self, "filter_type", text="")
+
+        self.draw_filter_name(layout)
+    
+    def filter_items(self, context, data, property):
+        mats = getattr(data, property)
+
+        helper_funcs = bpy.types.UI_UL_list
+        flt_flags = []
+        flt_neworder = []
+
+        if self.filter_name:
+            flt_flags = helper_funcs.filter_items_by_name(self.filter_name, self.bitflag_filter_item, mats, "name", reverse=self.use_filter_name_invert)
+        
+        if not flt_flags:
+            flt_flags = [self.bitflag_filter_item] * len(mats)
+
+        if self.filter_type != 'ALL':
+            for i, mat in enumerate(mats):
+                if mat.type == self.filter_type:
+                    continue
+
+                flt_flags[i] = 0
+
+        if self.use_filter_sort_alpha:
+            flt_neworder = helper_funcs.sort_items_by_name(mats, "name")
+
+        return flt_flags, flt_neworder
+
+
+class A3OB_UL_common_data_materials(A3OB_UL_common_data_base):
+    filter_type: bpy.props.EnumProperty(
+        name = "Type",
+        items = (
+            ('MATERIALS', "Material", "Visual materials", 'MATERIAL', 0),
+            ('MATERIALS_PENETRATION', "Penetration", "Penetration materials", 'SNAP_VOLUME', 1)
+        ),
+        default = 'MATERIALS'
+    )
+    use_filter_name_invert: bpy.props.BoolProperty(
+        name = "Invert",
+        description = "Invert name filtering"
+    )
+
+
+class A3OB_UL_common_data_namedprops(A3OB_UL_common_data_base):
+    filter_type: bpy.props.EnumProperty(
+        name = "Type",
+        items = (
+            ('NAMEDPROPS', "Named Property", "Named properties", 'PROPERTIES', 0),
+        ),
+        default = 'NAMEDPROPS'
+    )
+    use_filter_name_invert: bpy.props.BoolProperty(
+        name = "Invert",
+        description = "Invert name filtering"
+    )
+    def draw_filter(self, context, layout):
+        self.draw_filter_name(layout)
+
+
+class A3OB_UL_common_data_procedurals(A3OB_UL_common_data_base):
+    filter_type: bpy.props.EnumProperty(
+        name = "Type",
+        items = (
+            ('PROCEDURALS', "Procedural", "Procedural texture strings", 'NODE_TEXTURE', 0),
+        ),
+        default = 'PROCEDURALS'
+    )
+    use_filter_name_invert: bpy.props.BoolProperty(
+        name = "Invert",
+        description = "Invert name filtering"
+    )
+    def draw_filter(self, context, layout):
+        self.draw_filter_name(layout)
+
+
+class A3OB_UL_common_data_proxies(A3OB_UL_common_data_base):
+    filter_type: bpy.props.EnumProperty(
+        name = "Type",
+        items = (
+            ('PROXIES', "Proxies", "Proxy models", 'EMPTY_AXIS', 0),
+        ),
+        default = 'PROXIES'
+    )
+    use_filter_name_invert: bpy.props.BoolProperty(
+        name = "Invert",
+        description = "Invert name filtering"
+    )
+    def draw_filter(self, context, layout):
+        self.draw_filter_name(layout)
+
+
 class A3OB_MT_object_builder_topo(bpy.types.Menu):
     """Object Builder topology functions"""
     
@@ -308,6 +447,11 @@ classes = (
     A3OB_OT_cleanup_vertex_groups,
     A3OB_OT_redefine_vertex_group,
     A3OB_OT_open_changelog,
+    A3OB_UL_common_data_base,
+    A3OB_UL_common_data_materials,
+    A3OB_UL_common_data_namedprops,
+    A3OB_UL_common_data_procedurals,
+    A3OB_UL_common_data_proxies,
     A3OB_MT_object_builder,
     A3OB_MT_object_builder_topo,
     A3OB_MT_object_builder_faces,

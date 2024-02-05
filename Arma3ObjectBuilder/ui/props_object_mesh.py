@@ -85,35 +85,13 @@ class A3OB_OT_paste_common_proxy(bpy.types.Operator):
         return True
     
     def invoke(self, context, event):
-        scene_props = context.scene.a3ob_commons
-        scene_props.proxies.clear()
-        
-        proxies, custom = utils.get_common("proxies")
-        if custom is None:
-            self.report({'INFO'}, "Custom data JSON could not be loaded")
-        else:
-            proxies.update(custom)
-
-        for name in proxies:
-            item = scene_props.proxies.add()
-            item.name = name
-            item.path = utils.replace_slashes(proxies[name])
-        
-        scene_props.proxies_index = 0
-        
+        utils.load_common_data(context.scene)
         return context.window_manager.invoke_props_dialog(self)
     
     def draw(self, context):
         scene_props = context.scene.a3ob_commons
         layout = self.layout
-        layout.template_list("A3OB_UL_common_proxies", "A3OB_proxies_common", scene_props, "proxies", scene_props, "proxies_index")
-        
-        selection_index = scene_props.proxies_index
-        if utils.is_valid_idx(selection_index, scene_props.proxies):
-            row = layout.row()
-            item = scene_props.proxies[selection_index]
-            row.prop(item, "path", text="")
-            row.enabled = False
+        layout.template_list("A3OB_UL_common_data_proxies", "A3OB_proxies_common", scene_props, "items", scene_props, "items_index", item_dyntip_propname="value")
     
     def execute(self, context):
         obj = context.scene.objects.get(self.obj, context.object)
@@ -123,9 +101,9 @@ class A3OB_OT_paste_common_proxy(bpy.types.Operator):
 
         scene_props = context.scene.a3ob_commons
         
-        if utils.is_valid_idx(scene_props.proxies_index, scene_props.proxies):
-            new_item = scene_props.proxies[scene_props.proxies_index]
-            obj.a3ob_properties_object_proxy.proxy_path = new_item.path
+        if utils.is_valid_idx(scene_props.items_index, scene_props.items):
+            new_item = scene_props.items[scene_props.items_index]
+            obj.a3ob_properties_object_proxy.proxy_path = new_item.value
             
         return {'FINISHED'}
 
@@ -192,35 +170,20 @@ class A3OB_OT_paste_common_namedprop(bpy.types.Operator):
         return obj and obj.type == 'MESH'
     
     def invoke(self, context, event):
-        scene_props = context.scene.a3ob_commons
-        scene_props.namedprops.clear()
-        
-        namedprops, custom = utils.get_common("namedprops")
-        if custom is None:
-            self.report({'INFO'}, "Custom data JSON could not be loaded")
-        else:
-            namedprops.update(custom)
-
-        for name in namedprops:
-            item = scene_props.namedprops.add()
-            item.name = name
-            item.value = namedprops[name]
-        
-        scene_props.namedprops_index = 0
-        
+        utils.load_common_data(context.scene)
         return context.window_manager.invoke_props_dialog(self)
     
     def draw(self, context):
         scene_props = context.scene.a3ob_commons
         layout = self.layout
-        layout.template_list("A3OB_UL_namedprops", "A3OB_common_namedprops", scene_props, "namedprops", scene_props, "namedprops_index")
+        layout.template_list("A3OB_UL_common_data_namedprops", "A3OB_common_namedprops", scene_props, "items", scene_props, "items_index")
 
     def execute(self, context):
         obj = context.object
         scene_props = context.scene.a3ob_commons
         
-        if utils.is_valid_idx(scene_props.namedprops_index, scene_props.namedprops):
-            new_item = scene_props.namedprops[scene_props.namedprops_index]
+        if utils.is_valid_idx(scene_props.items_index, scene_props.items):
+            new_item = scene_props.items[scene_props.items_index]
             object_props = obj.a3ob_properties_object
             item = object_props.properties.add()
             item.name = new_item.name

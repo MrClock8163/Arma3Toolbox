@@ -223,25 +223,29 @@ def get_cfg_convert():
     return os.path.join(get_addon_preferences().a3_tools, "cfgconvert/cfgconvert.exe")
 
 
-def get_common(name):
+def load_common_data(scene):
     prefs = get_addon_preferences()
     custom_path = abspath(prefs.custom_data)
-    builtin = data.common_data[name]
-
-    if not os.path.exists(custom_path):
-        return builtin, {}
-    
+    builtin = data.common_data
     json_data = {}
     try:
         with open(custom_path) as file:
             json_data = json.load(file)
     except:
-        return builtin, None
+        pass
 
-    if name not in json_data:
-        return builtin, {}
+    common = {key: {**builtin[key], **json_data.get(key, {})} for key in builtin}
 
-    return builtin, json_data[name]
+    scene_props = scene.a3ob_commons
+    scene_props.items.clear()
+    for category, items in common.items():
+        for name, value in items.items():
+            item = scene_props.items.add()
+            item.name = name
+            item.value = value
+            item.type = category.upper()
+    
+    scene_props.items_index = 0
 
 
 preview_collection = {}
