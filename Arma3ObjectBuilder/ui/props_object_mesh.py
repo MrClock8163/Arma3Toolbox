@@ -34,6 +34,7 @@ class A3OB_OT_proxy_add(bpy.types.Operator):
 
         proxy_object = proxyutils.create_proxy()
         proxy_object.display_type = 'WIRE'
+        proxy_object.show_name = True
         proxy_object.location = context.scene.cursor.location
         obj.users_collection[0].objects.link(proxy_object)
         proxy_object.parent = obj

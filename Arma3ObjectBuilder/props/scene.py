@@ -287,6 +287,11 @@ class A3OB_PG_validation(bpy.types.PropertyGroup):
         description = "Treat warnings as errors during validation",
         default = True
     )
+    relative_paths: bpy.props.BoolProperty(
+        name = "Relative Paths",
+        description = "Make file paths relative to the project root for validation",
+        default = True
+    )
 
  
 class A3OB_PG_conversion(bpy.types.PropertyGroup):

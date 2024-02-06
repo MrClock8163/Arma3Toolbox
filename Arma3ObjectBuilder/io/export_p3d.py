@@ -34,6 +34,14 @@ def can_export(operator, context):
     return False
 
 
+def is_ascii(value):
+    try:
+        value.encode('ascii')
+        return True
+    except:
+        return False
+
+
 def duplicate_object(obj):
     new_object = obj.copy()
     new_object.data = obj.data.copy()
@@ -167,6 +175,28 @@ def merge_proxy_objects(main_obj, proxy_objects, relative):
     return proxy_lookup
 
 
+def validate_proxies(operator, proxy_objects):
+    for proxy in proxy_objects:
+        path, _ = proxy.a3ob_properties_object_proxy.to_placeholder(operator.relative_paths)
+        if not is_ascii(path):
+            return False
+        
+        for group in proxy.vertex_groups:
+            if not is_ascii(group.name):
+                return False
+        
+        for slot in proxy.material_slots:
+            mat = slot.material
+            if not mat:
+                continue
+            
+            texture, material = mat.a3ob_properties_material.to_p3d(operator.relative_paths)
+            if not is_ascii(texture) or not is_ascii(material):
+                return False
+    
+    return True
+
+
 # Huge monolith function to produce the final object and mesh data that can be written to the 
 # P3D file. Merges the sub-objects and proxies into the main objects, applies transformations,
 # runs mesh validation and sorts sections if necessary.
@@ -211,8 +241,8 @@ def get_lod_data(operator, context, validator):
         # validation would otherwise get confused by the proxy triangles (eg.: it'd be impossible to validate
         # that a mesh is otherwise contiguous or not).
         merge_sub_objects(operator, main_obj, sub_objects)
-        if validator:
-            is_valid = validator.validate(main_obj, main_obj.a3ob_properties_object.lod, True, operator.validate_lods_warning_errors)
+        is_valid = validator.validate(main_obj, main_obj.a3ob_properties_object.lod, True, operator.validate_lods_warning_errors, operator.relative_paths)
+        is_valid &= validate_proxies(operator, proxy_objects)
         proxy_lookup = merge_proxy_objects(main_obj, proxy_objects, operator.relative_paths)
 
         if operator.apply_transforms:
@@ -476,20 +506,13 @@ def process_lod(operator, obj, proxy_lookup, is_valid, logger):
 
     logger.level_up()
     logger.step("Name: %s" % lod_name)
-    logger.step("Processing data:")
-
-    # The P3D format cannot store n-gons, so the export must
-    # skip LODs with such faces.
-    if lodutils.has_ngons(obj.data):
-        logger.log("N-gons detected -> skipping LOD")
-        logger.level_down()
-        return None
 
     if not is_valid:
         logger.log("Failed validation -> skipping LOD (run manual validation for details)")
         logger.level_down()
         return None
 
+    logger.step("Processing data:")
     output = p3d.P3D_LOD()
     output.resolution.set(int(object_props.lod), object_props.resolution)
 
@@ -542,9 +565,7 @@ def write_file(operator, context, file):
     wm.progress_begin(0, 1000)
     wm.progress_update(0)
     
-    validator = None
-    if operator.validate_lods:
-        validator = Validator(ProcessLoggerNull())
+    validator = Validator(ProcessLoggerNull(), not operator.validate_lods)
     
     logger = ProcessLogger()
     logger.step("P3D export to %s" % operator.filepath)
@@ -573,13 +594,13 @@ def write_file(operator, context, file):
         new_lod = process_lod(operator, lod, proxy_lookup, is_valid, logger)
         if new_lod:
             mlod_lods.append(new_lod)
-        bpy.data.meshes.remove(lod.data, do_unlink=True)
+        bpy.data.meshes.remove(lod.data)
 
         logger.log("Done in %f sec" % (time.time() - time_lod_start))
         wm.progress_update(i + 1)
 
     if len(mlod_lods) == 0:
-        raise p3d.P3D_Error("All LODs had n-gons/failed validation, cannot write P3D with 0 LODs")
+        raise p3d.P3D_Error("All LODs failed validation, cannot write P3D with 0 LODs")
 
     # LODs should be sorted by their resolution signature.
     mlod_lods.sort(key=lambda lod: float(lod.resolution))

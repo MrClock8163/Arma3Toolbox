@@ -257,6 +257,7 @@ def process_proxies(operator, obj, proxy_lookup, empty_material):
             proxy_obj.a3ob_properties_object_flags.face.clear()
 
             proxy_obj.display_type = 'WIRE'
+            proxy_obj.show_name = True
 
             bm = bmesh.new()
             bm.from_mesh(proxy_obj.data)

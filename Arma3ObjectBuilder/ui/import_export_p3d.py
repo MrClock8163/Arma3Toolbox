@@ -286,7 +286,10 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             with output as file:
                 try:
                     lod_count, exported_count = export_p3d.write_file(self, context, file)
-                    self.report({'INFO'}, "Successfully exported %d/%d LODs (check the logs in the system console)" % (exported_count, lod_count))
+                    if lod_count == exported_count:
+                        self.report({'INFO'}, "Successfully exported all %d LODs (check the logs in the system console)" % exported_count)
+                    else:
+                        self.report({'WARNING'}, "Only exported %d/%d LODs (check the logs in the system console)" % (exported_count, lod_count))
                     output.success = True
                 except Exception as ex:
                     self.report({'ERROR'}, "%s (check the system console)" % str(ex))

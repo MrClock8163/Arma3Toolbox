@@ -9,10 +9,11 @@ import bpy
 
 
 class ValidatorComponent():
-    def __init__(self, obj, bm, logger):
+    def __init__(self, obj, bm, logger, relative_paths = False):
         self.obj = obj
         self.bm = bm
         self.logger = logger
+        self.relative_paths = relative_paths
 
     def is_contiguous(self):
         result = True, ""
@@ -61,6 +62,60 @@ class ValidatorComponent():
                     return True
         else:
             return False
+    
+    @staticmethod
+    def is_ascii_internal(value):
+        try:
+            value.encode("ascii")
+            return True
+        except:
+            return False
+    
+    def only_ascii_vgroups(self):
+        result = True, ""
+
+        for group in self.obj.vertex_groups:
+            if not self.is_ascii_internal(group.name):
+                result = False, "mesh has vertex groups with non-ASCII characters (first encountered: %s)" % group.name
+                break
+
+        return result
+    
+    def only_ascii_materials(self):
+        result = True, ""
+
+        for slot in self.obj.material_slots:
+            mat = slot.material
+            if not mat:
+                continue
+
+            texture, material = mat.a3ob_properties_material.to_p3d(self.relative_paths)
+            if not self.is_ascii_internal(texture) or not self.is_ascii_internal(material):
+                result = False, "mesh has materials with non-ASCII characters (first encountered: %s)" % mat.name
+                break
+
+        return result
+
+    def only_ascii_properties(self):
+        result = True, ""
+
+        for prop in self.obj.a3ob_properties_object.properties:
+            value = "%s = %s" % (prop.name, prop.value)
+            if not self.is_ascii_internal(value):
+                result = False, "mesh has named properties with non-ASCII characters (first encountered: %s)" % value
+                break
+
+        return result
+
+    def only_ascii_proxies(self):
+        result = True, ""
+
+        if self.obj.a3ob_properties_object_proxy.is_a3_proxy:
+            path, _ = self.obj.a3ob_properties_object_proxy.to_placeholder(self.relative_paths)
+            if not self.is_ascii_internal(path):
+                result = False, "mesh has proxy path with non-ASCII characters"
+
+        return result
     
     ruleset = "Base"
     def conditions(self):
@@ -129,6 +184,10 @@ class ValidatorGeneric(ValidatorComponent):
     def conditions(self):
         strict = (
             self.no_ngons,
+            self.only_ascii_materials,
+            self.only_ascii_vgroups,
+            self.only_ascii_properties,
+            self.only_ascii_proxies
         )
         optional = info = tuple()
 
@@ -422,18 +481,21 @@ class ValidatorPaths(ValidatorComponent):
 
 
 class Validator():
-    def __init__(self, logger):
+    def __init__(self, logger, only_generic = False):
         self.logger = logger
-        self.components = {
-            **dict.fromkeys(('4', '26', '27', '28'), [ValidatorShadow]),
-            **dict.fromkeys(('9', '10', '13'), [ValidatorPointcloud]),
-            **dict.fromkeys(('7', '8', '14', '15', '16', '17', '19', '20', '21', '22', '23', '24'), [ValidatorGeometrySubtype]),
-            '6': [ValidatorGeometry],
-            '11': [ValidatorRoadway],
-            '12': [ValidatorPaths]
-        }
-    
-    def validate(self, obj, lod, lazy = False, warns_errs = True):
+        if not only_generic:
+            self.components = {
+                **dict.fromkeys(('4', '26', '27', '28'), [ValidatorShadow]),
+                **dict.fromkeys(('9', '10', '13'), [ValidatorPointcloud]),
+                **dict.fromkeys(('7', '8', '14', '15', '16', '17', '19', '20', '21', '22', '23', '24'), [ValidatorGeometrySubtype]),
+                '6': [ValidatorGeometry],
+                '11': [ValidatorRoadway],
+                '12': [ValidatorPaths]
+            }
+        else:
+            self.components = {}
+
+    def validate(self, obj, lod, lazy = False, warns_errs = True, relative_paths = False):
         self.logger.step("Validating %s" % obj.name)
         self.logger.level_up()
         if warns_errs:
@@ -448,7 +510,7 @@ class Validator():
 
         is_valid = True
         for item in [ValidatorGeneric] + self.components.get(lod, []):
-            is_valid &= item(obj, bm, self.logger).validate(lazy, warns_errs)
+            is_valid &= item(obj, bm, self.logger, relative_paths).validate(lazy, warns_errs)
 
         bm.free()
         self.logger.level_down()
