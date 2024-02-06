@@ -66,7 +66,10 @@ def read_doubles(file, count = 1):
 def read_char(file, count = 1):
     chars = struct.unpack('%ds' % count, file.read(count))[0]
     return chars.decode('ascii')
-    
+
+# In theory all strings in BI files should be strictly ASCII,
+# but on the off chance that a corrupt character is present, the method would fail.
+# Therefore using UTF-8 decoding is more robust, and gives the same result for valid ASCII values.
 def read_asciiz(file):
     res = b''
     
@@ -77,7 +80,7 @@ def read_asciiz(file):
             
         res += a
     
-    return res.decode('ascii')
+    return res.decode('utf8', errors="replace")
 
 def read_asciiz_field(file, field_len):
     field = file.read(field_len)
@@ -93,7 +96,7 @@ def read_asciiz_field(file, field_len):
     else:
         raise ValueError("ASCIIZ field length overflow")
     
-    return result.decode('ascii')
+    return result.decode('utf8', errors="replace")
         
 def read_lascii(file):
     length = read_byte(file)
@@ -101,7 +104,7 @@ def read_lascii(file):
     if len(value) != length:
         raise EOFError("LASCII string ran into unexpected EOF")
     
-    return value.decode('ascii')
+    return value.decode('utf8', errors="replace")
     
 def write_byte(file, *args):
     file.write(struct.pack('%dB' % len(args), *args))
