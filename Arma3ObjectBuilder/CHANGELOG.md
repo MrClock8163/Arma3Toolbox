@@ -1,5 +1,22 @@
 # Changelog
 
+## [v2.2.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.2.0) (Blender 2.90 -> 4.0)
+
+### Added
+
+- support for penetration materials in common data JSON
+
+### Changed
+
+- LOD validation now checks for non-ASCII string values
+- read strings are now decoded as UTF-8 in order to improve robustness
+- new proxy triangles (imported or created) are now displayed as wireframes, as show their object names
+- common items are now displayed in alphabetical order by default
+
+### Fixed
+
+- vertex mass editing would potentially throw silent errors in certain conditions
+
 ## [v2.1.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.1.0) (Blender 2.90 -> 4.0)
 
 ### Added
