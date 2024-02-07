@@ -12,4 +12,5 @@ from . import proxy
 from . import renaming
 from . import rigging
 from . import structure
+from . import updater
 from . import validator

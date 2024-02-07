@@ -1,8 +1,10 @@
 import os
 
 import bpy
+from bpy.app.handlers import persistent
 
 from ..utilities import structure as structutils
+from ..utilities import updater as updateutils
 from ..utilities import generic as utils
 
 
@@ -215,6 +217,34 @@ class A3OB_OT_open_changelog(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class A3OB_OT_update_blend_data(bpy.types.Operator):
+    """Update blend file data"""
+
+    bl_label = "Update Arma 3 Object Builder Data"
+    bl_idname = "a3ob.update_blend_data"
+    bl_options = {'REGISTER'}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text="The following actions can be taken:")
+
+
+        layout.label(text="Click 'Ok' to proceed!")
+    
+    def execute(self, context):
+        print("Updated blend data")
+        
+
+        return {'FINISHED'}
+
+
 class A3OB_UL_common_data_base(bpy.types.UIList):
     icons = {
         'MATERIALS': 'MATERIAL',
@@ -418,6 +448,7 @@ class A3OB_MT_object_builder_misc(bpy.types.Menu):
     
     def draw(self, context):
         self.layout.operator("a3ob.vertex_groups_cleanup")
+        self.layout.operator("a3ob.update_blend_data", text="Update Blend Data", icon='FILE_REFRESH')
 
 
 class A3OB_MT_object_builder(bpy.types.Menu):
@@ -472,6 +503,7 @@ classes = (
     A3OB_OT_cleanup_vertex_groups,
     A3OB_OT_redefine_vertex_group,
     A3OB_OT_open_changelog,
+    A3OB_OT_update_blend_data,
     A3OB_UL_common_data_base,
     A3OB_UL_common_data_materials,
     A3OB_UL_common_data_namedprops,
@@ -485,6 +517,12 @@ classes = (
     A3OB_MT_vertex_groups,
     A3OB_MT_help
 )
+
+
+@persistent
+def load_post_handler(file):
+    if updateutils.can_update():
+        bpy.ops.a3ob.update_blend_data('INVOKE_DEFAULT')
 
 
 def menu_func(self, context):
@@ -512,6 +550,7 @@ def register():
     for cls in classes:
         register_class(cls)
     
+    bpy.app.handlers.load_post.append(load_post_handler)
     bpy.types.VIEW3D_MT_editor_menus.append(menu_func)
     bpy.types.DATA_PT_vertex_groups.append(vertex_groups_func)
     bpy.types.TOPBAR_MT_help.append(menu_help_func)
@@ -525,6 +564,7 @@ def unregister():
     bpy.types.TOPBAR_MT_help.remove(menu_help_func)
     bpy.types.DATA_PT_vertex_groups.remove(vertex_groups_func)
     bpy.types.VIEW3D_MT_editor_menus.remove(menu_func)
+    bpy.app.handlers.load_post.remove(load_post_handler)
 
     for cls in reversed(classes):
         unregister_class(cls)
