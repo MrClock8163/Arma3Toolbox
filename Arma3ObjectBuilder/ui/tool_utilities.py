@@ -4,6 +4,7 @@ import bpy
 
 from ..utilities import structure as structutils
 from ..utilities import generic as utils
+from ..utilities import data
 
 
 class A3OB_OT_check_convexity(bpy.types.Operator):
@@ -176,6 +177,26 @@ class A3OB_OT_cleanup_vertex_groups(bpy.types.Operator):
         bpy.ops.object.mode_set(mode=mode)
         
         self.report({'INFO'} ,"Removed %d unused vertex group(s) from %s" % (removed, obj.name))
+        
+        return {'FINISHED'}
+
+
+class A3OB_OT_translate_vertex_groups(bpy.types.Operator):
+    """Translate czech vertex group name to english where possible"""
+
+    bl_label = "Translate Vertex Groups"
+    bl_idname = "a3ob.vertex_groups_translate"
+
+    @classmethod
+    def poll(self, context):
+        obj = context.active_object
+        return obj and obj.type == 'MESH' and len(obj.vertex_groups) > 0
+
+    def execute(self, context):
+        obj = context.active_object
+
+        for group in obj.vertex_groups:
+            group.name = data.translations_czech_english.get(group.name.lower(), group.name)
         
         return {'FINISHED'}
 
@@ -440,7 +461,10 @@ class A3OB_MT_vertex_groups(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout.operator("a3ob.find_components", icon='STICKY_UVS_DISABLE')
+        layout.separator()
         layout.operator("a3ob.vertex_group_redefine", icon='FILE_REFRESH')
+        layout.operator("a3ob.vertex_groups_translate", icon='SYNTAX_OFF')
+        layout.separator()
         layout.operator("a3ob.vertex_groups_cleanup", icon='TRASH')
 
 
@@ -470,6 +494,7 @@ classes = (
     A3OB_OT_move_bottom,
     A3OB_OT_recalculate_normals,
     A3OB_OT_cleanup_vertex_groups,
+    A3OB_OT_translate_vertex_groups,
     A3OB_OT_redefine_vertex_group,
     A3OB_OT_open_changelog,
     A3OB_UL_common_data_base,

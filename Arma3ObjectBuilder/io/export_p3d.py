@@ -311,6 +311,7 @@ def process_vertices(bm):
 
     return output
 
+
 # Produce the unique vertex normal dictionary from the bmesh data, as well as a mapping
 # dictionary.
 # {idx 0: (x, y, z), ...: (..., ..., ...), ....}
@@ -500,6 +501,11 @@ def process_taggs(obj, bm, logger):
     return taggs
 
 
+def translate_selections(p3dm):
+    for tagg in p3dm.taggs:
+        tagg.name = data.translations_english_czech.get(tagg.name.lower(), tagg.name)
+
+
 def process_lod(operator, obj, proxy_lookup, is_valid, logger):
     object_props = obj.a3ob_properties_object
     lod_name = object_props.get_name()
@@ -539,6 +545,10 @@ def process_lod(operator, obj, proxy_lookup, is_valid, logger):
     if operator.renumber_components:
         output.renumber_components()
         logger.log("Renumbered component selections")
+    
+    if operator.translate_selections:
+        translate_selections(output)
+        logger.log("Translated selections to czech")
 
     bm.free()
 

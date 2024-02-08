@@ -130,7 +130,6 @@ def cleanup_vertex_groups(obj):
 
 def redefine_vertex_group(obj, weight):
     obj.update_from_editmode()
-    mesh = obj.data
     
     group = obj.vertex_groups.active
     if group is None:

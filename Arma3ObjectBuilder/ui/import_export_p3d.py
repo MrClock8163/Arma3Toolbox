@@ -79,6 +79,14 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         name = "First LOD Only",
         description = "Import only the first LOD found in the file"
     )
+    translate_selections: bpy.props.BoolProperty(
+        name = "Translate Selections",
+        description = "Try to translate czech selection names to english"
+    )
+    cleanup_empty_selections: bpy.props.BoolProperty(
+        name = "Cleanup Selections",
+        description = "Remove empty selections\nIMPORTANT: certain model.cfg animations may depend on even empty selections in order to display correctly"
+    )
     
     def draw(self, context):
         pass
@@ -176,10 +184,10 @@ class A3OB_PT_import_p3d_data(bpy.types.Panel):
         col_enum.prop(operator, "additional_data", text=" ") # text=" " otherwise the enum is stretched accross the panel
 
 
-class A3OB_PT_import_p3d_proxies(bpy.types.Panel):
+class A3OB_PT_import_p3d_post(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
-    bl_label = "Proxies"
+    bl_label = "Postprocess"
     bl_parent_id = "FILE_PT_operator"
     
     @classmethod
@@ -195,6 +203,9 @@ class A3OB_PT_import_p3d_proxies(bpy.types.Panel):
         layout.use_property_decorate = False
         sfile = context.space_data
         operator = sfile.active_operator
+
+        layout.prop(operator, "translate_selections")
+        layout.prop(operator, "cleanup_empty_selections")
         
         if 'SELECTIONS' not in operator.additional_data or not operator.additional_data_allowed:
             layout.alert = True
@@ -275,6 +286,10 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         name = "Force Lowercase",
         description = "Export all paths and selection names as lowercase",
         default = True
+    )
+    translate_selections: bpy.props.BoolProperty(
+        name = "Translate Selections",
+        description = "Try to translate english selection names to czech"
     )
 
     def draw(self, context):
@@ -430,6 +445,7 @@ class A3OB_PT_export_p3d_post(bpy.types.Panel):
 
         layout.prop(operator, "renumber_components")
         layout.prop(operator, "force_lowercase")
+        layout.prop(operator, "translate_selections")
 
 
 classes = (
@@ -437,7 +453,7 @@ classes = (
     A3OB_PT_import_p3d_main,
     A3OB_PT_import_p3d_collections,
     A3OB_PT_import_p3d_data,
-    A3OB_PT_import_p3d_proxies,
+    A3OB_PT_import_p3d_post,
     A3OB_OP_export_p3d,
     A3OB_PT_export_p3d_main,
     A3OB_PT_export_p3d_include,

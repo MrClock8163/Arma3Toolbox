@@ -336,6 +336,152 @@ enum_lod_types = (
 # }
 
 
+translations_czech_english = {
+    # Sprockets
+    "koll1": "sprocket_1_1",
+    "koll2": "sprocket_1_2",
+    "kolp1": "sprocket_2_1",
+    "kolp2": "sprocket_2_2",
+
+    # Wheels
+    "kolol1": "wheel_1_1",
+    "kolol2": "wheel_1_2",
+    "kolol3": "wheel_1_3",
+    "kolol4": "wheel_1_4",
+    "kolol5": "wheel_1_5",
+    "kolol6": "wheel_1_6",
+    "kolol7": "wheel_1_7",
+    "kolol8": "wheel_1_8",
+    "kolol9": "wheel_1_9",
+    "kolol10": "wheel_1_10",
+    "kolop1": "wheel_2_1",
+    "kolop2": "wheel_2_2",
+    "kolop3": "wheel_2_3",
+    "kolop4": "wheel_2_4",
+    "kolop5": "wheel_2_5",
+    "kolop6": "wheel_2_6",
+    "kolop7": "wheel_2_7",
+    "kolop8": "wheel_2_8",
+    "kolop9": "wheel_2_9",
+    "kolop10": "wheel_2_10",
+
+    # Dampers
+    "podkolol1": "wheel_1_1_damper",
+    "podkolol2": "wheel_1_2_damper",
+    "podkolol3": "wheel_1_3_damper",
+    "podkolol4": "wheel_1_4_damper",
+    "podkolol5": "wheel_1_5_damper",
+    "podkolol6": "wheel_1_6_damper",
+    "podkolol7": "wheel_1_7_damper",
+    "podkolol8": "wheel_1_8_damper",
+    "podkolol9": "wheel_1_9_damper",
+    "podkolol10": "wheel_1_10_damper",
+    "podkolop1": "wheel_2_1_damper",
+    "podkolop2": "wheel_2_2_damper",
+    "podkolop3": "wheel_2_3_damper",
+    "podkolop4": "wheel_2_4_damper",
+    "podkolop5": "wheel_2_5_damper",
+    "podkolop6": "wheel_2_6_damper",
+    "podkolop7": "wheel_2_7_damper",
+    "podkolop8": "wheel_2_8_damper",
+    "podkolop9": "wheel_2_9_damper",
+    "podkolop10": "wheel_2_10_damper",
+
+    # Damper hides
+    "podkolol1_hide": "wheel_1_1_damper_hide",
+    "podkolol2_hide": "wheel_1_2_damper_hide",
+    "podkolol3_hide": "wheel_1_3_damper_hide",
+    "podkolol4_hide": "wheel_1_4_damper_hide",
+    "podkolol5_hide": "wheel_1_5_damper_hide",
+    "podkolol6_hide": "wheel_1_6_damper_hide",
+    "podkolol7_hide": "wheel_1_7_damper_hide",
+    "podkolol8_hide": "wheel_1_8_damper_hide",
+    "podkolol9_hide": "wheel_1_9_damper_hide",
+    "podkolol10_hide": "wheel_1_10_damper_hide",
+    "podkolop1_hide": "wheel_2_1_damper_hide",
+    "podkolop2_hide": "wheel_2_2_damper_hide",
+    "podkolop3_hide": "wheel_2_3_damper_hide",
+    "podkolop4_hide": "wheel_2_4_damper_hide",
+    "podkolop5_hide": "wheel_2_5_damper_hide",
+    "podkolop6_hide": "wheel_2_6_damper_hide",
+    "podkolop7_hide": "wheel_2_7_damper_hide",
+    "podkolop8_hide": "wheel_2_8_damper_hide",
+    "podkolop9_hide": "wheel_2_9_damper_hide",
+    "podkolop10_hide": "wheel_2_10_damper_hide",
+
+    # Turrets
+    "otocvez": "turret",
+    "osaveze": "turret_axis",
+    "damagevez": "turret_damage",
+    "otochlaven": "gun",
+    "osahlavne": "gun_axis",
+    "damagehlaven": "gun_damage",
+    "recoilhlaven": "gun_recoil",
+    "recoilhlaven_axis": "gun_recoil_axis",
+
+    # Hatches
+    "poklop_driver": "hatch_driver",
+    "poklop_driver_axis": "hatch_driver_axis",
+    "poklop_commander": "hatch_commander",
+    "poklop_commander_axis": "hatch_commander_axis",
+    "poklop_gunner": "hatch_gunner",
+    "poklop_gunner_axis": "hatch_gunner_axis",
+    
+
+
+
+    # Misc
+    "vez": "tower",
+    "zbran": "weapon",
+    "zbytek": "remainder",
+    "telo": "body",
+
+
+
+    "brzdove svetlo": "light_brake",
+    "zadni svetlo": "light_rear",
+    "palivo": "fuel",
+    "motor": "engine",
+
+    "otocvelitele": "commander_turret",
+    "osa velitele": "commander_turret_axis",
+    "vezvelitele": "commander_turret_hit",
+    "otochlavenvelitele": "commander_gun",
+    "osa hlavne velitele": "commander_gun_axis",
+    "zbranvelitele": "commander_gun_hit",
+    # "koll1": "wheel_1_1",
+    # "koll2": "wheel_1_9",
+    "pasoffsetl": "track_l",
+    "pas_l": "track_l_hit",
+    # "kolp1": "wheel_2_1",
+    # "kolp2": "wheel_2_9",
+    "pasoffsetp": "track_r",
+    "pas_p": "track_r_hit",
+    
+    "usti hlavne": "muzzle_pos",
+    "konec hlavne": "muzzle_end",
+    "spice rakety": "missile_pos",
+    "konec rakety": "missile_end",
+    "doplnovani": "supply",
+    "zamerny": "aimpoint",
+    "kulas": "machinegun",
+    # "damagehide": "damage_hide",
+    # "driveroptics": "optics_driver",
+    # "driveropticsout": "optics_driver_out",
+    # "gunnverview": "optics_gunner",
+    # "gunnerviewout": "optics_gunner_out",
+    # "commanderview": "optics_commander",
+    # "commanderviewout": "optics_commander_out",
+    "zasleh": "muzzleflash",
+    "zasleh1": "muzzleflash1",
+    "zasleh2": "muzzleflash2",
+    "zasleh3": "muzzleflash3"
+}
+
+
+translations_english_czech = {v: k for k, v in translations_czech_english.items()}
+
+
 common_data = {
     "proxies": {
         "Weapon: optic": r"P:\a3\data_f\proxies\weapon_slots\top.p3d",

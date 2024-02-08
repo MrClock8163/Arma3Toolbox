@@ -229,7 +229,7 @@ def process_proxies(operator, obj, proxy_lookup, empty_material):
             pass
 
     bpy.ops.object.mode_set(mode='OBJECT')
-        
+    
     proxy_objects = [proxy for proxy in bpy.context.selected_objects if proxy != obj]
         
     bpy.ops.object.select_all(action='DESELECT')
@@ -275,6 +275,11 @@ def process_proxies(operator, obj, proxy_lookup, empty_material):
             name = "proxy: %s" % proxy_obj.a3ob_properties_object_proxy.get_name()
             proxy_obj.name = name
             proxy_obj.data.name = name
+
+
+def translate_selections(obj):
+    for group in obj.vertex_groups:
+        group.name = data.translations_czech_english.get(group.name.lower(), group.name)
 
 
 def process_lod(operator, logger, lod, materials, materials_lookup, categories, lod_links):
@@ -377,6 +382,14 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
 
     if operator.validate_meshes:
         mesh.validate(clean_customdata=False)
+    
+    if operator.translate_selections:
+        translate_selections(obj)
+        logger.log("Translated selections to english")
+    
+    if operator.cleanup_empty_selections:
+        structutils.cleanup_vertex_groups(obj)
+        logger.log("Cleaned up vertex groups")
 
     if operator.proxy_action != 'NOTHING' and 'SELECTIONS' in operator.additional_data:
         process_proxies(operator, obj, proxy_lookup, materials[0])

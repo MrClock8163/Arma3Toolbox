@@ -45,6 +45,10 @@ class Settings:
     validate_meshes = False
     # Postprocess proxies: 'NOTHING', 'SEPARATE' or 'CLEAR'
     proxy_action = 'SEPARATE'
+    # Translate czech selection names to english
+    translate_selections = False
+    # Cleanup selections without any vertices assigned
+    cleanup_empty_selections = False
 
 
 #   ---------------------------------------- LOGIC -----------------------------------------
