@@ -340,8 +340,12 @@ translations_czech_english = {
     # Sprockets
     "koll1": "sprocket_1_1",
     "koll2": "sprocket_1_2",
+    "koll3": "sprocket_1_3",
+    "koll4": "sprocket_1_4",
     "kolp1": "sprocket_2_1",
     "kolp2": "sprocket_2_2",
+    "kolp3": "sprocket_2_3",
+    "kolp4": "sprocket_2_4",
 
     # Wheels
     "kolol1": "wheel_1_1",
@@ -418,6 +422,12 @@ translations_czech_english = {
     "damagehlaven": "gun_damage",
     "recoilhlaven": "gun_recoil",
     "recoilhlaven_axis": "gun_recoil_axis",
+    "vezvelitele": "commander_tower",
+    "otocvelitele": "commander_turret",
+    "osavelitele": "commander_turret_axis",
+    "zbranvelitele": "commander_weapon",
+    "otochlavenvelitele": "commander_gun",
+    "osahlavnevelitele": "commander_gun_axis",
 
     # Hatches
     "poklop_driver": "hatch_driver",
@@ -427,55 +437,43 @@ translations_czech_english = {
     "poklop_gunner": "hatch_gunner",
     "poklop_gunner_axis": "hatch_gunner_axis",
     
-
-
+    # Weapons
+    "usti hlavne": "muzzle_pos",
+    "usti hlavne1": "muzzle_pos1",
+    "usti hlavne2": "muzzle_pos2",
+    "usti hlavne3": "muzzle_pos3",
+    "konec hlavne": "muzzle_end",
+    "konec hlavne1": "muzzle_end1",
+    "konec hlavne2": "muzzle_end2",
+    "konec hlavne3": "muzzle_end3",
+    "usti granatometu": "muzzle_ugl_pos",
+    "konec granatometu": "muzzle_ugl_end",
+    "spice rakety": "missile_pos",
+    "spice rakety 1": "missile_pos 1",
+    "spice rakety 2": "missile_pos 2",
+    "konec rakety": "missile_end",
+    "konec rakety 1": "missile_end 1",
+    "konec rakety 2": "missile_end 2",
+    "zasleh": "muzzleflash",
+    "zasleh1": "muzzleflash1",
+    "zasleh2": "muzzleflash2",
+    "zasleh3": "muzzleflash3",
 
     # Misc
     "vez": "tower",
     "zbran": "weapon",
     "zbytek": "remainder",
     "telo": "body",
-
-
-
-    "brzdove svetlo": "light_brake",
-    "zadni svetlo": "light_rear",
     "palivo": "fuel",
     "motor": "engine",
-
-    "otocvelitele": "commander_turret",
-    "osa velitele": "commander_turret_axis",
-    "vezvelitele": "commander_turret_hit",
-    "otochlavenvelitele": "commander_gun",
-    "osa hlavne velitele": "commander_gun_axis",
-    "zbranvelitele": "commander_gun_hit",
-    # "koll1": "wheel_1_1",
-    # "koll2": "wheel_1_9",
-    "pasoffsetl": "track_l",
-    "pas_l": "track_l_hit",
-    # "kolp1": "wheel_2_1",
-    # "kolp2": "wheel_2_9",
-    "pasoffsetp": "track_r",
-    "pas_p": "track_r_hit",
-    
-    "usti hlavne": "muzzle_pos",
-    "konec hlavne": "muzzle_end",
-    "spice rakety": "missile_pos",
-    "konec rakety": "missile_end",
+    "brzdove svetlo": "light_brake",
+    "zadni svetlo": "light_rear",
     "doplnovani": "supply",
-    "zamerny": "aimpoint",
-    "kulas": "machinegun",
-    # "damagehide": "damage_hide",
-    # "driveroptics": "optics_driver",
-    # "driveropticsout": "optics_driver_out",
-    # "gunnverview": "optics_gunner",
-    # "gunnerviewout": "optics_gunner_out",
-    # "commanderview": "optics_commander",
-    # "commanderviewout": "optics_commander_out",
-    "zasleh": "muzzleflash",
-    "zasleh1": "muzzleflash1",
-    "zasleh2": "muzzleflash2",
-    "zasleh3": "muzzleflash3"
+    "pasoffsetl": "track_l_offset",
+    "pasoffsetp": "track_r_offset",
+    "pas_l": "track_l",
+    "pas_p": "track_r",
+    "zamerny": "aimpoint"
 }
 
 
