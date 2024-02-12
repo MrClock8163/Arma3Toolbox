@@ -1,6 +1,6 @@
 # Changelog
 
-## [v2.2.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.2.0) (Blender 2.90 -> 4.0)
+## [v2.2.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.2.0) (Blender 2.90 -> 4.1)
 
 ### Added
 
@@ -8,6 +8,9 @@
 
 ### Changed
 
+- Blender 4.1 compatiblity:
+  - updated P3D import and export to be compatible with the new Blender API
+  - udpated Validation tool to be compatible with the new Blender API
 - LOD validation now checks for non-ASCII string values
 - read strings are now decoded as UTF-8 in order to improve robustness
 - new proxy triangles (imported or created) are now displayed as wireframes, as show their object names
