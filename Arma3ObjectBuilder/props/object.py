@@ -219,7 +219,7 @@ class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
 class A3OB_PG_properties_object_dtm(bpy.types.PropertyGroup):
     data_type: bpy.props.EnumProperty(
         name = "Data Type",
-        description = "Type of data arrengement",
+        description = "Type of data arrangement",
         items = (
             ('RASTER', "Raster", "Data points are cell centered"),
             ('GRID', "Grid", "Data points are on cell corners")

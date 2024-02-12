@@ -503,7 +503,7 @@ class Validator():
 
         obj.update_from_editmode()
         bm = bmesh.new()
-        bm.from_object(obj, bpy.context.evaluated_depsgraph_get())
+        bm.from_mesh(obj.evaluated_get(bpy.context.evaluated_depsgraph_get()).data)
         bm.verts.ensure_lookup_table()
         bm.edges.ensure_lookup_table()
         bm.faces.ensure_lookup_table()

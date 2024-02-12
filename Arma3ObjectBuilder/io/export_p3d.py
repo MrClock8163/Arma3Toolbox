@@ -10,7 +10,6 @@ import bmesh
 
 from . import data_p3d as p3d
 from ..utilities import generic as utils
-from ..utilities import lod as lodutils
 from ..utilities import flags as flagutils
 from ..utilities import compat as computils
 from ..utilities import data
@@ -261,8 +260,7 @@ def get_lod_data(operator, context, validator):
                 "object": main_obj
             }
             computils.call_operator_ctx(bpy.ops.mesh.customdata_custom_splitnormals_clear, ctx)
-            main_obj.data.use_auto_smooth = True
-            main_obj.data.auto_smooth_angle = 3.141592654
+            computils.mesh_auto_smooth(main_obj.data)
             mod = main_obj.modifiers.new("Temp", 'WEIGHTED_NORMAL')
             mod.weight = 50
             mod.keep_sharp = True
@@ -320,15 +318,25 @@ def process_normals(mesh):
     output = {}
     normals_index = {}
     normals_lookup_dict = {}
+    if bpy.app.version < (4, 1, 0):
+        mesh.calc_normals_split()
+        for i, loop in enumerate(mesh.loops):
+            normal = loop.normal.copy().freeze()
+            
+            if normal not in normals_index:
+                normals_index[normal] = len(normals_index)
+                output[len(output)] = normal
+            
+            normals_lookup_dict[i] = normals_index[normal]
+    else:
+        for i, normal_value in enumerate(mesh.corner_normals):
+            normal = normal_value.vector.copy().freeze()
 
-    for i, loop in enumerate(mesh.loops):
-        normal = loop.normal.copy().freeze()
-        
-        if normal not in normals_index:
-            normals_index[normal] = len(normals_index)
-            output[len(output)] = normal
-        
-        normals_lookup_dict[i] = normals_index[normal]
+            if normal not in normals_index:
+                normals_index[normal] = len(normals_index)
+                output[len(output)] = normal
+            
+            normals_lookup_dict[i] = normals_index[normal]
     
     return output, normals_lookup_dict
 
@@ -523,7 +531,6 @@ def process_lod(operator, obj, proxy_lookup, is_valid, logger):
     output.resolution.set(int(object_props.lod), object_props.resolution)
 
     mesh = obj.data
-    mesh.calc_normals_split()
 
     normals, normals_lookup_dict = process_normals(mesh)
     output.normals = normals
