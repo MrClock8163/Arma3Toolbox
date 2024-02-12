@@ -8,6 +8,10 @@ bl_version = bpy.app.version
 
 
 def call_operator_ctx(op, ctx = None, **kwargs):
+    if not ctx:
+        op(**kwargs)
+        return
+    
     op(ctx, **kwargs)
 
 
