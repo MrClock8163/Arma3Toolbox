@@ -25,3 +25,12 @@ def mesh_auto_smooth(mesh):
     if bpy.app.version < (4, 1, 0):
         mesh.use_auto_smooth = True
         mesh.auto_smooth_angle = 3.141592654
+
+
+def mesh_static_normals_iterator(mesh):
+    if bpy.app.version < (4, 1, 0):
+        for i, loop in enumerate(mesh.loops):
+            yield i, loop.normal.copy().freeze()
+    else:
+        for i, normal_value in enumerate(mesh.corner_normals):
+            yield i, normal_value.vector.copy().freeze()

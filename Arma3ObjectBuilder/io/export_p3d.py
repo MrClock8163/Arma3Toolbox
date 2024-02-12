@@ -318,26 +318,14 @@ def process_normals(mesh):
     output = {}
     normals_index = {}
     normals_lookup_dict = {}
-    if bpy.app.version < (4, 1, 0):
-        mesh.calc_normals_split()
-        for i, loop in enumerate(mesh.loops):
-            normal = loop.normal.copy().freeze()
-            
-            if normal not in normals_index:
-                normals_index[normal] = len(normals_index)
-                output[len(output)] = normal
-            
-            normals_lookup_dict[i] = normals_index[normal]
-    else:
-        for i, normal_value in enumerate(mesh.corner_normals):
-            normal = normal_value.vector.copy().freeze()
-
-            if normal not in normals_index:
-                normals_index[normal] = len(normals_index)
-                output[len(output)] = normal
-            
-            normals_lookup_dict[i] = normals_index[normal]
     
+    for i, normal in computils.mesh_static_normals_iterator(mesh):
+        if normal not in normals_index:
+            normals_index[normal] = len(normals_index)
+            output[len(output)] = normal
+        
+        normals_lookup_dict[i] = normals_index[normal]
+
     return output, normals_lookup_dict
 
 
