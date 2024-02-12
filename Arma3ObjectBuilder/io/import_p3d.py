@@ -322,8 +322,8 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
     if lod_index not in data.lod_shadows:
         for face in mesh.polygons:
             face.use_smooth = True
-        mesh.use_auto_smooth = True
-        mesh.auto_smooth_angle = 3.141592654
+        
+        computils.mesh_auto_smooth(mesh)
     
     if 'NORMALS' in operator.additional_data and lod_index in data.lod_visuals:
         if process_normals(mesh, lod):

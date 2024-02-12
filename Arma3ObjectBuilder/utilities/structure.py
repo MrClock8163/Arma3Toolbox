@@ -4,7 +4,6 @@
 import re
 
 import bpy
-import bmesh
 
 from . import generic as utils
 from . import compat as computils
