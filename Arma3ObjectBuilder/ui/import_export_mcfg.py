@@ -68,8 +68,6 @@ class A3OB_PT_import_mcfg_main(bpy.types.Panel):
     
     def draw(self, context):
         layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False
         sfile = context.space_data
         operator = sfile.active_operator
 
@@ -143,8 +141,6 @@ class A3OB_PT_export_mcfg_main(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False
         sfile = context.space_data
         operator = sfile.active_operator
         scene_props = context.scene.a3ob_rigging
