@@ -84,8 +84,7 @@ class A3OB_PT_material(bpy.types.Panel):
     
     @classmethod
     def poll(cls, context):
-        mat = context.material
-        return mat
+        return hasattr(context, "material") and context.material
         
     def draw_header(self, context):
         utils.draw_panel_header(self)
