@@ -534,7 +534,10 @@ common_data = {
         "Engine": r"P:\a3\data_f\penetration\engine.rvmat",
         "Fuel tank": r"P:\a3\data_f\penetration\fueltank.rvmat",
         "Glass": r"P:\a3\data_f\penetration\glass.rvmat",
-        "Interior": r"P:\a3\data_f\penetration\vehicle_interior.rvmat"
+        "Interior": r"P:\a3\data_f\penetration\vehicle_interior.rvmat",
+        "Meat (limbs)": r"P:\a3\data_f\penetration\meat.rvmat",
+        "Meat + Bones (body)": r"P:\a3\data_f\penetration\meatbones.rvmat",
+        "Plastic": r"P:\a3\data_f\penetration\plastic.rvmat"
     },
     "procedurals": {
         "PIP": "#(argb,512,512,1)r2t(rendertarget0,1.0)"
