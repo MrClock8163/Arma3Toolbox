@@ -12,8 +12,7 @@ class A3OB_OT_paste_common_material(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        mat = context.material
-        return mat
+        return hasattr(context, "material") and context.material
     
     def invoke(self, context, event):
         utils.load_common_data(context.scene)
@@ -46,7 +45,7 @@ class A3OB_OT_paste_common_procedural(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return bool(context.material)
+        return hasattr(context, "material") and context.material
     
     def invoke(self, context, event):
         utils.load_common_data(context.scene)
