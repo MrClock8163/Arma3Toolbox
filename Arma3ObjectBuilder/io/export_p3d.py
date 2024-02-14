@@ -240,7 +240,7 @@ def get_lod_data(operator, context, validator):
         # validation would otherwise get confused by the proxy triangles (eg.: it'd be impossible to validate
         # that a mesh is otherwise contiguous or not).
         merge_sub_objects(operator, main_obj, sub_objects)
-        is_valid = validator.validate(main_obj, main_obj.a3ob_properties_object.lod, True, operator.validate_lods_warning_errors, operator.relative_paths)
+        is_valid = validator.validate_lod(main_obj, main_obj.a3ob_properties_object.lod, True, operator.validate_lods_warning_errors, operator.relative_paths)
         is_valid &= validate_proxies(operator, proxy_objects)
         proxy_lookup = merge_proxy_objects(main_obj, proxy_objects, operator.relative_paths)
 
@@ -570,7 +570,9 @@ def write_file(operator, context, file):
     wm.progress_begin(0, 1000)
     wm.progress_update(0)
     
-    validator = Validator(ProcessLoggerNull(), not operator.validate_lods)
+    validator = Validator(ProcessLoggerNull())
+    if operator.validate_lods:
+        validator.setup_lod_specific()
     
     logger = ProcessLogger()
     logger.step("P3D export to %s" % operator.filepath)
