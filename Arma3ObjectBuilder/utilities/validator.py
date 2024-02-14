@@ -1,4 +1,4 @@
-# Backend logic for LOD validation.
+# Backend logic for data validation.
 
 
 import re
@@ -19,6 +19,78 @@ class ValidatorResult():
 
 
 class ValidatorComponent():
+    """Base component"""
+
+    @staticmethod
+    def is_ascii_internal(value):
+        try:
+            value.encode("ascii")
+            return True
+        except:
+            return False
+
+    def conditions(self):
+        strict = optional = info = tuple()
+
+        return strict, optional, info
+    
+    def validate_lazy(self, warns_errs):
+        strict, optional, _ = self.conditions()
+
+        for item in strict:
+            result = item()
+            if not result.is_valid:
+                return False
+        
+        if warns_errs:
+            for item in optional:
+                result = item()
+                if not result.is_valid:
+                    return False
+        
+        return True
+
+    def validate_verbose(self, warns_errs):
+        strict, optional, info = self.conditions()
+        is_valid = True
+        self.logger.level_up()
+
+        for item in strict:
+            result = item()
+            if not result.is_valid:
+                self.logger.step("ERROR: %s" % result.comment)
+                is_valid = False
+        
+        for item in optional:
+            result = item()
+            if not result.is_valid:
+                self.logger.step("WARNING: %s" % result.comment)
+                is_valid &= not warns_errs
+        
+        for item in info:
+            result = item()
+            self.logger.step("INFO: %s" % result.comment)
+
+        self.logger.level_down()
+
+        return is_valid
+
+    
+    def validate(self, lazy, warns_errs):
+        is_valid = True
+
+        if lazy:
+            is_valid = self.validate_lazy(warns_errs)
+        else:
+            self.logger.step("RULESET: %s" % self.__doc__)
+            is_valid = self.validate_verbose(warns_errs)
+
+        return is_valid
+
+
+class ValidatorComponentLOD(ValidatorComponent):
+    """LOD - Base component"""
+
     def __init__(self, obj, bm, logger, relative_paths = False):
         self.obj = obj
         self.bm = bm
@@ -73,14 +145,6 @@ class ValidatorComponent():
         else:
             return False
     
-    @staticmethod
-    def is_ascii_internal(value):
-        try:
-            value.encode("ascii")
-            return True
-        except:
-            return False
-    
     def only_ascii_vgroups(self):
         result = ValidatorResult()
 
@@ -126,69 +190,11 @@ class ValidatorComponent():
                 result.set(False, "mesh has proxy path with non-ASCII characters")
 
         return result
+
+
+class ValidatorLODGeneric(ValidatorComponentLOD):
+    """LOD - Generic"""
     
-    ruleset = "Base"
-    def conditions(self):
-        strict = optional = info = tuple()
-
-        return strict, optional, info
-    
-    def validate_lazy(self, warns_errs):
-        strict, optional, _ = self.conditions()
-
-        for item in strict:
-            result = item()
-            if not result.is_valid:
-                return False
-        
-        if warns_errs:
-            for item in optional:
-                result = item()
-                if not result.is_valid:
-                    return False
-        
-        return True
-
-    def validate_verbose(self, warns_errs):
-        strict, optional, info = self.conditions()
-        is_valid = True
-        self.logger.level_up()
-
-        for item in strict:
-            result = item()
-            if not result.is_valid:
-                self.logger.step("ERROR: %s" % result.comment)
-                is_valid = False
-        
-        for item in optional:
-            result = item()
-            if not result.is_valid:
-                self.logger.step("WARNING: %s" % result.comment)
-                is_valid &= not warns_errs
-        
-        for item in info:
-            result = item()
-            self.logger.step("INFO: %s" % result.comment)
-
-        self.logger.level_down()
-
-        return is_valid
-
-    
-    def validate(self, lazy, warns_errs):
-        is_valid = True
-
-        if lazy:
-            is_valid = self.validate_lazy(warns_errs)
-        else:
-            self.logger.step("RULESET: %s" % self.ruleset)
-            is_valid = self.validate_verbose(warns_errs)
-
-        return is_valid
-
-
-class ValidatorGeneric(ValidatorComponent):
-    ruleset = "Generic"
     def conditions(self):
         strict = (
             self.no_ngons,
@@ -202,7 +208,9 @@ class ValidatorGeneric(ValidatorComponent):
         return strict, optional, info
 
 
-class ValidatorGeometry(ValidatorComponent):
+class ValidatorLODGeometry(ValidatorComponentLOD):
+    """LOD - Geometry"""
+
     def is_triangulated(self):
         result =  super().is_triangulated()
         if result.is_valid:
@@ -273,7 +281,6 @@ class ValidatorGeometry(ValidatorComponent):
         
         return ValidatorResult(True, "distance of farthest point from origin is %.3f meters" % distance)
 
-    ruleset = "Geometry"
     def conditions(self):
         strict = (
             self.is_convex,
@@ -296,8 +303,9 @@ class ValidatorGeometry(ValidatorComponent):
         return strict, optional, info
 
 
-class ValidatorGeometrySubtype(ValidatorGeometry):
-    ruleset = "Geometry subtype"
+class ValidatorLODGeometrySubtype(ValidatorLODGeometry):
+    """LOD - Geometry subtype"""
+
     def conditions(self):
         strict = (
             self.is_convex,
@@ -316,7 +324,9 @@ class ValidatorGeometrySubtype(ValidatorGeometry):
         return strict, optional, info
     
 
-class ValidatorShadow(ValidatorComponent):
+class ValidatorLODShadow(ValidatorComponentLOD):
+    """LOD - Shadow"""
+
     def is_sharp(self):
         result = ValidatorResult()
 
@@ -353,7 +363,6 @@ class ValidatorShadow(ValidatorComponent):
             
         return result
     
-    ruleset = "Shadow"
     def conditions(self):
         strict = (
             self.is_contiguous,
@@ -366,7 +375,9 @@ class ValidatorShadow(ValidatorComponent):
         return strict, optional, info
 
 
-class ValidatorPointcloud(ValidatorComponent):
+class ValidatorLODPointcloud(ValidatorComponentLOD):
+    """LOD - Point cloud"""
+
     def no_edges(self):
         result = ValidatorResult()
 
@@ -383,7 +394,6 @@ class ValidatorPointcloud(ValidatorComponent):
         
         return result
     
-    ruleset = "Point cloud"
     def conditions(self):
         strict = info = tuple()
         optional = (
@@ -394,7 +404,9 @@ class ValidatorPointcloud(ValidatorComponent):
         return strict, optional, info
 
 
-class ValidatorRoadway(ValidatorComponent):
+class ValidatorLODRoadway(ValidatorComponentLOD):
+    """LOD - Roadway"""
+
     def under_limit(self):
         result = ValidatorResult()
 
@@ -441,7 +453,6 @@ class ValidatorRoadway(ValidatorComponent):
         
         return ValidatorResult(True, "distance of farthest point from origin is %.3f meters" % distance)
     
-    ruleset = "Roadway"
     def conditions(self):
         strict = (
             self.has_faces,
@@ -457,7 +468,9 @@ class ValidatorRoadway(ValidatorComponent):
         return strict, optional, info
 
 
-class ValidatorPaths(ValidatorComponent):
+class ValidatorLODPaths(ValidatorComponentLOD):
+    """LOD - Paths"""
+
     def has_faces(self):
         result = ValidatorResult()
 
@@ -482,7 +495,6 @@ class ValidatorPaths(ValidatorComponent):
         
         return result
 
-    ruleset = "Paths"
     def conditions(self):
         strict = (
             self.has_faces,
@@ -497,6 +509,8 @@ class ValidatorPaths(ValidatorComponent):
 
 
 class ValidatorComponentSkeleton(ValidatorComponent):
+    """Skeleton - Base component"""
+
     def __init__(self, skeleton, logger):
         self.skeleton = skeleton
         self.logger = logger
@@ -539,21 +553,10 @@ class ValidatorComponentSkeleton(ValidatorComponent):
 
         return result
 
-    def has_rtm_compatible_bones(self):
-        result = ValidatorResult()
-
-        for bone in self.skeleton.bones:
-            if len(bone.name) > 31 or len(bone.parent) > 31:
-                result.set(False, "skeleton has bone names longer than 31 characters")
-                break
-
-        return result
-
-    ruleset = "Skeleton base"
-
 
 class ValidatorSkeletonGeneric(ValidatorComponentSkeleton):
-    ruleset = "Skeleton"
+    """Skeleton - Generic"""
+
     def conditions(self):
         strict = (
             self.has_valid_name,
@@ -566,7 +569,18 @@ class ValidatorSkeletonGeneric(ValidatorComponentSkeleton):
 
 
 class ValidatorSkeletonRTM(ValidatorComponentSkeleton):
-    ruleset = "Skeleton for RTM"
+    """Skeleton - RTM"""
+
+    def has_rtm_compatible_bones(self):
+        result = ValidatorResult()
+
+        for bone in self.skeleton.bones:
+            if len(bone.name) > 31 or len(bone.parent) > 31:
+                result.set(False, "skeleton has bone names longer than 31 characters")
+                break
+
+        return result
+
     def conditions(self):
         strict = (
             self.has_rtm_compatible_bones,
@@ -583,12 +597,12 @@ class Validator():
     
     def setup_lod_specific(self):
         self.components = {
-            **dict.fromkeys(("4", "26", "27", "28"), [ValidatorShadow]),
-            **dict.fromkeys(("9", "10", "13"), [ValidatorPointcloud]),
-            **dict.fromkeys(("7", "8", "14", "15", "16", "17", "19", "20", "21", "22", "23", "24"), [ValidatorGeometrySubtype]),
-            "6": [ValidatorGeometry],
-            "11": [ValidatorRoadway],
-            "12": [ValidatorPaths]
+            **dict.fromkeys(("4", "26", "27", "28"), [ValidatorLODShadow]),
+            **dict.fromkeys(("9", "10", "13"), [ValidatorLODPointcloud]),
+            **dict.fromkeys(("7", "8", "14", "15", "16", "17", "19", "20", "21", "22", "23", "24"), [ValidatorLODGeometrySubtype]),
+            "6": [ValidatorLODGeometry],
+            "11": [ValidatorLODRoadway],
+            "12": [ValidatorLODPaths]
         }
 
     def validate_lod(self, obj, lod, lazy = False, warns_errs = True, relative_paths = False):
@@ -605,7 +619,7 @@ class Validator():
         bm.faces.ensure_lookup_table()
 
         is_valid = True
-        for item in [ValidatorGeneric] + self.components.get(lod, []):
+        for item in [ValidatorLODGeneric] + self.components.get(lod, []):
             is_valid &= item(obj, bm, self.logger, relative_paths).validate(lazy, warns_errs)
 
         bm.free()
