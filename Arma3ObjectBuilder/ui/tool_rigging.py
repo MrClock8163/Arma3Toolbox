@@ -2,6 +2,8 @@ import bpy
 
 from ..utilities import generic as utils
 from ..utilities import rigging as riggingutils
+from ..utilities.validator import Validator
+from ..utilities.logger import ProcessLogger
 
 
 def get_skeleton(scene_props):
@@ -153,6 +155,37 @@ class A3OB_OT_rigging_skeletons_clear(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class A3OB_OT_rigging_skeletons_validate(bpy.types.Operator):
+    """Validate the active skeleton definition"""
+
+    bl_idname = "a3ob.rigging_skeletons_validate"
+    bl_label = "Validate Skeleton"
+    bl_options = {'REGISTER'}
+
+    for_rtm: bpy.props.BoolProperty(
+        name = "For RTM",
+        description = "Validate skeleton for use with RTM animations"
+    )
+
+    @classmethod
+    def poll(cls, context):
+        scene_props = context.scene.a3ob_rigging
+        return utils.is_valid_idx(scene_props.skeletons_index, scene_props.skeletons)
+    
+    def execute(self, context):
+        scene_props = context.scene.a3ob_rigging
+        skeleton = scene_props.skeletons[scene_props.skeletons_index]
+        validator = Validator(ProcessLogger())
+        success = validator.validate_skeleton(skeleton, self.for_rtm)
+
+        if success:
+            self.report({'INFO'}, "Validation succeeded")
+        else:
+            self.report({'ERROR'}, "Validation failed (check the logs in the system console)")
+
+        return {'FINISHED'}
+
+
 class A3OB_OT_rigging_skeletons_bones_add(bpy.types.Operator):
     """Add new bone to skeleton definition"""
 
@@ -241,33 +274,6 @@ class A3OB_OT_rigging_skeletons_bones_lowercase(bpy.types.Operator):
         for item in skeleton.bones:
             item.name = item.name.lower()
             item.parent = item.parent.lower()
-        
-        return {'FINISHED'}
-
-
-class A3OB_OT_rigging_skeletons_bones_check_hierarchy(bpy.types.Operator):
-    """Check bone hierarchy for circular or faulty references"""
-
-    bl_idname = "a3ob.rigging_skeletons_bones_check_hierarchy"
-    bl_label = "Check Hierarchy"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    @classmethod
-    def poll(cls, context):
-        scene_props = context.scene.a3ob_rigging
-        skeleton = get_skeleton(scene_props)
-        
-        return skeleton and len(skeleton.bones) > 0
-
-    def execute(self, context):
-        scene_props = context.scene.a3ob_rigging
-        skeleton = get_skeleton(scene_props)
-
-        bones_parents = riggingutils.bone_order_from_skeleton(skeleton)
-        if bones_parents is None:
-            self.report({'WARNING'}, "Bone hierarchy is invalid (circular reference or typo)")
-        else:
-            self.report({'INFO'}, "Bone hierarchy is valid")
         
         return {'FINISHED'}
 
@@ -458,6 +464,10 @@ class A3OB_MT_rigging_skeletons(bpy.types.Menu):
 
         layout.operator("a3ob.rigging_skeletons_from_armature", icon='OUTLINER_OB_ARMATURE')
         layout.separator()
+        layout.operator("a3ob.rigging_skeletons_validate", text="Validate", icon='VIEWZOOM')
+        op = layout.operator("a3ob.rigging_skeletons_validate", text="Validate For RTM")
+        op.for_rtm = True
+        layout.separator()
         layout.operator("a3ob.rigging_skeletons_clear", text="Delete All Skeletons", icon='TRASH')
 
 
@@ -468,7 +478,6 @@ class A3OB_MT_rigging_bones(bpy.types.Menu):
         layout = self.layout
         
         layout.operator("a3ob.rigging_skeletons_bones_lowercase", icon='SYNTAX_OFF')
-        layout.operator("a3ob.rigging_skeletons_bones_check_hierarchy", icon='VIEWZOOM')
         layout.separator()
         layout.operator("a3ob.rigging_skeletons_bones_clear", text="Delete All Bones", icon='TRASH')
 
@@ -558,12 +567,12 @@ classes = (
     A3OB_OT_rigging_skeletons_add,
     A3OB_OT_rigging_skeletons_remove,
     A3OB_OT_rigging_skeletons_clear,
+    A3OB_OT_rigging_skeletons_validate,
     A3OB_OT_rigging_skeletons_from_armature,
     A3OB_OT_rigging_skeletons_bones_add,
     A3OB_OT_rigging_skeletons_bones_remove,
     A3OB_OT_rigging_skeletons_bones_clear,
     A3OB_OT_rigging_skeletons_bones_lowercase,
-    A3OB_OT_rigging_skeletons_bones_check_hierarchy,
     A3OB_OT_rigging_pivots_from_armature,
     A3OB_OT_rigging_weights_select_unnormalized,
     A3OB_OT_rigging_weights_select_overdetermined,

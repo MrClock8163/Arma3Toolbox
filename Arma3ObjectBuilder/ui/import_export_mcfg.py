@@ -6,6 +6,8 @@ import bpy_extras
 
 from ..io import import_mcfg, export_mcfg
 from ..utilities import generic as utils
+from ..utilities.validator import Validator
+from ..utilities.logger import ProcessLoggerNull
 
 
 class A3OB_OP_import_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
@@ -109,15 +111,16 @@ class A3OB_OP_export_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         scene_props = context.scene.a3ob_rigging
         skeleton = scene_props.skeletons[self.skeleton_index]
         output = utils.OutputManager(self.filepath, "w")
+
+        validator = Validator(ProcessLoggerNull())
+        if not validator.validate_skeleton(skeleton, False, True):
+            self.report({'ERROR'}, "Invalid skeleton definiton, run skeleton validation for more info")
+            return {'FINISHED'}
         
         with output as file:
             try:
-                success = export_mcfg.write_file(self, skeleton, file)
-                if not success:
-                    self.report({'ERROR'}, "Invalid bone hierarchy detected, cannot export skeleton")
-                else:
-                    self.report({'INFO'}, "Successfully exported skeleton definition")
-                output.success = success
+                export_mcfg.write_file(self, skeleton, file)
+                output.success = True
             except Exception as ex:
                 self.report({'ERROR'}, "%s (check the system console)" % str(ex))
                 traceback.print_exc()
