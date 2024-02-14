@@ -4,21 +4,36 @@
 
 ### Added
 
-- support for penetration materials in common data JSON
+- common data:
+  - support for penetration materials
+- tools:
+  - Rigging:
+    - Validate (skeleton)
+    - Validate For RTM (skeleton)
 
 ### Changed
 
+- common data:
+  - common items are now displayed in alphabetical order by default
 - Blender 4.1 compatiblity:
   - updated P3D import and export to be compatible with the new Blender API
-  - udpated Validation tool to be compatible with the new Blender API
-- LOD validation now checks for non-ASCII string values
-- read strings are now decoded as UTF-8 in order to improve robustness
-- new proxy triangles (imported or created) are now displayed as wireframes, as show their object names
-- common items are now displayed in alphabetical order by default
+  - updated Validation tool to be compatible with the new Blender API
+- tools:
+  - Validation:
+    - validation now checks for non-ASCII characters in named properties, paths and vertex group names
+    - internal logic is now standardized
+- import-export:
+  - read strings are now decoded as UTF-8 in order to improve robustness
+  - new proxy triangles (imported or created) are now displayed as wireframes, as show their object names
 
 ### Fixed
 
-- vertex mass editing would potentially throw silent errors in certain conditions
+- Vertex Mass Editing tool would potentially throw silent errors in certain conditions
+- material properties panel would throw silent errors in certain conditions
+
+### Removed
+
+- Check Hierarchy operator was removed from the Rigging tool (replaced by the Validate, and Validate For RTM operators)
 
 ## [v2.1.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.1.0) (Blender 2.90 -> 4.0)
 
