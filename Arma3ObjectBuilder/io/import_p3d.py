@@ -270,7 +270,8 @@ def process_proxies(operator, obj, proxy_lookup, empty_material):
 
             proxy_obj.a3ob_properties_object_proxy.is_a3_proxy = True
             proxy_obj.data.materials.clear()
-            proxy_obj.data.materials.append(empty_material)
+            if empty_material is not None:
+                proxy_obj.data.materials.append(empty_material)
             proxy_obj.parent = obj
             name = "proxy: %s" % proxy_obj.a3ob_properties_object_proxy.get_name()
             proxy_obj.name = name
@@ -392,7 +393,8 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
         logger.log("Cleaned up vertex groups")
 
     if operator.proxy_action != 'NOTHING' and 'SELECTIONS' in operator.additional_data:
-        process_proxies(operator, obj, proxy_lookup, materials[0])
+        empty_material = materials[0] if materials is not None else None
+        process_proxies(operator, obj, proxy_lookup, empty_material)
         logger.log("Processed proxies: %d" % len(proxy_lookup))
 
     object_props.is_a3_lod = True
