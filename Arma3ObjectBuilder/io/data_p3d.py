@@ -641,7 +641,7 @@ class P3D_LOD():
             material_idx = materials[(texture, material)]
             slot_idx = material_slot_indices.get(material_idx)
             if slot_idx is None:
-                slot_idx =len(material_slot_indices)
+                slot_idx = len(material_slot_indices)
                 material_slot_indices[material_idx] = slot_idx
             
             slot_indices.append(slot_idx)

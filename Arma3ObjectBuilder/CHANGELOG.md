@@ -10,6 +10,11 @@
   - Rigging:
     - Validate (skeleton)
     - Validate For RTM (skeleton)
+- import-export:
+  - P3D:
+    - Translate Selections import option
+    - Cleanup Selections import option
+    - Preserve/Merge sections import option
 
 ### Changed
 
