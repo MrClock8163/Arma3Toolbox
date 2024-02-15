@@ -132,10 +132,15 @@ def process_selections(bm, lod):
     return selection_names
 
 
-def process_materials(mesh, bm, lod, materials, materials_lookup):
-    face_indices, material_indices = lod.get_sections(materials_lookup)
+def process_materials(operator, mesh, bm, lod, materials, materials_lookup):
+    slot_indices = []
+    material_indices = []
+    if operator.sections == 'PRESERVE':
+        slot_indices, material_indices = lod.get_sections(materials_lookup)
+    elif operator.sections == 'MERGE':
+        slot_indices, material_indices = lod.get_sections_merged(materials_lookup)
     
-    for i, idx in enumerate(face_indices):
+    for i, idx in enumerate(slot_indices):
         bm.faces[i].material_index = idx
     
     for idx in material_indices:
@@ -354,7 +359,7 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
         logger.log("Added vertex groups: %d" % (len(selection_names)))
     
     if 'MATERIALS' in operator.additional_data:
-        process_materials(mesh, bm, lod, materials, materials_lookup)
+        process_materials(operator, mesh, bm, lod, materials, materials_lookup)
         logger.log("Assigned materials")
     
     if lod_index == 6 and 'MASS' in operator.additional_data:

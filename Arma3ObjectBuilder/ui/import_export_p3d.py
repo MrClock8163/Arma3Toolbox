@@ -87,6 +87,14 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         name = "Cleanup Selections",
         description = "Remove empty selections\nIMPORTANT: certain model.cfg animations may depend on even empty selections in order to display correctly"
     )
+    sections: bpy.props.EnumProperty(
+        name = "Sections",
+        items = (
+            ('PRESERVE', "Preserve", "Preserve model sections as they are"),
+            ('MERGE', "Merge", "Merge sections with identical texture-material pair")
+        ),
+        default = 'PRESERVE'
+    )
     
     def draw(self, context):
         pass
@@ -128,7 +136,6 @@ class A3OB_PT_import_p3d_main(bpy.types.Panel):
         operator = sfile.active_operator
         
         layout.prop(operator, "first_lod_only")
-        layout.prop(operator, "absolute_paths")
         layout.prop(operator, "validate_meshes")
 
 
@@ -176,12 +183,17 @@ class A3OB_PT_import_p3d_data(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
         
+        layout.prop(operator, "absolute_paths")
         col = layout.column(heading="Additional data")
         col.prop(operator, "additional_data_allowed", text="")
         
         col_enum = col.column()
         col_enum.enabled = operator.additional_data_allowed
         col_enum.prop(operator, "additional_data", text=" ") # text=" " otherwise the enum is stretched accross the panel
+        row_sections = layout.row(align=True)
+        row_sections.prop(operator, "sections", expand=True)
+        if not operator.additional_data_allowed or 'MATERIALS' not in operator.additional_data:
+            row_sections.enabled = False
 
 
 class A3OB_PT_import_p3d_post(bpy.types.Panel):
@@ -204,18 +216,23 @@ class A3OB_PT_import_p3d_post(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        layout.prop(operator, "translate_selections")
-        layout.prop(operator, "cleanup_empty_selections")
         
         if 'SELECTIONS' not in operator.additional_data or not operator.additional_data_allowed:
             layout.alert = True
             layout.label(text="Enable selection data")
-        
             col = layout.column(align=True)
+
+            col.prop(operator, "translate_selections")
+            col.prop(operator, "cleanup_empty_selections")
+            col.separator()
             col.prop(operator, "proxy_action", expand=True)
             col.enabled = False
         else:
             col = layout.column(align=True)
+
+            col.prop(operator, "translate_selections")
+            col.prop(operator, "cleanup_empty_selections")
+            col.separator()
             col.prop(operator, "proxy_action", expand=True)
 
 
@@ -442,10 +459,10 @@ class A3OB_PT_export_p3d_post(bpy.types.Panel):
         layout.use_property_decorate = False
         sfile = context.space_data
         operator = sfile.active_operator
-
-        layout.prop(operator, "renumber_components")
-        layout.prop(operator, "force_lowercase")
-        layout.prop(operator, "translate_selections")
+        col = layout.column(align=True)
+        col.prop(operator, "renumber_components")
+        col.prop(operator, "force_lowercase")
+        col.prop(operator, "translate_selections")
 
 
 classes = (
