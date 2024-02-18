@@ -51,23 +51,11 @@ def read_compressed_uint(file):
     
     return output
 
-def ushort_to_double(value):
-    sign = -1 if (value & 0x8000) else 1
-    exp = (value & 0x7fff) >> 10
-    coef = (value & 0x03ff) / (1 << 10)
-
-    if not exp:
-        return (sign / 0x4000) * coef
-
-    return sign * 2**(exp - 15) * (1 + coef)
-
 def read_half(file):
-    raw = struct.unpack('<H', file.read)[0]
-    return ushort_to_double(raw)
+    return struct.unpack('<e', file.read(2))[0]
 
 def read_halfs(file, count = 1):
-    raw = struct.unpack('<%dH' % count, file.read(2 * count))
-    return tuple([ushort_to_double(value) for value in raw])
+    return struct.unpack('<%de' % count, file.read(2 * count))
     
 def read_float(file):
     return struct.unpack('<f', file.read(4))[0]
@@ -151,6 +139,9 @@ def write_compressed_uint(file, value):
 
         write_byte(file, (temp & 127) + 128)
         temp = temp >> 7
+
+def write_half(file, *args):
+    file.write(struct.pack('<%de' % len(args), *args))
     
 def write_float(file, *args):
     file.write(struct.pack('<%df' % len(args), *args))
