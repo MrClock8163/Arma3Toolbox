@@ -50,6 +50,24 @@ def read_compressed_uint(file):
         byte_idx += 1
     
     return output
+
+def ushort_to_double(value):
+    sign = -1 if (value & 0x8000) else 1
+    exp = (value & 0x7fff) >> 10
+    coef = (value & 0x03ff) / (1 << 10)
+
+    if not exp:
+        return (sign / 0x4000) * coef
+
+    return sign * 2**(exp - 15) * (1 + coef)
+
+def read_half(file):
+    raw = struct.unpack('<H', file.read)[0]
+    return ushort_to_double(raw)
+
+def read_halfs(file, count = 1):
+    raw = struct.unpack('<%dH' % count, file.read(2 * count))
+    return tuple([ushort_to_double(value) for value in raw])
     
 def read_float(file):
     return struct.unpack('<f', file.read(4))[0]
