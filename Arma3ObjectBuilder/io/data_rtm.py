@@ -27,10 +27,10 @@ class RTM_Transform():
         data = struct.unpack('<12f', file.read(48))
 
         output.matrix = [
-            [data[0], data[2], data[1], 0],
-            [data[6], data[8], data[7], 0],
-            [data[3], data[5], data[4], 0],
-            [data[9], data[11], data[10], 1]
+            [data[0], data[6], data[3], data[9]],
+            [data[2], data[8], data[5], data[11]],
+            [data[1], data[7], data[4], data[10]],
+            [0, 0, 0, 1]
         ]
 
         return output
@@ -40,10 +40,10 @@ class RTM_Transform():
 
         data = self.matrix
         mat = [
-            [data[0][0], data[0][2], data[0][1]],
-            [data[2][0], data[2][2], data[2][1]],
-            [data[1][0], data[1][2], data[1][1]],
-            [data[3][0], data[3][2], data[3][1]]
+            [data[0][0], data[2][0], data[1][0]],
+            [data[0][2], data[2][2], data[1][2]],
+            [data[0][1], data[2][1], data[1][1]],
+            [data[0][3], data[2][3], data[1][3]]
         ]
 
         file.write(struct.pack('<12f', *mat[0], *mat[1], *mat[2], *mat[3]))

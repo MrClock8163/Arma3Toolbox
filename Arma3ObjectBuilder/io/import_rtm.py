@@ -39,7 +39,7 @@ def build_transform_lookup(rtm_0101):
     transforms = {}
     for i, frame in enumerate(rtm_0101.frames):
         for item in frame.transforms:
-            transforms[item.bone.lower(), i] = Matrix(item.matrix).transposed()
+            transforms[item.bone.lower(), i] = Matrix(item.matrix)
 
     return transforms
 

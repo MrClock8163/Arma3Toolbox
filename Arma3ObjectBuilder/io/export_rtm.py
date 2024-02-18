@@ -89,7 +89,6 @@ def process_frame(context, obj, bones_map, frame, phase):
         trans = rtm.RTM_Transform()
         trans.bone = bones_map[bone]
         matrix = pose_bone.matrix_channel.copy()
-        matrix.transpose()
 
         trans.matrix = matrix
 
