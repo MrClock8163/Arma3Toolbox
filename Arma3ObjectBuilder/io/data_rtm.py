@@ -17,7 +17,7 @@ class RTM_Error(Exception):
 class RTM_Transform():
     def __init__(self):
         self.bone = ""
-        self.matrix = []
+        self.matrix = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
     
     @classmethod
     def read(cls, file):
@@ -200,3 +200,7 @@ class RTM_File():
             raise RTM_Error("Cannot export RTM without animation data")
         
         self.anim.write(file)
+    
+    def write_file(self, filepath):
+        with open(filepath, "wb") as file:
+            self.write(file)

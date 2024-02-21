@@ -813,8 +813,6 @@ class P3D_MLOD():
     def write_file(self, filepath):
         with open(filepath, "wb") as file:
             self.write(file)
-        
-        self.source = filepath
     
     def get_materials(self):
         materials = {("", ""): 0}
