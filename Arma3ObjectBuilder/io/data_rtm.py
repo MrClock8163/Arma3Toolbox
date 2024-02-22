@@ -6,7 +6,7 @@
 
 
 import struct
-import io
+from io import BytesIO, BufferedReader
 import numpy as np
 
 
@@ -250,6 +250,11 @@ class BMTR_Transform:
 
         return output
 
+    # The BMTR format stores quaternions and offsets instead of full transformation matrices,
+    # so the matrices need to be reconstructed. Since the Arma 3 uses a left handed coordinate system
+    # with Y axis up, the order of some components, and some signs need to be swapped around.
+    # Formulas to convert a right-handed quaternion to matrix representation:
+    # https://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToMatrix/index.htm
     def as_rtm(self, bone):
         output = RTM_Transform()
         output.bone = bone
@@ -323,10 +328,10 @@ class BMTR_File:
         self.source = ""
         self.version = 5
         self.motion = (0, 0, 0)
-        self.frames = []
-        self.phases = []
         self.bones = []
         self.props = []
+        self.phases = []
+        self.frames = []
     
     def read_frame_phases(self, file, count_frames):
         expected = count_frames * 4
@@ -337,7 +342,7 @@ class BMTR_File:
         output = []
         if compressed:
             _, uncompressed = compression.lzo1x_decompress(file, expected)
-            buffer = io.BufferedReader(io.BytesIO(uncompressed))
+            buffer = BufferedReader(BytesIO(uncompressed))
             output = [binary.read_float(buffer) for i in range(count_frames)]
             if buffer.read() != b"":
                 raise BMTR_Error("Decompressed data is longer than expected")
@@ -346,7 +351,7 @@ class BMTR_File:
         
         return output
 
-    def read_frames(self, file:io.BufferedReader, count_frames, count_bones):
+    def read_frames(self, file, count_frames, count_bones):
         output = []
         for i in range(count_frames):
             count_bones = binary.read_ulong(file)
@@ -358,7 +363,7 @@ class BMTR_File:
 
             if compressed:
                 _, uncompressed = compression.lzo1x_decompress(file, expected)
-                buffer = io.BufferedReader(io.BytesIO(uncompressed))
+                buffer = BufferedReader(BytesIO(uncompressed))
                 output.append(BMTR_Frame.read(buffer, count_bones))
                 if buffer.read() != b"":
                     raise BMTR_Error("Decompressed data is longer than expected")
@@ -446,3 +451,15 @@ class BMTR_File:
 
     def write_file(self, filepath):
         self.write(None)
+
+
+def read_rtm_universal(file):
+    signature = file.read(4)
+    file.seek(0)
+
+    if signature == b"BMTR":
+        return BMTR_File.read(file)
+    elif signature == b"RTM_":
+        return RTM_File.read(file)
+    else:
+        raise ValueError("File is not a valid RTM file.")
