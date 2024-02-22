@@ -140,13 +140,14 @@ def import_keyframes(obj, action, transforms, frames, motion):
         rot_quat_prev = pose_bone.rotation_quaternion.copy()
 
         keyframes = {}
+        mat_identity = Matrix()
         for i in range(len(frames)):
-            mat_channel = transforms.get((pose_bone.name.lower(), i), Matrix())
-            mat_parent_channel = transforms.get((pose_bone.parent.name.lower() if pose_bone.parent else "", i), Matrix())
+            mat_channel = transforms.get((pose_bone.name.lower(), i), mat_identity)
+            mat_parent_channel = transforms.get((pose_bone.parent.name.lower() if pose_bone.parent else "", i), mat_identity)
             mat_basis = mat_rest.inverted_safe() @ mat_parent_channel.inverted_safe() @ (mat_channel @ mat_rest)
             loc, rot, scale = mat_basis.decompose()
 
-            if not pose_bone.parent:
+            if mat_channel is not mat_identity and not pose_bone.parent:
                 loc += motion[i]
 
             if pose_bone.rotation_mode == 'QUATERNION':
@@ -195,6 +196,7 @@ def import_file(operator, context, file):
     if type(rtm_data) is rtm.BMTR_File:
         logger.log("BMTR")
         logger.level_up()
+        logger.log("Version: %d" % rtm_data.version)
         logger.log("Motion vector: %s" % str(rtm_data.motion))
         logger.log("Bones: %d" % len(rtm_data.bones))
         logger.log("Properties: %d" % len(rtm_data.props))

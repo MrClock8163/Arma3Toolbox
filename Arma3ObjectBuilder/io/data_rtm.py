@@ -295,9 +295,6 @@ class BMTR_Frame:
         return output
 
     def as_rtm(self, phase, bones, bone_parents):
-        if len(bone_parents) < len(self.transforms):
-            raise BMTR_Error("Mismatching bone (%d) - transformation (%d) counts" % (len(bone_parents), len(self.transforms)))
-        
         output = RTM_Frame()
         output.phase = phase
 
@@ -312,7 +309,9 @@ class BMTR_Frame:
         # of its parent. To get the correct results, the multiplication must be done in hierarchical order.
         default = RTM_Transform()
         for bone in bone_parents:
-            rtm_transform = transform_lookup[bone]
+            rtm_transform = transform_lookup.get(bone)
+            if not rtm_transform:
+                continue
             rtm_transform_parent = transform_lookup.get(bone_parents[bone], default)
             absolute_matrix = np.matrix(rtm_transform_parent.matrix) @ np.matrix(rtm_transform.matrix)
             rtm_transform.matrix = absolute_matrix.tolist()
@@ -436,13 +435,12 @@ class BMTR_File:
         
         rtm_0101 = output.anim
         rtm_0101.motion = self.motion
-        rtm_0101.bones = self.bones
 
-        bones = set(self.bones)
-        parents = {bone: parent for bone, parent in bone_parents.items() if bone.lower() in bones}
+        case_lookup = {bone.lower(): bone for bone in bone_parents}
+        rtm_0101.bones = [case_lookup.get(bone.lower(), bone) for bone in self.bones]
 
         for phase, frame in zip(self.phases, self.frames):
-            rtm_0101.frames.append(frame.as_rtm(phase, self.bones, parents))
+            rtm_0101.frames.append(frame.as_rtm(phase, rtm_0101.bones, bone_parents))
 
         return output
 
