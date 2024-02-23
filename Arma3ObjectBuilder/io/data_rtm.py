@@ -1,14 +1,13 @@
 # Class structure, read-write methods and conversion functions for handling
-# the RTM binary data structure. Format specifications
-# can be found on the community wiki:
+# the RTM and BMTR binary data structures. Format specifications
+# can be found on the community wiki (although not 100% accurate/complete regarding certain details):
 # https://community.bistudio.com/wiki/Rtm_(Animation)_File_Format
-# Largely based on the RTM exporter from the original ArmaToolbox by Alwarren.
+# https://community.bistudio.com/wiki/Rtm_Binarised_File_Format
 
 
 import struct
 from io import BytesIO, BufferedReader
 import numpy as np
-
 
 from . import binary_handler as binary
 from .compression import lzo1x_decompress
