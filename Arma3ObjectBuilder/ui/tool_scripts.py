@@ -16,7 +16,8 @@ scripts = {
         "OFP2_ManSkeleton": "ofp2_manskeleton.py"
     },
     "misc": {
-        "Convert ATBX to A3OB": "convert_atbx_to_a3ob.py"
+        "Convert ATBX to A3OB": "convert_atbx_to_a3ob.py",
+        "Convert BMTR to plain RTM": "convert_bmtr_to_rtm.py"
     }
 }
 
