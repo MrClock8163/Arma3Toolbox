@@ -154,6 +154,9 @@ def merge_proxy_objects(main_obj, proxy_objects, relative):
         utils.create_selection(proxy, placeholder)
         proxy_lookup[placeholder] = proxy.a3ob_properties_object_proxy.to_placeholder(relative)
 
+        for uv in proxy.data.uv_layers:
+            proxy.data.uv_layers.remove(uv)
+
     all_objects = proxy_objects + [main_obj]
     for obj in proxy_objects:
         blank_flags_face(obj)
@@ -291,6 +294,10 @@ def get_lod_data(operator, context, validator):
             bm.faces.sort()
             bm.to_mesh(main_obj.data)
             bm.free()
+
+        if int(main_obj.a3ob_properties_object.lod) not in data.lod_visuals:
+            for uv in main_obj.data.uv_layers:
+                main_obj.data.uv_layers.remove(uv)
 
         lod_list.append((main_obj, proxy_lookup, is_valid))
 
