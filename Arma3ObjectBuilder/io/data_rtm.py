@@ -11,7 +11,7 @@ import numpy as np
 
 
 from . import binary_handler as binary
-from . import compression
+from .compression import lzo1x_decompress
 
 
 class RTM_Error(Exception):
@@ -340,7 +340,7 @@ class BMTR_File:
         
         output = []
         if compressed:
-            _, uncompressed = compression.lzo1x_decompress(file, expected)
+            _, uncompressed = lzo1x_decompress(file, expected)
             buffer = BufferedReader(BytesIO(uncompressed))
             output = [binary.read_float(buffer) for i in range(count_frames)]
             if buffer.read() != b"":
@@ -361,7 +361,7 @@ class BMTR_File:
                 compressed = binary.read_bool(file)
 
             if compressed:
-                _, uncompressed = compression.lzo1x_decompress(file, expected)
+                _, uncompressed = lzo1x_decompress(file, expected)
                 buffer = BufferedReader(BytesIO(uncompressed))
                 output.append(BMTR_Frame.read(buffer, count_bones))
                 if buffer.read() != b"":

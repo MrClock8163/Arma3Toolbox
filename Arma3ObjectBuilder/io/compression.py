@@ -82,15 +82,13 @@ def lzo1x_decompress(file, expected):
             length += mask + x
         return length
     
+    # # First byte is handled separately, as the output buffer is empty at this point.
     x = read1()
-    # First byte is handled separately, as the output buffer is empty at this point.
     if x > 17:
-        copy_literal(x - 17)
+        length = x - 17
+        copy_literal(length)
+        state = min(4, length)
         x = read1()
-        if x < 16:
-            raise LZO_Error("Invalid instruction: %d" % x)
-    # elif x == 17 and expected >= 5:
-    #     version = read1()
     
     while True:        
         if x > 127:
