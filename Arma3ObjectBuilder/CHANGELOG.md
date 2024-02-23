@@ -15,14 +15,18 @@
     - Translate Selections import option
     - Cleanup Selections import option
     - Preserve/Merge sections import option
+  - RTM:
+    - support for importing binarized (BMTR) animations
+- scripts:
+  - script to convert binarized (BMTR) animations to plain RTM representation
 
 ### Changed
 
-- common data:
-  - common items are now displayed in alphabetical order by default
 - Blender 4.1 compatiblity:
   - updated P3D import and export to be compatible with the new Blender API
   - updated Validation tool to be compatible with the new Blender API
+- common data:
+  - common items are now displayed in alphabetical order by default
 - tools:
   - Validation:
     - validation now checks for non-ASCII characters in named properties, paths and vertex group names
