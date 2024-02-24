@@ -25,7 +25,7 @@ def get_lod_name(index):
 
 
 def format_lod_name(index, resolution):
-    if index in data.lod_resolution is not None:
+    if index in data.lod_resolution_position:
         return "%s %d" % (get_lod_name(index), resolution)
         
     return get_lod_name(index)

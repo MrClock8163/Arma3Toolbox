@@ -212,6 +212,8 @@ def get_lod_data(operator, context, validator):
 
     lod_list = []
 
+    allow_uv = set([str(idx) for idx in (*data.lod_visuals, *data.lod_shadows)])
+
     for obj in [obj for obj in export_objects if not operator.visible_only or obj.visible_get()]:       
         if obj.type != 'MESH' or not obj.a3ob_properties_object.is_a3_lod or obj.parent != None or obj.a3ob_properties_object.lod == '30':
             continue
@@ -295,7 +297,7 @@ def get_lod_data(operator, context, validator):
             bm.to_mesh(main_obj.data)
             bm.free()
 
-        if int(main_obj.a3ob_properties_object.lod) not in data.lod_visuals:
+        if main_obj.a3ob_properties_object.lod not in allow_uv:
             for uv in main_obj.data.uv_layers:
                 main_obj.data.uv_layers.remove(uv)
 

@@ -526,7 +526,7 @@ class A3OB_PT_object_mesh(bpy.types.Panel):
         
         if object_props.is_a3_lod:
             layout.prop(object_props, "lod", text="Type")
-            if int(object_props.lod) in data.lod_resolution:
+            if int(object_props.lod) in data.lod_resolution_position:
                 layout.prop(object_props, "resolution")
 
 

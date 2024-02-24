@@ -75,13 +75,10 @@ lod_resolution_position = { # decimal places in normalized format
 }
 
 
-lod_resolution = (0, 3, 4, 5, 16, 26, 30)
+lod_visuals = {0, 1, 2, 3, 18, 30}
 
 
-lod_visuals = (0, 1, 2, 3, 18, 30)
-
-
-lod_shadows = (4, 26, 27, 28)
+lod_shadows = {4, 26, 27, 28}
 
 
 lod_type_names = {
