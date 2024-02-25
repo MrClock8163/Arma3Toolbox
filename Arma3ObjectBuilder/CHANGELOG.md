@@ -33,7 +33,9 @@
     - internal logic is now standardized
 - import-export:
   - read strings are now decoded as UTF-8 in order to improve robustness
-  - new proxy triangles (imported or created) are now displayed as wireframes, as show their object names
+  - P3D:
+    - new proxy triangles (imported or created) are now displayed as wireframes, and show their object names
+    - UV channels are now only exported for visual and shadow LODs
 
 ### Fixed
 
