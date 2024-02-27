@@ -36,11 +36,16 @@
   - P3D:
     - new proxy triangles (imported or created) are now displayed as wireframes, and show their object names
     - UV channels are now only exported for visual and shadow LODs
+  - RTM:
+    - simplified internal handling of the RTM matrix data
 
 ### Fixed
 
 - Vertex Mass Editing tool would potentially throw silent errors in certain conditions
 - material properties panel would throw silent errors in certain conditions
+- remove RTM frame operator would throw silent errors and would not work properly
+- Extract Proxy operator would fail due to missing properties
+- P3D import would fail at proxy separation if the materials are not allowed as additional data
 
 ### Removed
 
