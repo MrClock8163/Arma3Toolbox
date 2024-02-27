@@ -153,8 +153,8 @@ def write_file(operator, context, file, obj, action):
     logger.log("Collected frames")
     logger.level_down()
 
-    if not static_pose:
-        action_props = action.a3ob_properties_action
+    action_props = action.a3ob_properties_action
+    if not static_pose and len(action_props.props) > 0:
         rtm_mdat = rtm.RTM_MDAT()
         rtm_mdat.items = process_props(operator, action_props)
         rtm_data.props = rtm_mdat
