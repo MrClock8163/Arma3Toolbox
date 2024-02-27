@@ -232,7 +232,7 @@ def get_lod_data(operator, context, validator):
                 continue
                 
             if not child.mode == 'OBJECT':
-                computils.call_operator_ctx(bpy.ops.object.mode_set, {"active_object": obj}, mode='OBJECT')
+                computils.call_operator_ctx(bpy.ops.object.mode_set, {"active_object": child}, mode='OBJECT')
             
             child_copy = duplicate_object(child)
 
@@ -251,8 +251,10 @@ def get_lod_data(operator, context, validator):
 
         if operator.apply_transforms:
             ctx = {
+                "object": main_obj,
                 "active_object": main_obj,
-                "selected_editable_objects": [main_obj]
+                "selected_editable_objects": [main_obj],
+                "edit_object": None
             }
             computils.call_operator_ctx(bpy.ops.object.transform_apply, ctx, location = True, scale = True, rotation = True)
         

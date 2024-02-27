@@ -46,6 +46,7 @@
 - remove RTM frame operator would throw silent errors and would not work properly
 - Extract Proxy operator would fail due to missing properties
 - P3D import would fail at proxy separation if the materials are not allowed as additional data
+- P3D export would fail at applying transformations if a LOD object was in edit mode when starting the export (rare edge case)
 
 ### Removed
 
