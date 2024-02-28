@@ -10,7 +10,6 @@ import bmesh
 
 from . import data_p3d as p3d
 from ..utilities import generic as utils
-from ..utilities import lod as lodutils
 from ..utilities import flags as flagutils
 from ..utilities import compat as computils
 from ..utilities import data
@@ -32,6 +31,14 @@ def can_export(operator, context):
             return True
             
     return False
+
+
+def is_ascii(value):
+    try:
+        value.encode('ascii')
+        return True
+    except:
+        return False
 
 
 def duplicate_object(obj):
@@ -147,6 +154,9 @@ def merge_proxy_objects(main_obj, proxy_objects, relative):
         utils.create_selection(proxy, placeholder)
         proxy_lookup[placeholder] = proxy.a3ob_properties_object_proxy.to_placeholder(relative)
 
+        for uv in proxy.data.uv_layers:
+            proxy.data.uv_layers.remove(uv)
+
     all_objects = proxy_objects + [main_obj]
     for obj in proxy_objects:
         blank_flags_face(obj)
@@ -167,6 +177,28 @@ def merge_proxy_objects(main_obj, proxy_objects, relative):
     return proxy_lookup
 
 
+def validate_proxies(operator, proxy_objects):
+    for proxy in proxy_objects:
+        path, _ = proxy.a3ob_properties_object_proxy.to_placeholder(operator.relative_paths)
+        if not is_ascii(path):
+            return False
+        
+        for group in proxy.vertex_groups:
+            if not is_ascii(group.name):
+                return False
+        
+        for slot in proxy.material_slots:
+            mat = slot.material
+            if not mat:
+                continue
+            
+            texture, material = mat.a3ob_properties_material.to_p3d(operator.relative_paths)
+            if not is_ascii(texture) or not is_ascii(material):
+                return False
+    
+    return True
+
+
 # Huge monolith function to produce the final object and mesh data that can be written to the 
 # P3D file. Merges the sub-objects and proxies into the main objects, applies transformations,
 # runs mesh validation and sorts sections if necessary.
@@ -179,6 +211,8 @@ def get_lod_data(operator, context, validator):
         export_objects = context.selected_objects
 
     lod_list = []
+
+    allow_uv = set([str(idx) for idx in (*data.lod_visuals, *data.lod_shadows)])
 
     for obj in [obj for obj in export_objects if not operator.visible_only or obj.visible_get()]:       
         if obj.type != 'MESH' or not obj.a3ob_properties_object.is_a3_lod or obj.parent != None or obj.a3ob_properties_object.lod == '30':
@@ -198,7 +232,7 @@ def get_lod_data(operator, context, validator):
                 continue
                 
             if not child.mode == 'OBJECT':
-                computils.call_operator_ctx(bpy.ops.object.mode_set, {"active_object": obj}, mode='OBJECT')
+                computils.call_operator_ctx(bpy.ops.object.mode_set, {"active_object": child}, mode='OBJECT')
             
             child_copy = duplicate_object(child)
 
@@ -211,14 +245,16 @@ def get_lod_data(operator, context, validator):
         # validation would otherwise get confused by the proxy triangles (eg.: it'd be impossible to validate
         # that a mesh is otherwise contiguous or not).
         merge_sub_objects(operator, main_obj, sub_objects)
-        if validator:
-            is_valid = validator.validate(main_obj, main_obj.a3ob_properties_object.lod, True, operator.validate_lods_warning_errors)
+        is_valid = validator.validate_lod(main_obj, main_obj.a3ob_properties_object.lod, True, operator.validate_lods_warning_errors, operator.relative_paths)
+        is_valid &= validate_proxies(operator, proxy_objects)
         proxy_lookup = merge_proxy_objects(main_obj, proxy_objects, operator.relative_paths)
 
         if operator.apply_transforms:
             ctx = {
+                "object": main_obj,
                 "active_object": main_obj,
-                "selected_editable_objects": [main_obj]
+                "selected_editable_objects": [main_obj],
+                "edit_object": None
             }
             computils.call_operator_ctx(bpy.ops.object.transform_apply, ctx, location = True, scale = True, rotation = True)
         
@@ -231,8 +267,7 @@ def get_lod_data(operator, context, validator):
                 "object": main_obj
             }
             computils.call_operator_ctx(bpy.ops.mesh.customdata_custom_splitnormals_clear, ctx)
-            main_obj.data.use_auto_smooth = True
-            main_obj.data.auto_smooth_angle = 3.141592654
+            computils.mesh_auto_smooth(main_obj.data)
             mod = main_obj.modifiers.new("Temp", 'WEIGHTED_NORMAL')
             mod.weight = 50
             mod.keep_sharp = True
@@ -264,6 +299,10 @@ def get_lod_data(operator, context, validator):
             bm.to_mesh(main_obj.data)
             bm.free()
 
+        if main_obj.a3ob_properties_object.lod not in allow_uv:
+            for uv in main_obj.data.uv_layers:
+                main_obj.data.uv_layers.remove(uv)
+
         lod_list.append((main_obj, proxy_lookup, is_valid))
 
     return lod_list
@@ -281,6 +320,7 @@ def process_vertices(bm):
 
     return output
 
+
 # Produce the unique vertex normal dictionary from the bmesh data, as well as a mapping
 # dictionary.
 # {idx 0: (x, y, z), ...: (..., ..., ...), ....}
@@ -289,16 +329,14 @@ def process_normals(mesh):
     output = {}
     normals_index = {}
     normals_lookup_dict = {}
-
-    for i, loop in enumerate(mesh.loops):
-        normal = loop.normal.copy().freeze()
-        
+    
+    for i, normal in computils.mesh_static_normals_iterator(mesh):
         if normal not in normals_index:
             normals_index[normal] = len(normals_index)
             output[len(output)] = normal
         
         normals_lookup_dict[i] = normals_index[normal]
-    
+
     return output, normals_lookup_dict
 
 
@@ -470,31 +508,28 @@ def process_taggs(obj, bm, logger):
     return taggs
 
 
+def translate_selections(p3dm):
+    for tagg in p3dm.taggs:
+        tagg.name = data.translations_english_czech.get(tagg.name.lower(), tagg.name)
+
+
 def process_lod(operator, obj, proxy_lookup, is_valid, logger):
     object_props = obj.a3ob_properties_object
     lod_name = object_props.get_name()
 
     logger.level_up()
     logger.step("Name: %s" % lod_name)
-    logger.step("Processing data:")
-
-    # The P3D format cannot store n-gons, so the export must
-    # skip LODs with such faces.
-    if lodutils.has_ngons(obj.data):
-        logger.log("N-gons detected -> skipping LOD")
-        logger.level_down()
-        return None
 
     if not is_valid:
         logger.log("Failed validation -> skipping LOD (run manual validation for details)")
         logger.level_down()
         return None
 
+    logger.step("Processing data:")
     output = p3d.P3D_LOD()
     output.resolution.set(int(object_props.lod), object_props.resolution)
 
     mesh = obj.data
-    mesh.calc_normals_split()
 
     normals, normals_lookup_dict = process_normals(mesh)
     output.normals = normals
@@ -516,6 +551,10 @@ def process_lod(operator, obj, proxy_lookup, is_valid, logger):
     if operator.renumber_components:
         output.renumber_components()
         logger.log("Renumbered component selections")
+    
+    if operator.translate_selections:
+        translate_selections(output)
+        logger.log("Translated selections to czech")
 
     bm.free()
 
@@ -542,9 +581,9 @@ def write_file(operator, context, file):
     wm.progress_begin(0, 1000)
     wm.progress_update(0)
     
-    validator = None
+    validator = Validator(ProcessLoggerNull())
     if operator.validate_lods:
-        validator = Validator(ProcessLoggerNull())
+        validator.setup_lod_specific()
     
     logger = ProcessLogger()
     logger.step("P3D export to %s" % operator.filepath)
@@ -573,13 +612,13 @@ def write_file(operator, context, file):
         new_lod = process_lod(operator, lod, proxy_lookup, is_valid, logger)
         if new_lod:
             mlod_lods.append(new_lod)
-        bpy.data.meshes.remove(lod.data, do_unlink=True)
+        bpy.data.meshes.remove(lod.data)
 
         logger.log("Done in %f sec" % (time.time() - time_lod_start))
         wm.progress_update(i + 1)
 
     if len(mlod_lods) == 0:
-        raise p3d.P3D_Error("All LODs had n-gons/failed validation, cannot write P3D with 0 LODs")
+        raise p3d.P3D_Error("All LODs failed validation, cannot write P3D with 0 LODs")
 
     # LODs should be sorted by their resolution signature.
     mlod_lods.sort(key=lambda lod: float(lod.resolution))

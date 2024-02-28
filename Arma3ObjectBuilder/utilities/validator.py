@@ -1,4 +1,4 @@
-# Backend logic for LOD validation.
+# Backend logic for data validation.
 
 
 import re
@@ -8,38 +8,121 @@ import bmesh
 import bpy
 
 
+class ValidatorResult():
+    def __init__(self, is_valid = True, comment = ""):
+        self.is_valid = is_valid
+        self.comment = comment
+    
+    def set(self, is_valid = True, comment = ""):
+        self.is_valid = is_valid
+        self.comment = comment
+
+
 class ValidatorComponent():
-    def __init__(self, obj, bm, logger):
+    """Base component"""
+
+    @staticmethod
+    def is_ascii_internal(value):
+        try:
+            value.encode("ascii")
+            return True
+        except:
+            return False
+
+    def conditions(self):
+        strict = optional = info = tuple()
+
+        return strict, optional, info
+    
+    def validate_lazy(self, warns_errs):
+        strict, optional, _ = self.conditions()
+
+        for item in strict:
+            result = item()
+            if not result.is_valid:
+                return False
+        
+        if warns_errs:
+            for item in optional:
+                result = item()
+                if not result.is_valid:
+                    return False
+        
+        return True
+
+    def validate_verbose(self, warns_errs):
+        strict, optional, info = self.conditions()
+        is_valid = True
+        self.logger.level_up()
+
+        for item in strict:
+            result = item()
+            if not result.is_valid:
+                self.logger.step("ERROR: %s" % result.comment)
+                is_valid = False
+        
+        for item in optional:
+            result = item()
+            if not result.is_valid:
+                self.logger.step("WARNING: %s" % result.comment)
+                is_valid &= not warns_errs
+        
+        for item in info:
+            result = item()
+            self.logger.step("INFO: %s" % result.comment)
+
+        self.logger.level_down()
+
+        return is_valid
+
+    
+    def validate(self, lazy, warns_errs):
+        is_valid = True
+
+        if lazy:
+            is_valid = self.validate_lazy(warns_errs)
+        else:
+            self.logger.step("RULESET: %s" % self.__doc__)
+            is_valid = self.validate_verbose(warns_errs)
+
+        return is_valid
+
+
+class ValidatorComponentLOD(ValidatorComponent):
+    """LOD - Base component"""
+
+    def __init__(self, obj, bm, logger, relative_paths = False):
         self.obj = obj
         self.bm = bm
         self.logger = logger
+        self.relative_paths = relative_paths
 
     def is_contiguous(self):
-        result = True, ""
+        result = ValidatorResult()
 
         for edge in self.bm.edges:
             if not edge.is_contiguous:
-                result = False, "mesh is not contiguous"
+                result.set(False, "mesh is not contiguous")
                 break
             
         return result
 
     def is_triangulated(self):
-        result = True, ""
+        result = ValidatorResult()
 
         for face in self.bm.faces:
             if len(face.verts) > 3:
-                result = False, "mesh is not triangulated"
+                result.set(False, "mesh is not triangulated")
                 break
                 
         return result
 
     def no_ngons(self):
-        result = True, ""
+        result = ValidatorResult()
 
         for face in self.bm.faces:
             if len(face.verts) > 4:
-                result = False, "mesh has n-gons"
+                result.set(False, "mesh has n-gons")
                 break
         
         return result
@@ -62,88 +145,80 @@ class ValidatorComponent():
         else:
             return False
     
-    ruleset = "Base"
-    def conditions(self):
-        strict = tuple()
-        optional = tuple()
-        info = tuple()
+    def only_ascii_vgroups(self):
+        result = ValidatorResult()
 
-        return strict, optional, info
+        for group in self.obj.vertex_groups:
+            if not self.is_ascii_internal(group.name):
+                result.set(False, "mesh has vertex groups with non-ASCII characters (first encountered: %s)" % group.name)
+                break
+
+        return result
     
-    def validate_lazy(self, warns_errs):
-        strict, optional, _ = self.conditions()
+    def only_ascii_materials(self):
+        result = ValidatorResult()
 
-        for item in strict:
-            success, _ = item()
-            if not success:
-                return False
-        
-        if warns_errs:
-            for item in optional:
-                success, _ = item()
-                if not success:
-                    return False
-        
-        return True
+        for slot in self.obj.material_slots:
+            mat = slot.material
+            if not mat:
+                continue
 
-    def validate_verbose(self, warns_errs):
-        strict, optional, info = self.conditions()
-        is_valid = True
-        self.logger.level_up()
+            texture, material = mat.a3ob_properties_material.to_p3d(self.relative_paths)
+            if not self.is_ascii_internal(texture) or not self.is_ascii_internal(material):
+                result.set(False, "mesh has materials with non-ASCII characters (first encountered: %s)" % mat.name)
+                break
 
-        for item in strict:
-            success, comment = item()
-            if not success:
-                self.logger.step("ERROR: %s" % comment)
-                is_valid = False
-        
-        for item in optional:
-            success, comment = item()
-            if not success:
-                self.logger.step("WARNING: %s" % comment)
-                is_valid &= not warns_errs
-        
-        for item in info:
-            _, comment = item()
-            self.logger.step("INFO: %s" % comment)
+        return result
 
-        self.logger.level_down()
+    def only_ascii_properties(self):
+        result = ValidatorResult()
 
-        return is_valid
+        for prop in self.obj.a3ob_properties_object.properties:
+            value = "%s = %s" % (prop.name, prop.value)
+            if not self.is_ascii_internal(value):
+                result.set(False, "mesh has named properties with non-ASCII characters (first encountered: %s)" % value)
+                break
 
+        return result
+
+    def only_ascii_proxies(self):
+        result = ValidatorResult()
+
+        if self.obj.a3ob_properties_object_proxy.is_a3_proxy:
+            path, _ = self.obj.a3ob_properties_object_proxy.to_placeholder(self.relative_paths)
+            if not self.is_ascii_internal(path):
+                result.set(False, "mesh has proxy path with non-ASCII characters")
+
+        return result
+
+
+class ValidatorLODGeneric(ValidatorComponentLOD):
+    """LOD - Generic"""
     
-    def validate(self, lazy, warns_errs):
-        is_valid = True
-
-        if lazy:
-            is_valid = self.validate_lazy(warns_errs)
-        else:
-            self.logger.step("RULESET: %s" % self.ruleset)
-            is_valid = self.validate_verbose(warns_errs)
-
-        return is_valid
-
-
-class ValidatorGeneric(ValidatorComponent):
-    ruleset = "Generic"
     def conditions(self):
         strict = (
             self.no_ngons,
+            self.only_ascii_materials,
+            self.only_ascii_vgroups,
+            self.only_ascii_properties,
+            self.only_ascii_proxies
         )
         optional = info = tuple()
 
         return strict, optional, info
 
 
-class ValidatorGeometry(ValidatorComponent):
+class ValidatorLODGeometry(ValidatorComponentLOD):
+    """LOD - Geometry"""
+
     def is_triangulated(self):
         result =  super().is_triangulated()
-        if not result[0]:
-            result = False, "mesh is not triangulated (convexity is not definite)"
+        if result.is_valid:
+            result.set(False, "mesh is not triangulated (convexity is not definite)")
         
         return result
     
-    def is_convex_edge(self, edge):
+    def is_convex_edge_internal(self, edge):
         if edge.is_convex:
             return True
         
@@ -157,40 +232,44 @@ class ValidatorGeometry(ValidatorComponent):
         return True
 
     def is_convex(self):
-        result = True, ""
+        result = ValidatorResult()
 
         for edge in self.bm.edges:
-            if not self.is_convex_edge(edge):
-                result = False, "mesh is not convex"
+            if not self.is_convex_edge_internal(edge):
+                result.set(False, "mesh is not convex")
                 break
         
         return result
     
     def has_components(self):
+        result = ValidatorResult()
+
         if not self.has_selection_internal("component\d+"):
-            return False, "mesh has no component selections"
+            result.set(False, "mesh has no component selections")
         
-        return True, ""
+        return result
     
     def has_mass(self):
-        result = True, ""
+        result = ValidatorResult()
 
         layer = self.bm.verts.layers.float.get("a3ob_mass")
         if not layer or math.fsum([vert[layer] for vert in self.bm.verts]) < 0.001:
-            return False, "mesh has no vertex mass assigned"
+            result.set(False, "mesh has no vertex mass assigned")
 
         return result
     
     def no_unweighted(self):
-        result = True, ""
+        result = ValidatorResult()
 
         layer = self.bm.verts.layers.float.get("a3ob_mass")
         if not layer:
-            return False, "mesh has vertices with no vertex mass assigned"
+            result.set(False, "mesh has vertices with no vertex mass assigned")
+            return result
         
         for vert in self.bm.verts:
             if vert[layer] < 0.001:
-                return False, "mesh has vertices with no vertex mass assigned"
+                result.set(False, "mesh has vertices with no vertex mass assigned")
+                break
         
         return result
 
@@ -200,9 +279,8 @@ class ValidatorGeometry(ValidatorComponent):
             if vertex.co.length > distance:
                 distance = vertex.co.length
         
-        return True, "distance of farthest point from origin is %.3f meters" % distance
+        return ValidatorResult(True, "distance of farthest point from origin is %.3f meters" % distance)
 
-    ruleset = "Geometry"
     def conditions(self):
         strict = (
             self.is_convex,
@@ -225,8 +303,9 @@ class ValidatorGeometry(ValidatorComponent):
         return strict, optional, info
 
 
-class ValidatorGeometrySubtype(ValidatorGeometry):
-    ruleset = "Geometry subtype"
+class ValidatorLODGeometrySubtype(ValidatorLODGeometry):
+    """LOD - Geometry subtype"""
+
     def conditions(self):
         strict = (
             self.is_convex,
@@ -245,9 +324,11 @@ class ValidatorGeometrySubtype(ValidatorGeometry):
         return strict, optional, info
     
 
-class ValidatorShadow(ValidatorComponent):
+class ValidatorLODShadow(ValidatorComponentLOD):
+    """LOD - Shadow"""
+
     def is_sharp(self):
-        result = True, ""
+        result = ValidatorResult()
 
         for face in self.bm.faces:
             if face.smooth:
@@ -257,13 +338,13 @@ class ValidatorShadow(ValidatorComponent):
 
         for edge in self.bm.edges:
             if edge.smooth and edge.is_manifold:
-                result = False, "mesh has smooth edges"
+                result.set(False, "mesh has smooth edges")
                 break
         
         return result
     
     def no_materials(self):
-        result = True, ""
+        result = ValidatorResult()
 
         materials = {}
         for i, slot in enumerate(self.obj.material_slots):
@@ -272,17 +353,16 @@ class ValidatorShadow(ValidatorComponent):
                 materials[i] = ("", "")
                 continue
 
-            materials[i] = mat.a3ob_properties_material.to_p3d()
+            materials[i] = mat.a3ob_properties_material.to_p3d(False)
         
         if len(materials) > 0:
             for face in self.bm.faces:
                 if materials[face.material_index] != ("", ""):
-                    result = False, "mesh has materials assigned"
+                    result.set(False, "mesh has materials assigned")
                     break
             
         return result
     
-    ruleset = "Shadow"
     def conditions(self):
         strict = (
             self.is_contiguous,
@@ -295,24 +375,25 @@ class ValidatorShadow(ValidatorComponent):
         return strict, optional, info
 
 
-class ValidatorPointcloud(ValidatorComponent):
+class ValidatorLODPointcloud(ValidatorComponentLOD):
+    """LOD - Point cloud"""
+
     def no_edges(self):
-        result = True, ""
+        result = ValidatorResult()
 
         if len(self.bm.edges) > 0:
-            result = False, "point cloud contains edges"
+            result.set(False, "point cloud contains edges")
 
         return result
     
     def no_faces(self):
-        result = True, ""
+        result = ValidatorResult()
 
         if len(self.bm.faces) > 0:
-            result = False, "point cloud contains faces"
+            result.set(False, "point cloud contains faces")
         
         return result
     
-    ruleset = "Point cloud"
     def conditions(self):
         strict = info = tuple()
         optional = (
@@ -323,25 +404,27 @@ class ValidatorPointcloud(ValidatorComponent):
         return strict, optional, info
 
 
-class ValidatorRoadway(ValidatorComponent):
+class ValidatorLODRoadway(ValidatorComponentLOD):
+    """LOD - Roadway"""
+
     def under_limit(self):
-        result = True, ""
+        result = ValidatorResult()
 
         if len(self.bm.verts) > 255:
-            result = False, "mesh has more than 255 points (animations will not work properly)"
+            result.set(False, "mesh has more than 255 points (animations will not work properly)")
 
         return result
     
     def has_faces(self):
-        result = True, ""
+        result = ValidatorResult()
 
         if len(self.bm.faces) == 0:
-            result = False, "mesh has no faces"
+            result.set(False, "mesh has no faces")
 
         return result
 
     def has_sound(self):
-        result = True, ""
+        result = ValidatorResult()
 
         textures = {}
         for i, slot in enumerate(self.obj.material_slots):
@@ -350,14 +433,14 @@ class ValidatorRoadway(ValidatorComponent):
                 textures[i] = ""
                 continue
                 
-            textures[i] = mat.a3ob_properties_material.to_p3d()[0]
+            textures[i] = mat.a3ob_properties_material.to_p3d(False)[0]
         
         if len(textures) == 0:
-            result = False, "mesh has no sound textures assigned"
+            result.set(False, "mesh has no sound textures assigned")
         else:
             for face in self.bm.faces:
                 if textures[face.material_index] == "":
-                    result = False, "mesh has faces with no sound texture assigned"
+                    result.set(False, "mesh has faces with no sound texture assigned")
                     break
 
         return result
@@ -368,9 +451,8 @@ class ValidatorRoadway(ValidatorComponent):
             if vertex.co.length > distance:
                 distance = vertex.co.length
         
-        return True, "distance of farthest point from origin is %.3f meters" % distance
+        return ValidatorResult(True, "distance of farthest point from origin is %.3f meters" % distance)
     
-    ruleset = "Roadway"
     def conditions(self):
         strict = (
             self.has_faces,
@@ -386,32 +468,37 @@ class ValidatorRoadway(ValidatorComponent):
         return strict, optional, info
 
 
-class ValidatorPaths(ValidatorComponent):
+class ValidatorLODPaths(ValidatorComponentLOD):
+    """LOD - Paths"""
+
     def has_faces(self):
-        result = True, ""
+        result = ValidatorResult()
 
         if len(self.bm.faces) == 0:
-            result = False, "mesh has no faces"
+            result.set(False, "mesh has no faces")
 
         return result
     
     def has_entry(self):
+        result = ValidatorResult()
+
         if not self.has_selection_internal("in\d+"):
-            return False, "mesh has no entry points assigned"
+            result.set(False, "mesh has no entry points assigned")
         
-        return True, ""
+        return result
     
     def has_position(self):
-        if not self.has_selection_internal("in\d+"):
-            return False, "mesh has no position points assigned"
-        
-        return True, ""
+        result = ValidatorResult()
 
-    ruleset = "Paths"
+        if not self.has_selection_internal("in\d+"):
+            result.set(False, "mesh has no position points assigned")
+        
+        return result
+
     def conditions(self):
         strict = (
             self.has_faces,
-            self.has_entry,
+            self.has_entry
         )
         optional = (
             self.has_position,
@@ -421,19 +508,104 @@ class ValidatorPaths(ValidatorComponent):
         return strict, optional, info
 
 
+class ValidatorComponentSkeleton(ValidatorComponent):
+    """Skeleton - Base component"""
+
+    def __init__(self, skeleton, logger):
+        self.skeleton = skeleton
+        self.logger = logger
+    
+    def has_valid_name(self):
+        result = ValidatorResult()
+
+        if not self.is_ascii_internal(self.skeleton.name) or " " in self.skeleton.name:
+            result.set(False, "skeleton name contains spaces and/or non-ASCII characters")
+
+        return result
+    
+    def has_valid_hierarchy(self):
+        result = ValidatorResult()
+
+        bones = self.skeleton.bones
+        bone_order = {}
+        for i in range(len(bones)):
+            for item in bones:
+                if item.name in bone_order or item.parent != "" and item.parent not in bone_order:
+                    continue
+                
+                bone_order[item.name] = item.parent
+
+            if len(bone_order) == len(bones):
+                break
+        
+        else:
+            result.set(False, "skeleton has invalid bone hierarchy")
+
+        return result
+
+    def only_ascii_bones(self):
+        result = ValidatorResult()
+
+        for bone in self.skeleton.bones:
+            if not self.is_ascii_internal(bone.name) or not self.is_ascii_internal(bone.parent):
+                result.set(False, "skeleton has bones with non-ASCII characters")
+                break
+
+        return result
+
+
+class ValidatorSkeletonGeneric(ValidatorComponentSkeleton):
+    """Skeleton - Generic"""
+
+    def conditions(self):
+        strict = (
+            self.has_valid_name,
+            self.has_valid_hierarchy,
+            self.only_ascii_bones
+        )
+        optional = info = tuple()
+
+        return strict, optional, info
+
+
+class ValidatorSkeletonRTM(ValidatorComponentSkeleton):
+    """Skeleton - RTM"""
+
+    def has_rtm_compatible_bones(self):
+        result = ValidatorResult()
+
+        for bone in self.skeleton.bones:
+            if len(bone.name) > 31 or len(bone.parent) > 31:
+                result.set(False, "skeleton has bone names longer than 31 characters")
+                break
+
+        return result
+
+    def conditions(self):
+        strict = (
+            self.has_rtm_compatible_bones,
+        )
+        optional = info = tuple()
+
+        return strict, optional, info
+
+
 class Validator():
     def __init__(self, logger):
         self.logger = logger
-        self.components = {
-            **dict.fromkeys(('4', '26', '27', '28'), [ValidatorShadow]),
-            **dict.fromkeys(('9', '10', '13'), [ValidatorPointcloud]),
-            **dict.fromkeys(('7', '8', '14', '15', '16', '17', '19', '20', '21', '22', '23', '24'), [ValidatorGeometrySubtype]),
-            '6': [ValidatorGeometry],
-            '11': [ValidatorRoadway],
-            '12': [ValidatorPaths]
-        }
+        self.components = {}
     
-    def validate(self, obj, lod, lazy = False, warns_errs = True):
+    def setup_lod_specific(self):
+        self.components = {
+            **dict.fromkeys(("4", "26", "27", "28"), [ValidatorLODShadow]),
+            **dict.fromkeys(("9", "10", "13"), [ValidatorLODPointcloud]),
+            **dict.fromkeys(("7", "8", "14", "15", "16", "17", "19", "20", "21", "22", "23", "24"), [ValidatorLODGeometrySubtype]),
+            "6": [ValidatorLODGeometry],
+            "11": [ValidatorLODRoadway],
+            "12": [ValidatorLODPaths]
+        }
+
+    def validate_lod(self, obj, lod, lazy = False, warns_errs = True, relative_paths = False):
         self.logger.step("Validating %s" % obj.name)
         self.logger.level_up()
         if warns_errs:
@@ -441,16 +613,33 @@ class Validator():
 
         obj.update_from_editmode()
         bm = bmesh.new()
-        bm.from_object(obj, bpy.context.evaluated_depsgraph_get())
+        bm.from_mesh(obj.evaluated_get(bpy.context.evaluated_depsgraph_get()).data)
         bm.verts.ensure_lookup_table()
         bm.edges.ensure_lookup_table()
         bm.faces.ensure_lookup_table()
 
         is_valid = True
-        for item in [ValidatorGeneric] + self.components.get(lod, []):
-            is_valid &= item(obj, bm, self.logger).validate(lazy, warns_errs)
+        for item in [ValidatorLODGeneric] + self.components.get(lod, []):
+            is_valid &= item(obj, bm, self.logger, relative_paths).validate(lazy, warns_errs)
 
         bm.free()
+        self.logger.level_down()
+        self.logger.step("Finished validation")
+
+        return is_valid
+    
+    def validate_skeleton(self, skeleton, for_rtm = False, lazy = False):
+        self.logger.step("Validating %s" % skeleton.name)
+        self.logger.level_up()
+
+        is_valid = True
+        components = [ValidatorSkeletonGeneric]
+        if for_rtm:
+            components.append(ValidatorSkeletonRTM)
+
+        for item in components:
+            is_valid &= item(skeleton, self.logger).validate(lazy, False)
+
         self.logger.level_down()
         self.logger.step("Finished validation")
 

@@ -30,7 +30,11 @@ class A3OB_OT_validate_lod(bpy.types.Operator):
                 return {'FINISHED'}
         
         processor = Validator(ProcessLogger())
-        valid = processor.validate(obj, scene_props.lod, False, scene_props.warning_errors)
+        processor.setup_lod_specific()
+        valid = processor.validate_lod(obj, scene_props.lod, False, scene_props.warning_errors, scene_props.relative_paths)
+        for proxy in [item for item in obj.children if item.type == 'MESH' and item.a3ob_properties_object_proxy.is_a3_proxy]:
+            valid &= processor.validate_lod(proxy, '1', False, scene_props.warning_errors, scene_props.relative_paths)
+
         if valid:
             self.report({'INFO'}, "Validation succeeded")
         else:
@@ -65,6 +69,7 @@ class A3OB_PT_validation(bpy.types.Panel):
         if scene_props.detect:
             row_type.enabled = False
         layout.prop(scene_props, "warning_errors")
+        layout.prop(scene_props, "relative_paths")
             
         layout.separator()
         layout.operator("a3ob.validate_for_lod", text="Validate", icon_value=utils.get_icon("op_validate"))

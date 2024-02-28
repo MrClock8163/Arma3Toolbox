@@ -11,10 +11,6 @@ def write_file(operator, skeleton, file):
     logger.step("Skeleton definition export to %s" % operator.filepath)
     logger.log("Skeleton definition: %s" % skeleton.name)
     bones_parents = riggingutils.bone_order_from_skeleton(skeleton)
-    if bones_parents is None:
-        logger.log("Bone hierarchy is invalid (circular reference or undefined bone parents)")
-        logger.step("Skeleton export finished")
-        return False
 
     logger.log("Bones: %d" % len(bones_parents))
     
@@ -41,5 +37,3 @@ def write_file(operator, skeleton, file):
 
     logger.log("Wrote formatted file")
     logger.step("Skeleton export finished")
-
-    return True

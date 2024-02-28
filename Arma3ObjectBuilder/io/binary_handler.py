@@ -50,6 +50,12 @@ def read_compressed_uint(file):
         byte_idx += 1
     
     return output
+
+def read_half(file):
+    return struct.unpack('<e', file.read(2))[0]
+
+def read_halfs(file, count = 1):
+    return struct.unpack('<%de' % count, file.read(2 * count))
     
 def read_float(file):
     return struct.unpack('<f', file.read(4))[0]
@@ -66,7 +72,10 @@ def read_doubles(file, count = 1):
 def read_char(file, count = 1):
     chars = struct.unpack('%ds' % count, file.read(count))[0]
     return chars.decode('ascii')
-    
+
+# In theory all strings in BI files should be strictly ASCII,
+# but on the off chance that a corrupt character is present, the method would fail.
+# Therefore using UTF-8 decoding is more robust, and gives the same result for valid ASCII values.
 def read_asciiz(file):
     res = b''
     
@@ -77,7 +86,7 @@ def read_asciiz(file):
             
         res += a
     
-    return res.decode('ascii')
+    return res.decode('utf8', errors="replace")
 
 def read_asciiz_field(file, field_len):
     field = file.read(field_len)
@@ -93,7 +102,7 @@ def read_asciiz_field(file, field_len):
     else:
         raise ValueError("ASCIIZ field length overflow")
     
-    return result.decode('ascii')
+    return result.decode('utf8', errors="replace")
         
 def read_lascii(file):
     length = read_byte(file)
@@ -101,7 +110,7 @@ def read_lascii(file):
     if len(value) != length:
         raise EOFError("LASCII string ran into unexpected EOF")
     
-    return value.decode('ascii')
+    return value.decode('utf8', errors="replace")
     
 def write_byte(file, *args):
     file.write(struct.pack('%dB' % len(args), *args))
@@ -130,6 +139,9 @@ def write_compressed_uint(file, value):
 
         write_byte(file, (temp & 127) + 128)
         temp = temp >> 7
+
+def write_half(file, *args):
+    file.write(struct.pack('<%de' % len(args), *args))
     
 def write_float(file, *args):
     file.write(struct.pack('<%df' % len(args), *args))

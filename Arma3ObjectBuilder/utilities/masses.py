@@ -23,9 +23,10 @@ def can_edit_mass(context):
 # and no issues were observed so far (geometry LOD
 # meshes are relatively simple).
 def get_selection_mass(self):
-    mesh = self.data
+    if self.type != 'MESH' or self.mode != 'EDIT':
+        return 0
     
-    bm = bmesh.from_edit_mesh(mesh)
+    bm = bmesh.from_edit_mesh(self.data)
     layer = bm.verts.layers.float.get("a3ob_mass")
     
     if not layer:
@@ -41,6 +42,9 @@ def get_selection_mass(self):
 # vertices, then the difference of the sum and the target
 # value is distributed equally to the selected vertices.
 def set_selection_mass(self, value):
+    if self.type != 'MESH' or self.mode != 'EDIT':
+        return
+    
     with utils.edit_bmesh(self) as bm:
     
         layer = bm.verts.layers.float.get("a3ob_mass")
@@ -60,33 +64,37 @@ def set_selection_mass(self, value):
 
 
 def set_selection_mass_each(obj, value):
-    mesh = obj.data
-    bm = bmesh.from_edit_mesh(mesh)
+    if obj.type != 'MESH' or obj.mode != 'EDIT':
+        return
     
-    layer = bm.verts.layers.float.get("a3ob_mass")
-    if layer is None:
-        layer = bm.verts.layers.float.new("a3ob_mass")
-        
-    for vertex in bm.verts:
-        if vertex.select:
-            vertex[layer] = round(value, 3)
+    with utils.edit_bmesh(obj) as bm:
+    
+        layer = bm.verts.layers.float.get("a3ob_mass")
+        if layer is None:
+            layer = bm.verts.layers.float.new("a3ob_mass")
+            
+        for vertex in bm.verts:
+            if vertex.select:
+                vertex[layer] = round(value, 3)
 
    
 def set_selection_mass_distribute(obj, value):
-    mesh = obj.data
-    bm = bmesh.from_edit_mesh(mesh)
-    
-    layer = bm.verts.layers.float.get("a3ob_mass")
-    if layer is None:
-        layer = bm.verts.layers.float.new("a3ob_mass")
-        
-    verts = [vertex for vertex in bm.verts if vertex.select]
-    if len(verts) == 0:
+    if obj.type != 'MESH' or obj.mode != 'EDIT':
         return
-        
-    vertex_value = value / len(verts)
-    for vertex in verts:
-        vertex[layer] = vertex_value
+    
+    with utils.edit_bmesh(obj) as bm:
+    
+        layer = bm.verts.layers.float.get("a3ob_mass")
+        if layer is None:
+            layer = bm.verts.layers.float.new("a3ob_mass")
+            
+        verts = [vertex for vertex in bm.verts if vertex.select]
+        if len(verts) == 0:
+            return
+            
+        vertex_value = value / len(verts)
+        for vertex in verts:
+            vertex[layer] = vertex_value
 
 
 def clear_selection_masses(obj):

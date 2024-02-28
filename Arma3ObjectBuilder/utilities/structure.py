@@ -4,7 +4,6 @@
 import re
 
 import bpy
-import bmesh
 
 from . import generic as utils
 from . import compat as computils
@@ -130,7 +129,6 @@ def cleanup_vertex_groups(obj):
 
 def redefine_vertex_group(obj, weight):
     obj.update_from_editmode()
-    mesh = obj.data
     
     group = obj.vertex_groups.active
     if group is None:

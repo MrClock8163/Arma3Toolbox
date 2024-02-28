@@ -132,10 +132,15 @@ def process_selections(bm, lod):
     return selection_names
 
 
-def process_materials(mesh, bm, lod, materials, materials_lookup):
-    face_indices, material_indices = lod.get_sections(materials_lookup)
+def process_materials(operator, mesh, bm, lod, materials, materials_lookup):
+    slot_indices = []
+    material_indices = []
+    if operator.sections == 'PRESERVE':
+        slot_indices, material_indices = lod.get_sections(materials_lookup)
+    elif operator.sections == 'MERGE':
+        slot_indices, material_indices = lod.get_sections_merged(materials_lookup)
     
-    for i, idx in enumerate(face_indices):
+    for i, idx in enumerate(slot_indices):
         bm.faces[i].material_index = idx
     
     for idx in material_indices:
@@ -229,7 +234,7 @@ def process_proxies(operator, obj, proxy_lookup, empty_material):
             pass
 
     bpy.ops.object.mode_set(mode='OBJECT')
-        
+    
     proxy_objects = [proxy for proxy in bpy.context.selected_objects if proxy != obj]
         
     bpy.ops.object.select_all(action='DESELECT')
@@ -256,6 +261,9 @@ def process_proxies(operator, obj, proxy_lookup, empty_material):
             proxy_obj.a3ob_properties_object_flags.vertex.clear()
             proxy_obj.a3ob_properties_object_flags.face.clear()
 
+            proxy_obj.display_type = 'WIRE'
+            proxy_obj.show_name = True
+
             bm = bmesh.new()
             bm.from_mesh(proxy_obj.data)
 
@@ -267,11 +275,20 @@ def process_proxies(operator, obj, proxy_lookup, empty_material):
 
             proxy_obj.a3ob_properties_object_proxy.is_a3_proxy = True
             proxy_obj.data.materials.clear()
-            proxy_obj.data.materials.append(empty_material)
+            if empty_material is not None:
+                proxy_obj.data.materials.append(empty_material)
             proxy_obj.parent = obj
             name = "proxy: %s" % proxy_obj.a3ob_properties_object_proxy.get_name()
             proxy_obj.name = name
             proxy_obj.data.name = name
+
+            for uv in proxy_obj.data.uv_layers:
+                proxy_obj.data.uv_layers.remove(uv)
+
+
+def translate_selections(obj):
+    for group in obj.vertex_groups:
+        group.name = data.translations_czech_english.get(group.name.lower(), group.name)
 
 
 def process_lod(operator, logger, lod, materials, materials_lookup, categories, lod_links):
@@ -314,8 +331,8 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
     if lod_index not in data.lod_shadows:
         for face in mesh.polygons:
             face.use_smooth = True
-        mesh.use_auto_smooth = True
-        mesh.auto_smooth_angle = 3.141592654
+        
+        computils.mesh_auto_smooth(mesh)
     
     if 'NORMALS' in operator.additional_data and lod_index in data.lod_visuals:
         if process_normals(mesh, lod):
@@ -345,7 +362,7 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
         logger.log("Added vertex groups: %d" % (len(selection_names)))
     
     if 'MATERIALS' in operator.additional_data:
-        process_materials(mesh, bm, lod, materials, materials_lookup)
+        process_materials(operator, mesh, bm, lod, materials, materials_lookup)
         logger.log("Assigned materials")
     
     if lod_index == 6 and 'MASS' in operator.additional_data:
@@ -374,9 +391,18 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
 
     if operator.validate_meshes:
         mesh.validate(clean_customdata=False)
+    
+    if operator.translate_selections:
+        translate_selections(obj)
+        logger.log("Translated selections to english")
+    
+    if operator.cleanup_empty_selections:
+        structutils.cleanup_vertex_groups(obj)
+        logger.log("Cleaned up vertex groups")
 
     if operator.proxy_action != 'NOTHING' and 'SELECTIONS' in operator.additional_data:
-        process_proxies(operator, obj, proxy_lookup, materials[0])
+        empty_material = materials[0] if materials is not None else None
+        process_proxies(operator, obj, proxy_lookup, empty_material)
         logger.log("Processed proxies: %d" % len(proxy_lookup))
 
     object_props.is_a3_lod = True

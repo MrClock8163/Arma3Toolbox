@@ -604,30 +604,49 @@ class P3D_LOD():
     # Generate the necessary material index for each face, as well
     # as the indices of the used materials in each material slot.
     def get_sections(self, materials):
-        face_indices = []
-        material_indices = []
+        slot_indices = []
+        slot_material_indices = []
 
         last_idx = None
         face_idx = 0
 
-        for item in self.faces:
-            face = self.faces[item]
+        for i in self.faces:
+            face = self.faces[i]
             texture = face[3]
             material = face[4]
             
             idx = materials[(texture, material)]
             if last_idx is None:
                 last_idx = idx
-                material_indices.append(idx)
+                slot_material_indices.append(idx)
 
             if idx != last_idx:
-                material_indices.append(idx)
+                slot_material_indices.append(idx)
                 face_idx += 1
                 last_idx = idx
 
-            face_indices.append(face_idx)
+            slot_indices.append(face_idx)
 
-        return face_indices, material_indices
+        return slot_indices, slot_material_indices
+    
+    def get_sections_merged(self, materials):
+        slot_indices = []
+        material_slot_indices = {}
+
+        for i in self.faces:
+            face = self.faces[i]
+            texture = face[3]
+            material = face[4]
+
+            material_idx = materials[(texture, material)]
+            slot_idx = material_slot_indices.get(material_idx)
+            if slot_idx is None:
+                slot_idx = len(material_slot_indices)
+                material_slot_indices[material_idx] = slot_idx
+            
+            slot_indices.append(slot_idx)
+
+        return slot_indices, list(material_slot_indices.keys())
 
     def renumber_components(self):
         counter = 1
@@ -794,8 +813,6 @@ class P3D_MLOD():
     def write_file(self, filepath):
         with open(filepath, "wb") as file:
             self.write(file)
-        
-        self.source = filepath
     
     def get_materials(self):
         materials = {("", ""): 0}

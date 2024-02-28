@@ -12,48 +12,26 @@ class A3OB_OT_paste_common_material(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        mat = context.material
-        return mat
+        return hasattr(context, "material") and context.material
     
     def invoke(self, context, event):
-        scene_props = context.scene.a3ob_commons
-        scene_props.materials.clear()
-
-        materials, custom = utils.get_common("materials")
-        if custom is None:
-            self.report({'ERROR'}, "Custom data JSON could not be loaded")
-        else:
-            materials.update(custom)
-        
-        for name in materials:
-            item = scene_props.materials.add()
-            item.name = name
-            item.path = utils.replace_slashes(materials[name])
-        
-        scene_props.materials_index = 0
-
+        utils.load_common_data(context.scene)
         return context.window_manager.invoke_props_dialog(self)
     
     def draw(self, context):
         scene_props = context.scene.a3ob_commons
         layout = self.layout
-        layout.template_list("A3OB_UL_common_materials", "A3OB_common_materials", scene_props, "materials", scene_props, "materials_index")
+        layout.template_list("A3OB_UL_common_data_materials", "A3OB_common_materials", scene_props, "items", scene_props, "items_index", item_dyntip_propname="value")
 
-        selection_index = scene_props.materials_index
-        if utils.is_valid_idx(selection_index, scene_props.materials):
-            row = layout.row()
-            item = scene_props.materials[selection_index]
-            row.prop(item, "path", text="")
-            row.enabled = False
 
     def execute(self, context):
         mat = context.material
         scene_props = context.scene.a3ob_commons
 
-        if utils.is_valid_idx(scene_props.materials_index, scene_props.materials):
-            new_item = scene_props.materials[scene_props.materials_index]
+        if utils.is_valid_idx(scene_props.items_index, scene_props.items):
+            new_item = scene_props.items[scene_props.items_index]
             mat_props = mat.a3ob_properties_material
-            mat_props.material_path = new_item.path
+            mat_props.material_path = new_item.value
         
         return {'FINISHED'}
 
@@ -67,54 +45,27 @@ class A3OB_OT_paste_common_procedural(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return bool(context.material)
+        return hasattr(context, "material") and context.material
     
     def invoke(self, context, event):
-        scene_props = context.scene.a3ob_commons
-        scene_props.procedurals.clear()
-
-        procedurals, custom = utils.get_common("procedurals")
-        if custom is None:
-            self.report({'ERROR'}, "Custom data JSON could not be loaded")
-        else:
-            procedurals.update(custom)
-        
-        for name in procedurals:
-            item = scene_props.procedurals.add()
-            item.name = name
-            item.value = procedurals[name]
-        
-        scene_props.procedurals_index = 0
-
+        utils.load_common_data(context.scene)
         return context.window_manager.invoke_props_dialog(self)
     
     def draw(self, context):
         scene_props = context.scene.a3ob_commons
         layout = self.layout
-        layout.template_list("A3OB_UL_common_procedurals", "A3OB_common_procedurals", scene_props, "procedurals", scene_props, "procedurals_index")
-
-        selection_index = scene_props.procedurals_index
-        if utils.is_valid_idx(selection_index, scene_props.procedurals):
-            row = layout.row()
-            item = scene_props.procedurals[selection_index]
-            row.prop(item, "value", text="")
-            row.enabled = False
+        layout.template_list("A3OB_UL_common_data_procedurals", "A3OB_common_procedurals", scene_props, "items", scene_props, "items_index", item_dyntip_propname="value")
 
     def execute(self, context):
         mat = context.material
         scene_props = context.scene.a3ob_commons
 
-        if utils.is_valid_idx(scene_props.procedurals_index, scene_props.procedurals):
-            new_item = scene_props.procedurals[scene_props.procedurals_index]
+        if utils.is_valid_idx(scene_props.items_index, scene_props.items):
+            new_item = scene_props.items[scene_props.items_index]
             mat_props = mat.a3ob_properties_material
             mat_props.color_raw = new_item.value
         
         return {'FINISHED'}
-
-
-class A3OB_UL_common_materials(bpy.types.UIList):
-    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
-        layout.label(text=item.name)
 
 
 class A3OB_UL_common_procedurals(bpy.types.UIList):
@@ -132,8 +83,7 @@ class A3OB_PT_material(bpy.types.Panel):
     
     @classmethod
     def poll(cls, context):
-        mat = context.material
-        return mat
+        return hasattr(context, "material") and context.material
         
     def draw_header(self, context):
         utils.draw_panel_header(self)
@@ -170,7 +120,6 @@ class A3OB_PT_material(bpy.types.Panel):
 classes = (
     A3OB_OT_paste_common_material,
     A3OB_OT_paste_common_procedural,
-    A3OB_UL_common_materials,
     A3OB_UL_common_procedurals,
     A3OB_PT_material,
 )

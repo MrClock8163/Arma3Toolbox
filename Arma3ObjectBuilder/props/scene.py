@@ -1,6 +1,5 @@
 import bpy
 
-from . import object as objectprops
 from ..utilities import data
 from ..utilities import colors as colorutils
 
@@ -75,30 +74,15 @@ class A3OB_PG_proxies(bpy.types.PropertyGroup):
     lod_objects_index: bpy.props.IntProperty(name="Selection Index")
 
 
-class A3OB_PG_common_proxy(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty(name="Name", description="Descriptive name of the common proxy")
-    path: bpy.props.StringProperty(name="Path", description="File path of the proxy model")
-
-
-class A3OB_PG_common_material(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty(name="Name", description="Descriptive name of the common material")
-    path: bpy.props.StringProperty(name="Path", description="File path of the material")
-
-
-class A3OB_PG_common_procedural(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty(name="Name", description="Descriptive name of the common procedural texture")
-    value: bpy.props.StringProperty(name="Value", description="Procedural texture string")
+class A3OB_PG_common_data_item(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty(name="Name", description="Descriptive name of the common item")
+    value: bpy.props.StringProperty(name="Value", description="Value of the common item")
+    type: bpy.props.StringProperty(name="Type", description="Context type of the common item")
 
 
 class A3OB_PG_common_data(bpy.types.PropertyGroup):
-    namedprops: bpy.props.CollectionProperty(type=objectprops.A3OB_PG_properties_named_property)
-    namedprops_index: bpy.props.IntProperty(name="Selection Index")
-    proxies: bpy.props.CollectionProperty(type=A3OB_PG_common_proxy)
-    proxies_index: bpy.props.IntProperty(name="Selection Index")
-    materials: bpy.props.CollectionProperty(type=A3OB_PG_common_material)
-    materials_index: bpy.props.IntProperty(name="Selection Index")
-    procedurals: bpy.props.CollectionProperty(type=A3OB_PG_common_procedural)
-    procedurals_index: bpy.props.IntProperty(name="Selection Index")
+    items: bpy.props.CollectionProperty(type=A3OB_PG_common_data_item)
+    items_index: bpy.props.IntProperty(name="Selection Index")
 
 
 class A3OB_PG_mass_editor_stats(bpy.types.PropertyGroup):
@@ -301,6 +285,11 @@ class A3OB_PG_validation(bpy.types.PropertyGroup):
     warning_errors: bpy.props.BoolProperty(
         name = "Warnings Are Errors",
         description = "Treat warnings as errors during validation",
+        default = True
+    )
+    relative_paths: bpy.props.BoolProperty(
+        name = "Relative Paths",
+        description = "Make file paths relative to the project root for validation",
         default = True
     )
 
@@ -527,9 +516,7 @@ classes = (
     A3OB_PG_outliner,
     A3OB_PG_lod_object,
     A3OB_PG_proxies,
-    A3OB_PG_common_proxy,
-    A3OB_PG_common_material,
-    A3OB_PG_common_procedural,
+    A3OB_PG_common_data_item,
     A3OB_PG_common_data,
     A3OB_PG_mass_editor_stats,
     A3OB_PG_mass_editor,

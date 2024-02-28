@@ -1,5 +1,58 @@
 # Changelog
 
+## [v2.2.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.2.0) (Blender 2.90 -> 4.1)
+
+### Added
+
+- common data:
+  - support for penetration materials
+- tools:
+  - Rigging:
+    - Validate (skeleton)
+    - Validate For RTM (skeleton)
+- import-export:
+  - P3D:
+    - Translate Selections import option
+    - Cleanup Selections import option
+    - Preserve/Merge sections import option
+  - RTM:
+    - support for importing binarized (BMTR) animations
+- scripts:
+  - script to convert binarized (BMTR) animations to plain RTM representation
+
+### Changed
+
+- Blender 4.1 compatiblity:
+  - updated P3D import and export to be compatible with the new Blender API
+  - updated Validation tool to be compatible with the new Blender API
+- common data:
+  - common items are now displayed in alphabetical order by default
+- tools:
+  - Validation:
+    - validation now checks for non-ASCII characters in named properties, paths and vertex group names
+    - internal logic is now standardized
+- import-export:
+  - read strings are now decoded as UTF-8 in order to improve robustness
+  - P3D:
+    - new proxy triangles (imported or created) are now displayed as wireframes, and show their object names
+    - UV channels are now only exported for visual and shadow LODs
+  - RTM:
+    - simplified internal handling of the RTM matrix data
+    - default import frame mapping method is now "Direct"
+
+### Fixed
+
+- Vertex Mass Editing tool would potentially throw silent errors in certain conditions
+- material properties panel would throw silent errors in certain conditions
+- remove RTM frame operator would throw silent errors and would not work properly
+- Extract Proxy operator would fail due to missing properties
+- P3D import would fail at proxy separation if the materials are not allowed as additional data
+- P3D export would fail at applying transformations if a LOD object was in edit mode when starting the export (rare edge case)
+
+### Removed
+
+- Check Hierarchy operator was removed from the Rigging tool (replaced by the Validate, and Validate For RTM operators)
+
 ## [v2.1.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.1.0) (Blender 2.90 -> 4.0)
 
 ### Added

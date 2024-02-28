@@ -39,7 +39,7 @@ def build_transform_lookup(rtm_0101):
     transforms = {}
     for i, frame in enumerate(rtm_0101.frames):
         for item in frame.transforms:
-            transforms[item.bone.lower(), i] = Matrix(item.matrix).transposed()
+            transforms[item.bone.lower(), i] = Matrix(item.matrix)
 
     return transforms
 
@@ -140,13 +140,14 @@ def import_keyframes(obj, action, transforms, frames, motion):
         rot_quat_prev = pose_bone.rotation_quaternion.copy()
 
         keyframes = {}
+        mat_identity = Matrix()
         for i in range(len(frames)):
-            mat_channel = transforms.get((pose_bone.name.lower(), i), Matrix())
-            mat_parent_channel = transforms.get((pose_bone.parent.name.lower() if pose_bone.parent else "", i), Matrix())
+            mat_channel = transforms.get((pose_bone.name.lower(), i), mat_identity)
+            mat_parent_channel = transforms.get((pose_bone.parent.name.lower() if pose_bone.parent else "", i), mat_identity)
             mat_basis = mat_rest.inverted_safe() @ mat_parent_channel.inverted_safe() @ (mat_channel @ mat_rest)
             loc, rot, scale = mat_basis.decompose()
 
-            if not pose_bone.parent:
+            if mat_channel is not mat_identity and not pose_bone.parent:
                 loc += motion[i]
 
             if pose_bone.rotation_mode == 'QUATERNION':
@@ -168,15 +169,48 @@ def import_keyframes(obj, action, transforms, frames, motion):
         add_keyframes(action, fcurves, keyframes)
 
 
+def get_bone_hierarchy(bones, parent = ""):
+    hierarchy = {}
+    for bone in bones:
+        if not bone.parent or bone.parent.name == parent:
+            hierarchy[bone.name.lower()] = parent.lower()
+            hierarchy.update(get_bone_hierarchy(bone.children, bone.name))
+        
+    return hierarchy
+
+
 def import_file(operator, context, file):
     logger = ProcessLogger()
     logger.step("RTM import from %s" % operator.filepath)
-    rtm_data = rtm.RTM_File.read(file)
+
+    obj = context.active_object
+    if not obj or obj.type != 'ARMATURE':
+        logger.log("No target armature found, aborting import")
+        logger.step("RTM import finished")
+        return 0
+    
+    rtm_data = rtm.read_rtm_universal(file)
+    
+    logger.log("File report:")
+    logger.level_up()
+    if type(rtm_data) is rtm.BMTR_File:
+        logger.log("BMTR")
+        logger.level_up()
+        logger.log("Version: %d" % rtm_data.version)
+        logger.log("Motion vector: %s" % str(rtm_data.motion))
+        logger.log("Bones: %d" % len(rtm_data.bones))
+        logger.log("Properties: %d" % len(rtm_data.props))
+        logger.log("Phases: %d" % len(rtm_data.phases))
+        logger.log("Frames: %d" % len(rtm_data.frames))
+        logger.level_down()
+
+        bone_parents = get_bone_hierarchy(obj.data.bones)
+        rtm_data = rtm_data.as_rtm(bone_parents)
+        logger.log("Converted BMTR to plain RTM")
+
     rtm_0101 = rtm_data.anim
     rtm_mdat = rtm_data.props
 
-    logger.log("File report:")
-    logger.level_up()
     if rtm_mdat:
         logger.log("RTM_MDAT")
         logger.level_up()
@@ -192,13 +226,6 @@ def import_file(operator, context, file):
     logger.log("Frames: %d" % len(rtm_0101.frames))
     logger.level_down()
     logger.level_down()
-
-    obj = context.active_object
-    if not obj or obj.type != 'ARMATURE':
-        logger.log("No target armature found, aborting import")
-        logger.level_down()
-        logger.step("RTM import finished")
-        return 0
 
     logger.log("Processing data:")
     logger.level_up()

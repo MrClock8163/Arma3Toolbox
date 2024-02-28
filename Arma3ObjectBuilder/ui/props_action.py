@@ -48,7 +48,7 @@ class A3OB_OT_rtm_frames_remove(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         action = get_action(context.object)
-        if action:
+        if not action:
             return False
         
         action_props = action.a3ob_properties_action
