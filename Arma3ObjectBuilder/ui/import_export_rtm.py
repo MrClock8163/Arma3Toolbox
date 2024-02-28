@@ -254,9 +254,9 @@ class A3OB_OP_import_rtm(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         items = (
             ('RANGE', "Range", "Map phases to specified start-end range"),
             ('FPS', "FPS", "Map phases to specified range starting at 1, with the length of FPS * time"),
-            ('DIRECT', "Direct", "Map each phase to new frame"),
+            ('DIRECT', "Direct", "Map each phase to new frame\n(ensures that no frames are lost to rounding, but might distort animation if RTM frames are not evenly spaced)"),
         ),
-        default = 'FPS'
+        default = 'DIRECT'
     )
 
     @classmethod

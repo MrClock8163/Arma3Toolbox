@@ -38,6 +38,7 @@
     - UV channels are now only exported for visual and shadow LODs
   - RTM:
     - simplified internal handling of the RTM matrix data
+    - default import frame mapping method is now "Direct"
 
 ### Fixed
 
