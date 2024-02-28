@@ -5,7 +5,7 @@ import struct
 
 
 class LZO_Error(Exception):
-    ...
+    pass
 
 
 # Decompression algorithm for bit streams compressed with the LZO1X algorithm.
@@ -116,6 +116,8 @@ def lzo1x_decompress(file, expected):
             distance = 16384 + ((x & 8) << 11) + (extra >> 2)
             state = extra & 3
             if distance == 16384:
+                if length != 3:
+                    raise LZO_Error("Invalid End Of Stream (expected match length: 3, got: %s)" % length)
                 # End of Stream reached
                 break
             
