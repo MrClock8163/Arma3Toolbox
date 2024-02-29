@@ -164,6 +164,6 @@ def write_asciiz_field(file, value, field_len):
 def write_lascii(file, value):
     length = len(value)
     if length > 255:
-        raise OverflowError("LASCII string cannot be longer than 255 characters")
+        raise ValueError("LASCII string cannot be longer than 255 characters")
     
     file.write(struct.pack('B%ds' % length, length, value.encode('ascii')))
