@@ -1,5 +1,11 @@
 # Changelog
 
+## [v2.2.1](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.2.1) (Blender 2.90 -> 4.1)
+
+### Fixed
+
+- geometry node modifiers would not be applied during P3D export
+
 ## [v2.2.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.2.0) (Blender 2.90 -> 4.1)
 
 ### Added
