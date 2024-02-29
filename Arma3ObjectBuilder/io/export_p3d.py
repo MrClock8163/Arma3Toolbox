@@ -136,10 +136,6 @@ def merge_sub_objects(operator, main_obj, sub_objects):
             "selected_editable_objects": all_objects
         }
         computils.call_operator_ctx(bpy.ops.object.join, ctx)
-    
-    # Duplicate cleanup
-    # for obj in sub_objects:
-    #     bpy.data.meshes.remove(obj.data, do_unlink=True)
 
 
 def merge_proxy_objects(main_obj, proxy_objects, relative):
@@ -170,10 +166,6 @@ def merge_proxy_objects(main_obj, proxy_objects, relative):
             "selected_editable_objects": all_objects
         }
         computils.call_operator_ctx(bpy.ops.object.join, ctx)
-    
-    # Duplicate cleanup
-    # for obj in proxy_objects:
-    #     bpy.data.meshes.remove(obj.data, do_unlink=True)
 
     return proxy_lookup
 
@@ -613,7 +605,6 @@ def write_file(operator, context, file, temp_collection):
         new_lod = process_lod(operator, lod, proxy_lookup, is_valid, logger)
         if new_lod:
             mlod_lods.append(new_lod)
-        # bpy.data.meshes.remove(lod.data)
 
         logger.log("Done in %f sec" % (time.time() - time_lod_start))
         wm.progress_update(i + 1)
