@@ -41,9 +41,10 @@ def is_ascii(value):
         return False
 
 
-def duplicate_object(obj):
+def duplicate_object(obj, temp_collection):
     new_object = obj.copy()
     new_object.data = obj.data.copy()
+    temp_collection.objects.link(new_object)
     return new_object
 
 
@@ -135,10 +136,6 @@ def merge_sub_objects(operator, main_obj, sub_objects):
             "selected_editable_objects": all_objects
         }
         computils.call_operator_ctx(bpy.ops.object.join, ctx)
-    
-    # Duplicate cleanup
-    for obj in sub_objects:
-        bpy.data.meshes.remove(obj.data, do_unlink=True)
 
 
 def merge_proxy_objects(main_obj, proxy_objects, relative):
@@ -169,10 +166,6 @@ def merge_proxy_objects(main_obj, proxy_objects, relative):
             "selected_editable_objects": all_objects
         }
         computils.call_operator_ctx(bpy.ops.object.join, ctx)
-    
-    # Duplicate cleanup
-    for obj in proxy_objects:
-        bpy.data.meshes.remove(obj.data, do_unlink=True)
 
     return proxy_lookup
 
@@ -203,7 +196,7 @@ def validate_proxies(operator, proxy_objects):
 # P3D file. Merges the sub-objects and proxies into the main objects, applies transformations,
 # runs mesh validation and sorts sections if necessary.
 # [(LOD object 0, proxy lookup 0), (..., ....), ....]
-def get_lod_data(operator, context, validator):
+def get_lod_data(operator, context, validator, temp_collection):
     scene = context.scene
     export_objects = scene.objects
 
@@ -222,7 +215,7 @@ def get_lod_data(operator, context, validator):
         if not obj.mode == 'OBJECT':
             computils.call_operator_ctx(bpy.ops.object.mode_set, {"active_object": obj}, mode='OBJECT')
         
-        main_obj = duplicate_object(obj)
+        main_obj = duplicate_object(obj, temp_collection)
         is_valid = True
 
         sub_objects = []
@@ -234,7 +227,7 @@ def get_lod_data(operator, context, validator):
             if not child.mode == 'OBJECT':
                 computils.call_operator_ctx(bpy.ops.object.mode_set, {"active_object": child}, mode='OBJECT')
             
-            child_copy = duplicate_object(child)
+            child_copy = duplicate_object(child, temp_collection)
 
             if child_copy.a3ob_properties_object_proxy.is_a3_proxy:
                 proxy_objects.append(child_copy)
@@ -576,7 +569,7 @@ def process_lod(operator, obj, proxy_lookup, is_valid, logger):
     return output
 
 
-def write_file(operator, context, file):
+def write_file(operator, context, file, temp_collection):
     wm = context.window_manager
     wm.progress_begin(0, 1000)
     wm.progress_update(0)
@@ -592,7 +585,7 @@ def write_file(operator, context, file):
 
     # Gather all exportable LOD objects, duplicate them, merge their components, and validate for LOD type.
     # Produce the final mesh data, proxy lookup table and validity for each LOD.
-    lod_list = get_lod_data(operator, context, validator)
+    lod_list = get_lod_data(operator, context, validator, temp_collection)
     
     logger.log("Preprocessing done in %f sec" % (time.time() - time_file_start))
     logger.log("Detected %d LOD objects" % len(lod_list))
@@ -612,7 +605,6 @@ def write_file(operator, context, file):
         new_lod = process_lod(operator, lod, proxy_lookup, is_valid, logger)
         if new_lod:
             mlod_lods.append(new_lod)
-        bpy.data.meshes.remove(lod.data)
 
         logger.log("Done in %f sec" % (time.time() - time_lod_start))
         wm.progress_update(i + 1)
