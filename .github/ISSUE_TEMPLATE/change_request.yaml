@@ -1,26 +1,19 @@
 name: Change Request
 description: Request a change in an existing feature
-title: "Change: "
+title: "[Change] "
 labels: ["change"]
 body:
   - type: markdown
     attributes:
       value: |
         ## Before you submit the request
-        - Make sure you use the latest version of the add-on
-        - Consider if others would benefit from the change as well (Niche personal changes without broader application probably won't be worked on)
-  - type: input
-    id: feature
-    attributes:
-      label: Feature to change
-      description: Existing feature you'd like to change
-    validations:
-      required: true
+        - Make sure you use the latest released version of the add-on
+        - Consider if others would benefit from the change as well (niche personal changes without broader application probably won't be worked on)
   - type: textarea
     id: description
     attributes:
       label: Description
-      description: Describe the change you'd like to see in detail! (You can include images)
+      description: Describe the change you'd like to see in detail! (You can include images, and other attachments.)
       placeholder: The change I'd like to request is...
     validations:
       required: true
@@ -28,7 +21,7 @@ body:
     id: contact
     attributes:
       label: Contact details
-      description: Optional contact info (discord, email, etc.) if we need further information
+      description: Optional contact info (discord, email, etc.) for if we need further information
       placeholder: ex. email@example.com
     validations:
       required: false
