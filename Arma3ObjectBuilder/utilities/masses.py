@@ -284,3 +284,26 @@ def visualize_mass(obj, scene_props):
         scene_props.stats.mass_max = stats[2]
         scene_props.stats.mass_sum = stats[3]
         scene_props.stats.count_item = stats[4]
+
+
+def find_center_of_gravity(obj):
+    with utils.query_bmesh(obj) as bm:
+        bm.verts.ensure_lookup_table()
+
+        layer = bm.verts.layers.float.get("a3ob_mass")
+        if not layer:
+            return
+        
+        contributing = [vert for vert in bm.verts if vert[layer] > 0]
+        
+        if len(contributing) == 0:
+            return
+        
+        masses = []
+        center = Vector()
+        for vert in contributing:
+            mass = vert[layer]
+            masses.append(mass)
+            center += vert.co * mass
+        
+        return center / math.fsum(masses)

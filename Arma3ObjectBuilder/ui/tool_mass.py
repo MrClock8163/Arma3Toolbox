@@ -98,6 +98,26 @@ class A3OB_OT_vertex_mass_visualize(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class A3OB_OT_vertex_mass_center(bpy.types.Operator):
+    """Move 3D cursor to the center of gravity"""
+
+    bl_idname = "a3ob.vertex_mass_center"
+    bl_label = "Center Of Mass"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return massutils.can_edit_mass(context)
+    
+    def execute(self, context):
+        obj = context.object
+        center = massutils.find_center_of_gravity(obj)
+
+        context.scene.cursor.location = center
+    
+        return {'FINISHED'}
+
+
 class A3OB_PT_vertex_mass(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
@@ -185,6 +205,7 @@ class A3OB_PT_vertex_mass_analyze(bpy.types.Panel):
         row_method.prop(scene_props, "method", text="Method", expand=True)
         
         layout.operator("a3ob.vertex_mass_visualize", icon_value=utils.get_icon("op_visualize"))
+        layout.operator("a3ob.vertex_mass_center", icon_value=utils.get_icon("op_mass_center"))
         
         layout.label(text="Stats:")
         col_stats = layout.column(align=True)
@@ -197,13 +218,14 @@ class A3OB_PT_vertex_mass_analyze(bpy.types.Panel):
 
 
 classes = (
-    A3OB_PT_vertex_mass,
-    A3OB_PT_vertex_mass_analyze,
     A3OB_OT_vertex_mass_set,
     A3OB_OT_vertex_mass_distribute,
     A3OB_OT_vertex_mass_set_density,
     A3OB_OT_vertex_mass_clear,
-    A3OB_OT_vertex_mass_visualize
+    A3OB_OT_vertex_mass_visualize,
+    A3OB_OT_vertex_mass_center,
+    A3OB_PT_vertex_mass,
+    A3OB_PT_vertex_mass_analyze
 )
 
 

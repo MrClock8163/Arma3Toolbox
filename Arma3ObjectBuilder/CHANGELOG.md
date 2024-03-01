@@ -2,9 +2,14 @@
 
 ## [v2.2.1](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.2.1) (Blender 2.90 -> 4.1)
 
+### Added
+
+- Center Of Mass operator in the Vertex Mass Editing tool (forgot to include in v2.2.0)
+
 ### Fixed
 
 - geometry node modifiers would not be applied during P3D export
+- length limit on P3D named property names and values was missing and would result in a failed export at too long values
 
 ## [v2.2.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.2.0) (Blender 2.90 -> 4.1)
 
