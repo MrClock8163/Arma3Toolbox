@@ -39,7 +39,7 @@ class RTM_Transform():
         return output
     
     def write(self, file):
-        file.write(struct.pack('<32s', self.bone.encode('ASCII')))
+        binary.write_asciiz_field(file, self.bone, 32)
 
         data = self.matrix
         mat = [
@@ -103,8 +103,7 @@ class RTM_MDAT():
 
     def write(self, file):
         file.write(self.signature)
-        binary.write_ulong(file, 0)
-        binary.write_ulong(file, len(self.items))
+        binary.write_ulong(file, 0, len(self.items))
 
         for phase, name, value in self.items:
             binary.write_float(file, phase)
@@ -128,10 +127,9 @@ class RTM_0101():
             if signature != b"RTM_0101":
                 raise RTM_Error("Invalid header signature: %s" % signature)
 
-        x, y, z = struct.unpack('<fff', file.read(12))
+        x, z, y = binary.read_floats(file, 3)
         output.motion = (x, y, z)
-        count_frames = binary.read_ulong(file)
-        count_bones = binary.read_ulong(file)
+        count_frames, count_bones = binary.read_ulongs(file, 2)
         
         output.bones = [binary.read_asciiz_field(file, 32) for i in range(count_bones)]
         output.frames = [RTM_Frame.read(file, count_bones) for i in range(count_frames)]
@@ -140,15 +138,15 @@ class RTM_0101():
     
     def write(self, file):
         file.write(self.signature)
-        file.write(struct.pack('<fff', self.motion[0], self.motion[1], self.motion[2]))
+        binary.write_float(file, self.motion[0], self.motion[2], self.motion[1])
+
         count_frames = len(self.frames)
         count_bones = len(self.bones)
 
-        binary.write_ulong(file, count_frames)
-        binary.write_ulong(file, count_bones)
+        binary.write_ulong(file, count_frames, count_bones)
 
         for item in self.bones:
-            file.write(struct.pack('<32s', item.encode('ASCII')))
+            binary.write_asciiz_field(file, item, 32)
         
         for item in self.frames:
             item.write(file)
@@ -383,7 +381,8 @@ class BMTR_File:
 
         output.version = version
         file.read(1)
-        output.motion = binary.read_floats(file, 3)
+        x, z, y = binary.read_floats(file, 3)
+        output.motion = (x, y, z)
 
         count_frames = binary.read_ulong(file)
         file.read(4)
@@ -425,12 +424,10 @@ class BMTR_File:
     def as_rtm(self, bone_parents):
         output = RTM_File()
         output.source = self.source
-        rtm_0101 = output.anim
-        rtm_mdat = output.props
 
         if len(self.props) > 0:
-            rtm_mdat = RTM_MDAT()
-            rtm_mdat.items = [prop.as_rtm() for prop in self.props]
+            output.props = RTM_MDAT()
+            output.props.items = [prop.as_rtm() for prop in self.props]
         
         rtm_0101 = output.anim
         rtm_0101.motion = self.motion
