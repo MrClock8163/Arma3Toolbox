@@ -12,6 +12,7 @@
 
 ### Fixed
 
+- P3D import and export would fail in older versions of Blender when trying to remove unnecessary UV layers from objects
 - geometry node modifiers would not be applied during P3D export
 - length limit on P3D named property names and values was missing and would result in a failed export at too long values
 

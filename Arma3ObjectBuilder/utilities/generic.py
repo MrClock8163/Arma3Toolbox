@@ -164,6 +164,13 @@ def create_selection(obj, selection):
     group.add([vert.index for vert in obj.data.vertices], 1, 'REPLACE')
 
 
+def clear_uvs(obj):
+    uvs = [uv for uv in obj.data.uv_layers]
+
+    while uvs:
+        obj.data.uv_layers.remove(uvs.pop())
+
+
 def replace_slashes(path):
     return path.replace("/", "\\")
 

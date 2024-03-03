@@ -282,8 +282,7 @@ def process_proxies(operator, obj, proxy_lookup, empty_material):
             proxy_obj.name = name
             proxy_obj.data.name = name
 
-            for uv in proxy_obj.data.uv_layers:
-                proxy_obj.data.uv_layers.remove(uv)
+            utils.clear_uvs(proxy_obj)
 
 
 def translate_selections(obj):
