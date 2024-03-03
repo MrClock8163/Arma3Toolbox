@@ -27,18 +27,19 @@ class A3OB_OT_proxy_add(bpy.types.Operator):
         return True
         
     def execute(self, context):
-        obj = context.scene.objects.get(self.parent, context.active_object)        
-        if not obj:
-            self.report({'INFO'}, "Cannot add new proxy object without parent")
-            return {'FINISHED'}
-
         proxy_object = proxyutils.create_proxy()
         proxy_object.display_type = 'WIRE'
         proxy_object.show_name = True
         proxy_object.location = context.scene.cursor.location
-        obj.users_collection[0].objects.link(proxy_object)
-        proxy_object.parent = obj
-        proxy_object.matrix_parent_inverse = obj.matrix_world.inverted()
+
+        parent = context.scene.objects.get(self.parent, context.active_object)
+        if parent:
+            parent.users_collection[0].objects.link(proxy_object)
+            proxy_object.parent = parent
+            proxy_object.matrix_parent_inverse = parent.matrix_world.inverted()
+        else:
+            context.collection.objects.link(proxy_object)
+
         proxy_object.a3ob_properties_object_proxy.proxy_path = self.path
         return {'FINISHED'}
 

@@ -6,6 +6,10 @@
 
 - Center Of Mass operator in the Vertex Mass Editing tool (forgot to include in v2.2.0)
 
+### Changed
+
+- Arma 3 Proxy object can now be added to the scene without first selecting a parent object
+
 ### Fixed
 
 - geometry node modifiers would not be applied during P3D export
