@@ -26,7 +26,7 @@ class A3OB_OT_validate_lod(bpy.types.Operator):
             try:
                 scene_props.lod = obj.a3ob_properties_object.lod
             except:
-                self.report({'INFO'}, "No validation rules for detected LOD type")
+                self.report({'ERROR'}, "No validation rules for detected LOD type")
                 return {'FINISHED'}
         
         processor = Validator(ProcessLogger())

@@ -23,13 +23,15 @@ def proxy_name_update(self, context):
 class A3OB_PG_properties_named_property(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(
         name = "Name",
-        description = "Property name"
+        description = "Property name",
+        maxlen = 63
         # search = lambda self, context, edit_text: [item for item in data.known_namedprops if item.lower().startswith(edit_text.lower())],
         # search_options = {'SORT', 'SUGGESTION'}
     )
     value: bpy.props.StringProperty(
         name = "Value",
-        description = "Property value"
+        description = "Property value",
+        maxlen = 63
         # search = lambda self, context, edit_text: [item for item in data.known_namedprops.get(self.name.lower(), []) if item.startswith(edit_text.lower())],
         # search_options = {'SORT', 'SUGGESTION'}
     )

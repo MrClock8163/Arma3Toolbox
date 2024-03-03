@@ -27,18 +27,19 @@ class A3OB_OT_proxy_add(bpy.types.Operator):
         return True
         
     def execute(self, context):
-        obj = context.scene.objects.get(self.parent, context.active_object)        
-        if not obj:
-            self.report({'INFO'}, "Cannot add new proxy object without parent")
-            return {'FINISHED'}
-
         proxy_object = proxyutils.create_proxy()
         proxy_object.display_type = 'WIRE'
         proxy_object.show_name = True
         proxy_object.location = context.scene.cursor.location
-        obj.users_collection[0].objects.link(proxy_object)
-        proxy_object.parent = obj
-        proxy_object.matrix_parent_inverse = obj.matrix_world.inverted()
+
+        parent = context.scene.objects.get(self.parent, context.active_object)
+        if parent:
+            parent.users_collection[0].objects.link(proxy_object)
+            proxy_object.parent = parent
+            proxy_object.matrix_parent_inverse = parent.matrix_world.inverted()
+        else:
+            context.collection.objects.link(proxy_object)
+
         proxy_object.a3ob_properties_object_proxy.proxy_path = self.path
         return {'FINISHED'}
 
@@ -62,7 +63,7 @@ class A3OB_OT_proxy_remove(bpy.types.Operator):
     def execute(self, context):
         obj = context.scene.objects.get(self.obj, context.active_object)
         if not obj or obj.type != 'MESH' or not obj.a3ob_properties_object_proxy.is_a3_proxy:
-            self.report({'INFO'}, "Cannot remove proxy")
+            self.report({'ERROR'}, "Cannot remove proxy")
             return {'FINISHED'}
         
         bpy.data.meshes.remove(obj.data)
@@ -98,7 +99,7 @@ class A3OB_OT_paste_common_proxy(bpy.types.Operator):
     def execute(self, context):
         obj = context.scene.objects.get(self.obj, context.object)
         if not obj or obj.type != 'MESH' or not obj.a3ob_properties_object_proxy.is_a3_proxy:
-            self.report({'INFO'}, "No proxy object was selected")
+            self.report({'ERROR'}, "No proxy object was selected")
             return {'FINISHED'}
 
         scene_props = context.scene.a3ob_commons
@@ -143,7 +144,10 @@ class A3OB_OT_namedprops_remove(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'MESH' and obj.a3ob_properties_object.property_index != -1
+        if not obj:
+            return False
+        object_props = obj.a3ob_properties_object
+        return obj.type == 'MESH' and utils.is_valid_idx(object_props.property_index, object_props.properties)
         
     def execute(self, context):
         obj = context.object

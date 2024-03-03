@@ -313,11 +313,13 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         pass
     
     def execute(self, context):
-        if export_p3d.can_export(self, context):            
-            output = utils.OutputManager(self.filepath, "wb")            
+        if export_p3d.can_export(self, context):
+            output = utils.OutputManager(self.filepath, "wb")
+            temp_collection = bpy.data.collections.new("A3OB_temp")
+            context.scene.collection.children.link(temp_collection)
             with output as file:
                 try:
-                    lod_count, exported_count = export_p3d.write_file(self, context, file)
+                    lod_count, exported_count = export_p3d.write_file(self, context, file, temp_collection)
                     if lod_count == exported_count:
                         self.report({'INFO'}, "Successfully exported all %d LODs (check the logs in the system console)" % exported_count)
                     else:
@@ -326,9 +328,14 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                 except Exception as ex:
                     self.report({'ERROR'}, "%s (check the system console)" % str(ex))
                     traceback.print_exc()
+            
+            for obj in temp_collection.objects:
+                bpy.data.meshes.remove(obj.data)
+            
+            bpy.data.collections.remove(temp_collection)
                 
         else:
-            self.report({'INFO'}, "There are no LODs to export")
+            self.report({'ERROR'}, "There are no LODs to export")
         
         return {'FINISHED'}
 

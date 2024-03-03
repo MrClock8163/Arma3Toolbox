@@ -46,7 +46,7 @@ def build_transform_lookup(rtm_0101):
 
 def build_motion_lookup(operator, rtm_0101):
     lookup = {}
-    motion = Vector(rtm_0101.motion)
+    motion = Vector(rtm_0101.motion).xzy # not sure why it has to be swizzled back to XZY order, but oh well...
     if motion.length == 0 or not operator.apply_motion:
         empty = Vector()
         for i in range(len(rtm_0101.frames)):
@@ -70,9 +70,7 @@ def build_frame_mapping(operator, rtm_0101):
     frames = {}
 
     if operator.mapping_mode == 'DIRECT':
-        frame_start = 1
-        frame_end = len(rtm_0101.frames)
-        frames = {i: i for i in range(len(rtm_0101.frames))}
+        frames = {i: i + 1 for i in range(len(rtm_0101.frames))}
     else:
         for i, frame in enumerate(rtm_0101.frames):
             frames[i] = frame.phase * frame_end + (1 - frame.phase) * frame_start
@@ -141,7 +139,7 @@ def import_keyframes(obj, action, transforms, frames, motion):
 
         keyframes = {}
         mat_identity = Matrix()
-        for i in range(len(frames)):
+        for i in frames:
             mat_channel = transforms.get((pose_bone.name.lower(), i), mat_identity)
             mat_parent_channel = transforms.get((pose_bone.parent.name.lower() if pose_bone.parent else "", i), mat_identity)
             mat_basis = mat_rest.inverted_safe() @ mat_parent_channel.inverted_safe() @ (mat_channel @ mat_rest)
@@ -242,6 +240,8 @@ def import_file(operator, context, file):
     logger.log("Built motion lookup")
 
     frames = build_frame_mapping(operator, rtm_0101)
+    operator.frame_start = frames[0]
+    operator.frame_end = frames[len(rtm_0101.frames) - 1]
     logger.log("Built frame mapping")
 
     if operator.mute_constraints:
@@ -252,12 +252,15 @@ def import_file(operator, context, file):
     logger.log("Created keyframes")
 
     if operator.make_active:
-        values = list(frames.values())
-        context.scene.frame_start = floor(values[0])
-        context.scene.frame_end = ceil(values[-1])
+        context.scene.frame_start = operator.frame_start
+        context.scene.frame_end = operator.frame_end
+
+    action_props = action.a3ob_properties_action
+
+    if not operator.apply_motion:
+        action_props.motion_vector = rtm_0101.motion
 
     if rtm_mdat:
-        action_props = action.a3ob_properties_action
         for phase, name, value in rtm_mdat.items:
             new_item = action_props.props.add()
             new_item.index = round(phase * operator.frame_end + (1 - phase) * operator.frame_start)
