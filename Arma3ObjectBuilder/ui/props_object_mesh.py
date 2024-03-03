@@ -63,7 +63,7 @@ class A3OB_OT_proxy_remove(bpy.types.Operator):
     def execute(self, context):
         obj = context.scene.objects.get(self.obj, context.active_object)
         if not obj or obj.type != 'MESH' or not obj.a3ob_properties_object_proxy.is_a3_proxy:
-            self.report({'INFO'}, "Cannot remove proxy")
+            self.report({'ERROR'}, "Cannot remove proxy")
             return {'FINISHED'}
         
         bpy.data.meshes.remove(obj.data)
@@ -99,7 +99,7 @@ class A3OB_OT_paste_common_proxy(bpy.types.Operator):
     def execute(self, context):
         obj = context.scene.objects.get(self.obj, context.object)
         if not obj or obj.type != 'MESH' or not obj.a3ob_properties_object_proxy.is_a3_proxy:
-            self.report({'INFO'}, "No proxy object was selected")
+            self.report({'ERROR'}, "No proxy object was selected")
             return {'FINISHED'}
 
         scene_props = context.scene.a3ob_commons

@@ -335,7 +335,7 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             bpy.data.collections.remove(temp_collection)
                 
         else:
-            self.report({'INFO'}, "There are no LODs to export")
+            self.report({'ERROR'}, "There are no LODs to export")
         
         return {'FINISHED'}
 
