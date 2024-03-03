@@ -143,7 +143,10 @@ class A3OB_OT_namedprops_remove(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj and obj.type == 'MESH' and obj.a3ob_properties_object.property_index != -1
+        if not obj:
+            return False
+        object_props = obj.a3ob_properties_object
+        return obj.type == 'MESH' and utils.is_valid_idx(object_props.property_index, object_props.properties)
         
     def execute(self, context):
         obj = context.object
