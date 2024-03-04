@@ -240,7 +240,8 @@ def process_proxies(operator, obj, proxy_lookup, empty_material):
     bpy.ops.object.select_all(action='DESELECT')
     
     if operator.proxy_action == 'CLEAR':
-        computils.call_operator_ctx(bpy.ops.object.delete, {"selected_objects": proxy_objects})
+        for obj in proxy_objects:
+            bpy.data.meshes.remove(obj.data)
 
     elif operator.proxy_action == 'SEPARATE':
         for i, proxy_obj in enumerate(proxy_objects):
