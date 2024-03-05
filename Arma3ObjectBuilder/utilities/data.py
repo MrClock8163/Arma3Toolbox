@@ -200,7 +200,7 @@ enum_lod_types = (
     ('27', "Shadow Volume - Pilot View", "First person view shadow casting geometry"),
     ('28', "Shadow Volume - Gunner View", "Gunner view shadow casting geometry"),
     ('29', "Wreckage", "Vehicle wreckage"),
-    ('30', "Geometry PhysX Old", "Old PhysX object collision geometry (also Underground for VBS4)"),
+    ('30', "Geometry PhysX Old", "Old PhysX object collision geometry (also Underground for VBS)"),
     ('31', "Unknown", "Unknown model layer")
 )
 
