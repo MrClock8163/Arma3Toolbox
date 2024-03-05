@@ -599,7 +599,7 @@ class Validator():
         self.components = {
             **dict.fromkeys(("4", "26", "27", "28"), [ValidatorLODShadow]),
             **dict.fromkeys(("9", "10", "13"), [ValidatorLODPointcloud]),
-            **dict.fromkeys(("7", "8", "14", "15", "16", "17", "19", "20", "21", "22", "23", "24"), [ValidatorLODGeometrySubtype]),
+            **dict.fromkeys(("7", "8", "14", "15", "16", "17", "19", "20", "21", "22", "23", "24", "31"), [ValidatorLODGeometrySubtype]),
             "6": [ValidatorLODGeometry],
             "11": [ValidatorLODRoadway],
             "12": [ValidatorLODPaths]

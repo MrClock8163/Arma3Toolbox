@@ -27,7 +27,7 @@ def can_export(operator, context):
         export_objects = context.selected_objects
         
     for obj in export_objects:
-        if (not operator.visible_only or obj.visible_get()) and  obj.type == 'MESH' and obj.a3ob_properties_object.is_a3_lod and obj.parent == None and obj.a3ob_properties_object.lod != '30':
+        if (not operator.visible_only or obj.visible_get()) and  obj.type == 'MESH' and obj.a3ob_properties_object.is_a3_lod and obj.parent == None and obj.a3ob_properties_object.lod != '31':
             return True
             
     return False
@@ -207,7 +207,7 @@ def get_lod_data(operator, context, validator, temp_collection):
     allow_uv = set([str(idx) for idx in (*data.lod_visuals, *data.lod_shadows)])
 
     for obj in [obj for obj in export_objects if not operator.visible_only or obj.visible_get()]:       
-        if obj.type != 'MESH' or not obj.a3ob_properties_object.is_a3_lod or obj.parent != None or obj.a3ob_properties_object.lod == '30':
+        if obj.type != 'MESH' or not obj.a3ob_properties_object.is_a3_lod or obj.parent != None or obj.a3ob_properties_object.lod == '31':
             continue
             
         # Some operator polls fail later if an object is in edit mode.

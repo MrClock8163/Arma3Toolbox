@@ -293,7 +293,8 @@ class P3D_LOD_Resolution():
     SHADOW_VIEW_PILOT = 27
     SHADOW_VIEW_GUNNER = 28
     WRECKAGE = 29
-    UNKNOWN = 30
+    GEOMETRY_PHYSX_OLD = 30 # For VBS4 support
+    UNKNOWN = 31
 
     INDEX_MAP = {
         (0.0, 0): VISUAL, # Visual
@@ -304,6 +305,7 @@ class P3D_LOD_Resolution():
         (2.0, 4): EDIT, # Edit
         (1.0, 13): GEOMETRY, # Geometry
         (2.0, 13): GEOMETRY_BUOY, # Geometry Buoyancy
+        (3.0, 13): GEOMETRY_PHYSX_OLD, # Geometry PhysX (old) also Underground for VBS4
         (4.0, 13): GEOMETRY_PHYSX, # Geometry PhysX
         (1.0, 15): MEMORY, # Memory
         (2.0, 15): LANDCONTACT, # Land Contact
@@ -336,7 +338,7 @@ class P3D_LOD_Resolution():
         5: 4,
         16: 2,
         26: 3,
-        30: -1
+        31: -1
     }
 
     def __init__(self, lod = 0, res = 0):

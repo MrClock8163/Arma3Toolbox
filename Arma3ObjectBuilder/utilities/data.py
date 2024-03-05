@@ -71,7 +71,7 @@ lod_resolution_position = { # decimal places in normalized format
     5: 4,
     16: 2,
     26: 2,
-    30: -1
+    31: -1
 }
 
 
@@ -112,16 +112,17 @@ lod_type_names = {
     27: "Shadow Volume - Pilot View",
     28: "Shadow Volume - Gunner View",
     29: "Wreckage",
-    30: "Unknown"
+    30: "Geometry PhysX Old - Underground",
+    31: "Unknown"
 }
 
 
 lod_groups_type = {
     **dict.fromkeys([0, 1, 2, 3, 18], "Visuals"),
     **dict.fromkeys([4, 26, 27, 28], "Shadows"),
-    **dict.fromkeys([6, 7, 8, 14, 15, 16, 17, 19, 20, 21, 22, 23, 24], "Geometries"),
+    **dict.fromkeys([6, 7, 8, 14, 15, 16, 17, 19, 20, 21, 22, 23, 24, 30], "Geometries"),
     **dict.fromkeys([9, 10, 13], "Point clouds"),
-    **dict.fromkeys([5, 11, 12, 25, 29, 30], "Misc")
+    **dict.fromkeys([5, 11, 12, 25, 29, 31], "Misc")
 }
 
 
@@ -129,7 +130,7 @@ lod_groups_context = {
     **dict.fromkeys([0], "3rd person"),
     **dict.fromkeys([1, 2, 3, 16, 17, 18, 19, 20, 21, 22, 23, 24, 26, 27, 28], "1st person"),
     **dict.fromkeys([4, 6], "General"),
-    **dict.fromkeys([5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 25, 29, 30], "Misc")
+    **dict.fromkeys([5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 25, 29, 30, 31], "Misc")
 }
 
 
@@ -199,7 +200,8 @@ enum_lod_types = (
     ('27', "Shadow Volume - Pilot View", "First person view shadow casting geometry"),
     ('28', "Shadow Volume - Gunner View", "Gunner view shadow casting geometry"),
     ('29', "Wreckage", "Vehicle wreckage"),
-    ('30', "Unknown", "Unknown model layer")
+    ('30', "Geometry PhysX Old", "Old PhysX object collision geometry (also Underground for VBS4)"),
+    ('31', "Unknown", "Unknown model layer")
 )
 
 
