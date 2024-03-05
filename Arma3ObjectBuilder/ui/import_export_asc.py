@@ -118,6 +118,10 @@ class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         pass
     
     def execute(self, context):
+        if not utils.OutputManager.can_access_path(self.filepath):
+            self.report({'ERROR'}, "Cannot write to target file (file likely in use by another blocking process)")
+            return {'FINISHED'}
+        
         obj = context.active_object
         
         output = utils.OutputManager(self.filepath, "w")

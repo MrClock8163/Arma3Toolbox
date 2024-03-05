@@ -313,6 +313,10 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         pass
     
     def execute(self, context):
+        if not utils.OutputManager.can_access_path(self.filepath):
+            self.report({'ERROR'}, "Cannot write to target file (file likely in use by another blocking process)")
+            return {'FINISHED'}
+        
         if export_p3d.can_export(self, context):
             output = utils.OutputManager(self.filepath, "wb")
             temp_collection = bpy.data.collections.new("A3OB_temp")

@@ -3,6 +3,7 @@
 
 import os
 import json
+from datetime import datetime
 from contextlib import contextmanager
 
 import bpy
@@ -91,8 +92,10 @@ def query_bmesh(obj):
 
 class OutputManager():
     def __init__(self, filepath, mode = "w"):
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         self.filepath = filepath
-        self.temppath = filepath + ".temp"
+        self.temppath = "%s.%s.temp" % (filepath, timestamp)
+        self.backup = "%s.%s.bak" % (filepath, timestamp)
         self.mode = mode
         self.file = None
         self.success = False
@@ -124,6 +127,16 @@ class OutputManager():
             os.remove(new)
         
         os.rename(old, new)
+    
+    # Very dirty check, but works for now
+    @staticmethod
+    def can_access_path(path):
+        try:
+            open(path, "ab").close()
+            os.rename(path, path)
+            return True
+        except:
+            return False
 
 
 def get_components(mesh):

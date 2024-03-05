@@ -108,6 +108,10 @@ class A3OB_OP_export_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         pass
 
     def execute(self, context):
+        if not utils.OutputManager.can_access_path(self.filepath):
+            self.report({'ERROR'}, "Cannot write to target file (file likely in use by another blocking process)")
+            return {'FINISHED'}
+        
         scene_props = context.scene.a3ob_rigging
         skeleton = scene_props.skeletons[self.skeleton_index]
         output = utils.OutputManager(self.filepath, "w")

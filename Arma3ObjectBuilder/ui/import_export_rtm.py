@@ -85,6 +85,10 @@ class A3OB_OP_export_rtm(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         return super().invoke(context, event)
         
     def execute(self, context):
+        if not utils.OutputManager.can_access_path(self.filepath):
+            self.report({'ERROR'}, "Cannot write to target file (file likely in use by another blocking process)")
+            return {'FINISHED'}
+        
         obj = context.object
         action = None
         if obj.animation_data:
