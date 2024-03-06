@@ -1,5 +1,15 @@
 # Changelog
 
+## [v2.2.2](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.2.2) (Blender 2.90 -> 4.1)
+
+### Added
+
+- support for Underground (VBS) LOD type (including specific validation)
+
+### Fixed
+
+- Geometry LOD validation would falsely report not triangulated meshes
+
 ## [v2.2.1](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.2.1) (Blender 2.90 -> 4.1)
 
 ### Added

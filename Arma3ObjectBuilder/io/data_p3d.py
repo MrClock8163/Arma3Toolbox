@@ -293,7 +293,7 @@ class P3D_LOD_Resolution():
     SHADOW_VIEW_PILOT = 27
     SHADOW_VIEW_GUNNER = 28
     WRECKAGE = 29
-    GEOMETRY_PHYSX_OLD = 30 # For VBS support
+    UNDERGROUND = 30 # Geometry PhysX Old for Arma 3
     UNKNOWN = 31
 
     INDEX_MAP = {
@@ -305,7 +305,7 @@ class P3D_LOD_Resolution():
         (2.0, 4): EDIT, # Edit
         (1.0, 13): GEOMETRY, # Geometry
         (2.0, 13): GEOMETRY_BUOY, # Geometry Buoyancy
-        (3.0, 13): GEOMETRY_PHYSX_OLD, # Geometry PhysX (old) also Underground for VBS
+        (3.0, 13): UNDERGROUND, # Underground for VBS, Geometry PhysX (old) for Arma 3
         (4.0, 13): GEOMETRY_PHYSX, # Geometry PhysX
         (1.0, 15): MEMORY, # Memory
         (2.0, 15): LANDCONTACT, # Land Contact

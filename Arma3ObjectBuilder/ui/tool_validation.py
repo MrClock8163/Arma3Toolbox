@@ -36,7 +36,7 @@ class A3OB_OT_validate_lod(bpy.types.Operator):
             valid &= processor.validate_lod(proxy, '1', False, scene_props.warning_errors, scene_props.relative_paths)
 
         if valid:
-            self.report({'INFO'}, "Validation succeeded")
+            self.report({'INFO'}, "Validation passed")
         else:
             self.report({'ERROR'}, "Validation failed (check the logs in the system console)")
 

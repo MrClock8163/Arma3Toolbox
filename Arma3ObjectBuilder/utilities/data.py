@@ -112,7 +112,7 @@ lod_type_names = {
     27: "Shadow Volume - Pilot View",
     28: "Shadow Volume - Gunner View",
     29: "Wreckage",
-    30: "Geometry PhysX Old - Underground",
+    30: "Underground - Geometry PhysX Old",
     31: "Unknown"
 }
 
@@ -200,7 +200,7 @@ enum_lod_types = (
     ('27', "Shadow Volume - Pilot View", "First person view shadow casting geometry"),
     ('28', "Shadow Volume - Gunner View", "Gunner view shadow casting geometry"),
     ('29', "Wreckage", "Vehicle wreckage"),
-    ('30', "Geometry PhysX Old", "Old PhysX object collision geometry (also Underground for VBS)"),
+    ('30', "Underground (VBS)", "Underground volume for VBS (not supported in Arma 3, Geometry PhysX Old)"),
     ('31', "Unknown", "Unknown model layer")
 )
 
