@@ -283,7 +283,7 @@ class P3D_LOD_Resolution():
     VIEW_CARGO_FIRE_GEOMETRY = 17
     VIEW_COMMANDER = 18
     VIEW_COMMANDER_GEOMETRY = 19
-    VIEW_COMMANDER_FIRE_EOMETRY = 20
+    VIEW_COMMANDER_FIRE_GEOMETRY = 20
     VIEW_PILOT_GEOMETRY = 21
     VIEW_PILOT_FIRE_GEOMETRY = 22
     VIEW_GUNNER_GEOMETRY = 23
@@ -318,7 +318,7 @@ class P3D_LOD_Resolution():
         (9.0, 15): VIEW_CARGO_FIRE_GEOMETRY, # View Cargo Fire Geometry
         (1.0, 16): VIEW_COMMANDER, # View Commander
         (1.1, 16): VIEW_COMMANDER_GEOMETRY, # View Commander Geometry
-        (1.2, 16): VIEW_COMMANDER_FIRE_EOMETRY, # View Commander Fire Geometry
+        (1.2, 16): VIEW_COMMANDER_FIRE_GEOMETRY, # View Commander Fire Geometry
         (1.3, 16): VIEW_PILOT_GEOMETRY, # View Pilot Geometry
         (1.4, 16): VIEW_PILOT_FIRE_GEOMETRY, # View Pilot Fire Geometry
         (1.5, 16): VIEW_GUNNER_GEOMETRY, # View Gunner Geometry
@@ -332,13 +332,11 @@ class P3D_LOD_Resolution():
     }
 
     RESOLUTION_POS = { # decimal places in normalized format
-        0: -1,
         3: 3,
         4: 4,
         5: 4,
         16: 2,
-        26: 3,
-        31: -1
+        26: 3
     }
 
     def __init__(self, lod = 0, res = 0):
@@ -354,7 +352,7 @@ class P3D_LOD_Resolution():
 
     @classmethod
     def encode(cls, lod, resolution):
-        if lod == 0:
+        if lod == cls.VISUAL or lod == cls.UNKNOWN:
             return resolution 
         
         lookup = {v: k for k, v in cls.INDEX_MAP.items()}
@@ -371,20 +369,23 @@ class P3D_LOD_Resolution():
     @classmethod
     def decode(cls, signature):
         if signature < 1e3:
-            return 0, round(signature)
+            return cls.VISUAL, round(signature)
         elif 1e4 <= signature < 2e4:
-            return 4, round(signature - 1e4)
+            return cls.SHADOW, round(signature - 1e4)
         
         num = Decimal(signature)
         exp = num.normalize(Context(2)).adjusted()
         
         coef = float((num / 10**exp))
         base = round(coef)
-        if exp in [3, 16]:
+        if exp in (3, 16):
             base = round(coef, 1)
 
-        lod = cls.INDEX_MAP.get((base, exp), 30)
+        lod = cls.INDEX_MAP.get((base, exp), cls.UNKNOWN)
         pos = cls.RESOLUTION_POS.get(lod, None)
+
+        if lod == cls.UNKNOWN:
+            return lod, round(signature)
 
         resolution = 0
         if pos is not None:

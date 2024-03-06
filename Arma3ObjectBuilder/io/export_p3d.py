@@ -27,7 +27,7 @@ def can_export(operator, context):
         export_objects = context.selected_objects
         
     for obj in export_objects:
-        if (not operator.visible_only or obj.visible_get()) and  obj.type == 'MESH' and obj.a3ob_properties_object.is_a3_lod and obj.parent == None and obj.a3ob_properties_object.lod != '31':
+        if (not operator.visible_only or obj.visible_get()) and  obj.type == 'MESH' and obj.a3ob_properties_object.is_a3_lod and obj.parent == None:
             return True
             
     return False
@@ -204,10 +204,8 @@ def get_lod_data(operator, context, validator, temp_collection):
 
     lod_list = []
 
-    allow_uv = set([str(idx) for idx in (*data.lod_visuals, *data.lod_shadows)])
-
     for obj in [obj for obj in export_objects if not operator.visible_only or obj.visible_get()]:       
-        if obj.type != 'MESH' or not obj.a3ob_properties_object.is_a3_lod or obj.parent != None or obj.a3ob_properties_object.lod == '31':
+        if obj.type != 'MESH' or not obj.a3ob_properties_object.is_a3_lod or obj.parent != None:
             continue
             
         # Some operator polls fail later if an object is in edit mode.
@@ -291,7 +289,7 @@ def get_lod_data(operator, context, validator, temp_collection):
             bm.to_mesh(main_obj.data)
             bm.free()
 
-        if main_obj.a3ob_properties_object.lod not in allow_uv:
+        if int(main_obj.a3ob_properties_object.lod) not in data.lod_allow_uvs:
             utils.clear_uvs(main_obj)
 
         lod_list.append((main_obj, proxy_lookup, is_valid))
@@ -518,7 +516,11 @@ def process_lod(operator, obj, proxy_lookup, is_valid, logger):
 
     logger.step("Processing data:")
     output = p3d.P3D_LOD()
-    output.resolution.set(int(object_props.lod), object_props.resolution)
+    lod_idx = int(object_props.lod)
+    if lod_idx != data.lod_unknown:
+        output.resolution.set(lod_idx, object_props.resolution)
+    else:
+        output.resolution.set(lod_idx, object_props.resolution_float)
 
     mesh = obj.data
 
@@ -616,7 +618,7 @@ def write_file(operator, context, file, temp_collection):
 
     if operator.force_lowercase:
         mlod.force_lowercase()
-        logger.log("Forced lowercase")
+        logger.step("Forced lowercase")
 
     mlod.write(file)
     

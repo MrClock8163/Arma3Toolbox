@@ -530,8 +530,11 @@ class A3OB_PT_object_mesh(bpy.types.Panel):
         
         if object_props.is_a3_lod:
             layout.prop(object_props, "lod", text="Type")
-            if int(object_props.lod) in data.lod_resolution_position:
+            lod_idx = int(object_props.lod)
+            if lod_idx in data.lod_has_resolution:
                 layout.prop(object_props, "resolution")
+            elif lod_idx == data.lod_unknown:
+                layout.prop(object_props, "resolution_float")
 
 
 class A3OB_PT_object_mesh_namedprops(bpy.types.Panel):

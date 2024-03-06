@@ -7,6 +7,8 @@ import math
 import bmesh
 import bpy
 
+from ..io.data_p3d import P3D_LOD_Resolution as LOD
+
 
 class ValidatorResult():
     def __init__(self, is_valid = True, comment = ""):
@@ -620,13 +622,44 @@ class Validator():
     
     def setup_lod_specific(self):
         self.components = {
-            **dict.fromkeys(("4", "26", "27", "28"), [ValidatorLODShadow]),
-            **dict.fromkeys(("9", "10", "13"), [ValidatorLODPointcloud]),
-            **dict.fromkeys(("7", "8", "14", "15", "16", "17", "19", "20", "21", "22", "23", "24"), [ValidatorLODGeometrySubtype]),
-            "6": [ValidatorLODGeometry],
-            "11": [ValidatorLODRoadway],
-            "12": [ValidatorLODPaths],
-            "30": [ValidatorLODUnderground]
+            **dict.fromkeys(
+                (
+                    str(LOD.SHADOW),
+                    str(LOD.SHADOW_VIEW_CARGO),
+                    str(LOD.SHADOW_VIEW_PILOT),
+                    str(LOD.SHADOW_VIEW_GUNNER)
+                ), 
+                [ValidatorLODShadow]
+            ),
+            **dict.fromkeys(
+                (
+                    str(LOD.MEMORY),
+                    str(LOD.LANDCONTACT),
+                    str(LOD.HITPOINTS)
+                ),
+                [ValidatorLODPointcloud]
+            ),
+            **dict.fromkeys(
+                (
+                    str(LOD.GEOMETRY_BUOY),
+                    str(LOD.GEOMETRY_PHYSX),
+                    str(LOD.VIEW_GEOMETRY),
+                    str(LOD.FIRE_GEOMETRY),
+                    str(LOD.VIEW_CARGO_GEOMERTRY),
+                    str(LOD.VIEW_CARGO_FIRE_GEOMETRY),
+                    str(LOD.VIEW_COMMANDER_GEOMETRY),
+                    str(LOD.VIEW_COMMANDER_FIRE_GEOMETRY),
+                    str(LOD.VIEW_PILOT_GEOMETRY),
+                    str(LOD.VIEW_PILOT_FIRE_GEOMETRY),
+                    str(LOD.VIEW_GUNNER_GEOMETRY),
+                    str(LOD.VIEW_GUNNER_FIRE_GEOMETRY)
+                ),
+                [ValidatorLODGeometrySubtype]
+            ),
+            str(LOD.GEOMETRY): [ValidatorLODGeometry],
+            str(LOD.ROADWAY): [ValidatorLODRoadway],
+            str(LOD.PATHS): [ValidatorLODPaths],
+            str(LOD.UNDERGROUND): [ValidatorLODUnderground]
         }
 
     def validate_lod(self, obj, lod, lazy = False, warns_errs = True, relative_paths = False):

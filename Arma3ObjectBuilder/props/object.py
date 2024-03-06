@@ -152,6 +152,14 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
         soft_max = 1000,
         step = 1
     )
+    resolution_float: bpy.props.FloatProperty(
+        name = "Resolution/Index",
+        description = "Resolution or index value of LOD object of unknown type",
+        default = 1,
+        min = 0,
+        soft_max = 1000,
+        step = 1
+    )
     properties: bpy.props.CollectionProperty(
         name = "Named Properties",
         description = "Named properties associated with the LOD",
