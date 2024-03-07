@@ -171,6 +171,9 @@ def merge_proxy_objects(main_obj, proxy_objects, relative):
 
 def validate_proxies(operator, proxy_objects):
     for proxy in proxy_objects:
+        if len(proxy.data.polygons) > 1 or len(proxy.data.polygons[0].vertices) > 3:
+            return False
+
         path, _ = proxy.a3ob_properties_object_proxy.to_placeholder(operator.relative_paths)
         if not is_ascii(path):
             return False
@@ -235,8 +238,14 @@ def get_lod_data(operator, context, validator, temp_collection):
         # validation would otherwise get confused by the proxy triangles (eg.: it'd be impossible to validate
         # that a mesh is otherwise contiguous or not).
         merge_sub_objects(operator, main_obj, sub_objects)
-        is_valid = validator.validate_lod(main_obj, main_obj.a3ob_properties_object.lod, True, operator.validate_lods_warning_errors, operator.relative_paths)
-        is_valid &= validate_proxies(operator, proxy_objects)
+        is_valid = validate_proxies(operator, proxy_objects)
+
+        is_valid_copies = []
+        for copy in main_obj.a3ob_properties_object.copies:
+            is_valid_copies.append(is_valid and validator.validate_lod(main_obj, copy.lod, True, operator.validate_lods_warning_errors, operator.relative_paths))
+
+        is_valid &= validator.validate_lod(main_obj, main_obj.a3ob_properties_object.lod, True, operator.validate_lods_warning_errors, operator.relative_paths)
+
         proxy_lookup = merge_proxy_objects(main_obj, proxy_objects, operator.relative_paths)
 
         if operator.apply_transforms:
@@ -294,14 +303,12 @@ def get_lod_data(operator, context, validator, temp_collection):
 
         lod_list.append((main_obj, proxy_lookup, is_valid))
         
-        for copy in main_obj.a3ob_properties_object.copies:
+        for copy, is_valid_copy in zip(main_obj.a3ob_properties_object.copies, is_valid_copies):
             main_obj_copy = duplicate_object(main_obj, temp_collection)
             copy_props = main_obj_copy.a3ob_properties_object
             copy_props.lod = copy.lod
             copy_props.resolution = copy.resolution
             copy_props.resolution_float = copy.resolution_float
-
-            is_valid_copy = validator.validate_lod(main_obj_copy, "1", True, False, operator.relative_paths)
             lod_list.append((main_obj_copy, proxy_lookup, is_valid_copy))
 
     return lod_list

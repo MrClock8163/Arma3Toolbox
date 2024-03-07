@@ -109,7 +109,7 @@ lod_info = {
     LOD.SHADOW: ("Shadow Volume", "Shadow casting geometry"),
     LOD.EDIT: ("Edit", "Temporary layer"),
     LOD.GEOMETRY: ("Geometry", "Object collision geometry and occluders"),
-    LOD.GEOMETRY_BUOY: ("Geometry Buoyancy", "Buoyant object geometry"),
+    LOD.GEOMETRY_BUOY: ("Geometry Buoyancy", "Buoyant object geometry (Displacement for VBS)"),
     LOD.GEOMETRY_PHYSX: ("Geometry PhysX", "PhysX object collision geometry"),
     LOD.MEMORY: ("Memory", "Hard points and animation axes"),
     LOD.LANDCONTACT: ("Land Contact", "Points of contact with ground"),
