@@ -199,6 +199,56 @@ class A3OB_OT_paste_common_namedprop(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class A3OB_OT_lod_copy_add(bpy.types.Operator):
+    """Add copy directive to active object"""
+    
+    bl_idname = "a3ob.lod_copy_add"
+    bl_label = "Add Copy"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        obj = context.object
+        return obj and obj.type == 'MESH'
+        
+    def execute(self, context):
+        obj = context.object
+        object_props = obj.a3ob_properties_object
+        object_props.copies.add()
+        object_props.copies_index = len(object_props.copies) - 1
+        
+        return {'FINISHED'}
+
+
+class A3OB_OT_lod_copy_remove(bpy.types.Operator):
+    """Remove copy directive from the active object"""
+    
+    bl_idname = "a3ob.lod_copy_remove"
+    bl_label = "Remove Copy"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        obj = context.object
+        if not obj:
+            return False
+        object_props = obj.a3ob_properties_object
+        return obj.type == 'MESH' and utils.is_valid_idx(object_props.copies_index, object_props.copies)
+        
+    def execute(self, context):
+        obj = context.object
+        object_props = obj.a3ob_properties_object
+        index = object_props.copies_index
+        if index != -1:
+            object_props.copies.remove(index)
+            if len(object_props.copies) == 0:
+                object_props.copies_index = -1
+            elif index > len(object_props.properties) - 1:
+                object_props.copies_index = len(object_props.copies) - 1            
+        
+        return {'FINISHED'}
+
+
 class A3OB_OT_flags_vertex_add(bpy.types.Operator):
     """Add a new vertex flag group to the active object"""
     
@@ -465,6 +515,17 @@ class A3OB_UL_namedprops(bpy.types.UIList):
         layout.prop(item, "value", text="", emboss=False)
 
 
+class A3OB_UL_lod_copies(bpy.types.UIList):
+    def draw_item(self, context, layout, _data, item, icon, active_data, active_propname):
+        layout.alignment = 'LEFT'
+        layout.prop(item, "lod", text="", emboss=False)
+        lod_idx = int(item.lod)
+        if lod_idx in data.lod_has_resolution:
+            layout.prop(item, "resolution", text="", emboss=False)
+        elif lod_idx == data.lod_unknown:
+            layout.prop(item, "resolution_float", text="", emboss=False)
+
+
 class A3OB_UL_common_proxies(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         layout.label(text=item.name)
@@ -607,6 +668,33 @@ class A3OB_PT_object_mesh_proxies(bpy.types.Panel):
         op_common.obj = proxy.name
         row_path.prop(proxy_props, "proxy_path", text="", icon='MESH_CUBE')
         col_list.prop(proxy_props, "proxy_index")
+
+
+class A3OB_PT_object_mesh_copies(bpy.types.Panel):
+    bl_region_type = 'WINDOW'
+    bl_space_type = 'PROPERTIES'
+    bl_label = "Copies"
+    bl_context = "data"
+    bl_parent_id = "A3OB_PT_object_mesh"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    @classmethod
+    def poll(cls, context):
+        obj = context.object
+        return obj and obj.type == 'MESH' and obj.a3ob_properties_object.is_a3_lod and not obj.a3ob_properties_object_proxy.is_a3_proxy
+
+    def draw(self, context):
+        obj = context.object
+        object_props = obj.a3ob_properties_object
+
+        layout = self.layout
+        row = layout.row()
+        col_list = row.column()
+        col_list.template_list("A3OB_UL_lod_copies", "A3OB_lod_copies", object_props, "copies", object_props, "copies_index")
+            
+        col_operators = row.column(align=True)
+        col_operators.operator("a3ob.lod_copy_add", text="", icon='ADD')
+        col_operators.operator("a3ob.lod_copy_remove", text="", icon='REMOVE')
 
 
 class A3OB_PT_object_mesh_flags(bpy.types.Panel):
@@ -818,6 +906,8 @@ classes = (
     A3OB_OT_namedprops_add,
     A3OB_OT_namedprops_remove,
     A3OB_OT_paste_common_namedprop,
+    A3OB_OT_lod_copy_add,
+    A3OB_OT_lod_copy_remove,
     A3OB_OT_flags_vertex_add,
     A3OB_OT_flags_vertex_remove,
     A3OB_OT_flags_vertex_assign,
@@ -831,6 +921,7 @@ classes = (
     A3OB_OT_flags_face_deselect,
     A3OB_OT_flags_face_clear,
     A3OB_UL_namedprops,
+    A3OB_UL_lod_copies,
     A3OB_UL_common_proxies,
     A3OB_UL_flags_vertex,
     A3OB_UL_flags_face,
@@ -838,6 +929,7 @@ classes = (
     A3OB_PT_object_mesh,
     A3OB_PT_object_mesh_namedprops,
     A3OB_PT_object_mesh_proxies,
+    A3OB_PT_object_mesh_copies,
     A3OB_PT_object_proxy,
     A3OB_PT_object_mesh_flags,
     A3OB_PT_object_mesh_flags_vertex,

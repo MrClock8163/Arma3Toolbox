@@ -7,6 +7,7 @@
 - import-export:
   - P3D:
     - support for Underground (VBS) LOD type (including specific validation)
+    - LOD copy directives
 
 ### Changed
 

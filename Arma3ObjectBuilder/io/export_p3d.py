@@ -293,6 +293,16 @@ def get_lod_data(operator, context, validator, temp_collection):
             utils.clear_uvs(main_obj)
 
         lod_list.append((main_obj, proxy_lookup, is_valid))
+        
+        for copy in main_obj.a3ob_properties_object.copies:
+            main_obj_copy = duplicate_object(main_obj, temp_collection)
+            copy_props = main_obj_copy.a3ob_properties_object
+            copy_props.lod = copy.lod
+            copy_props.resolution = copy.resolution
+            copy_props.resolution_float = copy.resolution_float
+
+            is_valid_copy = validator.validate_lod(main_obj_copy, "1", True, False, operator.relative_paths)
+            lod_list.append((main_obj_copy, proxy_lookup, is_valid_copy))
 
     return lod_list
 
