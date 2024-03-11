@@ -71,6 +71,7 @@ lod_has_resolution = {
     LOD.VISUAL,
     LOD.VIEW_CARGO,
     LOD.SHADOW,
+    # LOD.SHADOWBUFFER,
     LOD.EDIT,
     LOD.VIEW_CARGO_GEOMERTRY,
     LOD.SHADOW_VIEW_CARGO
@@ -89,6 +90,7 @@ lod_visuals = {
 
 lod_shadows = {
     LOD.SHADOW,
+    # LOD.SHADOWBUFFER,
     LOD.SHADOW_VIEW_CARGO,
     LOD.SHADOW_VIEW_PILOT,
     LOD.SHADOW_VIEW_GUNNER
@@ -107,6 +109,7 @@ lod_info = {
     LOD.VIEW_PILOT: ("View - Pilot", "First person view"),
     LOD.VIEW_CARGO: ("View - Cargo", "Passenger first person view"),
     LOD.SHADOW: ("Shadow Volume", "Shadow casting geometry"),
+    # LOD.SHADOWBUFFER: ("Shadow Buffer", "Shadow buffer geometry"),
     LOD.EDIT: ("Edit", "Temporary layer"),
     LOD.GEOMETRY: ("Geometry", "Object collision geometry and occluders"),
     LOD.GEOMETRY_BUOY: ("Geometry Buoyancy", "Buoyant object geometry (Displacement for VBS)"),
@@ -133,6 +136,7 @@ lod_info = {
     LOD.SHADOW_VIEW_GUNNER: ("Shadow Volume - Gunner View", "Gunner view shadow casting geometry"),
     LOD.WRECKAGE: ("Wreckage", "Vehicle wreckage"),
     LOD.UNDERGROUND: ("Underground (VBS)", "Underground volume for VBS (not supported in Arma 3 -> Geometry PhysX Old)"),
+    LOD.GROUNDLAYER: ("Groundlayer (VBS)", "Ground defaormation data for VBS (not supported in Arma 3 -> Shadow Volume 3000)"),
     LOD.UNKNOWN: ("Unknown", "Unknown model layer")
 }
 
@@ -151,6 +155,7 @@ lod_groups_type = {
     **dict.fromkeys(
         [
             LOD.SHADOW,
+            # LOD.SHADOWBUFFER,
             LOD.SHADOW_VIEW_CARGO,
             LOD.SHADOW_VIEW_PILOT,
             LOD.SHADOW_VIEW_GUNNER
@@ -191,6 +196,7 @@ lod_groups_type = {
             LOD.PATHS,
             LOD.SUBPARTS,
             LOD.WRECKAGE,
+            LOD.GROUNDLAYER,
             LOD.UNKNOWN
         ],
         "Misc"
@@ -228,6 +234,7 @@ lod_groups_context = {
     **dict.fromkeys(
         [
             LOD.SHADOW,
+            # LOD.SHADOWBUFFER,
             LOD.GEOMETRY
         ],
         "General"
@@ -247,6 +254,7 @@ lod_groups_context = {
             LOD.SUBPARTS,
             LOD.WRECKAGE,
             LOD.UNDERGROUND,
+            LOD.GROUNDLAYER,
             LOD.UNKNOWN
         ],
         "Misc"

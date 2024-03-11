@@ -291,7 +291,9 @@ class P3D_LOD_Resolution():
     SHADOW_VIEW_GUNNER = 28
     WRECKAGE = 29
     UNDERGROUND = 30 # Geometry PhysX Old for Arma 3
-    UNKNOWN = 31
+    GROUNDLAYER = 31
+    # SHADOWBUFFER = 32
+    UNKNOWN = -1
 
     INDEX_MAP = {
         (0.0, 0): VISUAL, # Visual
@@ -299,6 +301,8 @@ class P3D_LOD_Resolution():
         (1.1, 3): VIEW_PILOT, # View Pilot
         (1.2, 3): VIEW_CARGO, # View Cargo
         (1.0, 4): SHADOW, # Shadow
+        # (1.1, 4): SHADOWBUFFER,
+        (1.3, 4): GROUNDLAYER,
         (2.0, 4): EDIT, # Edit
         (1.0, 13): GEOMETRY, # Geometry
         (2.0, 13): GEOMETRY_BUOY, # Geometry Buoyancy
@@ -331,6 +335,7 @@ class P3D_LOD_Resolution():
     RESOLUTION_POS = { # decimal places in normalized format
         VIEW_CARGO: 3,
         SHADOW: 4,
+        # SHADOWBUFFER: 4,
         EDIT: 4,
         VIEW_CARGO_GEOMERTRY: 2,
         SHADOW_VIEW_CARGO: 3
@@ -365,14 +370,14 @@ class P3D_LOD_Resolution():
     def decode(cls, signature):
         if signature < 1e3:
             return cls.VISUAL, round(signature)
-        elif 1e4 <= signature < 2e4:
+        elif 1e4 <= signature < 1.2e4:
             return cls.SHADOW, round(signature - 1e4)
         
         num = Decimal(signature)
         exp = num.normalize(Context(2)).adjusted()
         
         coef = float((num / 10**exp))
-        base = round(coef, 1) if exp in (3, 16) else round(coef)
+        base = round(coef, 1) if exp in (3, 4, 16) else round(coef)
 
         lod = cls.INDEX_MAP.get((base, exp), cls.UNKNOWN)
         pos = cls.RESOLUTION_POS.get(lod, None)
