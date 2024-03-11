@@ -14,7 +14,8 @@ from .compression import lzo1x_decompress, LZO_Error
 
 
 class RTM_Error(Exception):
-    pass
+    def __str__(self):
+        return "RTM - %s" % super().__str__()
 
 
 class RTM_Transform():
@@ -208,7 +209,8 @@ class RTM_File():
 
 
 class BMTR_Error(Exception):
-    pass
+    def __str__(self):
+        return "BMTR - %s" % super().__str__()
 
 
 class BMTR_Prop:
@@ -340,7 +342,7 @@ class BMTR_File:
             try:
                 _, uncompressed = lzo1x_decompress(file, expected)
             except LZO_Error as ex:
-                raise BMTR_Error("LZO: %s" % ex)
+                raise BMTR_Error(str(ex))
             
             buffer = BufferedReader(BytesIO(uncompressed))
             output = [binary.read_float(buffer) for i in range(count_frames)]
@@ -365,7 +367,7 @@ class BMTR_File:
                 try:
                     _, uncompressed = lzo1x_decompress(file, expected)
                 except LZO_Error as ex:
-                    raise BMTR_Error("LZO: %s" % ex)
+                    raise BMTR_Error(str(ex))
                 
                 buffer = BufferedReader(BytesIO(uncompressed))
                 output.append(BMTR_Frame.read(buffer, count_bones))

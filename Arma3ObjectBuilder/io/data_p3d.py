@@ -13,7 +13,8 @@ from . import binary_handler as binary
 
 
 class P3D_Error(Exception):
-    pass
+    def __str__(self):
+        return "P3D - %s" % super().__str__()
 
 
 # Generic class to consume unneeded TAGG types (eg.: #Hidden#, #Selected#).
