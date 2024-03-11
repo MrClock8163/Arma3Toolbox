@@ -329,11 +329,11 @@ class P3D_LOD_Resolution():
     }
 
     RESOLUTION_POS = { # decimal places in normalized format
-        3: 3,
-        4: 4,
-        5: 4,
-        16: 2,
-        26: 3
+        VIEW_CARGO: 3,
+        SHADOW: 4,
+        EDIT: 4,
+        VIEW_CARGO_GEOMERTRY: 2,
+        SHADOW_VIEW_CARGO: 3
     }
 
     def __init__(self, lod = 0, res = 0):

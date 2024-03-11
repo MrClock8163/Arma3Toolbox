@@ -132,25 +132,125 @@ lod_info = {
     LOD.SHADOW_VIEW_PILOT: ("Shadow Volume - Pilot View", "First person view shadow casting geometry"),
     LOD.SHADOW_VIEW_GUNNER: ("Shadow Volume - Gunner View", "Gunner view shadow casting geometry"),
     LOD.WRECKAGE: ("Wreckage", "Vehicle wreckage"),
-    LOD.UNDERGROUND: ("Underground (VBS)", "Underground volume for VBS (not supported in Arma 3, Geometry PhysX Old)"),
+    LOD.UNDERGROUND: ("Underground (VBS)", "Underground volume for VBS (not supported in Arma 3 -> Geometry PhysX Old)"),
     LOD.UNKNOWN: ("Unknown", "Unknown model layer")
 }
 
 
 lod_groups_type = {
-    **dict.fromkeys([0, 1, 2, 3, 18], "Visuals"),
-    **dict.fromkeys([4, 26, 27, 28], "Shadows"),
-    **dict.fromkeys([6, 7, 8, 14, 15, 16, 17, 19, 20, 21, 22, 23, 24, 30], "Geometries"),
-    **dict.fromkeys([9, 10, 13], "Point clouds"),
-    **dict.fromkeys([5, 11, 12, 25, 29, 31], "Misc")
+    **dict.fromkeys(
+        [
+            LOD.VISUAL,
+            LOD.VIEW_GUNNER,
+            LOD.VIEW_PILOT,
+            LOD.VIEW_CARGO,
+            LOD.VIEW_COMMANDER
+        ],
+        "Visuals"
+    ),
+    **dict.fromkeys(
+        [
+            LOD.SHADOW,
+            LOD.SHADOW_VIEW_CARGO,
+            LOD.SHADOW_VIEW_PILOT,
+            LOD.SHADOW_VIEW_GUNNER
+        ],
+        "Shadows"
+    ),
+    **dict.fromkeys(
+        [
+            LOD.GEOMETRY,
+            LOD.GEOMETRY_BUOY,
+            LOD.GEOMETRY_PHYSX,
+            LOD.VIEW_GEOMETRY,
+            LOD.FIRE_GEOMETRY,
+            LOD.VIEW_CARGO_GEOMERTRY,
+            LOD.VIEW_CARGO_FIRE_GEOMETRY,
+            LOD.VIEW_COMMANDER_GEOMETRY,
+            LOD.VIEW_COMMANDER_FIRE_GEOMETRY,
+            LOD.VIEW_PILOT_GEOMETRY,
+            LOD.VIEW_PILOT_FIRE_GEOMETRY,
+            LOD.VIEW_GUNNER_GEOMETRY,
+            LOD.VIEW_GUNNER_FIRE_GEOMETRY,
+            LOD.UNDERGROUND
+        ],
+        "Geometries"
+    ),
+    **dict.fromkeys(
+        [
+            LOD.MEMORY,
+            LOD.LANDCONTACT,
+            LOD.HITPOINTS
+        ],
+        "Point clouds"
+    ),
+    **dict.fromkeys(
+        [
+            LOD.EDIT,
+            LOD.ROADWAY,
+            LOD.PATHS,
+            LOD.SUBPARTS,
+            LOD.WRECKAGE,
+            LOD.UNKNOWN
+        ],
+        "Misc"
+    )
 }
 
 
 lod_groups_context = {
-    **dict.fromkeys([0], "3rd person"),
-    **dict.fromkeys([1, 2, 3, 16, 17, 18, 19, 20, 21, 22, 23, 24, 26, 27, 28], "1st person"),
-    **dict.fromkeys([4, 6], "General"),
-    **dict.fromkeys([5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 25, 29, 30, 31], "Misc")
+    **dict.fromkeys(
+        [
+            LOD.VISUAL
+        ],
+        "3rd person"
+    ),
+    **dict.fromkeys(
+        [
+            LOD.VIEW_GUNNER,
+            LOD.VIEW_PILOT,
+            LOD.VIEW_CARGO,
+            LOD.VIEW_CARGO_GEOMERTRY,
+            LOD.VIEW_CARGO_FIRE_GEOMETRY,
+            LOD.VIEW_COMMANDER,
+            LOD.VIEW_COMMANDER_GEOMETRY,
+            LOD.VIEW_COMMANDER_FIRE_GEOMETRY,
+            LOD.VIEW_PILOT_GEOMETRY,
+            LOD.VIEW_PILOT_FIRE_GEOMETRY,
+            LOD.VIEW_GUNNER_GEOMETRY,
+            LOD.VIEW_GUNNER_FIRE_GEOMETRY,
+            LOD.SHADOW_VIEW_CARGO,
+            LOD.SHADOW_VIEW_PILOT,
+            LOD.SHADOW_VIEW_GUNNER
+        ],
+        "1st person"
+    ),
+    **dict.fromkeys(
+        [
+            LOD.SHADOW,
+            LOD.GEOMETRY
+        ],
+        "General"
+    ),
+    **dict.fromkeys(
+        [
+            LOD.EDIT,
+            LOD.GEOMETRY_BUOY,
+            LOD.GEOMETRY_PHYSX,
+            LOD.MEMORY,
+            LOD.LANDCONTACT,
+            LOD.ROADWAY,
+            LOD.PATHS,
+            LOD.HITPOINTS,
+            LOD.VIEW_GEOMETRY,
+            LOD.FIRE_GEOMETRY,
+            LOD.SUBPARTS,
+            LOD.WRECKAGE,
+            LOD.UNDERGROUND,
+            LOD.UNKNOWN
+        ],
+        "Misc"
+    )
 }
 
 
