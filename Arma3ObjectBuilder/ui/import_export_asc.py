@@ -40,8 +40,10 @@ class A3OB_OP_import_asc(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             try:
                 import_asc.read_file(self, context, file)
                 utils.op_report(self, {'INFO'}, "Successfully imported DEM")
+            except import_asc.asc.ASC_Error as ex:
+                utils.op_report(self, {'ERROR'}, ex)
             except Exception as ex:
-                utils.op_report(self, {'ERROR'}, str(ex))
+                utils.op_report(self, {'ERROR'}, ex)
                 traceback.print_exc()
         
         return {'FINISHED'}
@@ -130,8 +132,10 @@ class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                 export_asc.write_file(self, context, file, obj)
                 output.success = True
                 utils.op_report(self, {'INFO'}, "Successfuly exported DTM")
+            except export_asc.asc.ASC_Error:
+                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
             except Exception as ex:
-                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % str(ex))
+                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
                 traceback.print_exc()
         
         return {'FINISHED'}

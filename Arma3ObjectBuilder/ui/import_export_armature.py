@@ -52,7 +52,7 @@ class A3OB_OP_import_armature(bpy.types.Operator, bpy_extras.io_utils.ImportHelp
         try:
             arm.import_armature(self, skeleton)
         except Exception as ex:
-            utils.op_report(self, {'ERROR'}, "%s (check the system console)" % str(ex))
+            utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
             traceback.print_exc()
 
         return {'FINISHED'}

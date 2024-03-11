@@ -118,9 +118,11 @@ class A3OB_OP_export_rtm(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                     utils.op_report(self, {'INFO'}, "Exported %d frame(s)" % frame_count)
                 
                 output.success = True
-                    
+            
+            except export_rtm.rtm.RTM_Error as ex:
+                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
             except Exception as ex:
-                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % str(ex))
+                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
                 traceback.print_exc()
             
         return {'FINISHED'}
@@ -283,8 +285,10 @@ class A3OB_OP_import_rtm(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         with open(self.filepath, "rb") as file:
             try:
                 count_frames = import_rtm.import_file(self, context, file)
+            except (import_rtm.rtm.RTM_Error, import_rtm.rtm.BMTR_Error) as ex:
+                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
             except Exception as ex:
-                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % str(ex))
+                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
                 traceback.print_exc()
         
         if count_frames > 0:

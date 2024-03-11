@@ -44,8 +44,10 @@ class A3OB_OP_import_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         count_skeletons = 0
         try:
             count_skeletons = import_mcfg.read_file(self, context)
+        except import_mcfg.rap.RAP_Error as ex:
+            utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
         except Exception as ex:
-            utils.op_report(self, {'ERROR'}, "%s (check the system console)" % str(ex))
+            utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
             traceback.print_exc()
         
         if count_skeletons > 0:
@@ -126,7 +128,7 @@ class A3OB_OP_export_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 export_mcfg.write_file(self, skeleton, file)
                 output.success = True
             except Exception as ex:
-                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % str(ex))
+                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
                 traceback.print_exc()
 
         return {'FINISHED'}
