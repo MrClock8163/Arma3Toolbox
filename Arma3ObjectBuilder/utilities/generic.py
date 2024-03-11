@@ -27,6 +27,13 @@ def show_info_box(message, title = "", icon = 'INFO'):
     bpy.context.window_manager.popup_menu(draw, title=title, icon=icon)
 
 
+# For some reason, not all operator reports are printed to the console. The behavior seems to be context dependent,
+# but not certain.
+def op_report(operator, mode, message):
+    operator.report(mode, message)
+    print("%s: %s\n" % (tuple(mode)[0].title(), message))
+
+
 def abspath(path):
     if not path.startswith("//"):
         return path

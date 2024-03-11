@@ -1,5 +1,4 @@
 import traceback
-from math import floor, ceil
 
 import bpy
 import bpy_extras
@@ -86,7 +85,7 @@ class A3OB_OP_export_rtm(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         
     def execute(self, context):
         if not utils.OutputManager.can_access_path(self.filepath):
-            self.report({'ERROR'}, "Cannot write to target file (file likely in use by another blocking process)")
+            utils.op_report(self, {'ERROR'}, "Cannot write to target file (file likely in use by another blocking process)")
             return {'FINISHED'}
         
         obj = context.object
@@ -105,7 +104,7 @@ class A3OB_OP_export_rtm(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         skeleton = scene_props.skeletons[self.skeleton_index]
         validator = Validator(ProcessLoggerNull())
         if not validator.validate_skeleton(skeleton, True, True):
-            self.report({'ERROR'}, "Invalid skeleton definiton, run skeleton validation for RTM for more info")
+            utils.op_report(self, {'ERROR'}, "Invalid skeleton definiton, run skeleton validation for RTM for more info")
             return {'FINISHED'}
 
         output = utils.OutputManager(self.filepath, "wb")
@@ -114,14 +113,14 @@ class A3OB_OP_export_rtm(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                 static, frame_count = export_rtm.write_file(self, context, file, obj, action)
             
                 if not self.static_pose and static:
-                    self.report({'INFO'}, "Exported as static pose")
+                    utils.op_report(self, {'INFO'}, "Exported as static pose")
                 else:
-                    self.report({'INFO'}, "Exported %d frame(s)" % frame_count)
+                    utils.op_report(self, {'INFO'}, "Exported %d frame(s)" % frame_count)
                 
                 output.success = True
                     
             except Exception as ex:
-                self.report({'ERROR'}, "%s (check the system console)" % str(ex))
+                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % str(ex))
                 traceback.print_exc()
             
         return {'FINISHED'}
@@ -285,11 +284,11 @@ class A3OB_OP_import_rtm(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             try:
                 count_frames = import_rtm.import_file(self, context, file)
             except Exception as ex:
-                self.report({'ERROR'}, "%s (check the system console)" % str(ex))
+                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % str(ex))
                 traceback.print_exc()
         
         if count_frames > 0:
-            self.report({'INFO'}, "Successfully imported %d frame(s)" % count_frames)
+            utils.op_report(self, {'INFO'}, "Successfully imported %d frame(s)" % count_frames)
 
         return {'FINISHED'}
 

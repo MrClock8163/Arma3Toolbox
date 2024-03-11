@@ -45,11 +45,11 @@ class A3OB_OP_import_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         try:
             count_skeletons = import_mcfg.read_file(self, context)
         except Exception as ex:
-            self.report({'ERROR'}, "%s (check the system console)" % str(ex))
+            utils.op_report(self, {'ERROR'}, "%s (check the system console)" % str(ex))
             traceback.print_exc()
         
         if count_skeletons > 0:
-            self.report({'INFO'}, "Successfully imported %d skeleton(s)" % count_skeletons)
+            utils.op_report(self, {'INFO'}, "Successfully imported %d skeleton(s)" % count_skeletons)
         
         return {'FINISHED'}
 
@@ -109,7 +109,7 @@ class A3OB_OP_export_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
     def execute(self, context):
         if not utils.OutputManager.can_access_path(self.filepath):
-            self.report({'ERROR'}, "Cannot write to target file (file likely in use by another blocking process)")
+            utils.op_report(self, {'ERROR'}, "Cannot write to target file (file likely in use by another blocking process)")
             return {'FINISHED'}
         
         scene_props = context.scene.a3ob_rigging
@@ -118,7 +118,7 @@ class A3OB_OP_export_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
         validator = Validator(ProcessLoggerNull())
         if not validator.validate_skeleton(skeleton, False, True):
-            self.report({'ERROR'}, "Invalid skeleton definiton, run skeleton validation for more info")
+            utils.op_report(self, {'ERROR'}, "Invalid skeleton definiton, run skeleton validation for more info")
             return {'FINISHED'}
         
         with output as file:
@@ -126,7 +126,7 @@ class A3OB_OP_export_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 export_mcfg.write_file(self, skeleton, file)
                 output.success = True
             except Exception as ex:
-                self.report({'ERROR'}, "%s (check the system console)" % str(ex))
+                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % str(ex))
                 traceback.print_exc()
 
         return {'FINISHED'}

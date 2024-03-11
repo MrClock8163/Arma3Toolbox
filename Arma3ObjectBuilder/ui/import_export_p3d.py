@@ -1,6 +1,5 @@
 import traceback
 import struct
-import os
 
 import bpy
 import bpy_extras
@@ -103,12 +102,12 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         with open(self.filepath, "rb") as file:
             try:
                 lod_objects = import_p3d.read_file(self, context, file)
-                self.report({'INFO'}, "Successfully imported %d LODs (check the logs in the system console)" % len(lod_objects))
+                utils.op_report(self, {'INFO'}, "Successfully imported %d LODs (check the logs in the system console)" % len(lod_objects))
             except struct.error as ex:
-                self.report({'ERROR'}, "Unexpected EndOfFile (check the system console)")
+                utils.op_report(self, {'ERROR'}, "Unexpected EndOfFile (check the system console)")
                 traceback.print_exc()
             except Exception as ex:
-                self.report({'ERROR'}, "%s (check the system console)" % str(ex))
+                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % str(ex))
                 traceback.print_exc()
         
         return {'FINISHED'}
@@ -324,7 +323,7 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     
     def execute(self, context):
         if not utils.OutputManager.can_access_path(self.filepath):
-            self.report({'ERROR'}, "Cannot write to target file (file likely in use by another blocking process)")
+            utils.op_report(self, {'ERROR'}, "Cannot write to target file (file likely in use by another blocking process)")
             return {'FINISHED'}
         
         if export_p3d.can_export(self, context):
@@ -335,12 +334,12 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                 try:
                     lod_count, exported_count = export_p3d.write_file(self, context, file, temp_collection)
                     if lod_count == exported_count:
-                        self.report({'INFO'}, "Successfully exported all %d LODs (check the logs in the system console)" % exported_count)
+                        utils.op_report(self, {'INFO'}, "Successfully exported all %d LODs (check the logs in the system console)" % exported_count)
                     else:
-                        self.report({'WARNING'}, "Only exported %d/%d LODs (check the logs in the system console)" % (exported_count, lod_count))
+                        utils.op_report(self, {'WARNING'}, "Only exported %d/%d LODs (check the logs in the system console)" % (exported_count, lod_count))
                     output.success = True
                 except Exception as ex:
-                    self.report({'ERROR'}, "%s (check the system console)" % str(ex))
+                    utils.op_report(self, {'ERROR'}, "%s (check the system console)" % str(ex))
                     traceback.print_exc()
             
             for obj in temp_collection.objects:
@@ -349,7 +348,7 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             bpy.data.collections.remove(temp_collection)
                 
         else:
-            self.report({'ERROR'}, "There are no LODs to export")
+            utils.op_report(self, {'ERROR'}, "There are no LODs to export")
         
         return {'FINISHED'}
 

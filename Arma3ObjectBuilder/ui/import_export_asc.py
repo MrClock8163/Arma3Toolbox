@@ -39,9 +39,9 @@ class A3OB_OP_import_asc(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         with open(self.filepath) as file:
             try:
                 import_asc.read_file(self, context, file)
-                self.report({'INFO'}, "Successfully imported DEM")
+                utils.op_report(self, {'INFO'}, "Successfully imported DEM")
             except Exception as ex:
-                self.report({'ERROR'}, str(ex))
+                utils.op_report(self, {'ERROR'}, str(ex))
                 traceback.print_exc()
         
         return {'FINISHED'}
@@ -119,7 +119,7 @@ class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     
     def execute(self, context):
         if not utils.OutputManager.can_access_path(self.filepath):
-            self.report({'ERROR'}, "Cannot write to target file (file likely in use by another blocking process)")
+            utils.op_report(self, {'ERROR'}, "Cannot write to target file (file likely in use by another blocking process)")
             return {'FINISHED'}
         
         obj = context.active_object
@@ -129,9 +129,9 @@ class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             try:
                 export_asc.write_file(self, context, file, obj)
                 output.success = True
-                self.report({'INFO'}, "Successfuly exported DTM")
+                utils.op_report(self, {'INFO'}, "Successfuly exported DTM")
             except Exception as ex:
-                self.report({'ERROR'}, "%s (check the system console)" % str(ex))
+                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % str(ex))
                 traceback.print_exc()
         
         return {'FINISHED'}
