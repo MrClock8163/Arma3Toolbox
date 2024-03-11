@@ -286,6 +286,16 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         description = "Sort faces in LODs by the assigned materials (prevents fragmentation in the face list, and allows proper sorting of alpha faces)",
         default = True
     )
+    lod_collisions: bpy.props.EnumProperty(
+        name = "Collisions",
+        description = "Action to take when detecting LODs with identical signatures",
+        items = (
+            ('IGNORE', "Ignore", "Ignore and proceed with the export"),
+            ('SKIP', "Skip", "Skip LODs with signatures that have already been exported"),
+            ('FAIL', "Fail", "Fail the export process")
+        ),
+        default = 'FAIL'
+    )
     validate_lods: bpy.props.BoolProperty(
         name = "Validate LODs",
         description = "Validate LOD objects, and skip the export of invalid ones"
@@ -444,11 +454,11 @@ class A3OB_PT_export_p3d_validate(bpy.types.Panel):
         operator = sfile.active_operator
         
         col = layout.column(align=True)
+        col.prop(operator, "lod_collisions")
         col.prop(operator, "validate_lods")
         row = col.row(align=True)
         row.prop(operator, "validate_lods_warning_errors")
-        if not operator.validate_lods:
-            row.enabled = False
+        row.enabled = operator.validate_lods
 
 
 class A3OB_PT_export_p3d_post(bpy.types.Panel):

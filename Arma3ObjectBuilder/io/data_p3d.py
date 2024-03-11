@@ -134,10 +134,8 @@ class P3D_TAGG_DataSelection():
     
     @classmethod
     def decode_weight(cls, weight):
-        if weight == 0:
-            return 0.0
-        elif weight == 1:
-            return 1.0
+        if weight == 0 or weight == 1:
+            return weight
             
         value = (256 - weight) / 255
         
@@ -148,10 +146,8 @@ class P3D_TAGG_DataSelection():
     
     @classmethod
     def encode_weight(cls, weight):
-        if weight == 0:
-            return 0
-        elif weight  == 1:
-            return 1
+        if weight == 0 or weight == 1:
+            return int(weight)
             
         value = round(256 - 255 * weight)
         
@@ -232,7 +228,7 @@ class P3D_TAGG():
         elif not output.name.startswith("#") and not output.name.endswith("#"):
             output.data = P3D_TAGG_DataSelection.read(file, count_verts, count_faces)
         else:
-            # Consume unnedded TAGGs
+            # Consume unneeded TAGGs
             file.read(length)
             output.active = False
         
@@ -345,7 +341,7 @@ class P3D_LOD_Resolution():
         self.source = None # field to store the originally read float value for debug purposes
     
     def __eq__(self, other):
-        return type(self) is type(other) and self.lod == other.lod and self.res == other.res
+        return type(self) is type(other) and self.get() == other.get()
     
     def __float__(self):
         return float(self.encode(self.lod, self.res))
@@ -360,9 +356,7 @@ class P3D_LOD_Resolution():
         coef, exp = lookup[lod]
         pos = cls.RESOLUTION_POS.get(lod, None)
 
-        resolution_sign = 0
-        if pos is not None:
-            resolution_sign = resolution * 10**(exp - pos)
+        resolution_sign = (resolution * 10**(exp - pos)) if pos is not None else 0
         
         return coef * 10**exp + resolution_sign
 
@@ -377,9 +371,7 @@ class P3D_LOD_Resolution():
         exp = num.normalize(Context(2)).adjusted()
         
         coef = float((num / 10**exp))
-        base = round(coef)
-        if exp in (3, 16):
-            base = round(coef, 1)
+        base = round(coef, 1) if exp in (3, 16) else round(coef)
 
         lod = cls.INDEX_MAP.get((base, exp), cls.UNKNOWN)
         pos = cls.RESOLUTION_POS.get(lod, None)
@@ -387,9 +379,7 @@ class P3D_LOD_Resolution():
         if lod == cls.UNKNOWN:
             return lod, round(signature)
 
-        resolution = 0
-        if pos is not None:
-            resolution = int(round((coef - base) * 10**pos, pos))
+        resolution = int(round((coef - base) * 10**pos, pos)) if pos is not None else 0
         
         return lod, resolution
     
@@ -837,3 +827,16 @@ class P3D_MLOD():
                 return lod
         
         return None
+    
+    def get_duplicate_lods(self):
+        signatures = set()
+        duplicates = []
+
+        for i, lod in enumerate(self.lods):
+            sign = float(lod.resolution)
+            if sign in signatures:
+                duplicates.append(i)
+            else:
+                signatures.add(sign)
+
+        return duplicates

@@ -44,6 +44,7 @@ def is_ascii(value):
 def duplicate_object(obj, temp_collection):
     new_object = obj.copy()
     new_object.data = obj.data.copy()
+    new_object["a3ob_original_object"] = obj.get("a3ob_original_object", obj.name)
     temp_collection.objects.link(new_object)
     return new_object
 
@@ -519,12 +520,12 @@ def translate_selections(p3dm):
         tagg.name = data.translations_english_czech.get(tagg.name.lower(), tagg.name)
 
 
-def process_lod(operator, obj, proxy_lookup, is_valid, logger):
+def process_lod(operator, obj, proxy_lookup, is_valid, processed_signatures, logger):
     object_props = obj.a3ob_properties_object
     lod_name = object_props.get_name()
 
     logger.level_up()
-    logger.step("Name: %s" % lod_name)
+    logger.step("Type: %s" % lod_name)
 
     if not is_valid:
         logger.log("Failed validation -> skipping LOD (run manual validation for details)")
@@ -538,6 +539,16 @@ def process_lod(operator, obj, proxy_lookup, is_valid, logger):
         output.resolution.set(lod_idx, object_props.resolution)
     else:
         output.resolution.set(lod_idx, object_props.resolution_float)
+    
+    signature = float(output.resolution)
+    if signature in processed_signatures and operator.lod_collisions != 'IGNORE':
+        if operator.lod_collisions == 'FAIL':
+            raise p3d.P3D_Error("Duplicate LODs detected")
+        logger.log("Duplicate -> skipping LOD")
+        logger.level_down()
+        return None
+    else:
+        processed_signatures.add(signature)
 
     mesh = obj.data
 
@@ -615,11 +626,12 @@ def write_file(operator, context, file, temp_collection):
     logger.level_up()
 
     mlod_lods = []
+    processed_signatures = set()
     for i, (lod, proxy_lookup, is_valid) in enumerate(lod_list):
         time_lod_start = time.time()
-        logger.step("LOD %d" % (i + 1))
+        logger.step("LOD %d: %s" % (i + 1, lod["a3ob_original_object"]))
 
-        new_lod = process_lod(operator, lod, proxy_lookup, is_valid, logger)
+        new_lod = process_lod(operator, lod, proxy_lookup, is_valid, processed_signatures, logger)
         if new_lod:
             mlod_lods.append(new_lod)
 
@@ -632,6 +644,7 @@ def write_file(operator, context, file, temp_collection):
     # LODs should be sorted by their resolution signature.
     mlod_lods.sort(key=lambda lod: float(lod.resolution))
     mlod.lods = mlod_lods
+    logger.step("Sorted LODs")
 
     if operator.force_lowercase:
         mlod.force_lowercase()
