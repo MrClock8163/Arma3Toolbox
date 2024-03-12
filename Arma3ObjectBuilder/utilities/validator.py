@@ -137,18 +137,11 @@ class ValidatorComponentLOD(ValidatorComponent):
             return False
         
         RE_NAME = re.compile(re_selection, re.IGNORECASE)
-        groups = [group.index for group in self.obj.vertex_groups if RE_NAME.match(group.name)]
+        for group in self.obj.vertex_groups:
+            if RE_NAME.match(group.name):
+                return True
         
-        if len(groups) == 0:
-            return False
-        
-        layer = self.bm.verts.layers.deform.verify()
-        for vert in self.bm.verts:
-            for group in groups:
-                if group in vert[layer] and vert[layer][group] == 1:
-                    return True
-        else:
-            return False
+        return False
     
     def only_ascii_vgroups(self):
         result = ValidatorResult()

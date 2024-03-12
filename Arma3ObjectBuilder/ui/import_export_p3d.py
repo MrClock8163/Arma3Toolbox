@@ -319,6 +319,10 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         name = "Translate Selections",
         description = "Try to translate english selection names to czech"
     )
+    generate_components: bpy.props.BoolProperty(
+        name = "Generate Components",
+        description = "Generate Component## selections if none are already defined"
+    )
 
     def draw(self, context):
         pass
@@ -434,6 +438,7 @@ class A3OB_PT_export_p3d_meshes(bpy.types.Panel):
         col.prop(operator, "apply_transforms")
         col.prop(operator, "preserve_normals")
         col.prop(operator, "sort_sections")
+        col.prop(operator, "generate_components")
 
 
 class A3OB_PT_export_p3d_validate(bpy.types.Panel):

@@ -4,6 +4,7 @@
 
 
 import time
+import re
 
 import bpy
 import bmesh
@@ -12,6 +13,7 @@ from . import data_p3d as p3d
 from ..utilities import generic as utils
 from ..utilities import flags as flagutils
 from ..utilities import compat as computils
+from ..utilities import structure as structutils
 from ..utilities import data
 from ..utilities.logger import ProcessLogger, ProcessLoggerNull
 from ..utilities.validator import Validator
@@ -60,6 +62,16 @@ def apply_modifiers(obj):
             computils.call_operator_ctx(bpy.ops.object.modifier_apply, ctx, modifier= m.name)
         except:
             obj.modifiers.remove(m)
+
+
+def apply_transforms(obj):
+    ctx = {
+        "object": obj,
+        "active_object": obj,
+        "selected_editable_objects": [obj],
+        "edit_object": None
+    }
+    computils.call_operator_ctx(bpy.ops.object.transform_apply, ctx)
 
 
 # In order to simplify merging the LOD parts, and the data access later on, the dereferenced
@@ -195,6 +207,77 @@ def validate_proxies(operator, proxy_objects):
     return True
 
 
+def get_sub_objects(obj, temp_collection):
+    sub_objects = []
+    proxy_objects = []
+    for child in obj.children:
+        if child.type != 'MESH':
+            continue
+            
+        if not child.mode == 'OBJECT':
+            computils.call_operator_ctx(bpy.ops.object.mode_set, {"active_object": child}, mode='OBJECT')
+        
+        child_copy = duplicate_object(child, temp_collection)
+
+        if child_copy.a3ob_properties_object_proxy.is_a3_proxy:
+            proxy_objects.append(child_copy)
+        else:
+            sub_objects.append(child_copy)
+    
+    return sub_objects, proxy_objects
+
+
+def sort_sections(obj):
+    sections = {0: []}
+    for i in range(len(obj.material_slots)):
+        sections[i] = []
+
+    with utils.edit_bmesh(obj) as bm:
+        bm.faces.ensure_lookup_table()
+
+        for face in bm.faces:
+            sections.get(face.material_index, sections[0]).append(face)
+        
+        face_index = 0
+        for section in sections.values():
+            for face in section:
+                face.index = face_index
+                face_index -=- 1
+
+        bm.faces.sort()
+
+
+def cleanup_uvs(obj):
+    if int(obj.a3ob_properties_object.lod) not in data.lod_allow_uvs:
+        utils.clear_uvs(obj)
+
+
+def cleanup_normals(operator, obj):
+    if not operator.preserve_normals or int(obj.a3ob_properties_object.lod) not in data.lod_visuals:
+        ctx = {
+            "active_object": obj,
+            "object": obj
+        }
+        computils.call_operator_ctx(bpy.ops.mesh.customdata_custom_splitnormals_clear, ctx)
+        computils.mesh_auto_smooth(obj.data)
+        mod = obj.modifiers.new("Temp", 'WEIGHTED_NORMAL')
+        mod.weight = 50
+        mod.keep_sharp = True
+        apply_modifiers(obj)
+
+
+def generate_components(operator, obj):
+    if not operator.generate_components or int(obj.a3ob_properties_object.lod) not in data.lod_geometries:
+        return
+    
+    re_component = re.compile(r"component\d+", re.IGNORECASE)
+    for group in obj.vertex_groups:
+        if re_component.match(group.name):
+            return
+    
+    structutils.find_components(obj)
+
+
 # Huge monolith function to produce the final object and mesh data that can be written to the 
 # P3D file. Merges the sub-objects and proxies into the main objects, applies transformations,
 # runs mesh validation and sorts sections if necessary.
@@ -219,21 +302,7 @@ def get_lod_data(operator, context, validator, temp_collection):
         main_obj = duplicate_object(obj, temp_collection)
         is_valid = True
 
-        sub_objects = []
-        proxy_objects = []
-        for child in obj.children:
-            if child.type != 'MESH':
-                continue
-                
-            if not child.mode == 'OBJECT':
-                computils.call_operator_ctx(bpy.ops.object.mode_set, {"active_object": child}, mode='OBJECT')
-            
-            child_copy = duplicate_object(child, temp_collection)
-
-            if child_copy.a3ob_properties_object_proxy.is_a3_proxy:
-                proxy_objects.append(child_copy)
-            else:
-                sub_objects.append(child_copy)
+        sub_objects, proxy_objects = get_sub_objects(obj, temp_collection)
         
         # Merging of the components has to be done in two steps (1st: sub-objects, 2nd: proxies), because the LOD
         # validation would otherwise get confused by the proxy triangles (eg.: it'd be impossible to validate
@@ -242,67 +311,41 @@ def get_lod_data(operator, context, validator, temp_collection):
         is_valid = validate_proxies(operator, proxy_objects)
 
         is_valid_copies = []
+        temp_component = None
         for copy in main_obj.a3ob_properties_object.copies:
+            # Temporary fake component selection, so the validation doesn't fail for geometries
+            if operator.generate_components:
+                temp_component = main_obj.vertex_groups.new(name="Component00")
+            
             is_valid_copies.append(is_valid and validator.validate_lod(main_obj, copy.lod, True, operator.validate_lods_warning_errors, operator.relative_paths))
+            
+            if temp_component:
+                main_obj.vertex_groups.remove(temp_component)
+                temp_component = None
+
+        # Temporary fake component selection, so the validation doesn't fail for geometries
+        if operator.generate_components:
+            temp_component = main_obj.vertex_groups.new(name="Component00")
 
         is_valid &= validator.validate_lod(main_obj, main_obj.a3ob_properties_object.lod, True, operator.validate_lods_warning_errors, operator.relative_paths)
+
+        if temp_component:
+            main_obj.vertex_groups.remove(temp_component)
 
         proxy_lookup = merge_proxy_objects(main_obj, proxy_objects, operator.relative_paths)
 
         if operator.apply_transforms:
-            ctx = {
-                "object": main_obj,
-                "active_object": main_obj,
-                "selected_editable_objects": [main_obj],
-                "edit_object": None
-            }
-            computils.call_operator_ctx(bpy.ops.object.transform_apply, ctx, location = True, scale = True, rotation = True)
+            apply_transforms(main_obj)
         
         if operator.validate_meshes:
             main_obj.data.validate(clean_customdata=False)
-            
-        if not operator.preserve_normals or int(main_obj.a3ob_properties_object.lod) not in data.lod_visuals:
-            ctx = {
-                "active_object": main_obj,
-                "object": main_obj
-            }
-            computils.call_operator_ctx(bpy.ops.mesh.customdata_custom_splitnormals_clear, ctx)
-            computils.mesh_auto_smooth(main_obj.data)
-            mod = main_obj.modifiers.new("Temp", 'WEIGHTED_NORMAL')
-            mod.weight = 50
-            mod.keep_sharp = True
-            apply_modifiers(main_obj)
 
         # Sections are important for in-game performace, and should be sorted during export
         # to avoid any unnecessary fragmentation. Some info about sections can be found on the
         # community wiki: https://community.bistudio.com/wiki/Section_Count.
         # Some corrections: https://mrcmodding.gitbook.io/home/documents/sections.
         if operator.sort_sections:
-            sections = {0: []}
-            for i, slot in enumerate(main_obj.material_slots):
-                sections[i] = []
-
-            bm = bmesh.new()
-            bm.from_mesh(main_obj.data)
-            bm.faces.ensure_lookup_table()
-
-            for face in bm.faces:
-                sections.get(face.material_index, sections[0]).append(face)
-            
-            face_index = 0
-            for section in sections.values():
-                for face in section:
-                    face.index = face_index
-                    face_index -=- 1
-
-            bm.faces.sort()
-            bm.to_mesh(main_obj.data)
-            bm.free()
-
-        if int(main_obj.a3ob_properties_object.lod) not in data.lod_allow_uvs:
-            utils.clear_uvs(main_obj)
-
-        lod_list.append((main_obj, proxy_lookup, is_valid))
+            sort_sections(obj)
         
         for copy, is_valid_copy in zip(main_obj.a3ob_properties_object.copies, is_valid_copies):
             main_obj_copy = duplicate_object(main_obj, temp_collection)
@@ -310,7 +353,16 @@ def get_lod_data(operator, context, validator, temp_collection):
             copy_props.lod = copy.lod
             copy_props.resolution = copy.resolution
             copy_props.resolution_float = copy.resolution_float
+
+            cleanup_uvs(main_obj_copy)
+            cleanup_normals(operator, main_obj_copy)
+            generate_components(operator, main_obj_copy)
             lod_list.append((main_obj_copy, proxy_lookup, is_valid_copy))
+            
+        cleanup_uvs(main_obj)
+        cleanup_normals(operator, main_obj)
+        generate_components(operator, main_obj)
+        lod_list.append((main_obj, proxy_lookup, is_valid))
 
     return lod_list
 
