@@ -184,7 +184,7 @@ def merge_proxy_objects(main_obj, proxy_objects, relative):
 
 def validate_proxies(operator, proxy_objects):
     for proxy in proxy_objects:
-        if len(proxy.data.polygons) > 1 or len(proxy.data.polygons[0].vertices) > 3:
+        if len(proxy.data.polygons) != 1 or len(proxy.data.polygons[0].vertices) != 3:
             return False
 
         path, _ = proxy.a3ob_properties_object_proxy.to_placeholder(operator.relative_paths)
