@@ -5,6 +5,7 @@
 
 import time
 import re
+from contextlib import contextmanager
 
 import bpy
 import bmesh
@@ -278,9 +279,25 @@ def generate_components(operator, obj):
     structutils.find_components(obj)
 
 
+# Needed to get around the validator requiring component## selections. If the
+# option to generate the components is enabled in the export, the selections
+# might not yet be there, so the validation would fail. A dummy component is
+# added temporarily in this case to satisfy the validator.
+@contextmanager
+def temporary_component(operator, obj):
+    temporary_component = None
+    try:
+        if operator.generate_components:
+            temporary_component = obj.vertex_groups.new(name="Component00")
+        yield obj
+    finally:
+        if temporary_component:
+            obj.vertex_groups.remove(temporary_component)
+
+
 # Huge monolith function to produce the final object and mesh data that can be written to the 
 # P3D file. Merges the sub-objects and proxies into the main objects, applies transformations,
-# runs mesh validation and sorts sections if necessary.
+# runs mesh validation and sorts sections if necessary. Also processes the LOD copy directives.
 # [(LOD object 0, proxy lookup 0), (..., ....), ....]
 def get_lod_data(operator, context, validator, temp_collection):
     scene = context.scene
@@ -311,26 +328,12 @@ def get_lod_data(operator, context, validator, temp_collection):
         is_valid = validate_proxies(operator, proxy_objects)
 
         is_valid_copies = []
-        temp_component = None
         for copy in main_obj.a3ob_properties_object.copies:
-            # Temporary fake component selection, so the validation doesn't fail for geometries
-            if operator.generate_components:
-                temp_component = main_obj.vertex_groups.new(name="Component00")
-            
-            is_valid_copies.append(is_valid and validator.validate_lod(main_obj, copy.lod, True, operator.validate_lods_warning_errors, operator.relative_paths))
-            
-            if temp_component:
-                main_obj.vertex_groups.remove(temp_component)
-                temp_component = None
+            with temporary_component(operator, main_obj):
+                is_valid_copies.append(is_valid and validator.validate_lod(main_obj, copy.lod, True, operator.validate_lods_warning_errors, operator.relative_paths))
 
-        # Temporary fake component selection, so the validation doesn't fail for geometries
-        if operator.generate_components:
-            temp_component = main_obj.vertex_groups.new(name="Component00")
-
-        is_valid &= validator.validate_lod(main_obj, main_obj.a3ob_properties_object.lod, True, operator.validate_lods_warning_errors, operator.relative_paths)
-
-        if temp_component:
-            main_obj.vertex_groups.remove(temp_component)
+        with temporary_component(operator, main_obj):
+            is_valid &= validator.validate_lod(main_obj, main_obj.a3ob_properties_object.lod, True, operator.validate_lods_warning_errors, operator.relative_paths)
 
         proxy_lookup = merge_proxy_objects(main_obj, proxy_objects, operator.relative_paths)
 
