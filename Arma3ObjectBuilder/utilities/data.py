@@ -115,7 +115,7 @@ lod_geometries = {
 }
 
 
-lod_allow_uvs = {*lod_visuals, *lod_shadows}
+lod_allow_uvs = {*lod_visuals, *lod_shadows, LOD.GROUNDLAYER}
 
 
 lod_unknown = LOD.UNKNOWN

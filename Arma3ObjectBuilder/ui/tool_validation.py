@@ -21,6 +21,8 @@ class A3OB_OT_validate_lod(bpy.types.Operator):
     def execute(self, context):
         scene_props = context.scene.a3ob_validation
         obj = context.active_object
+        if obj.mode != 'OBJECT':
+            bpy.ops.object.mode_set(mode='OBJECT')
         
         if scene_props.detect:
             try:

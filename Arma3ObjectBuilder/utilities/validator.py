@@ -486,6 +486,43 @@ class ValidatorLODRoadway(ValidatorComponentLOD):
         return strict, optional, info
 
 
+class ValidatorLODGroundlayer(ValidatorLODRoadway, ValidatorComponentLOD):
+    """LOD - Groundlayer (VBS)"""
+
+    def has_uv_channel(self):
+        result = ValidatorResult()
+
+        if len(self.obj.data.uv_layers) != 1:
+            result.set(False, "mesh has no UV data or more than 1 UV channel")
+        
+        return result
+    
+    def only_valid_uvs(self):
+        result = ValidatorResult()
+        
+        if len(self.obj.data.uv_layers) != 1:
+            return result
+        
+        valid_uvs = {(0, 0), (1, 0), (1, 1), (1, -1)}
+        for uv in self.obj.data.uv_layers[0].uv:
+            u, v = uv.vector
+            if (u, v) not in valid_uvs:
+                result.set(False, "mesh has invalid UV values")
+                break
+
+        return result
+    
+    def conditions(self):
+        strict = (
+            self.has_faces,
+            self.has_uv_channel,
+            self.only_valid_uvs
+        )
+        optional = info = tuple()
+
+        return strict, optional, info
+
+
 class ValidatorLODPaths(ValidatorComponentLOD):
     """LOD - Paths"""
 
@@ -652,7 +689,8 @@ class Validator():
             str(LOD.GEOMETRY): [ValidatorLODGeometry],
             str(LOD.ROADWAY): [ValidatorLODRoadway],
             str(LOD.PATHS): [ValidatorLODPaths],
-            str(LOD.UNDERGROUND): [ValidatorLODUnderground]
+            str(LOD.UNDERGROUND): [ValidatorLODUnderground],
+            str(LOD.GROUNDLAYER): [ValidatorLODGroundlayer]
         }
 
     def validate_lod(self, obj, lod, lazy = False, warns_errs = True, relative_paths = False):
