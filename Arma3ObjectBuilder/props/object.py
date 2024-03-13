@@ -133,6 +133,31 @@ class A3OB_PG_properties_flag_face(bpy.types.PropertyGroup):
         flagutils.set_flag_face(self, value)
 
 
+class A3OB_PG_properties_lod_copy(bpy.types.PropertyGroup):
+    lod: bpy.props.EnumProperty(
+        name = "LOD Type",
+        description = "Type of LOD",
+        items = data.enum_lod_types,
+        default = '0'
+    )
+    resolution: bpy.props.IntProperty(
+        name = "Resolution/Index",
+        description = "Resolution or index value of LOD object",
+        default = 1,
+        min = 0,
+        soft_max = 1000,
+        step = 1
+    )
+    resolution_float: bpy.props.FloatProperty(
+        name = "Resolution/Index",
+        description = "Resolution or index value of LOD object of unknown type",
+        default = 1,
+        min = 0,
+        soft_max = 1000,
+        step = 1
+    )
+
+
 class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
     is_a3_lod: bpy.props.BoolProperty(
         name = "Arma 3 LOD",
@@ -152,12 +177,26 @@ class A3OB_PG_properties_object_mesh(bpy.types.PropertyGroup):
         soft_max = 1000,
         step = 1
     )
+    resolution_float: bpy.props.FloatProperty(
+        name = "Resolution/Index",
+        description = "Resolution or index value of LOD object of unknown type",
+        default = 1,
+        min = 0,
+        soft_max = 1000,
+        step = 1
+    )
     properties: bpy.props.CollectionProperty(
         name = "Named Properties",
         description = "Named properties associated with the LOD",
         type = A3OB_PG_properties_named_property
     )
     property_index: bpy.props.IntProperty(name="Active Property Index", description="Double click to change name and value")
+    copies: bpy.props.CollectionProperty(
+        name = "Copies",
+        description = "LODs to copy the edited LOD to",
+        type = A3OB_PG_properties_lod_copy
+    )
+    copies_index: bpy.props.IntProperty(name="Active Copy Index", description="")
 
     def get_name(self):
         return lodutils.format_lod_name(int(self.lod), self.resolution)
@@ -289,6 +328,7 @@ classes = (
     A3OB_PG_properties_named_property,
     A3OB_PG_properties_flag_vertex,
     A3OB_PG_properties_flag_face,
+    A3OB_PG_properties_lod_copy,
     A3OB_PG_properties_object_mesh,
     A3OB_PG_properties_object_flags,
     A3OB_PG_properties_object_proxy,

@@ -1,6 +1,5 @@
 import traceback
 import struct
-import os
 
 import bpy
 import bpy_extras
@@ -103,12 +102,14 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         with open(self.filepath, "rb") as file:
             try:
                 lod_objects = import_p3d.read_file(self, context, file)
-                self.report({'INFO'}, "Successfully imported %d LODs (check the logs in the system console)" % len(lod_objects))
+                utils.op_report(self, {'INFO'}, "Successfully imported %d LODs (check the logs in the system console)" % len(lod_objects))
             except struct.error as ex:
-                self.report({'ERROR'}, "Unexpected EndOfFile (check the system console)")
+                utils.op_report(self, {'ERROR'}, "Unexpected EndOfFile (check the system console)")
                 traceback.print_exc()
+            except import_p3d.p3d.P3D_Error as ex:
+                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
             except Exception as ex:
-                self.report({'ERROR'}, "%s (check the system console)" % str(ex))
+                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
                 traceback.print_exc()
         
         return {'FINISHED'}
@@ -286,6 +287,16 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         description = "Sort faces in LODs by the assigned materials (prevents fragmentation in the face list, and allows proper sorting of alpha faces)",
         default = True
     )
+    lod_collisions: bpy.props.EnumProperty(
+        name = "Collisions",
+        description = "Action to take when detecting LODs with identical signatures",
+        items = (
+            ('IGNORE', "Ignore", "Ignore and proceed with the export"),
+            ('SKIP', "Skip", "Skip LODs with signatures that have already been exported"),
+            ('FAIL', "Fail", "Fail the export process")
+        ),
+        default = 'FAIL'
+    )
     validate_lods: bpy.props.BoolProperty(
         name = "Validate LODs",
         description = "Validate LOD objects, and skip the export of invalid ones"
@@ -308,11 +319,19 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         name = "Translate Selections",
         description = "Try to translate english selection names to czech"
     )
+    generate_components: bpy.props.BoolProperty(
+        name = "Generate Components",
+        description = "Generate Component## selections if none are already defined"
+    )
 
     def draw(self, context):
         pass
     
     def execute(self, context):
+        if not utils.OutputManager.can_access_path(self.filepath):
+            utils.op_report(self, {'ERROR'}, "Cannot write to target file (file likely in use by another blocking process)")
+            return {'FINISHED'}
+        
         if export_p3d.can_export(self, context):
             output = utils.OutputManager(self.filepath, "wb")
             temp_collection = bpy.data.collections.new("A3OB_temp")
@@ -321,12 +340,14 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                 try:
                     lod_count, exported_count = export_p3d.write_file(self, context, file, temp_collection)
                     if lod_count == exported_count:
-                        self.report({'INFO'}, "Successfully exported all %d LODs (check the logs in the system console)" % exported_count)
+                        utils.op_report(self, {'INFO'}, "Successfully exported all %d LODs (check the logs in the system console)" % exported_count)
                     else:
-                        self.report({'WARNING'}, "Only exported %d/%d LODs (check the logs in the system console)" % (exported_count, lod_count))
+                        utils.op_report(self, {'WARNING'}, "Only exported %d/%d LODs (check the logs in the system console)" % (exported_count, lod_count))
                     output.success = True
+                except export_p3d.p3d.P3D_Error as ex:
+                    utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
                 except Exception as ex:
-                    self.report({'ERROR'}, "%s (check the system console)" % str(ex))
+                    utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
                     traceback.print_exc()
             
             for obj in temp_collection.objects:
@@ -335,7 +356,7 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             bpy.data.collections.remove(temp_collection)
                 
         else:
-            self.report({'ERROR'}, "There are no LODs to export")
+            utils.op_report(self, {'ERROR'}, "There are no LODs to export")
         
         return {'FINISHED'}
 
@@ -417,6 +438,7 @@ class A3OB_PT_export_p3d_meshes(bpy.types.Panel):
         col.prop(operator, "apply_transforms")
         col.prop(operator, "preserve_normals")
         col.prop(operator, "sort_sections")
+        col.prop(operator, "generate_components")
 
 
 class A3OB_PT_export_p3d_validate(bpy.types.Panel):
@@ -440,11 +462,11 @@ class A3OB_PT_export_p3d_validate(bpy.types.Panel):
         operator = sfile.active_operator
         
         col = layout.column(align=True)
+        col.prop(operator, "lod_collisions")
         col.prop(operator, "validate_lods")
         row = col.row(align=True)
         row.prop(operator, "validate_lods_warning_errors")
-        if not operator.validate_lods:
-            row.enabled = False
+        row.enabled = operator.validate_lods
 
 
 class A3OB_PT_export_p3d_post(bpy.types.Panel):

@@ -141,7 +141,7 @@ class A3OB_OT_proxy_extract(bpy.types.Operator):
                 self.report({'ERROR'}, "Unexpected EndOfFile (check the system console)")
                 traceback.print_exc()
             except Exception as ex:
-                self.report({'ERROR'}, "%s (check the system console)" % str(ex))
+                self.report({'ERROR'}, "%s (check the system console)" % ex)
                 traceback.print_exc()
         
         imported_object = lod_objects[0]

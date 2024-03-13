@@ -4,7 +4,8 @@
 
 
 class ASC_Error(Exception):
-    pass
+    def __str__(self):
+        return "ASC - %s" % super().__str__()
 
 
 class ASC_File():

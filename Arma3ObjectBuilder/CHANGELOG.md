@@ -1,5 +1,31 @@
 # Changelog
 
+## [v2.3.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.3.0) (Blender 2.90 -> 4.1)
+
+### Added
+
+- import-export:
+  - P3D:
+    - support for Underground (VBS) LOD type (including specific validation)
+    - support for Groundlayer (VBS) LOD type
+    - support for Navigation (VBS) LOD type
+    - Collisions export option (handling duplicate LOD types)
+    - Generate Components import option
+    - LOD copy directives
+
+### Changed
+
+- import-export:
+  - export processes will no longer start if the target file is in use by another application
+  - backup and temporary export files are now time stamped in the extension to avoid collisions
+  - P3D:
+    - handling of unknown LOD types has been improved (the Unknown LOD type can now be used to set any custom LOD signature)
+
+### Fixed
+
+- Geometry LOD validation would falsely report not triangulated meshes
+- P3D import would crash Blender if Proxy Action was set to Purge
+
 ## [v2.2.1](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.2.1) (Blender 2.90 -> 4.1)
 
 ### Added

@@ -13,7 +13,8 @@ from . import binary_handler as binary
 
 
 class P3D_Error(Exception):
-    pass
+    def __str__(self):
+        return "P3D - %s" % super().__str__()
 
 
 # Generic class to consume unneeded TAGG types (eg.: #Hidden#, #Selected#).
@@ -134,10 +135,8 @@ class P3D_TAGG_DataSelection():
     
     @classmethod
     def decode_weight(cls, weight):
-        if weight == 0:
-            return 0.0
-        elif weight == 1:
-            return 1.0
+        if weight == 0 or weight == 1:
+            return weight
             
         value = (256 - weight) / 255
         
@@ -148,10 +147,8 @@ class P3D_TAGG_DataSelection():
     
     @classmethod
     def encode_weight(cls, weight):
-        if weight == 0:
-            return 0
-        elif weight  == 1:
-            return 1
+        if weight == 0 or weight == 1:
+            return int(weight)
             
         value = round(256 - 255 * weight)
         
@@ -232,7 +229,7 @@ class P3D_TAGG():
         elif not output.name.startswith("#") and not output.name.endswith("#"):
             output.data = P3D_TAGG_DataSelection.read(file, count_verts, count_faces)
         else:
-            # Consume unnedded TAGGs
+            # Consume unneeded TAGGs
             file.read(length)
             output.active = False
         
@@ -283,7 +280,7 @@ class P3D_LOD_Resolution():
     VIEW_CARGO_FIRE_GEOMETRY = 17
     VIEW_COMMANDER = 18
     VIEW_COMMANDER_GEOMETRY = 19
-    VIEW_COMMANDER_FIRE_EOMETRY = 20
+    VIEW_COMMANDER_FIRE_GEOMETRY = 20
     VIEW_PILOT_GEOMETRY = 21
     VIEW_PILOT_FIRE_GEOMETRY = 22
     VIEW_GUNNER_GEOMETRY = 23
@@ -293,7 +290,11 @@ class P3D_LOD_Resolution():
     SHADOW_VIEW_PILOT = 27
     SHADOW_VIEW_GUNNER = 28
     WRECKAGE = 29
-    UNKNOWN = 30
+    UNDERGROUND = 30 # Geometry PhysX Old for Arma 3
+    GROUNDLAYER = 31
+    NAVIGATION = 32
+    # SHADOWBUFFER = ...
+    UNKNOWN = -1
 
     INDEX_MAP = {
         (0.0, 0): VISUAL, # Visual
@@ -301,10 +302,14 @@ class P3D_LOD_Resolution():
         (1.1, 3): VIEW_PILOT, # View Pilot
         (1.2, 3): VIEW_CARGO, # View Cargo
         (1.0, 4): SHADOW, # Shadow
+        # (1.1, 4): SHADOWBUFFER,
+        (1.3, 4): GROUNDLAYER, # GroundLayer (VBS)
         (2.0, 4): EDIT, # Edit
         (1.0, 13): GEOMETRY, # Geometry
         (2.0, 13): GEOMETRY_BUOY, # Geometry Buoyancy
+        (3.0, 13): UNDERGROUND, # Underground (VBS), Geometry PhysX (old) for Arma 3
         (4.0, 13): GEOMETRY_PHYSX, # Geometry PhysX
+        (5.0, 13): NAVIGATION, # Navigation (VBS)
         (1.0, 15): MEMORY, # Memory
         (2.0, 15): LANDCONTACT, # Land Contact
         (3.0, 15): ROADWAY, # Roadway
@@ -316,7 +321,7 @@ class P3D_LOD_Resolution():
         (9.0, 15): VIEW_CARGO_FIRE_GEOMETRY, # View Cargo Fire Geometry
         (1.0, 16): VIEW_COMMANDER, # View Commander
         (1.1, 16): VIEW_COMMANDER_GEOMETRY, # View Commander Geometry
-        (1.2, 16): VIEW_COMMANDER_FIRE_EOMETRY, # View Commander Fire Geometry
+        (1.2, 16): VIEW_COMMANDER_FIRE_GEOMETRY, # View Commander Fire Geometry
         (1.3, 16): VIEW_PILOT_GEOMETRY, # View Pilot Geometry
         (1.4, 16): VIEW_PILOT_FIRE_GEOMETRY, # View Pilot Fire Geometry
         (1.5, 16): VIEW_GUNNER_GEOMETRY, # View Gunner Geometry
@@ -330,13 +335,12 @@ class P3D_LOD_Resolution():
     }
 
     RESOLUTION_POS = { # decimal places in normalized format
-        0: -1,
-        3: 3,
-        4: 4,
-        5: 4,
-        16: 2,
-        26: 3,
-        30: -1
+        VIEW_CARGO: 3,
+        SHADOW: 4,
+        # SHADOWBUFFER: 4,
+        EDIT: 4,
+        VIEW_CARGO_GEOMERTRY: 2,
+        SHADOW_VIEW_CARGO: 3
     }
 
     def __init__(self, lod = 0, res = 0):
@@ -345,14 +349,14 @@ class P3D_LOD_Resolution():
         self.source = None # field to store the originally read float value for debug purposes
     
     def __eq__(self, other):
-        return type(self) is type(other) and self.lod == other.lod and self.res == other.res
+        return type(self) is type(other) and self.get() == other.get()
     
     def __float__(self):
         return float(self.encode(self.lod, self.res))
 
     @classmethod
     def encode(cls, lod, resolution):
-        if lod == 0:
+        if lod == cls.VISUAL or lod == cls.UNKNOWN:
             return resolution 
         
         lookup = {v: k for k, v in cls.INDEX_MAP.items()}
@@ -360,33 +364,30 @@ class P3D_LOD_Resolution():
         coef, exp = lookup[lod]
         pos = cls.RESOLUTION_POS.get(lod, None)
 
-        resolution_sign = 0
-        if pos is not None:
-            resolution_sign = resolution * 10**(exp - pos)
+        resolution_sign = (resolution * 10**(exp - pos)) if pos is not None else 0
         
         return coef * 10**exp + resolution_sign
 
     @classmethod
     def decode(cls, signature):
         if signature < 1e3:
-            return 0, round(signature)
-        elif 1e4 <= signature < 2e4:
-            return 4, round(signature - 1e4)
+            return cls.VISUAL, round(signature)
+        elif 1e4 <= signature < 1.2e4:
+            return cls.SHADOW, round(signature - 1e4)
         
         num = Decimal(signature)
         exp = num.normalize(Context(2)).adjusted()
         
         coef = float((num / 10**exp))
-        base = round(coef)
-        if exp in [3, 16]:
-            base = round(coef, 1)
+        base = round(coef, 1) if exp in (3, 4, 16) else round(coef)
 
-        lod = cls.INDEX_MAP.get((base, exp), 30)
+        lod = cls.INDEX_MAP.get((base, exp), cls.UNKNOWN)
         pos = cls.RESOLUTION_POS.get(lod, None)
 
-        resolution = 0
-        if pos is not None:
-            resolution = int(round((coef - base) * 10**pos, pos))
+        if lod == cls.UNKNOWN:
+            return lod, round(signature)
+
+        resolution = int(round((coef - base) * 10**pos, pos)) if pos is not None else 0
         
         return lod, resolution
     
@@ -834,3 +835,16 @@ class P3D_MLOD():
                 return lod
         
         return None
+    
+    def get_duplicate_lods(self):
+        signatures = set()
+        duplicates = []
+
+        for i, lod in enumerate(self.lods):
+            sign = float(lod.resolution)
+            if sign in signatures:
+                duplicates.append(i)
+            else:
+                signatures.add(sign)
+
+        return duplicates

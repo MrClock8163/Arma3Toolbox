@@ -321,12 +321,12 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
 
     # Setup LOD properties
     object_props = obj.a3ob_properties_object
-    try:
-        object_props.lod = str(lod_index)
-    except:
-        object_props.lod = "30"
-        
-    object_props.resolution = lod_resolution
+    object_props.lod = str(lod_index)
+    
+    if lod_index != data.lod_unknown:
+        object_props.resolution = lod_resolution
+    else:
+        object_props.resolution_float = lod_resolution
 
     if lod_index not in data.lod_shadows:
         for face in mesh.polygons:
