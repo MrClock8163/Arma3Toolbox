@@ -292,7 +292,8 @@ class P3D_LOD_Resolution():
     WRECKAGE = 29
     UNDERGROUND = 30 # Geometry PhysX Old for Arma 3
     GROUNDLAYER = 31
-    # SHADOWBUFFER = 32
+    NAVIGATION = 32
+    # SHADOWBUFFER = ...
     UNKNOWN = -1
 
     INDEX_MAP = {
@@ -302,12 +303,13 @@ class P3D_LOD_Resolution():
         (1.2, 3): VIEW_CARGO, # View Cargo
         (1.0, 4): SHADOW, # Shadow
         # (1.1, 4): SHADOWBUFFER,
-        (1.3, 4): GROUNDLAYER,
+        (1.3, 4): GROUNDLAYER, # GroundLayer (VBS)
         (2.0, 4): EDIT, # Edit
         (1.0, 13): GEOMETRY, # Geometry
         (2.0, 13): GEOMETRY_BUOY, # Geometry Buoyancy
-        (3.0, 13): UNDERGROUND, # Underground for VBS, Geometry PhysX (old) for Arma 3
+        (3.0, 13): UNDERGROUND, # Underground (VBS), Geometry PhysX (old) for Arma 3
         (4.0, 13): GEOMETRY_PHYSX, # Geometry PhysX
+        (5.0, 13): NAVIGATION, # Navigation (VBS)
         (1.0, 15): MEMORY, # Memory
         (2.0, 15): LANDCONTACT, # Land Contact
         (3.0, 15): ROADWAY, # Roadway

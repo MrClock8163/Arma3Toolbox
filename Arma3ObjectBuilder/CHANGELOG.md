@@ -7,7 +7,10 @@
 - import-export:
   - P3D:
     - support for Underground (VBS) LOD type (including specific validation)
+    - support for Groundlayer (VBS) LOD type
+    - support for Navigation (VBS) LOD type
     - Collisions export option (handling duplicate LOD types)
+    - Generate Components import option
     - LOD copy directives
 
 ### Changed

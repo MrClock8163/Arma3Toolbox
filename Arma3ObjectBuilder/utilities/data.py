@@ -154,7 +154,8 @@ lod_info = {
     LOD.SHADOW_VIEW_GUNNER: ("Shadow Volume - Gunner View", "Gunner view shadow casting geometry"),
     LOD.WRECKAGE: ("Wreckage", "Vehicle wreckage"),
     LOD.UNDERGROUND: ("Underground (VBS)", "Underground volume for VBS (not supported in Arma 3 -> Geometry PhysX Old)"),
-    LOD.GROUNDLAYER: ("Groundlayer (VBS)", "Ground defaormation data for VBS (not supported in Arma 3 -> Shadow Volume 3000)"),
+    LOD.GROUNDLAYER: ("Groundlayer (VBS)", "Ground deformation data for VBS (not supported in Arma 3 -> Shadow Volume 3000)"),
+    LOD.NAVIGATION: ("Navigation (VBS)", "Navigation data for VBS (not supported in Arma 3 -> Geometry / Resolution 5e+013)"),
     LOD.UNKNOWN: ("Unknown", "Unknown model layer")
 }
 
@@ -215,6 +216,7 @@ lod_groups_type = {
             LOD.SUBPARTS,
             LOD.WRECKAGE,
             LOD.GROUNDLAYER,
+            LOD.NAVIGATION,
             LOD.UNKNOWN
         ],
         "Misc"
@@ -273,6 +275,7 @@ lod_groups_context = {
             LOD.WRECKAGE,
             LOD.UNDERGROUND,
             LOD.GROUNDLAYER,
+            LOD.NAVIGATION,
             LOD.UNKNOWN
         ],
         "Misc"
