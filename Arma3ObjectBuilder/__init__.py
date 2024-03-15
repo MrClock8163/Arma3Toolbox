@@ -324,6 +324,7 @@ modules = (
     ui.import_export_asc,
     ui.tool_outliner,
     ui.tool_mass,
+    ui.tool_materials,
     ui.tool_hitpoint,
     ui.tool_paths,
     ui.tool_proxies,

@@ -736,6 +736,20 @@ ofp2_manskeleton = {
 }
 
 
+def get_rvmat_templates():
+    import os
+    from ..utilities.generic import get_addon_directory
+
+    template_dir = os.path.join(get_addon_directory(), "scripts")
+
+    templates = {
+        "Super - Cloth": os.path.join(template_dir, "super_cloth.rvmat"),
+        "Super - Weapon": os.path.join(template_dir, "super_weapon.rvmat")
+    }
+
+    return templates
+
+
 common_data = {
     "proxies": {
         "Weapon: optic": r"P:\a3\data_f\proxies\weapon_slots\top.p3d",
@@ -775,5 +789,6 @@ common_data = {
     },
     "procedurals": {
         "PIP": "#(argb,512,512,1)r2t(rendertarget0,1.0)"
-    }
+    },
+    "rvmat_templates": get_rvmat_templates()
 }
