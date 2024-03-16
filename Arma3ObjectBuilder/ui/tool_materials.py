@@ -41,7 +41,7 @@ class A3OB_OT_materials_templates_reload(bpy.types.Operator):
     """Load/Reload material templates"""
     
     bl_idname = "a3ob.materials_templates_reload"
-    bl_label = "Load/Reload Templates"
+    bl_label = "Refresh Templates"
     bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
@@ -66,11 +66,6 @@ class A3OB_OT_materials_templates_reload(bpy.types.Operator):
 
 
 class A3OB_UL_materials_templates(bpy.types.UIList):
-    use_filter_sort_alpha: bpy.props.BoolProperty(
-        name = "Sort By Name",
-        description = "Sort items by their name",
-        default = True
-    )
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         layout.label(text=item.name, icon='TEXT')
 
@@ -122,6 +117,7 @@ classes = (
     A3OB_PT_materials,
     A3OB_PT_materials_templates
 )
+
 
 def register():
     for cls in classes:
