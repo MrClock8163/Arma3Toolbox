@@ -6,11 +6,11 @@ from ..utilities import generic as utils
 from ..utilities import materials as matutils
 
 
-class A3OB_OT_materials_compose(bpy.types.Operator):
-    """Compose RVMAT from selected template"""
+class A3OB_OT_materials_templates_generate(bpy.types.Operator):
+    """Generate RVMAT from selected template"""
 
-    bl_idname = "a3ob.materials_compose"
-    bl_label = "Compose"
+    bl_idname = "a3ob.materials_templates_generate"
+    bl_label = "Generate"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
@@ -21,17 +21,18 @@ class A3OB_OT_materials_compose(bpy.types.Operator):
     def execute(self, context):
         scene_props = context.scene.a3ob_materials
 
-        if os.path.isfile(os.path.join(scene_props.folder, scene_props.basename + ".rvmat")):
+        if os.path.isfile(os.path.join(scene_props.folder, scene_props.basename + ".rvmat")) and not scene_props.overwrite_existing:
             self.report({'ERROR'}, "RVMAT already exists")
             return {'FINISHED'}
 
-        template = scene_props.templates[scene_props.templates_index]
+        path = scene_props.templates[scene_props.templates_index].path
+        template = matutils.RVMATTemplate(path)
+        success = template.write_output(utils.get_addon_preferences().project_root, scene_props.folder, scene_props.basename, scene_props.check_files_exist)
 
-        try:
-            matutils.process_template(template.path, utils.get_addon_preferences().project_root, scene_props.folder, scene_props.basename, scene_props.check_file_exist)
-        except Exception as ex:
-            print(ex)
-            self.report({'ERROR'}, "Unexpected error, RVMAT could not be properly created")
+        if success:
+            self.report({'INFO'}, "Successfully generated %s.rvmat" % scene_props.basename)
+        else:
+            self.report({'ERROR'}, "RVMAT could not be generated")
 
         return {'FINISHED'}
 
@@ -90,11 +91,11 @@ class A3OB_PT_materials(bpy.types.Panel):
         pass
 
 
-class A3OB_PT_materials_compose(bpy.types.Panel):
+class A3OB_PT_materials_templates(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "Object Builder"
-    bl_label = "Compose"
+    bl_label = "Templates"
     bl_parent_id = "A3OB_PT_materials"
     bl_options = {'DEFAULT_CLOSED'}
 
@@ -108,18 +109,18 @@ class A3OB_PT_materials_compose(bpy.types.Panel):
 
         layout.prop(scene_props, "folder")
         layout.prop(scene_props, "basename")
-        layout.prop(scene_props, "check_file_exist")
+        layout.prop(scene_props, "check_files_exist")
+        layout.prop(scene_props, "overwrite_existing")
 
-
-        layout.operator("a3ob.materials_compose", icon='EXPORT')
+        layout.operator("a3ob.materials_templates_generate", icon='EXPORT')
 
 
 classes = (
-    A3OB_OT_materials_compose,
+    A3OB_OT_materials_templates_generate,
     A3OB_OT_materials_templates_reload,
     A3OB_UL_materials_templates,
     A3OB_PT_materials,
-    A3OB_PT_materials_compose
+    A3OB_PT_materials_templates
 )
 
 def register():

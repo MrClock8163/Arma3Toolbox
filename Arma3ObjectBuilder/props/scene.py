@@ -527,10 +527,14 @@ class A3OB_PG_materials(bpy.types.PropertyGroup):
         name = "Name",
         description = "Name of the texture set to be processed"
     )
-    check_file_exist: bpy.props.BoolProperty(
+    check_files_exist: bpy.props.BoolProperty(
         name = "Ensure Files Exist",
-        description = "If a file does not actually existing on the expected path, use the default value of the template",
+        description = "If the textures files do not actually exist on the expected paths, use the default values of the template",
         default = True
+    )
+    overwrite_existing: bpy.props.BoolProperty(
+        name = "Overwrite",
+        description = "Overwrite the target RVMAT file if it already exists"
     )
 
 

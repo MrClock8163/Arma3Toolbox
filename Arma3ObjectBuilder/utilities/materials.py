@@ -1,32 +1,69 @@
 import os
 import re
 
-def process_template(template, root, folder, basename, check_file_exist):
-    data = ""
 
-    with open(template) as file:
-        data = file.read()
-
-        RE_STAGE = re.compile(r"(?:<)(?P<stage>.*)(?:>)")
+class RVMATTemplateField:
+    def __init__(self, string):
+        if not string.startswith("<") or not string.endswith(">") or string.count("|") != 2:
+            print(string)
+            raise ValueError("Invalid RVMAT template field definition")
         
-        replace = []
-        for match in RE_STAGE.finditer(data):
-            suffix, default = match.group("stage").split('|')
+        string = string[1:-1]
+        suffixes, extensions, default = string.split("|")
 
-            path = os.path.join(folder, "%s%s.paa" % (basename, ("_" + suffix) if suffix else ""))
-            if os.path.isfile(path) or not check_file_exist:
-                if path.lower().startswith(root.lower()):
-                    path = os.path.relpath(path, root)
-            else:
-                path = default
-            
-            replace.append("\"%s\"" % path)
-        
-        replace = iter(replace)
-        def repl(match):
-            return next(replace)
+        self.suffixes = [("_%s" % item.strip().lower()) for item in suffixes.split(",")]
+        self.extensions = [(".%s" % item.strip().lower()) for item in extensions.split(",")]
 
-        data = RE_STAGE.sub(repl, data)
+        self.default = default
     
-    with open(os.path.join(folder, basename + ".rvmat"), "w") as file:
-        file.write(data)
+    def generate_paths(self, folder, basename):
+        return [os.path.join(folder, basename + sfx + ext) for sfx in self.suffixes for ext in self.extensions]
+    
+    def generate_value(self, root, folder, basename, check_files_exist):
+        paths = self.generate_paths(folder, basename)
+        print(paths)
+
+        for item in paths:
+            if os.path.isfile(item):
+                return os.path.relpath(item, root)
+        
+        if not check_files_exist:
+            return os.path.relpath(paths[0], root)
+        
+        return self.default
+
+class RVMATTemplate:
+    RE_STAGE = re.compile(r"<.*>")
+
+    def __init__(self, filepath):
+        self.fields = []
+        with open(filepath) as file:
+            self.template = file.read()
+
+        for match in self.RE_STAGE.finditer(self.template):
+            try:
+                self.fields.append(RVMATTemplateField(match.group(0)))
+            except ValueError as ex:
+                self.fields.append(None)
+    
+    def write_output(self, root, folder, basename, check_files_exist):
+        values = ((field.generate_value(root, folder, basename, check_files_exist) if field else None) for field in self.fields)
+        
+        def repl(match):
+            string = next(values)
+            if string is None:
+                return match.group(0)
+            
+            return "\"%s\"" % string
+        
+        try:
+            if not os.path.isdir(folder):
+                os.makedirs(folder)
+
+            with open(os.path.join(folder, basename + ".rvmat"), "w") as file:
+                file.write(self.RE_STAGE.sub(repl, self.template))
+                return True
+            
+        except Exception as ex:
+            print(ex)
+            return False

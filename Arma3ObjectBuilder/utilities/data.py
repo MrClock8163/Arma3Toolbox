@@ -743,8 +743,9 @@ def get_rvmat_templates():
     template_dir = os.path.join(get_addon_directory(), "scripts")
 
     templates = {
-        "Super - Cloth": os.path.join(template_dir, "super_cloth.rvmat"),
-        "Super - Weapon": os.path.join(template_dir, "super_weapon.rvmat")
+        "Super - Cloth": os.path.join(template_dir, "super_cloth.rvmat_template"),
+        "Super - Weapon": os.path.join(template_dir, "super_weapon.rvmat_template"),
+        "PBR (VBS)": os.path.join(template_dir, "pbr_vbs.rvmat_template")
     }
 
     return templates
