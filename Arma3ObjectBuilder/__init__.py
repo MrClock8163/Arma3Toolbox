@@ -329,7 +329,6 @@ modules = (
     ui.tool_paths,
     ui.tool_proxies,
     ui.tool_validation,
-    ui.tool_color,
     ui.tool_rigging,
     ui.tool_utilities,
     ui.tool_scripts

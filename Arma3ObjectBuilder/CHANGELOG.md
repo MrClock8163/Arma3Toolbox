@@ -1,17 +1,26 @@
 # Changelog
 
-## [v2.3.0 dev](...) (Blender 2.90 -> 4.1)
+## v2.3.0 dev (Blender 2.90 -> 4.1)
 
 ### Added
 
+- Materials tool RVMAT Templates
 - import-export:
   - P3D:
-    - support for Underground (VBS) LOD type (including specific validation)
+    - support for Underground (VBS) LOD type
     - support for Groundlayer (VBS) LOD type
     - support for Navigation (VBS) LOD type
     - Collisions export option (handling duplicate LOD types)
-    - Generate Components import option
+    - Generate Components export option
     - LOD copy directives
+- Validation tool:
+  - LOD - Generic ruleset:
+    - warning for more than 2 UV channels on a LOD object
+  - LOD - Shadow ruleset:
+    - warning for unconventinal LOD indices (not 0, 10, 1000, 1010 or 1020)
+    - warning if LOD has `lodnoshadow = 1` named property
+  - LOD - Underground (VBS) ruleset
+  - LOD - Groundlayer (VBS) ruleset
 
 ### Changed
 
@@ -20,6 +29,11 @@
   - backup and temporary export files are now time stamped in the extension to avoid collisions
   - P3D:
     - handling of unknown LOD types has been improved (the Unknown LOD type can now be used to set any custom LOD signature)
+- utilities:
+  - Find Components now only creates selections for closed components
+- Vertex Mass Editing:
+  - Mass From Density now ignores non-closed components and loose vertices
+- Colors tool was moved under new Materials tool
 
 ### Fixed
 

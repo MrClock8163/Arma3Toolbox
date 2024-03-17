@@ -86,6 +86,55 @@ class A3OB_PT_materials(bpy.types.Panel):
         pass
 
 
+class A3OB_PT_materials_colors(bpy.types.Panel):
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "Object Builder"
+    bl_label = "Colors"
+    bl_parent_id = "A3OB_PT_materials"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        scene_props = context.scene.a3ob_colors
+        
+        layout.label(text="Input:")
+        
+        row_input_type = layout.row(align=True)
+        row_input_type.prop(scene_props, "input_type", expand=True)
+        
+        col_input = layout.column(align=True)
+        if scene_props.input_type == 'S8':
+            col_input.prop(scene_props, "input_red_int")
+            col_input.prop(scene_props, "input_green_int")
+            col_input.prop(scene_props, "input_blue_int")
+        else:
+            col_input.prop(scene_props, "input_red_float")
+            col_input.prop(scene_props, "input_green_float")
+            col_input.prop(scene_props, "input_blue_float")
+            
+        layout.label(text="Output:")
+            
+        row_output_type = layout.row(align=True)
+        row_output_type.prop(scene_props, "output_type", expand=True)
+        
+        col_output = layout.column(align=True)
+        
+        if scene_props.output_type == 'S8':
+            col_output.prop(scene_props, "output_red_int")
+            col_output.prop(scene_props, "output_green_int")
+            col_output.prop(scene_props, "output_blue_int")
+        else:
+            col_output.prop(scene_props, "output_red_float")
+            col_output.prop(scene_props, "output_green_float")
+            col_output.prop(scene_props, "output_blue_float")
+        
+        if scene_props.output_type in {'S8', 'S'}:
+            layout.prop(scene_props, "output_srgb", text="")
+        else:
+            layout.prop(scene_props, "output_linear", text="")
+
+
 class A3OB_PT_materials_templates(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
@@ -115,6 +164,7 @@ classes = (
     A3OB_OT_materials_templates_reload,
     A3OB_UL_materials_templates,
     A3OB_PT_materials,
+    A3OB_PT_materials_colors,
     A3OB_PT_materials_templates
 )
 
