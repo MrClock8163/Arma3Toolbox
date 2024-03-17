@@ -16,7 +16,9 @@ scripts = {
         "OFP2_ManSkeleton": "ofp2_manskeleton.py"
     },
     "rvmat": {
-        "Super Shader": "template_supershader.rvmat"
+        "PBR shader (VBS)": "pbr_vbs.rvmat_template",
+        "Super Shader - Cloth": "super_cloth.rvmat_template",
+        "Super Shader - Weapon": "super_weapon.rvmat_template"
     },
     "misc": {
         "Convert ATBX to A3OB": "convert_atbx_to_a3ob.py",
