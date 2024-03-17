@@ -54,9 +54,9 @@ class A3OB_OT_vertex_mass_set_density(bpy.types.Operator):
     def execute(self, context):
         obj = context.object
         scene = context.scene
-        contiguous = massutils.set_selection_mass_density(obj, scene.a3ob_mass_editor.density)
-        if not contiguous:
-            self.report({'WARNING'}, "Mesh is not contiguous, volume calculation gives unreliable result")
+        no_ignored_verts = massutils.set_selection_mass_density(obj, scene.a3ob_mass_editor.density)
+        if not no_ignored_verts:
+            self.report({'WARNING'}, "Non-closed components and loose vertices were ignored")
         
         return {'FINISHED'}
 

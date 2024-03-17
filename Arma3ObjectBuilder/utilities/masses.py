@@ -8,7 +8,6 @@ import bmesh
 from mathutils import Vector
 
 from . import generic as utils
-from . import lod as lodutils
 
 
 def can_edit_mass(context):
@@ -129,7 +128,7 @@ def set_selection_mass_density(obj, density):
     obj.update_from_editmode()
     mesh = obj.data
     
-    lookup, components = utils.get_components(mesh)
+    lookup, components = utils.get_closed_components(obj)
     data = {i: [0, 0.0, 0.0] for i in range(len(components))} # [vertex count, volume, mass per vertex]
     for i in lookup:
         data[lookup[i]][0] += 1
@@ -150,10 +149,8 @@ def set_selection_mass_density(obj, density):
         
         for index in lookup:
             bm.verts[index][layer] = data[lookup[index]][0]
-        
-        contiguous = lodutils.is_contiguous_mesh(bm)
     
-    return contiguous
+    return len(lookup) == len(bm.verts)
 
 
 # Linear conversion of non-zero factor values to [0.001; 1] range.

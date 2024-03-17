@@ -146,22 +146,60 @@ class OutputManager():
             return False
 
 
-def get_components(mesh):
+def get_loose_components(obj):
+    mesh = obj.data
     mesh.calc_loop_triangles()
     chunks = meshutils.mesh_linked_triangles(mesh)
     components = []
     component_lookup = {}
 
-    for id, chunk in enumerate(chunks):
-        if len(chunk) < 4:
-            continue
-
+    id = 0
+    for chunk in chunks:
         components.append(chunk)
-
         for tri in chunk:
             for vert in tri.vertices:
                 component_lookup[vert] = id
+        
+        id += 1
     
+    return component_lookup, components
+
+
+def get_closed_components(obj):
+    def is_contiguous_chunk(bm, chunk):
+        if len(chunk) < 4:
+            return False
+        
+        face_indices = set([tri.polygon_index for tri in chunk])
+        for idx in face_indices:
+            for edge in bm.faces[idx].edges:
+                if not edge.is_contiguous:
+                    return False
+
+        return True
+    
+    mesh = obj.data
+    mesh.calc_loop_triangles()
+    chunks = meshutils.mesh_linked_triangles(mesh)
+
+    components = []
+    component_lookup = {}
+
+    with query_bmesh(obj) as bm:
+        bm.faces.ensure_lookup_table()
+
+        id = 0
+        for chunk in chunks:
+            if not is_contiguous_chunk(bm, chunk):
+                continue
+
+            components.append(chunk)
+            for tri in chunk:
+                for vert_id in tri.vertices:
+                    component_lookup[vert_id] = id
+            
+            id += 1
+
     return component_lookup, components
 
 

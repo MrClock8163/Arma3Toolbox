@@ -18,7 +18,7 @@ def find_components(obj):
         if re_component.match(group.name):
             obj.vertex_groups.remove(group)
     
-    lookup, components = utils.get_components(mesh)
+    lookup, components = utils.get_closed_components(obj)
     
     verts = {i: [] for i in range(len(components))}
     for id in lookup:
@@ -28,7 +28,7 @@ def find_components(obj):
         group = obj.vertex_groups.new(name="Component%02d" % (component + 1))
         group.add(verts[component], 1, 'REPLACE')
     
-    return component + 1
+    return len(components)
 
 
 def component_convex_hull(obj):
