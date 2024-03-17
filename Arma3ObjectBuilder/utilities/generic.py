@@ -148,18 +148,19 @@ class OutputManager():
 
 def get_components(mesh):
     mesh.calc_loop_triangles()
-    components = meshutils.mesh_linked_triangles(mesh)
+    chunks = meshutils.mesh_linked_triangles(mesh)
+    components = []
     component_lookup = {}
 
-    for id, comp in enumerate(components):
-        for tri in comp:
+    for id, chunk in enumerate(chunks):
+        if len(chunk) < 4:
+            continue
+
+        components.append(chunk)
+
+        for tri in chunk:
             for vert in tri.vertices:
                 component_lookup[vert] = id
-    
-    loose = [vert.index for vert in mesh.vertices if component_lookup.get(vert.index, None) is None]
-    count_components = len(components)
-    component_lookup.update({id: count_components + i for i, id in enumerate(loose)})
-    components.extend([[] for i in range(len(loose))])
     
     return component_lookup, components
 

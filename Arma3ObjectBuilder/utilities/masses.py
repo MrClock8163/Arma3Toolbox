@@ -147,9 +147,9 @@ def set_selection_mass_density(obj, density):
         layer = bm.verts.layers.float.get("a3ob_mass")
         if not layer:
             layer = bm.verts.layers.float.new("a3ob_mass")
-            
-        for vert in bm.verts:
-            vert[layer] = data[lookup[vert.index]][2]
+        
+        for index in lookup:
+            bm.verts[index][layer] = data[lookup[index]][0]
         
         contiguous = lodutils.is_contiguous_mesh(bm)
     

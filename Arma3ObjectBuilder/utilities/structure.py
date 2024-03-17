@@ -13,8 +13,9 @@ def find_components(obj):
     utils.force_mode_object()
     mesh = obj.data
     
+    re_component = re.compile("component\d+", re.IGNORECASE)
     for group in obj.vertex_groups:
-        if re.match("component\d+", group.name, re.IGNORECASE):
+        if re_component.match(group.name):
             obj.vertex_groups.remove(group)
     
     lookup, components = utils.get_components(mesh)
