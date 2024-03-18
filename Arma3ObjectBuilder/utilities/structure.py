@@ -125,9 +125,11 @@ def cleanup_vertex_groups(obj):
         for group in vert.groups:
             group_index = group.group
             used_groups[group_index] = obj.vertex_groups[group_index]
-
-    for group in obj.vertex_groups:
-        if group not in used_groups.values():
+    
+    vgroups = [group for group in obj.vertex_groups]
+    while vgroups:
+        group = vgroups.pop()
+        if group.index not in used_groups:
             obj.vertex_groups.remove(group)
             removed += 1
         

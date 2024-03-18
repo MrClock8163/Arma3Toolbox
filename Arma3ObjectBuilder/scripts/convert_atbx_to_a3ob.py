@@ -137,10 +137,9 @@ def convert_proxy_item(obj, selections, cleanup):
     atbx_props.isArmaObject = False
     atbx_props.namedProps.clear()
     
-    for group in obj.vertex_groups:
-        if not group.name in selections:
-            continue
-        
+    vgroups = [group for group in obj.vertex_groups if group.name in selections]
+    while vgroups:
+        group = vgroups.pop()        
         proxy_data = selections[group.name]
         a3ob_props.proxy_path = proxy_data[0]
         a3ob_props.proxy_index = proxy_data[1]

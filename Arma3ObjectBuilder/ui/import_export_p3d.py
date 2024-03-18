@@ -350,8 +350,9 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                     utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
                     traceback.print_exc()
             
-            for obj in temp_collection.objects:
-                bpy.data.meshes.remove(obj.data)
+            temp_objects = [obj for obj in temp_collection.objects]
+            while temp_objects:
+                bpy.data.meshes.remove(temp_objects.pop().data)
             
             bpy.data.collections.remove(temp_collection)
                 

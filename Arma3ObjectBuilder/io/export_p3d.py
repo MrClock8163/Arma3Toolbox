@@ -57,7 +57,9 @@ def duplicate_object(obj, temp_collection):
 def apply_modifiers(obj):
     ctx = {"object": obj}
     
-    for m in obj.modifiers:
+    modifiers = [m for m in obj.modifiers if m.show_viewport]
+    while modifiers:
+        m = modifiers.pop(0)
         try:
             ctx["modifier"] = m
             computils.call_operator_ctx(bpy.ops.object.modifier_apply, ctx, modifier= m.name)
