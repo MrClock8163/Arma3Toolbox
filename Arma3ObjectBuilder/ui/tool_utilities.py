@@ -19,15 +19,16 @@ class A3OB_OT_check_convexity(bpy.types.Operator):
         return len(context.selected_objects) == 1 and obj and obj.type == 'MESH'
     
     def execute(self, context):
-        name, concaves = structutils.check_convexity()
+        obj = context.active_object
+        concaves = structutils.check_convexity(obj)
         
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_mode(type='EDGE')
         
         if concaves > 0:
-            self.report({'WARNING'}, "%s has %d concave edge(s)" % (name, concaves))
+            self.report({'WARNING'}, "%s has %d concave edge(s)" % (obj.name, concaves))
         else:
-            self.report({'INFO'}, "%s is convex" % name)
+            self.report({'INFO'}, "%s is convex" % obj.name)
         
         return {'FINISHED'}
 
@@ -100,9 +101,14 @@ class A3OB_OT_find_components(bpy.types.Operator):
     def execute(self, context):
         mode = bpy.context.object.mode
         obj = context.active_object
-        count_components = structutils.find_components(obj)
+        count_components, all_closed = structutils.find_components(obj)
         bpy.ops.object.mode_set(mode=mode)
-        self.report({'INFO'}, "Created %d component(s) in %s" % (count_components, obj.name))
+        if count_components > 0 and all_closed:
+            self.report({'INFO'}, "Created %d component(s) in %s" % (count_components, obj.name))
+        elif count_components > 0:
+            self.report({'WARNING'}, "Created %d component(s) in %s, non-closed components were ignored" % (count_components, obj.name))
+        else:
+            self.report({'ERROR'}, "There are no closed components in %s" % obj.name)
         return {'FINISHED'}
 
 
@@ -176,7 +182,10 @@ class A3OB_OT_cleanup_vertex_groups(bpy.types.Operator):
         
         bpy.ops.object.mode_set(mode=mode)
         
-        self.report({'INFO'} ,"Removed %d unused vertex group(s) from %s" % (removed, obj.name))
+        if removed > 0:
+            self.report({'INFO'} ,"Removed %d unused vertex group(s) from %s" % (removed, obj.name))
+        else:
+            self.report({'INFO'}, "There were no unused vertex group(s) found in %s" % obj.name)
         
         return {'FINISHED'}
 

@@ -184,6 +184,7 @@ def get_closed_components(obj):
 
     components = []
     component_lookup = {}
+    all_closed = True
 
     with query_bmesh(obj) as bm:
         bm.faces.ensure_lookup_table()
@@ -191,6 +192,7 @@ def get_closed_components(obj):
         id = 0
         for chunk in chunks:
             if not is_contiguous_chunk(bm, chunk):
+                all_closed = False
                 continue
 
             components.append(chunk)
@@ -200,7 +202,7 @@ def get_closed_components(obj):
             
             id += 1
 
-    return component_lookup, components
+    return component_lookup, components, all_closed
 
 
 def force_mode_object():

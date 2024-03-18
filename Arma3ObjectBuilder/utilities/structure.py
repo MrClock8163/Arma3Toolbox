@@ -9,16 +9,22 @@ from . import generic as utils
 from . import compat as computils
 
 
+def clear_components(obj):
+    re_component = re.compile("component\d+", re.IGNORECASE)
+    vgroups = [group for group in obj.vertex_groups]
+    while vgroups:
+        group = vgroups.pop()
+        if re_component.match(group.name):
+            obj.vertex_groups.remove(group)
+
+
 def find_components(obj):
     utils.force_mode_object()
     mesh = obj.data
     
-    re_component = re.compile("component\d+", re.IGNORECASE)
-    for group in obj.vertex_groups:
-        if re_component.match(group.name):
-            obj.vertex_groups.remove(group)
+    clear_components(obj)
     
-    lookup, components = utils.get_closed_components(obj)
+    lookup, components, all_closed = utils.get_closed_components(obj)
     
     verts = {i: [] for i in range(len(components))}
     for id in lookup:
@@ -28,16 +34,14 @@ def find_components(obj):
         group = obj.vertex_groups.new(name="Component%02d" % (component + 1))
         group.add(verts[component], 1, 'REPLACE')
     
-    return len(components)
+    return len(components), all_closed
 
 
 def component_convex_hull(obj):
     utils.force_mode_object()
     
     # Remove pre-existing component selections
-    for group in obj.vertex_groups:
-        if re.match("component\d+", group.name, re.IGNORECASE):
-            obj.vertex_groups.remove(group)
+    clear_components(obj)
     
     # Split mesh
     bpy.ops.mesh.separate(type='LOOSE')
@@ -90,24 +94,26 @@ def check_closed():
     bpy.ops.mesh.select_non_manifold()
 
 
-def check_convexity():
+def check_convexity(obj):
     utils.force_mode_object()
     
-    obj = bpy.context.selected_objects[0]
     with utils.edit_bmesh(obj) as bm:
-    
         count_concave = 0
         for edge in bm.edges:
-            if not edge.is_convex:
-                face1 = edge.link_faces[0]
-                face2 = edge.link_faces[1]
-                dot = face1.normal.dot(face2.normal)
-                
-                if not (0.9999 <= dot and dot <=1.0001):
-                    edge.select_set(True)
-                    count_concave += 1
+            if edge.is_convex:
+                continue
+
+            face1 = edge.link_faces[0]
+            face2 = edge.link_faces[1]
+            dot = face1.normal.dot(face2.normal)
+            
+            if 0.9999 <= dot <=1.0001:
+                continue
+            
+            edge.select_set(True)
+            count_concave += 1
     
-    return obj.name, count_concave
+    return count_concave
 
 
 def cleanup_vertex_groups(obj):
