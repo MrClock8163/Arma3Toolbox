@@ -101,9 +101,9 @@ class A3OB_OT_find_components(bpy.types.Operator):
     def execute(self, context):
         mode = bpy.context.object.mode
         obj = context.active_object
-        count_components, all_closed = structutils.find_components(obj)
+        count_components, no_ignored = structutils.find_components(obj)
         bpy.ops.object.mode_set(mode=mode)
-        if count_components > 0 and all_closed:
+        if count_components > 0 and no_ignored:
             self.report({'INFO'}, "Created %d component(s) in %s" % (count_components, obj.name))
         elif count_components > 0:
             self.report({'WARNING'}, "Created %d component(s) in %s, non-closed components were ignored" % (count_components, obj.name))

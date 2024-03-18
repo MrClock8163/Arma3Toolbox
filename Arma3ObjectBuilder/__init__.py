@@ -196,7 +196,8 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         items = (
             ('GENERAL', "General", "General and misc settings", 'PREFERENCES', 0),
             ('PATHS', "Paths", "File path related settings", 'FILE_TICK', 1),
-            ('DEFAULTS', "Defaults", "Default fallback values", 'RECOVER_LAST', 2)
+            ('DEFAULTS', "Defaults", "Default fallback values", 'RECOVER_LAST', 2),
+            ('DEBUG', "Debug", "Debug options", 'ERROR', 4)
         )
     )
     # General
@@ -204,10 +205,6 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         name = "Show Help Links",
         description = "Display links to the addon documentation in the headers of panels",
         default = True
-    )
-    preserve_faulty_output: bpy.props.BoolProperty(
-        name = "Preserve Faulty Output",
-        description = "Preserve the .temp files if an export failed (could be useful to attach to a bug report)"
     )
     create_backups: bpy.props.BoolProperty(
         name = "Create Backups",
@@ -264,6 +261,16 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         default = "00000000",
         get = lambda self: "%08x" % self.flag_face
     )
+    # Debug
+    preserve_faulty_output: bpy.props.BoolProperty(
+        name = "Preserve Faulty Output",
+        description = "Preserve the .temp files if an export failed (could be useful to attach to a bug report)"
+    )
+    preserve_preprocessed_lods: bpy.props.BoolProperty(
+        name = "Preserve Preprocessed LOD Objects",
+        description = "Preserve the preprocessed LOD meshes that were generated during P3D export"
+    )
+
     
     def draw(self, context):
         layout = self.layout
@@ -277,7 +284,6 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         
         if self.tabs == 'GENERAL':
             box.prop(self, "show_info_links")
-            box.prop(self, "preserve_faulty_output")
             box.prop(self, "create_backups")
             row_theme = box.row(align=True)
             row_theme.prop(self, "icon_theme", expand=True)
@@ -299,6 +305,10 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
             row_face = box.row(align=True)
             row_face.prop(self, "flag_face_display")
             row_face.operator("a3ob.prefs_edit_flag_face", text="", icon='GREASEPENCIL')
+        
+        elif self.tabs == 'DEBUG':
+            box.prop(self, "preserve_faulty_output")
+            box.prop(self, "preserve_preprocessed_lods")
 
 
 classes = (

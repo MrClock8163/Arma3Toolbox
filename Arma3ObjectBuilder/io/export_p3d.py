@@ -36,6 +36,27 @@ def can_export(operator, context):
     return False
 
 
+def create_temp_collection(context):
+    temp = bpy.data.collections.get("A3OB_temp")
+    if temp is None:
+        temp = bpy.data.collections.new("A3OB_temp")
+        context.scene.collection.children.link(temp)
+    
+    objects = [obj for obj in temp.objects]
+    while objects:
+        bpy.data.objects.remove(objects.pop())
+    
+    return temp
+
+
+def cleanup_temp_collection(temp):    
+    temp_objects = [obj for obj in temp.objects]
+    while temp_objects:
+        bpy.data.meshes.remove(temp_objects.pop().data)
+
+    bpy.data.collections.remove(temp)
+
+
 def is_ascii(value):
     try:
         value.encode('ascii')

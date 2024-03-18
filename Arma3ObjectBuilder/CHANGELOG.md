@@ -21,6 +21,8 @@
     - warning if LOD has `lodnoshadow = 1` named property
   - LOD - Underground (VBS) ruleset
   - LOD - Groundlayer (VBS) ruleset
+- Debug add-on options tab:
+  - Preserve Preprocessed LOD Objects
 
 ### Changed
 
@@ -34,11 +36,13 @@
 - Vertex Mass Editing:
   - Mass From Density now ignores non-closed components and loose vertices
 - Colors tool was moved under new Materials tool
+- Preserve Faulty Output add-on option was moved to the newly introduced Debug options tab
 
 ### Fixed
 
 - Geometry LOD validation would falsely report not triangulated meshes
 - P3D import would crash Blender if Proxy Action was set to Purge
+- Find Components would purge all vertex groups under certain circumstances
 
 ## [v2.2.1](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.2.1) (Blender 2.90 -> 4.1)
 

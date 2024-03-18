@@ -321,7 +321,8 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     )
     generate_components: bpy.props.BoolProperty(
         name = "Generate Components",
-        description = "Generate Component## selections if none are already defined"
+        description = "Generate Component## selections if none are already defined",
+        default = True
     )
 
     def draw(self, context):
@@ -334,8 +335,7 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         
         if export_p3d.can_export(self, context):
             output = utils.OutputManager(self.filepath, "wb")
-            temp_collection = bpy.data.collections.new("A3OB_temp")
-            context.scene.collection.children.link(temp_collection)
+            temp_collection = export_p3d.create_temp_collection(context)
             with output as file:
                 try:
                     lod_count, exported_count = export_p3d.write_file(self, context, file, temp_collection)
@@ -350,11 +350,8 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                     utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
                     traceback.print_exc()
             
-            temp_objects = [obj for obj in temp_collection.objects]
-            while temp_objects:
-                bpy.data.meshes.remove(temp_objects.pop().data)
-            
-            bpy.data.collections.remove(temp_collection)
+            if not utils.get_addon_preferences().preserve_preprocessed_lods:
+                export_p3d.cleanup_temp_collection(temp_collection)
                 
         else:
             utils.op_report(self, {'ERROR'}, "There are no LODs to export")

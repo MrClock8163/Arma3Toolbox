@@ -11,20 +11,17 @@ from . import compat as computils
 
 def clear_components(obj):
     re_component = re.compile("component\d+", re.IGNORECASE)
-    vgroups = [group for group in obj.vertex_groups]
+    vgroups = [group for group in obj.vertex_groups if re_component.match(group.name)]
     while vgroups:
-        group = vgroups.pop()
-        if re_component.match(group.name):
-            obj.vertex_groups.remove(group)
+        obj.vertex_groups.remove(vgroups.pop())
 
 
 def find_components(obj):
     utils.force_mode_object()
-    mesh = obj.data
     
     clear_components(obj)
     
-    lookup, components, all_closed = utils.get_closed_components(obj)
+    lookup, components, no_ignored = utils.get_closed_components(obj)
     
     verts = {i: [] for i in range(len(components))}
     for id in lookup:
@@ -34,7 +31,7 @@ def find_components(obj):
         group = obj.vertex_groups.new(name="Component%02d" % (component + 1))
         group.add(verts[component], 1, 'REPLACE')
     
-    return len(components), all_closed
+    return len(components), no_ignored
 
 
 def component_convex_hull(obj):
@@ -54,16 +51,16 @@ def component_convex_hull(obj):
         component_id += 1
         
         bpy.context.view_layer.objects.active = component_object
-            
+        
         if len(component_object.data.vertices) < 4: # Ignore proxies
             continue
         
         convex_hull()
-            
+        
         group = component_object.vertex_groups.new(name=("Component%02d" % component_id))
         group.add([vert.index for vert in component_object.data.vertices], 1, 'REPLACE')
-        
-    if len(components) > 0:        
+    
+    if len(components) > 0:
         ctx = {
             "selected_objects": components,
             "selected_editable_objects": components,
