@@ -128,17 +128,9 @@ def set_selection_mass_density(obj, density):
     obj.update_from_editmode()
     mesh = obj.data
     
-    lookup, components, all_closed = utils.get_closed_components(obj)
-    data = {i: [0, 0.0, 0.0] for i in range(len(components))} # [vertex count, volume, mass per vertex]
-    for i in lookup:
-        data[lookup[i]][0] += 1
-    
-    for id, item in enumerate(components):
-        data[id][1] = calculate_volume(mesh, item)
-    
-    for id in data:
-        item = data[id]
-        item[2] = item[1] * density / item[0]
+    component_verts, component_tris, all_closed = utils.get_closed_components(obj)
+    stats = [[len(verts), calculate_volume(mesh, tris)] for verts, tris in zip(component_verts, component_tris)] # [vertex count, volume, mass per vertex]
+    component_mass = [(volume * density / count_verts) for count_verts, volume in stats]
     
     with utils.edit_bmesh(obj) as bm:
         bm.verts.ensure_lookup_table()
@@ -147,8 +139,9 @@ def set_selection_mass_density(obj, density):
         if not layer:
             layer = bm.verts.layers.float.new("a3ob_mass")
         
-        for index in lookup:
-            bm.verts[index][layer] = data[lookup[index]][0]
+        for verts, mass in zip(component_verts, component_mass):
+            for idx in verts:
+                bm.verts[idx][layer] = mass
     
     return all_closed
 

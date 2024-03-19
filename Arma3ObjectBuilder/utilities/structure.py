@@ -21,17 +21,13 @@ def find_components(obj):
     
     clear_components(obj)
     
-    lookup, components, no_ignored = utils.get_closed_components(obj)
+    component_verts, _, no_ignored = utils.get_closed_components(obj)
     
-    verts = {i: [] for i in range(len(components))}
-    for id in lookup:
-        verts[lookup[id]].append(id)
+    for i, component in enumerate(component_verts):
+        group = obj.vertex_groups.new(name="Component%02d" % (i + 1))
+        group.add(component, 1, 'REPLACE')
     
-    for component in verts:
-        group = obj.vertex_groups.new(name="Component%02d" % (component + 1))
-        group.add(verts[component], 1, 'REPLACE')
-    
-    return len(components), no_ignored
+    return len(component_verts), no_ignored
 
 
 def component_convex_hull(obj):

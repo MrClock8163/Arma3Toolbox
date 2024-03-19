@@ -271,7 +271,6 @@ class A3OB_AT_preferences(bpy.types.AddonPreferences):
         description = "Preserve the preprocessed LOD meshes that were generated during P3D export"
     )
 
-    
     def draw(self, context):
         layout = self.layout
         

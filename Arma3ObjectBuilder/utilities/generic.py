@@ -182,27 +182,23 @@ def get_closed_components(obj):
     mesh.calc_loop_triangles()
     chunks = meshutils.mesh_linked_triangles(mesh)
 
-    components = []
-    component_lookup = {}
+    component_tris = []
+    component_verts = []
     no_ignored = True
 
     with query_bmesh(obj) as bm:
         bm.faces.ensure_lookup_table()
 
-        id = 0
+        chunk: list[bpy.types.MeshLoopTriangle]
         for chunk in chunks:
             if not is_contiguous_chunk(bm, chunk):
                 no_ignored = False
                 continue
 
-            components.append(chunk)
-            for tri in chunk:
-                for vert_id in tri.vertices:
-                    component_lookup[vert_id] = id
-            
-            id += 1
+            component_tris.append(chunk)
+            component_verts.append(list({vert_id for tri in chunk for vert_id in tri.vertices}))
 
-    return component_lookup, components, no_ignored
+    return component_verts, component_tris, no_ignored
 
 
 def force_mode_object():
