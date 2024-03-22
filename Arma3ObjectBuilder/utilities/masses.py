@@ -183,19 +183,11 @@ def generate_factors_vertex(bm, layer):
     return scale_factors(values), stats
 
 
-def generate_factors_component(mesh, bm, layer):
-    lookup, components = utils.get_components(mesh)
-    
-    masses = {i: [] for i in range(len(components))}
-    
-    for vert in bm.verts:
-        comp_id = lookup[vert.index]
-        
-        masses[comp_id].append(vert[layer])
-
-    masses.update({id: math.fsum(masses[id]) for id in masses})
-
-    values = [masses.get(lookup.get(vert.index, None), 0) for vert in bm.verts]
+def generate_factors_component(obj, bm, layer):
+    component_verts, _ = utils.get_loose_components(obj)
+    vertex_lookup = {vert: i for i, comp in enumerate(component_verts) for vert in comp}
+    masses = {i: math.fsum([bm.verts[idx][layer] for idx in component]) for i, component in enumerate(component_verts)}
+    values = [masses.get(vertex_lookup.get(vert.index), 0) for vert in bm.verts]
     stats = (0, 0, 0, 0, len(masses))
     
     values_array = np.array([masses[id] for id in masses])
@@ -226,7 +218,6 @@ def interpolate_colors(factors, stops, colorramp):
 
 def visualize_mass(obj, scene_props):
     obj.update_from_editmode()
-    mesh = obj.data
     with utils.edit_bmesh(obj) as bm:
         bm.verts.ensure_lookup_table()
         
@@ -257,7 +248,7 @@ def visualize_mass(obj, scene_props):
         if scene_props.method == 'VERT':
             factors, stats = generate_factors_vertex(bm, layer)
         elif scene_props.method == 'COMP':
-            factors, stats = generate_factors_component(mesh, bm, layer)
+            factors, stats = generate_factors_component(obj, bm, layer)
         
         vcolors = interpolate_colors(factors, stops, colorramp)
         

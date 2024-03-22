@@ -150,19 +150,15 @@ def get_loose_components(obj):
     mesh = obj.data
     mesh.calc_loop_triangles()
     chunks = meshutils.mesh_linked_triangles(mesh)
-    components = []
-    component_lookup = {}
 
-    id = 0
+    component_verts = []
+    component_tris = []
+
     for chunk in chunks:
-        components.append(chunk)
-        for tri in chunk:
-            for vert in tri.vertices:
-                component_lookup[vert] = id
-        
-        id += 1
+        component_tris.append(chunk)
+        component_verts.append(list({vert for tri in chunk for vert in tri.vertices}))
     
-    return component_lookup, components
+    return component_verts, component_tris
 
 
 def get_closed_components(obj):
@@ -182,8 +178,8 @@ def get_closed_components(obj):
     mesh.calc_loop_triangles()
     chunks = meshutils.mesh_linked_triangles(mesh)
 
-    component_tris = []
     component_verts = []
+    component_tris = []
     no_ignored = True
 
     with query_bmesh(obj) as bm:
