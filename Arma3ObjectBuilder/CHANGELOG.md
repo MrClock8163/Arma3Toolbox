@@ -21,6 +21,8 @@
     - warning if LOD has `lodnoshadow = 1` named property
   - LOD - Underground (VBS) ruleset
   - LOD - Groundlayer (VBS) ruleset
+- Rigging tool:
+  - Add OFP2_ManSkeleton operator
 - Debug add-on options tab:
   - Preserve Preprocessed LOD Objects
 

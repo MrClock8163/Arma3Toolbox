@@ -2,6 +2,7 @@ import bpy
 
 from ..utilities import generic as utils
 from ..utilities import rigging as riggingutils
+from ..utilities import data
 from ..utilities.validator import Validator
 from ..utilities.logger import ProcessLogger
 
@@ -278,6 +279,31 @@ class A3OB_OT_rigging_skeletons_bones_lowercase(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class A3OB_OT_rigging_skeletons_ofp2manskeleton(bpy.types.Operator):
+    """Add OFP2_ManSkeleton definition"""
+    
+    bl_idname = "a3ob.rigging_skeletons_ofp2manskeleton"
+    bl_label = "Add OFP2_ManSkeleton"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    def execute(self, context):
+        scene_props = context.scene.a3ob_rigging
+        skeleton = scene_props.skeletons.add()
+        skeleton.name = "OFP2_ManSkeleton"
+        skeleton.protected = True
+
+        for bone, parent in data.ofp2_manskeleton.items():
+            item = skeleton.bones.add()
+            item.name = bone
+            item.parent = parent
+        
+        return {'FINISHED'}
+
+
 class A3OB_OT_rigging_pivots_from_armature(bpy.types.Operator):
     """Generate pivot points memory LOD from armature and skeleton definition"""
 
@@ -464,6 +490,8 @@ class A3OB_MT_rigging_skeletons(bpy.types.Menu):
 
         layout.operator("a3ob.rigging_skeletons_from_armature", icon='OUTLINER_OB_ARMATURE')
         layout.separator()
+        layout.operator("a3ob.rigging_skeletons_ofp2manskeleton", icon='ARMATURE_DATA')
+        layout.separator()
         layout.operator("a3ob.rigging_skeletons_validate", text="Validate", icon='VIEWZOOM')
         op = layout.operator("a3ob.rigging_skeletons_validate", text="Validate For RTM")
         op.for_rtm = True
@@ -573,6 +601,7 @@ classes = (
     A3OB_OT_rigging_skeletons_bones_remove,
     A3OB_OT_rigging_skeletons_bones_clear,
     A3OB_OT_rigging_skeletons_bones_lowercase,
+    A3OB_OT_rigging_skeletons_ofp2manskeleton,
     A3OB_OT_rigging_pivots_from_armature,
     A3OB_OT_rigging_weights_select_unnormalized,
     A3OB_OT_rigging_weights_select_overdetermined,
