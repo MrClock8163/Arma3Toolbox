@@ -2,19 +2,17 @@
 
 ## About the project
 
-**Arma 3 Object Builder** borrows it's name from the infamous **Object Builder** application that's used for importing models to the P3D model format of **Arma 3**.
+**Arma 3 Object Builder** borrows its name from the infamous **Object Builder** application that's used for importing models to the P3D model format of **Arma 3**.
 While **Object Builder** bares some modelling functionality, it's by no means adequate by today's standards.
-Because of this, the need arose to create an alternative, and so Alwarren developed the [**ArmAToolbox**](https://github.com/AlwarrenSidh/ArmAToolbox),
-which makes it possible to import and export animation and model files for **Arma 3**.
+Because of this, the need arose for an alternative, that resulted in the creation of the [**ArmAToolbox**](https://github.com/AlwarrenSidh/ArmAToolbox) add-on for **Blender** by Alwarren,
+which makes it possible to import and export animations and models to the **Arma 3** file formats directly.
 
-This project's goal is to build a new, more modern add-on based on the ideas of the original **ArmAToolbox**, which has been in use by modders for many years.
-Since it's release, the code base of the **ArmAToolbox** became quite cluttered with unused code and broken features (eg.: due to **Blender** API changes).
-This project aims to correct this, and bring elements of the workflow more in-line with the design of **Blender**, while also creating new tools to further aid mod development.
+The **ArmaToolbox** has been in use by modders for many years, but since its release the code base of the add-on became cluttered with unused or broken parts (usually due to changes in the **Blender** API). This project aims to provide a new add-on, implementing a workflow that is similar to that of the **ArmaToolbox**, with improved and extended features and an interface that's more in-line with the design of **Blender**.
 
 ## Origins
 
 The project is originally a fork of Alwarren's repository, but in reality, instead of consisting of smaller changes to be merged into the main repository,
-it turned into a full rewrite of the add-on.
+it turned into a completely different add-on that reimplements a similar workflow with improved functionality and extended features.
 
 Excerpt from the ArmAToolbox readme:
 
