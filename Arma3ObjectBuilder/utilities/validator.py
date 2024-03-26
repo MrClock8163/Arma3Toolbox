@@ -614,23 +614,30 @@ class ValidatorComponentSkeleton(ValidatorComponent):
 
         return result
     
+    def only_unique_bones(self):
+        result = ValidatorResult()
+
+        names = set()
+        for bone in self.skeleton.bones:
+            if bone.name.lower() in names:
+                result.set(False, "skeleton has duplicate bones (first encountered: %s)" % bone.name)
+                break
+
+            names.add(bone.name.lower())
+
+        return result
+    
     def has_valid_hierarchy(self):
         result = ValidatorResult()
 
         bones = self.skeleton.bones
         bone_order = {}
-        for i in range(len(bones)):
-            for item in bones:
-                if item.name in bone_order or item.parent != "" and item.parent not in bone_order:
-                    continue
-                
-                bone_order[item.name] = item.parent
-
-            if len(bone_order) == len(bones):
+        for bone in bones:
+            if bone.parent != "" and bone.parent not in bone_order:
+                result.set(False, "skeleton has invalid bone hierarchy (first invalid bone encountered: %s)" % bone.name)
                 break
         
-        else:
-            result.set(False, "skeleton has invalid bone hierarchy")
+            bone_order[bone.name] = bone.parent
 
         return result
 
@@ -639,7 +646,7 @@ class ValidatorComponentSkeleton(ValidatorComponent):
 
         for bone in self.skeleton.bones:
             if not self.is_ascii_internal(bone.name) or not self.is_ascii_internal(bone.parent):
-                result.set(False, "skeleton has bones with non-ASCII characters")
+                result.set(False, "skeleton has bones with non-ASCII characters (first encountered: %s)" % bone.name)
                 break
 
         return result
@@ -651,6 +658,7 @@ class ValidatorSkeletonGeneric(ValidatorComponentSkeleton):
     def conditions(self):
         strict = (
             self.has_valid_name,
+            self.only_unique_bones,
             self.has_valid_hierarchy,
             self.only_ascii_bones
         )

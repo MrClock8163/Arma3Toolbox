@@ -50,7 +50,7 @@ def get_addon_preferences():
 
 
 def is_valid_idx(index, subscriptable):
-    return 0 <= index < len(subscriptable)
+    return len(subscriptable) > 0 and 0 <= index < len(subscriptable)
 
 
 def draw_panel_header(panel):

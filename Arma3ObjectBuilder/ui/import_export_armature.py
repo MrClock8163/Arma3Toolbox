@@ -46,7 +46,7 @@ class A3OB_OP_import_armature(bpy.types.Operator, bpy_extras.io_utils.ImportHelp
         
         skeleton = scene_props.skeletons[self.skeleton_index]
         if riggingutils.bone_order_from_skeleton(skeleton) is None:
-            utils.op_report(self, {'ERROR'}, "Skeleton contains circular references or undefined bone parents, cannot reconstruct armature")
+            utils.op_report(self, {'ERROR'}, "Invalid skeleton definiton, run skeleton validation for RTM for more info")
             return {'FINISHED'}
 
         try:

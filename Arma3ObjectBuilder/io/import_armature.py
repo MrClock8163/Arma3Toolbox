@@ -65,16 +65,6 @@ def read_pivots(pivots_path):
     return pivots
 
 
-def read_bones(mcfg_path, skeleton_name):
-    mcfg_data = mcfg.read_mcfg(mcfg_path)
-    if not mcfg_data:
-        return []
-    
-    bones_compiled = mcfg.get_bones_compiled(mcfg_data, skeleton_name)
-    
-    return bones_compiled
-
-
 def filter_bones(bones, pivots):
     known = []
     unknown = []
