@@ -35,8 +35,11 @@
     - handling of unknown LOD types has been improved (the Unknown LOD type can now be used to set any custom LOD signature)
 - utilities:
   - Find Components now only creates selections for closed components
-- Vertex Mass Editing:
+- Vertex Mass Editing tool:
   - Mass From Density now ignores non-closed components and loose vertices
+- Rigging tool:
+  - skeletons and bones are no longer forcibly alphabetically sorted
+  - hierarchic bone order now has to be maintained manually, depending processed will not try to detect the hierarchy in a mixed order
 - Colors tool was moved under new Materials tool
 - Preserve Faulty Output add-on option was moved to the newly introduced Debug options tab
 
