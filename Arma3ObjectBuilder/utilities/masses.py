@@ -8,7 +8,6 @@ import bmesh
 from mathutils import Vector
 
 from . import generic as utils
-from . import lod as lodutils
 
 
 def can_edit_mass(context):
@@ -129,17 +128,9 @@ def set_selection_mass_density(obj, density):
     obj.update_from_editmode()
     mesh = obj.data
     
-    lookup, components = utils.get_components(mesh)
-    data = {i: [0, 0.0, 0.0] for i in range(len(components))} # [vertex count, volume, mass per vertex]
-    for i in lookup:
-        data[lookup[i]][0] += 1
-    
-    for id, item in enumerate(components):
-        data[id][1] = calculate_volume(mesh, item)
-    
-    for id in data:
-        item = data[id]
-        item[2] = item[1] * density / item[0]
+    component_verts, component_tris, all_closed = utils.get_closed_components(obj)
+    stats = [[len(verts), calculate_volume(mesh, tris)] for verts, tris in zip(component_verts, component_tris)] # [vertex count, volume, mass per vertex]
+    component_mass = [(volume * density / count_verts) for count_verts, volume in stats]
     
     with utils.edit_bmesh(obj) as bm:
         bm.verts.ensure_lookup_table()
@@ -147,13 +138,12 @@ def set_selection_mass_density(obj, density):
         layer = bm.verts.layers.float.get("a3ob_mass")
         if not layer:
             layer = bm.verts.layers.float.new("a3ob_mass")
-            
-        for vert in bm.verts:
-            vert[layer] = data[lookup[vert.index]][2]
         
-        contiguous = lodutils.is_contiguous_mesh(bm)
+        for verts, mass in zip(component_verts, component_mass):
+            for idx in verts:
+                bm.verts[idx][layer] = mass
     
-    return contiguous
+    return all_closed
 
 
 # Linear conversion of non-zero factor values to [0.001; 1] range.
@@ -193,19 +183,11 @@ def generate_factors_vertex(bm, layer):
     return scale_factors(values), stats
 
 
-def generate_factors_component(mesh, bm, layer):
-    lookup, components = utils.get_components(mesh)
-    
-    masses = {i: [] for i in range(len(components))}
-    
-    for vert in bm.verts:
-        comp_id = lookup[vert.index]
-        
-        masses[comp_id].append(vert[layer])
-
-    masses.update({id: math.fsum(masses[id]) for id in masses})
-
-    values = [masses.get(lookup.get(vert.index, None), 0) for vert in bm.verts]
+def generate_factors_component(obj, bm, layer):
+    component_verts, _ = utils.get_loose_components(obj)
+    vertex_lookup = {vert: i for i, comp in enumerate(component_verts) for vert in comp}
+    masses = {i: math.fsum([bm.verts[idx][layer] for idx in component]) for i, component in enumerate(component_verts)}
+    values = [masses.get(vertex_lookup.get(vert.index), 0) for vert in bm.verts]
     stats = (0, 0, 0, 0, len(masses))
     
     values_array = np.array([masses[id] for id in masses])
@@ -236,7 +218,6 @@ def interpolate_colors(factors, stops, colorramp):
 
 def visualize_mass(obj, scene_props):
     obj.update_from_editmode()
-    mesh = obj.data
     with utils.edit_bmesh(obj) as bm:
         bm.verts.ensure_lookup_table()
         
@@ -267,7 +248,7 @@ def visualize_mass(obj, scene_props):
         if scene_props.method == 'VERT':
             factors, stats = generate_factors_vertex(bm, layer)
         elif scene_props.method == 'COMP':
-            factors, stats = generate_factors_component(mesh, bm, layer)
+            factors, stats = generate_factors_component(obj, bm, layer)
         
         vcolors = interpolate_colors(factors, stops, colorramp)
         

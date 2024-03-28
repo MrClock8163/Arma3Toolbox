@@ -8,7 +8,8 @@ from . import binary_handler as binary
 
 
 class RAP_Error(Exception):
-    pass
+    def __str__(self):
+        return "RAP - %s" % super().__str__()
 
 
 class CFG_Formatter():

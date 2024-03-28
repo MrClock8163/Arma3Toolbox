@@ -1,5 +1,54 @@
 # Changelog
 
+## [v2.3.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.3.0) (Blender 2.90 -> 4.1)
+
+### Added
+
+- Materials tool RVMAT Templates
+- import-export:
+  - P3D:
+    - support for Underground (VBS) LOD type
+    - support for Groundlayer (VBS) LOD type
+    - support for Navigation (VBS) LOD type
+    - Collisions export option (handling duplicate LOD types)
+    - Generate Components export option
+    - LOD copy directives
+- Validation tool:
+  - LOD - Generic ruleset:
+    - warning for more than 2 UV channels on a LOD object
+  - LOD - Shadow ruleset:
+    - warning for unconventinal LOD indices (not 0, 10, 1000, 1010 or 1020)
+    - warning if LOD has `lodnoshadow = 1` named property
+  - LOD - Underground (VBS) ruleset
+  - LOD - Groundlayer (VBS) ruleset
+- Rigging tool:
+  - Add OFP2_ManSkeleton operator
+- Debug add-on options tab:
+  - Preserve Preprocessed LOD Objects
+
+### Changed
+
+- import-export:
+  - export processes will no longer start if the target file is in use by another application
+  - backup and temporary export files are now time stamped in the extension to avoid collisions
+  - P3D:
+    - handling of unknown LOD types has been improved (the Unknown LOD type can now be used to set any custom LOD signature)
+- utilities:
+  - Find Components now only creates selections for closed components
+- Vertex Mass Editing tool:
+  - Mass From Density now ignores non-closed components and loose vertices
+- Rigging tool:
+  - skeletons and bones are no longer forcibly alphabetically sorted
+  - hierarchic bone order now has to be maintained manually, depending processed will not try to detect the hierarchy in a mixed order
+- Colors tool was moved under new Materials tool
+- Preserve Faulty Output add-on option was moved to the newly introduced Debug options tab
+
+### Fixed
+
+- Geometry LOD validation would falsely report not triangulated meshes
+- P3D import would crash Blender if Proxy Action was set to Purge
+- Find Components would purge all vertex groups under certain circumstances
+
 ## [v2.2.1](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.2.1) (Blender 2.90 -> 4.1)
 
 ### Added

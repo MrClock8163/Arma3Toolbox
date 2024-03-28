@@ -21,11 +21,11 @@ def is_contiguous_mesh(bm):
 
 
 def get_lod_name(index):
-    return data.lod_type_names.get(index, data.lod_type_names[30])
+    return data.lod_info.get(index, data.lod_info[data.lod_unknown])[0]
 
 
 def format_lod_name(index, resolution):
-    if index in data.lod_resolution_position:
+    if index in data.lod_has_resolution:
         return "%s %d" % (get_lod_name(index), resolution)
         
     return get_lod_name(index)

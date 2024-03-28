@@ -1,6 +1,9 @@
 # Various hard coded data used in I/O and throughout the UI.
 
 
+from ..io.data_p3d import P3D_LOD_Resolution as LOD
+
+
 flags_vertex_surface = {
     'NORMAL': 0x00000000,
     'SURFACE_ON': 0x00000001,
@@ -64,72 +67,219 @@ flag_face_merging = 0x01000000
 flag_face_user_mask = 0xfe000000
 
 
-lod_resolution_position = { # decimal places in normalized format
-    0: -1,
-    3: 3,
-    4: 4,
-    5: 4,
-    16: 2,
-    26: 2,
-    30: -1
+lod_has_resolution = {
+    LOD.VISUAL,
+    LOD.VIEW_CARGO,
+    LOD.SHADOW,
+    # LOD.SHADOWBUFFER,
+    LOD.EDIT,
+    LOD.VIEW_CARGO_GEOMERTRY,
+    LOD.SHADOW_VIEW_CARGO
 }
 
 
-lod_visuals = {0, 1, 2, 3, 18, 30}
+lod_visuals = {
+    LOD.VISUAL,
+    LOD.VIEW_GUNNER,
+    LOD.VIEW_PILOT,
+    LOD.VIEW_CARGO,
+    LOD.VIEW_COMMANDER,
+    LOD.UNKNOWN
+}
 
 
-lod_shadows = {4, 26, 27, 28}
+lod_shadows = {
+    LOD.SHADOW,
+    # LOD.SHADOWBUFFER,
+    LOD.SHADOW_VIEW_CARGO,
+    LOD.SHADOW_VIEW_PILOT,
+    LOD.SHADOW_VIEW_GUNNER
+}
 
 
-lod_type_names = {
-    0: "Resolution",
-    1: "View - Gunner",
-    2: "View - Pilot",
-    3: "View - Cargo",
-    4: "Shadow Volume",
-    5: "Edit",
-    6: "Geometry",
-    7: "Geometry Buoyancy",
-    8: "Geometry PhysX",
-    9: "Memory",
-    10: "Land Contact",
-    11: "Roadway",
-    12: "Paths",
-    13: "Hit-points",
-    14: "View Geometry",
-    15: "Fire Geometry",
-    16: "View - Cargo Geometry",
-    17: "View - Cargo Fire Geometry",
-    18: "View - Commander",
-    19: "View - Commander Geometry",
-    20: "View - Commander Fire Geometry",
-    21: "View - Pilot Geometry",
-    22: "View - Pilot Fire Geometry",
-    23: "View - Gunner Geometry",
-    24: "View - Gunner Fire Geometry",
-    25: "Sub Parts",
-    26: "Shadow Volume - Cargo View",
-    27: "Shadow Volume - Pilot View",
-    28: "Shadow Volume - Gunner View",
-    29: "Wreckage",
-    30: "Unknown"
+lod_geometries = {
+    LOD.GEOMETRY,
+    LOD.GEOMETRY_BUOY,
+    LOD.GEOMETRY_PHYSX,
+    LOD.VIEW_GEOMETRY,
+    LOD.FIRE_GEOMETRY,
+    LOD.VIEW_CARGO_GEOMERTRY,
+    LOD.VIEW_CARGO_FIRE_GEOMETRY,
+    LOD.VIEW_COMMANDER_GEOMETRY,
+    LOD.VIEW_COMMANDER_FIRE_GEOMETRY,
+    LOD.VIEW_PILOT_GEOMETRY,
+    LOD.VIEW_PILOT_FIRE_GEOMETRY,
+    LOD.VIEW_GUNNER_GEOMETRY,
+    LOD.VIEW_GUNNER_FIRE_GEOMETRY,
+    LOD.UNDERGROUND
+}
+
+
+lod_allow_uvs = {*lod_visuals, *lod_shadows, LOD.GROUNDLAYER}
+
+
+lod_unknown = LOD.UNKNOWN
+
+
+lod_info = {
+    LOD.VISUAL: ("Resolution", "Visual resolutiion"),
+    LOD.VIEW_GUNNER: ("View - Gunner", "Gunner first person view"),
+    LOD.VIEW_PILOT: ("View - Pilot", "First person view"),
+    LOD.VIEW_CARGO: ("View - Cargo", "Passenger first person view"),
+    LOD.SHADOW: ("Shadow Volume", "Shadow casting geometry"),
+    # LOD.SHADOWBUFFER: ("Shadow Buffer", "Shadow buffer geometry"),
+    LOD.EDIT: ("Edit", "Temporary layer"),
+    LOD.GEOMETRY: ("Geometry", "Object collision geometry and occluders"),
+    LOD.GEOMETRY_BUOY: ("Geometry Buoyancy", "Buoyant object geometry (Displacement for VBS)"),
+    LOD.GEOMETRY_PHYSX: ("Geometry PhysX", "PhysX object collision geometry"),
+    LOD.MEMORY: ("Memory", "Hard points and animation axes"),
+    LOD.LANDCONTACT: ("Land Contact", "Points of contact with ground"),
+    LOD.ROADWAY: ("Roadway", "Walkable surfaces"),
+    LOD.PATHS: ("Paths", "AI path finding mesh"),
+    LOD.HITPOINTS: ("Hit-points", "Hit point cloud"),
+    LOD.VIEW_GEOMETRY: ("View Geometry", "View occlusion for AI"),
+    LOD.FIRE_GEOMETRY: ("Fire Geometry", "Hitbox geometry"),
+    LOD.VIEW_CARGO_GEOMERTRY: ("View - Cargo Geometry", "Passenger view collision geometry and occluders"),
+    LOD.VIEW_CARGO_FIRE_GEOMETRY: ("View - Cargo Fire Geometry", "Passenger view hitbox geometry"),
+    LOD.VIEW_COMMANDER: ("View - Commander", "Commander first person view"),
+    LOD.VIEW_COMMANDER_GEOMETRY: ("View - Commander Geometry", "Commander view collision geometry and occluders"),
+    LOD.VIEW_COMMANDER_FIRE_GEOMETRY: ("View - Commander Fire Geometry", "Commander hitbox geometry"),
+    LOD.VIEW_PILOT_GEOMETRY: ("View - Pilot Geometry", "First person collision geometry and occluders"),
+    LOD.VIEW_PILOT_FIRE_GEOMETRY: ("View - Pilot Fire Geometry", "First person hitbox geometry"),
+    LOD.VIEW_GUNNER_GEOMETRY: ("View - Gunner Geometry", "Gunner collision geometry and occluders"),
+    LOD.VIEW_GUNNER_FIRE_GEOMETRY: ("View - Gunner Fire Geometry", "Gunner view hitbox geometry"),
+    LOD.SUBPARTS: ("Sub Parts", "Obsolete"),
+    LOD.SHADOW_VIEW_CARGO: ("Shadow Volume - Cargo View", "Passenger view shadow casting geometry"),
+    LOD.SHADOW_VIEW_PILOT: ("Shadow Volume - Pilot View", "First person view shadow casting geometry"),
+    LOD.SHADOW_VIEW_GUNNER: ("Shadow Volume - Gunner View", "Gunner view shadow casting geometry"),
+    LOD.WRECKAGE: ("Wreckage", "Vehicle wreckage"),
+    LOD.UNDERGROUND: ("Underground (VBS)", "Underground volume for VBS (not supported in Arma 3 -> Geometry PhysX Old)"),
+    LOD.GROUNDLAYER: ("Groundlayer (VBS)", "Ground deformation data for VBS (not supported in Arma 3 -> Shadow Volume 3000)"),
+    LOD.NAVIGATION: ("Navigation (VBS)", "Navigation data for VBS (not supported in Arma 3 -> Geometry / Resolution 5e+013)"),
+    LOD.UNKNOWN: ("Unknown", "Unknown model layer")
 }
 
 
 lod_groups_type = {
-    **dict.fromkeys([0, 1, 2, 3, 18], "Visuals"),
-    **dict.fromkeys([4, 26, 27, 28], "Shadows"),
-    **dict.fromkeys([6, 7, 8, 14, 15, 16, 17, 19, 20, 21, 22, 23, 24], "Geometries"),
-    **dict.fromkeys([9, 10, 13], "Point clouds"),
-    **dict.fromkeys([5, 11, 12, 25, 29, 30], "Misc")
+    **dict.fromkeys(
+        [
+            LOD.VISUAL,
+            LOD.VIEW_GUNNER,
+            LOD.VIEW_PILOT,
+            LOD.VIEW_CARGO,
+            LOD.VIEW_COMMANDER
+        ],
+        "Visuals"
+    ),
+    **dict.fromkeys(
+        [
+            LOD.SHADOW,
+            # LOD.SHADOWBUFFER,
+            LOD.SHADOW_VIEW_CARGO,
+            LOD.SHADOW_VIEW_PILOT,
+            LOD.SHADOW_VIEW_GUNNER
+        ],
+        "Shadows"
+    ),
+    **dict.fromkeys(
+        [
+            LOD.GEOMETRY,
+            LOD.GEOMETRY_BUOY,
+            LOD.GEOMETRY_PHYSX,
+            LOD.VIEW_GEOMETRY,
+            LOD.FIRE_GEOMETRY,
+            LOD.VIEW_CARGO_GEOMERTRY,
+            LOD.VIEW_CARGO_FIRE_GEOMETRY,
+            LOD.VIEW_COMMANDER_GEOMETRY,
+            LOD.VIEW_COMMANDER_FIRE_GEOMETRY,
+            LOD.VIEW_PILOT_GEOMETRY,
+            LOD.VIEW_PILOT_FIRE_GEOMETRY,
+            LOD.VIEW_GUNNER_GEOMETRY,
+            LOD.VIEW_GUNNER_FIRE_GEOMETRY,
+            LOD.UNDERGROUND
+        ],
+        "Geometries"
+    ),
+    **dict.fromkeys(
+        [
+            LOD.MEMORY,
+            LOD.LANDCONTACT,
+            LOD.HITPOINTS
+        ],
+        "Point clouds"
+    ),
+    **dict.fromkeys(
+        [
+            LOD.EDIT,
+            LOD.ROADWAY,
+            LOD.PATHS,
+            LOD.SUBPARTS,
+            LOD.WRECKAGE,
+            LOD.GROUNDLAYER,
+            LOD.NAVIGATION,
+            LOD.UNKNOWN
+        ],
+        "Misc"
+    )
 }
 
 
 lod_groups_context = {
-    **dict.fromkeys([0], "3rd person"),
-    **dict.fromkeys([1, 2, 3, 16, 17, 18, 19, 20, 21, 22, 23, 24, 26, 27, 28], "1st person"),
-    **dict.fromkeys([4, 6], "General"),
-    **dict.fromkeys([5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 25, 29, 30], "Misc")
+    **dict.fromkeys(
+        [
+            LOD.VISUAL
+        ],
+        "3rd person"
+    ),
+    **dict.fromkeys(
+        [
+            LOD.VIEW_GUNNER,
+            LOD.VIEW_PILOT,
+            LOD.VIEW_CARGO,
+            LOD.VIEW_CARGO_GEOMERTRY,
+            LOD.VIEW_CARGO_FIRE_GEOMETRY,
+            LOD.VIEW_COMMANDER,
+            LOD.VIEW_COMMANDER_GEOMETRY,
+            LOD.VIEW_COMMANDER_FIRE_GEOMETRY,
+            LOD.VIEW_PILOT_GEOMETRY,
+            LOD.VIEW_PILOT_FIRE_GEOMETRY,
+            LOD.VIEW_GUNNER_GEOMETRY,
+            LOD.VIEW_GUNNER_FIRE_GEOMETRY,
+            LOD.SHADOW_VIEW_CARGO,
+            LOD.SHADOW_VIEW_PILOT,
+            LOD.SHADOW_VIEW_GUNNER
+        ],
+        "1st person"
+    ),
+    **dict.fromkeys(
+        [
+            LOD.SHADOW,
+            # LOD.SHADOWBUFFER,
+            LOD.GEOMETRY
+        ],
+        "General"
+    ),
+    **dict.fromkeys(
+        [
+            LOD.EDIT,
+            LOD.GEOMETRY_BUOY,
+            LOD.GEOMETRY_PHYSX,
+            LOD.MEMORY,
+            LOD.LANDCONTACT,
+            LOD.ROADWAY,
+            LOD.PATHS,
+            LOD.HITPOINTS,
+            LOD.VIEW_GEOMETRY,
+            LOD.FIRE_GEOMETRY,
+            LOD.SUBPARTS,
+            LOD.WRECKAGE,
+            LOD.UNDERGROUND,
+            LOD.GROUNDLAYER,
+            LOD.NAVIGATION,
+            LOD.UNKNOWN
+        ],
+        "Misc"
+    )
 }
 
 
@@ -168,39 +318,7 @@ enum_texture_types = (
 )
 
 
-enum_lod_types = (
-    ('0', "Resolution", "Visual resolutiion"),
-    ('1', "View - Gunner", "Gunner first person view"),
-    ('2', "View - Pilot", "First person view"),
-    ('3', "View - Cargo", "Passenger first person view"),
-    ('4', "Shadow Volume", "Shadow casting geometry"),
-    ('5', "Edit", "Temporary layer"),
-    ('6', "Geometry", "Object collision geometry and occluders"),
-    ('7', "Geometry Buoyancy", "Buoyant object geometry"),
-    ('8', "Geometry PhysX", "PhysX object collision geometry"),
-    ('9', "Memory", "Hard points and animation axes"),
-    ('10', "Land Contact", "Points of contact with ground"),
-    ('11', "Roadway", "Walkable surfaces"),
-    ('12', "Paths", "AI path finding mesh"),
-    ('13', "Hit-points", "Hit point cloud"),
-    ('14', "View Geometry", "View occlusion for AI"),
-    ('15', "Fire Geometry", "Hitbox geometry"),
-    ('16', "View - Cargo Geometry", "Passenger view collision geometry and occluders"),
-    ('17', "View - Cargo Fire Geometry", "Passenger view hitbox geometry"),
-    ('18', "View - Commander", "Commander first person view"),
-    ('19', "View - Commander Geometry", "Commander view collision geometry and occluders"),
-    ('20', "View - Commander Fire Geometry", "Commander hitbox geometry"),
-    ('21', "View - Pilot Geometry", "First person collision geometry and occluders"),
-    ('22', "View - Pilot Fire Geometry", "First person hitbox geometry"),
-    ('23', "View - Gunner Geometry", "Gunner collision geometry and occluders"),
-    ('24', "View - Gunner Fire Geometry", "Gunner view hitbox geometry"),
-    ('25', "Sub Parts", "Obsolete"),
-    ('26', "Shadow Volume - Cargo View", "Passenger view shadow casting geometry"),
-    ('27', "Shadow Volume - Pilot View", "First person view shadow casting geometry"),
-    ('28', "Shadow Volume - Gunner View", "Gunner view shadow casting geometry"),
-    ('29', "Wreckage", "Vehicle wreckage"),
-    ('30', "Unknown", "Unknown model layer")
-)
+enum_lod_types = tuple([(str(idx), *lod_info[idx]) for idx in lod_info])
 
 
 # Currently unused as the search function for string properties is a
@@ -618,6 +736,21 @@ ofp2_manskeleton = {
 }
 
 
+def get_rvmat_templates():
+    import os
+    from ..utilities.generic import get_addon_directory
+
+    template_dir = os.path.join(get_addon_directory(), "scripts")
+
+    templates = {
+        "PBR (VBS)": os.path.join(template_dir, "pbr_vbs.rvmat_template"),
+        "Super - Cloth": os.path.join(template_dir, "super_cloth.rvmat_template"),
+        "Super - Weapon": os.path.join(template_dir, "super_weapon.rvmat_template")
+    }
+
+    return templates
+
+
 common_data = {
     "proxies": {
         "Weapon: optic": r"P:\a3\data_f\proxies\weapon_slots\top.p3d",
@@ -657,5 +790,6 @@ common_data = {
     },
     "procedurals": {
         "PIP": "#(argb,512,512,1)r2t(rendertarget0,1.0)"
-    }
+    },
+    "rvmat_templates": get_rvmat_templates()
 }

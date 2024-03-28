@@ -4,6 +4,8 @@
 
 
 import time
+import re
+from contextlib import contextmanager
 
 import bpy
 import bmesh
@@ -12,6 +14,7 @@ from . import data_p3d as p3d
 from ..utilities import generic as utils
 from ..utilities import flags as flagutils
 from ..utilities import compat as computils
+from ..utilities import structure as structutils
 from ..utilities import data
 from ..utilities.logger import ProcessLogger, ProcessLoggerNull
 from ..utilities.validator import Validator
@@ -27,10 +30,31 @@ def can_export(operator, context):
         export_objects = context.selected_objects
         
     for obj in export_objects:
-        if (not operator.visible_only or obj.visible_get()) and  obj.type == 'MESH' and obj.a3ob_properties_object.is_a3_lod and obj.parent == None and obj.a3ob_properties_object.lod != '30':
+        if (not operator.visible_only or obj.visible_get()) and  obj.type == 'MESH' and obj.a3ob_properties_object.is_a3_lod and obj.parent == None:
             return True
             
     return False
+
+
+def create_temp_collection(context):
+    temp = bpy.data.collections.get("A3OB_temp")
+    if temp is None:
+        temp = bpy.data.collections.new("A3OB_temp")
+        context.scene.collection.children.link(temp)
+    
+    objects = [obj for obj in temp.objects]
+    while objects:
+        bpy.data.objects.remove(objects.pop())
+    
+    return temp
+
+
+def cleanup_temp_collection(temp):    
+    temp_objects = [obj for obj in temp.objects]
+    while temp_objects:
+        bpy.data.meshes.remove(temp_objects.pop().data)
+
+    bpy.data.collections.remove(temp)
 
 
 def is_ascii(value):
@@ -44,6 +68,7 @@ def is_ascii(value):
 def duplicate_object(obj, temp_collection):
     new_object = obj.copy()
     new_object.data = obj.data.copy()
+    new_object["a3ob_original_object"] = obj.get("a3ob_original_object", obj.name)
     temp_collection.objects.link(new_object)
     return new_object
 
@@ -53,12 +78,24 @@ def duplicate_object(obj, temp_collection):
 def apply_modifiers(obj):
     ctx = {"object": obj}
     
-    for m in obj.modifiers:
+    modifiers = [m for m in obj.modifiers if m.show_viewport]
+    while modifiers:
+        m = modifiers.pop(0)
         try:
             ctx["modifier"] = m
             computils.call_operator_ctx(bpy.ops.object.modifier_apply, ctx, modifier= m.name)
         except:
             obj.modifiers.remove(m)
+
+
+def apply_transforms(obj):
+    ctx = {
+        "object": obj,
+        "active_object": obj,
+        "selected_editable_objects": [obj],
+        "edit_object": None
+    }
+    computils.call_operator_ctx(bpy.ops.object.transform_apply, ctx)
 
 
 # In order to simplify merging the LOD parts, and the data access later on, the dereferenced
@@ -171,6 +208,9 @@ def merge_proxy_objects(main_obj, proxy_objects, relative):
 
 def validate_proxies(operator, proxy_objects):
     for proxy in proxy_objects:
+        if len(proxy.data.polygons) != 1 or len(proxy.data.polygons[0].vertices) != 3:
+            return False
+
         path, _ = proxy.a3ob_properties_object_proxy.to_placeholder(operator.relative_paths)
         if not is_ascii(path):
             return False
@@ -191,9 +231,96 @@ def validate_proxies(operator, proxy_objects):
     return True
 
 
+def get_sub_objects(obj, temp_collection):
+    sub_objects = []
+    proxy_objects = []
+    for child in obj.children:
+        if child.type != 'MESH':
+            continue
+            
+        if not child.mode == 'OBJECT':
+            computils.call_operator_ctx(bpy.ops.object.mode_set, {"active_object": child}, mode='OBJECT')
+        
+        child_copy = duplicate_object(child, temp_collection)
+
+        if child_copy.a3ob_properties_object_proxy.is_a3_proxy:
+            proxy_objects.append(child_copy)
+        else:
+            sub_objects.append(child_copy)
+    
+    return sub_objects, proxy_objects
+
+
+def sort_sections(obj):
+    sections = {0: []}
+    for i in range(len(obj.material_slots)):
+        sections[i] = []
+
+    with utils.edit_bmesh(obj) as bm:
+        bm.faces.ensure_lookup_table()
+
+        for face in bm.faces:
+            sections.get(face.material_index, sections[0]).append(face)
+        
+        face_index = 0
+        for section in sections.values():
+            for face in section:
+                face.index = face_index
+                face_index -=- 1
+
+        bm.faces.sort()
+
+
+def cleanup_uvs(obj):
+    if int(obj.a3ob_properties_object.lod) not in data.lod_allow_uvs:
+        utils.clear_uvs(obj)
+
+
+def cleanup_normals(operator, obj):
+    if not operator.preserve_normals or int(obj.a3ob_properties_object.lod) not in data.lod_visuals:
+        ctx = {
+            "active_object": obj,
+            "object": obj
+        }
+        computils.call_operator_ctx(bpy.ops.mesh.customdata_custom_splitnormals_clear, ctx)
+        computils.mesh_auto_smooth(obj.data)
+        mod = obj.modifiers.new("Temp", 'WEIGHTED_NORMAL')
+        mod.weight = 50
+        mod.keep_sharp = True
+        apply_modifiers(obj)
+
+
+def generate_components(operator, obj):
+    if not operator.generate_components or int(obj.a3ob_properties_object.lod) not in data.lod_geometries:
+        return
+    
+    re_component = re.compile(r"component\d+", re.IGNORECASE)
+    for group in obj.vertex_groups:
+        if re_component.match(group.name):
+            return
+    
+    structutils.find_components(obj)
+
+
+# Needed to get around the validator requiring component## selections. If the
+# option to generate the components is enabled in the export, the selections
+# might not yet be there, so the validation would fail. A dummy component is
+# added temporarily in this case to satisfy the validator.
+@contextmanager
+def temporary_component(operator, obj):
+    temporary_component = None
+    try:
+        if operator.generate_components:
+            temporary_component = obj.vertex_groups.new(name="Component00")
+        yield obj
+    finally:
+        if temporary_component:
+            obj.vertex_groups.remove(temporary_component)
+
+
 # Huge monolith function to produce the final object and mesh data that can be written to the 
 # P3D file. Merges the sub-objects and proxies into the main objects, applies transformations,
-# runs mesh validation and sorts sections if necessary.
+# runs mesh validation and sorts sections if necessary. Also processes the LOD copy directives.
 # [(LOD object 0, proxy lookup 0), (..., ....), ....]
 def get_lod_data(operator, context, validator, temp_collection):
     scene = context.scene
@@ -204,10 +331,8 @@ def get_lod_data(operator, context, validator, temp_collection):
 
     lod_list = []
 
-    allow_uv = set([str(idx) for idx in (*data.lod_visuals, *data.lod_shadows)])
-
     for obj in [obj for obj in export_objects if not operator.visible_only or obj.visible_get()]:       
-        if obj.type != 'MESH' or not obj.a3ob_properties_object.is_a3_lod or obj.parent != None or obj.a3ob_properties_object.lod == '30':
+        if obj.type != 'MESH' or not obj.a3ob_properties_object.is_a3_lod or obj.parent != None:
             continue
             
         # Some operator polls fail later if an object is in edit mode.
@@ -217,83 +342,52 @@ def get_lod_data(operator, context, validator, temp_collection):
         main_obj = duplicate_object(obj, temp_collection)
         is_valid = True
 
-        sub_objects = []
-        proxy_objects = []
-        for child in obj.children:
-            if child.type != 'MESH':
-                continue
-                
-            if not child.mode == 'OBJECT':
-                computils.call_operator_ctx(bpy.ops.object.mode_set, {"active_object": child}, mode='OBJECT')
-            
-            child_copy = duplicate_object(child, temp_collection)
-
-            if child_copy.a3ob_properties_object_proxy.is_a3_proxy:
-                proxy_objects.append(child_copy)
-            else:
-                sub_objects.append(child_copy)
+        sub_objects, proxy_objects = get_sub_objects(obj, temp_collection)
         
         # Merging of the components has to be done in two steps (1st: sub-objects, 2nd: proxies), because the LOD
         # validation would otherwise get confused by the proxy triangles (eg.: it'd be impossible to validate
         # that a mesh is otherwise contiguous or not).
         merge_sub_objects(operator, main_obj, sub_objects)
-        is_valid = validator.validate_lod(main_obj, main_obj.a3ob_properties_object.lod, True, operator.validate_lods_warning_errors, operator.relative_paths)
-        is_valid &= validate_proxies(operator, proxy_objects)
+        is_valid = validate_proxies(operator, proxy_objects)
+
+        is_valid_copies = []
+        for copy in main_obj.a3ob_properties_object.copies:
+            with temporary_component(operator, main_obj):
+                is_valid_copies.append(is_valid and validator.validate_lod(main_obj, copy.lod, True, operator.validate_lods_warning_errors, operator.relative_paths))
+
+        with temporary_component(operator, main_obj):
+            is_valid &= validator.validate_lod(main_obj, main_obj.a3ob_properties_object.lod, True, operator.validate_lods_warning_errors, operator.relative_paths)
+
         proxy_lookup = merge_proxy_objects(main_obj, proxy_objects, operator.relative_paths)
 
         if operator.apply_transforms:
-            ctx = {
-                "object": main_obj,
-                "active_object": main_obj,
-                "selected_editable_objects": [main_obj],
-                "edit_object": None
-            }
-            computils.call_operator_ctx(bpy.ops.object.transform_apply, ctx, location = True, scale = True, rotation = True)
+            apply_transforms(main_obj)
         
         if operator.validate_meshes:
             main_obj.data.validate(clean_customdata=False)
-            
-        if not operator.preserve_normals or int(main_obj.a3ob_properties_object.lod) not in data.lod_visuals:
-            ctx = {
-                "active_object": main_obj,
-                "object": main_obj
-            }
-            computils.call_operator_ctx(bpy.ops.mesh.customdata_custom_splitnormals_clear, ctx)
-            computils.mesh_auto_smooth(main_obj.data)
-            mod = main_obj.modifiers.new("Temp", 'WEIGHTED_NORMAL')
-            mod.weight = 50
-            mod.keep_sharp = True
-            apply_modifiers(main_obj)
 
         # Sections are important for in-game performace, and should be sorted during export
         # to avoid any unnecessary fragmentation. Some info about sections can be found on the
         # community wiki: https://community.bistudio.com/wiki/Section_Count.
         # Some corrections: https://mrcmodding.gitbook.io/home/documents/sections.
         if operator.sort_sections:
-            sections = {0: []}
-            for i, slot in enumerate(main_obj.material_slots):
-                sections[i] = []
+            sort_sections(obj)
+        
+        for copy, is_valid_copy in zip(main_obj.a3ob_properties_object.copies, is_valid_copies):
+            main_obj_copy = duplicate_object(main_obj, temp_collection)
+            copy_props = main_obj_copy.a3ob_properties_object
+            copy_props.lod = copy.lod
+            copy_props.resolution = copy.resolution
+            copy_props.resolution_float = copy.resolution_float
 
-            bm = bmesh.new()
-            bm.from_mesh(main_obj.data)
-            bm.faces.ensure_lookup_table()
-
-            for face in bm.faces:
-                sections.get(face.material_index, sections[0]).append(face)
+            cleanup_uvs(main_obj_copy)
+            cleanup_normals(operator, main_obj_copy)
+            generate_components(operator, main_obj_copy)
+            lod_list.append((main_obj_copy, proxy_lookup, is_valid_copy))
             
-            face_index = 0
-            for section in sections.values():
-                for face in section:
-                    face.index = face_index
-                    face_index -=- 1
-
-            bm.faces.sort()
-            bm.to_mesh(main_obj.data)
-            bm.free()
-
-        if main_obj.a3ob_properties_object.lod not in allow_uv:
-            utils.clear_uvs(main_obj)
-
+        cleanup_uvs(main_obj)
+        cleanup_normals(operator, main_obj)
+        generate_components(operator, main_obj)
         lod_list.append((main_obj, proxy_lookup, is_valid))
 
     return lod_list
@@ -504,12 +598,12 @@ def translate_selections(p3dm):
         tagg.name = data.translations_english_czech.get(tagg.name.lower(), tagg.name)
 
 
-def process_lod(operator, obj, proxy_lookup, is_valid, logger):
+def process_lod(operator, obj, proxy_lookup, is_valid, processed_signatures, logger):
     object_props = obj.a3ob_properties_object
     lod_name = object_props.get_name()
 
     logger.level_up()
-    logger.step("Name: %s" % lod_name)
+    logger.step("Type: %s" % lod_name)
 
     if not is_valid:
         logger.log("Failed validation -> skipping LOD (run manual validation for details)")
@@ -518,7 +612,21 @@ def process_lod(operator, obj, proxy_lookup, is_valid, logger):
 
     logger.step("Processing data:")
     output = p3d.P3D_LOD()
-    output.resolution.set(int(object_props.lod), object_props.resolution)
+    lod_idx = int(object_props.lod)
+    if lod_idx != data.lod_unknown:
+        output.resolution.set(lod_idx, object_props.resolution)
+    else:
+        output.resolution.set(lod_idx, object_props.resolution_float)
+    
+    signature = float(output.resolution)
+    if signature in processed_signatures and operator.lod_collisions != 'IGNORE':
+        if operator.lod_collisions == 'FAIL':
+            raise p3d.P3D_Error("Duplicate LODs detected")
+        logger.log("Duplicate -> skipping LOD")
+        logger.level_down()
+        return None
+    else:
+        processed_signatures.add(signature)
 
     mesh = obj.data
 
@@ -596,11 +704,12 @@ def write_file(operator, context, file, temp_collection):
     logger.level_up()
 
     mlod_lods = []
+    processed_signatures = set()
     for i, (lod, proxy_lookup, is_valid) in enumerate(lod_list):
         time_lod_start = time.time()
-        logger.step("LOD %d" % (i + 1))
+        logger.step("LOD %d: %s" % (i + 1, lod["a3ob_original_object"]))
 
-        new_lod = process_lod(operator, lod, proxy_lookup, is_valid, logger)
+        new_lod = process_lod(operator, lod, proxy_lookup, is_valid, processed_signatures, logger)
         if new_lod:
             mlod_lods.append(new_lod)
 
@@ -613,10 +722,11 @@ def write_file(operator, context, file, temp_collection):
     # LODs should be sorted by their resolution signature.
     mlod_lods.sort(key=lambda lod: float(lod.resolution))
     mlod.lods = mlod_lods
+    logger.step("Sorted LODs")
 
     if operator.force_lowercase:
         mlod.force_lowercase()
-        logger.log("Forced lowercase")
+        logger.step("Forced lowercase")
 
     mlod.write(file)
     

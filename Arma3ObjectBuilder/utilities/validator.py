@@ -7,11 +7,16 @@ import math
 import bmesh
 import bpy
 
+from ..io.data_p3d import P3D_LOD_Resolution as LOD
+
 
 class ValidatorResult():
     def __init__(self, is_valid = True, comment = ""):
         self.is_valid = is_valid
         self.comment = comment
+    
+    def __bool__(self):
+        return self.is_valid
     
     def set(self, is_valid = True, comment = ""):
         self.is_valid = is_valid
@@ -30,7 +35,7 @@ class ValidatorComponent():
             return False
 
     def conditions(self):
-        strict = optional = info = tuple()
+        strict = optional = info = ()
 
         return strict, optional, info
     
@@ -39,13 +44,13 @@ class ValidatorComponent():
 
         for item in strict:
             result = item()
-            if not result.is_valid:
+            if not result:
                 return False
         
         if warns_errs:
             for item in optional:
                 result = item()
-                if not result.is_valid:
+                if not result:
                     return False
         
         return True
@@ -57,13 +62,13 @@ class ValidatorComponent():
 
         for item in strict:
             result = item()
-            if not result.is_valid:
+            if not result:
                 self.logger.step("ERROR: %s" % result.comment)
                 is_valid = False
         
         for item in optional:
             result = item()
-            if not result.is_valid:
+            if not result:
                 self.logger.step("WARNING: %s" % result.comment)
                 is_valid &= not warns_errs
         
@@ -126,24 +131,25 @@ class ValidatorComponentLOD(ValidatorComponent):
                 break
         
         return result
+    
+    def max_two_uvs(self):
+        result = ValidatorResult()
+
+        if len(self.obj.data.uv_layers) > 2:
+            result.set(False, "mesh has more than 2 UV channels")
+
+        return result
 
     def has_selection_internal(self, re_selection):
         if len(self.bm.verts) == 0:
             return False
         
         RE_NAME = re.compile(re_selection, re.IGNORECASE)
-        groups = [group.index for group in self.obj.vertex_groups if RE_NAME.match(group.name)]
+        for group in self.obj.vertex_groups:
+            if RE_NAME.match(group.name):
+                return True
         
-        if len(groups) == 0:
-            return False
-        
-        layer = self.bm.verts.layers.deform.verify()
-        for vert in self.bm.verts:
-            for group in groups:
-                if group in vert[layer] and vert[layer][group] == 1:
-                    return True
-        else:
-            return False
+        return False
     
     def only_ascii_vgroups(self):
         result = ValidatorResult()
@@ -203,7 +209,11 @@ class ValidatorLODGeneric(ValidatorComponentLOD):
             self.only_ascii_properties,
             self.only_ascii_proxies
         )
-        optional = info = tuple()
+        optional = (
+            self.max_two_uvs,
+        )
+        
+        info = ()
 
         return strict, optional, info
 
@@ -213,7 +223,7 @@ class ValidatorLODGeometry(ValidatorComponentLOD):
 
     def is_triangulated(self):
         result =  super().is_triangulated()
-        if result.is_valid:
+        if not result:
             result.set(False, "mesh is not triangulated (convexity is not definite)")
         
         return result
@@ -319,7 +329,7 @@ class ValidatorLODGeometrySubtype(ValidatorLODGeometry):
         optional = (
             self.is_triangulated,
         )
-        info = tuple()
+        info = ()
 
         return strict, optional, info
     
@@ -362,6 +372,25 @@ class ValidatorLODShadow(ValidatorComponentLOD):
                     break
             
         return result
+
+    def only_conventional_indices(self):
+        result = ValidatorResult()
+
+        idx = self.obj.a3ob_properties_object.resolution
+        if idx not in {0, 10, 1000, 1010, 1020}:
+            result.set(False, "unconventional shadow resolution: %d" % idx)
+
+        return result
+    
+    def not_disabled(self):
+        result = ValidatorResult()
+
+        for prop in self.obj.a3ob_properties_object.properties:
+            if prop.name.strip().lower() == "lodnoshadow" and prop.value.strip() == "1":
+                result.set(False, "disabled by property (LODNoShadow = 1)")
+                break
+
+        return result
     
     def conditions(self):
         strict = (
@@ -370,7 +399,32 @@ class ValidatorLODShadow(ValidatorComponentLOD):
             self.is_sharp,
             self.no_materials
         )
-        optional = info = tuple()
+        optional = (
+            self.only_conventional_indices,
+            self.not_disabled
+        )
+        
+        info = ()
+
+        return strict, optional, info
+
+
+class ValidatorLODUnderground(ValidatorLODGeometry, ValidatorLODShadow):
+    """LOD - Underground (VBS)"""
+
+    def conditions(self):
+        strict = (
+            self.is_contiguous,
+            self.is_triangulated,
+            self.is_convex,
+            self.has_components,
+            self.is_sharp,
+            self.no_materials
+        )
+        optional = ()
+        info = (
+            self.farthest_point,
+        )
 
         return strict, optional, info
 
@@ -395,7 +449,7 @@ class ValidatorLODPointcloud(ValidatorComponentLOD):
         return result
     
     def conditions(self):
-        strict = info = tuple()
+        strict = info = ()
         optional = (
             self.no_edges,
             self.no_faces
@@ -468,6 +522,43 @@ class ValidatorLODRoadway(ValidatorComponentLOD):
         return strict, optional, info
 
 
+class ValidatorLODGroundlayer(ValidatorLODRoadway, ValidatorComponentLOD):
+    """LOD - Groundlayer (VBS)"""
+
+    def has_uv_channel(self):
+        result = ValidatorResult()
+
+        if len(self.obj.data.uv_layers) != 1:
+            result.set(False, "mesh has no UV data or more than 1 UV channel")
+        
+        return result
+    
+    def only_valid_uvs(self):
+        result = ValidatorResult()
+        
+        if len(self.obj.data.uv_layers) != 1:
+            return result
+        
+        valid_uvs = {(0, 0), (1, 0), (1, 1), (1, -1)}
+        for uv in self.obj.data.uv_layers[0].uv:
+            u, v = uv.vector
+            if (u, v) not in valid_uvs:
+                result.set(False, "mesh has invalid UV values")
+                break
+
+        return result
+    
+    def conditions(self):
+        strict = (
+            self.has_faces,
+            self.has_uv_channel,
+            self.only_valid_uvs
+        )
+        optional = info = ()
+
+        return strict, optional, info
+
+
 class ValidatorLODPaths(ValidatorComponentLOD):
     """LOD - Paths"""
 
@@ -503,7 +594,7 @@ class ValidatorLODPaths(ValidatorComponentLOD):
         optional = (
             self.has_position,
         )
-        info = tuple()
+        info = ()
 
         return strict, optional, info
 
@@ -523,23 +614,30 @@ class ValidatorComponentSkeleton(ValidatorComponent):
 
         return result
     
+    def only_unique_bones(self):
+        result = ValidatorResult()
+
+        names = set()
+        for bone in self.skeleton.bones:
+            if bone.name.lower() in names:
+                result.set(False, "skeleton has duplicate bones (first encountered: %s)" % bone.name)
+                break
+
+            names.add(bone.name.lower())
+
+        return result
+    
     def has_valid_hierarchy(self):
         result = ValidatorResult()
 
         bones = self.skeleton.bones
         bone_order = {}
-        for i in range(len(bones)):
-            for item in bones:
-                if item.name in bone_order or item.parent != "" and item.parent not in bone_order:
-                    continue
-                
-                bone_order[item.name] = item.parent
-
-            if len(bone_order) == len(bones):
+        for bone in bones:
+            if bone.parent != "" and bone.parent not in bone_order:
+                result.set(False, "skeleton has invalid bone hierarchy (first invalid bone encountered: %s)" % bone.name)
                 break
         
-        else:
-            result.set(False, "skeleton has invalid bone hierarchy")
+            bone_order[bone.name] = bone.parent
 
         return result
 
@@ -548,7 +646,7 @@ class ValidatorComponentSkeleton(ValidatorComponent):
 
         for bone in self.skeleton.bones:
             if not self.is_ascii_internal(bone.name) or not self.is_ascii_internal(bone.parent):
-                result.set(False, "skeleton has bones with non-ASCII characters")
+                result.set(False, "skeleton has bones with non-ASCII characters (first encountered: %s)" % bone.name)
                 break
 
         return result
@@ -560,10 +658,11 @@ class ValidatorSkeletonGeneric(ValidatorComponentSkeleton):
     def conditions(self):
         strict = (
             self.has_valid_name,
+            self.only_unique_bones,
             self.has_valid_hierarchy,
             self.only_ascii_bones
         )
-        optional = info = tuple()
+        optional = info = ()
 
         return strict, optional, info
 
@@ -585,7 +684,7 @@ class ValidatorSkeletonRTM(ValidatorComponentSkeleton):
         strict = (
             self.has_rtm_compatible_bones,
         )
-        optional = info = tuple()
+        optional = info = ()
 
         return strict, optional, info
 
@@ -597,12 +696,45 @@ class Validator():
     
     def setup_lod_specific(self):
         self.components = {
-            **dict.fromkeys(("4", "26", "27", "28"), [ValidatorLODShadow]),
-            **dict.fromkeys(("9", "10", "13"), [ValidatorLODPointcloud]),
-            **dict.fromkeys(("7", "8", "14", "15", "16", "17", "19", "20", "21", "22", "23", "24"), [ValidatorLODGeometrySubtype]),
-            "6": [ValidatorLODGeometry],
-            "11": [ValidatorLODRoadway],
-            "12": [ValidatorLODPaths]
+            **dict.fromkeys(
+                (
+                    str(LOD.SHADOW),
+                    str(LOD.SHADOW_VIEW_CARGO),
+                    str(LOD.SHADOW_VIEW_PILOT),
+                    str(LOD.SHADOW_VIEW_GUNNER)
+                ), 
+                [ValidatorLODShadow]
+            ),
+            **dict.fromkeys(
+                (
+                    str(LOD.MEMORY),
+                    str(LOD.LANDCONTACT),
+                    str(LOD.HITPOINTS)
+                ),
+                [ValidatorLODPointcloud]
+            ),
+            **dict.fromkeys(
+                (
+                    str(LOD.GEOMETRY_BUOY),
+                    str(LOD.GEOMETRY_PHYSX),
+                    str(LOD.VIEW_GEOMETRY),
+                    str(LOD.FIRE_GEOMETRY),
+                    str(LOD.VIEW_CARGO_GEOMERTRY),
+                    str(LOD.VIEW_CARGO_FIRE_GEOMETRY),
+                    str(LOD.VIEW_COMMANDER_GEOMETRY),
+                    str(LOD.VIEW_COMMANDER_FIRE_GEOMETRY),
+                    str(LOD.VIEW_PILOT_GEOMETRY),
+                    str(LOD.VIEW_PILOT_FIRE_GEOMETRY),
+                    str(LOD.VIEW_GUNNER_GEOMETRY),
+                    str(LOD.VIEW_GUNNER_FIRE_GEOMETRY)
+                ),
+                [ValidatorLODGeometrySubtype]
+            ),
+            str(LOD.GEOMETRY): [ValidatorLODGeometry],
+            str(LOD.ROADWAY): [ValidatorLODRoadway],
+            str(LOD.PATHS): [ValidatorLODPaths],
+            str(LOD.UNDERGROUND): [ValidatorLODUnderground],
+            str(LOD.GROUNDLAYER): [ValidatorLODGroundlayer]
         }
 
     def validate_lod(self, obj, lod, lazy = False, warns_errs = True, relative_paths = False):
@@ -623,6 +755,7 @@ class Validator():
             is_valid &= item(obj, bm, self.logger, relative_paths).validate(lazy, warns_errs)
 
         bm.free()
+        self.logger.step("Validation %s" % ("PASSED" if is_valid else "FAILED"))
         self.logger.level_down()
         self.logger.step("Finished validation")
 
@@ -639,7 +772,8 @@ class Validator():
 
         for item in components:
             is_valid &= item(skeleton, self.logger).validate(lazy, False)
-
+        
+        self.logger.step("Validation %s" % ("PASSED" if is_valid else "FAILED"))
         self.logger.level_down()
         self.logger.step("Finished validation")
 

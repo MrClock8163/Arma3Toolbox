@@ -145,18 +145,17 @@ def bone_order_from_skeleton(skeleton):
     if len(skeleton.bones) == 0:
         return {}
     
-    bones = {}
-    for i in range(len(skeleton.bones)):
-        for item in skeleton.bones:
-            if item.name in bones or item.parent != "" and item.parent not in bones:
-                continue
-            
-            bones[item.name] = item.parent
+    if len({bone.name.lower() for bone in skeleton.bones}) != len(skeleton.bones):
+        return None
 
-        if len(bones) == len(skeleton.bones):
-            return bones
+    bones = {}
+    for bone in skeleton.bones:
+        if bone.parent != "" and bone.parent not in bones:
+            return None
+        
+        bones[bone.name] = bone.parent
     
-    return None
+    return bones
     
 
 def pivots_from_armature(obj, bones_parents):    

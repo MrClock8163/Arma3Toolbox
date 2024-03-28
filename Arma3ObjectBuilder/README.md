@@ -1,12 +1,13 @@
 # Arma 3 Object Builder
 
-Arma 3 Object Builder is a free community add-on for Blender to help content development for Arma 3. The add-on is based on the ideas of the [ArmAToolbox](https://github.com/AlwarrenSidh/ArmAToolbox) add-on developed by Alwarren.
+Arma 3 Object Builder is a free, community add-on for Blender to help content development for Arma 3. The add-on is based on the ideas of the [ArmAToolbox](https://github.com/AlwarrenSidh/ArmAToolbox) add-on developed by Alwarren, but exists as a completely different implementation of a similar workflow, with a great number improved and extended features.
 
 ## Main features
 
 - P3D import-export
 - ASC import-export
-- RTM export
+- RTM import-export
+- armature reconstruction
 - various editing tools
 - utility functions
 
@@ -16,8 +17,8 @@ The documentation can be found on [GitBook](https://mrcmodding.gitbook.io/arma-3
 
 ## Installation
 
-The add-on can be installed after either downloading a packaged release, or cloning the repository.
-For information about add-on installation, visit the official [Blender documentation](https://mrcmodding.gitbook.io/arma-3-object-builder/home) page about add-ons.
+The add-on can be installed after either downloading a packaged release, or cloning the repository and manually packing it.
+For information about add-on installation, visit the official [Blender documentation](https://docs.blender.org/manual/en/latest/editors/preferences/addons.html) page about add-ons.
 
 ## License
 

@@ -3,6 +3,7 @@
 
 import os
 import json
+from datetime import datetime
 from contextlib import contextmanager
 
 import bpy
@@ -26,6 +27,13 @@ def show_info_box(message, title = "", icon = 'INFO'):
     bpy.context.window_manager.popup_menu(draw, title=title, icon=icon)
 
 
+# For some reason, not all operator reports are printed to the console. The behavior seems to be context dependent,
+# but not certain.
+def op_report(operator, mode, message):
+    operator.report(mode, message)
+    print("%s: %s\n" % (tuple(mode)[0].title(), message))
+
+
 def abspath(path):
     if not path.startswith("//"):
         return path
@@ -42,7 +50,7 @@ def get_addon_preferences():
 
 
 def is_valid_idx(index, subscriptable):
-    return 0 <= index < len(subscriptable)
+    return len(subscriptable) > 0 and 0 <= index < len(subscriptable)
 
 
 def draw_panel_header(panel):
@@ -91,8 +99,10 @@ def query_bmesh(obj):
 
 class OutputManager():
     def __init__(self, filepath, mode = "w"):
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         self.filepath = filepath
-        self.temppath = filepath + ".temp"
+        self.temppath = "%s.%s.temp" % (filepath, timestamp)
+        self.backup = "%s.%s.bak" % (filepath, timestamp)
         self.mode = mode
         self.file = None
         self.success = False
@@ -124,24 +134,67 @@ class OutputManager():
             os.remove(new)
         
         os.rename(old, new)
+    
+    # Very dirty check, but works for now
+    @staticmethod
+    def can_access_path(path):
+        try:
+            open(path, "ab").close()
+            os.rename(path, path)
+            return True
+        except:
+            return False
 
 
-def get_components(mesh):
+def get_loose_components(obj):
+    mesh = obj.data
     mesh.calc_loop_triangles()
-    components = meshutils.mesh_linked_triangles(mesh)
-    component_lookup = {}
+    chunks = meshutils.mesh_linked_triangles(mesh)
 
-    for id, comp in enumerate(components):
-        for tri in comp:
-            for vert in tri.vertices:
-                component_lookup[vert] = id
+    component_verts = []
+    component_tris = []
+
+    for chunk in chunks:
+        component_tris.append(chunk)
+        component_verts.append(list({vert for tri in chunk for vert in tri.vertices}))
     
-    loose = [vert.index for vert in mesh.vertices if component_lookup.get(vert.index, None) is None]
-    count_components = len(components)
-    component_lookup.update({id: count_components + i for i, id in enumerate(loose)})
-    components.extend([[] for i in range(len(loose))])
+    return component_verts, component_tris
+
+
+def get_closed_components(obj):
+    def is_contiguous_chunk(bm, chunk):
+        if len(chunk) < 4:
+            return False
+        
+        face_indices = set([tri.polygon_index for tri in chunk])
+        for idx in face_indices:
+            for edge in bm.faces[idx].edges:
+                if not edge.is_contiguous:
+                    return False
+
+        return True
     
-    return component_lookup, components
+    mesh = obj.data
+    mesh.calc_loop_triangles()
+    chunks = meshutils.mesh_linked_triangles(mesh)
+
+    component_verts = []
+    component_tris = []
+    no_ignored = True
+
+    with query_bmesh(obj) as bm:
+        bm.faces.ensure_lookup_table()
+
+        chunk: list[bpy.types.MeshLoopTriangle]
+        for chunk in chunks:
+            if not is_contiguous_chunk(bm, chunk):
+                no_ignored = False
+                continue
+
+            component_tris.append(chunk)
+            component_verts.append(list({vert_id for tri in chunk for vert_id in tri.vertices}))
+
+    return component_verts, component_tris, no_ignored
 
 
 def force_mode_object():

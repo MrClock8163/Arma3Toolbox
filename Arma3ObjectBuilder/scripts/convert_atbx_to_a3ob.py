@@ -39,43 +39,44 @@ from Arma3ObjectBuilder.utilities import generic as utils
 from Arma3ObjectBuilder.utilities import structure as structutils
 from Arma3ObjectBuilder.utilities import lod as lodutils
 from Arma3ObjectBuilder.utilities.logger import ProcessLogger
+from Arma3ObjectBuilder.io.data_p3d import P3D_LOD_Resolution as LOD
 from Arma3ObjectBuilder.io import import_p3d
 
 
 LOD_TYPE_MAPPING = {
-    '-1.0': '0',
-    '1.000e+3': '1',
-    '1.200e+3': '3',
-    '1.100e+3': '2',
-    '1.000e+4': '4',
-    '1.001e+4': '4',
-    '1.100e+4': '4',
-    '1.101e+4': '4',
-    '1.000e+13': '6',
-    '1.000e+15': '9',
-    '2.000e+15': '10',
-    '3.000e+15': '11',
-    '4.000e+15': '12',
-    '5.000e+15': '13',
-    '6.000e+15': '14',
-    '7.000e+15': '15',
-    '8.000e+15': '16',
-    '9.000e+15': '17',
-    '1.000e+16': '18',
-    '1.100e+16': '19',
-    '1.200e+16': '20',
-    '1.300e+16': '21',
-    '1.400e+16': '22',
-    '1.500e+16': '23',
-    '1.600e+16': '24',
-    '1.700e+16': '25',
-    '1.800e+16': '26',
-    '1.900e+16': '27',
-    '2.000e+16': '28',
-    '2.100e+16': '29',
-    '2.000e+13': '7',
-    '4.000e+13': '8',
-    '2.000e+4': '5'
+    '-1.0': str(LOD.VISUAL),
+    '1.000e+3': str(LOD.VIEW_GUNNER),
+    '1.100e+3': str(LOD.VIEW_PILOT),
+    '1.200e+3': str(LOD.VIEW_CARGO),
+    '1.000e+4': str(LOD.SHADOW),
+    '1.001e+4': str(LOD.SHADOW),
+    '1.100e+4': str(LOD.SHADOW),
+    '1.101e+4': str(LOD.SHADOW),
+    '2.000e+4': str(LOD.EDIT),
+    '1.000e+13': str(LOD.GEOMETRY),
+    '2.000e+13': str(LOD.GEOMETRY_BUOY),
+    '4.000e+13': str(LOD.GEOMETRY_PHYSX),
+    '1.000e+15': str(LOD.MEMORY),
+    '2.000e+15': str(LOD.LANDCONTACT),
+    '3.000e+15': str(LOD.ROADWAY),
+    '4.000e+15': str(LOD.PATHS),
+    '5.000e+15': str(LOD.HITPOINTS),
+    '6.000e+15': str(LOD.VIEW_GEOMETRY),
+    '7.000e+15': str(LOD.FIRE_GEOMETRY),
+    '8.000e+15': str(LOD.VIEW_CARGO_GEOMERTRY),
+    '9.000e+15': str(LOD.VIEW_CARGO_FIRE_GEOMETRY),
+    '1.000e+16': str(LOD.VIEW_COMMANDER),
+    '1.100e+16': str(LOD.VIEW_COMMANDER_GEOMETRY),
+    '1.200e+16': str(LOD.VIEW_COMMANDER_FIRE_GEOMETRY),
+    '1.300e+16': str(LOD.VIEW_PILOT_GEOMETRY),
+    '1.400e+16': str(LOD.VIEW_PILOT_FIRE_GEOMETRY),
+    '1.500e+16': str(LOD.VIEW_GUNNER_GEOMETRY),
+    '1.600e+16': str(LOD.VIEW_GUNNER_FIRE_GEOMETRY),
+    '1.700e+16': str(LOD.SUBPARTS),
+    '1.800e+16': str(LOD.SHADOW_VIEW_CARGO),
+    '1.900e+16': str(LOD.SHADOW_VIEW_PILOT),
+    '2.000e+16': str(LOD.SHADOW_VIEW_GUNNER),
+    '2.100e+16': str(LOD.WRECKAGE)
 }
 
 
@@ -136,10 +137,9 @@ def convert_proxy_item(obj, selections, cleanup):
     atbx_props.isArmaObject = False
     atbx_props.namedProps.clear()
     
-    for group in obj.vertex_groups:
-        if not group.name in selections:
-            continue
-        
+    vgroups = [group for group in obj.vertex_groups if group.name in selections]
+    while vgroups:
+        group = vgroups.pop()        
         proxy_data = selections[group.name]
         a3ob_props.proxy_path = proxy_data[0]
         a3ob_props.proxy_index = proxy_data[1]
@@ -204,7 +204,7 @@ def convert_lod_properties(obj, cleanup, logger):
     try:
         a3ob_props.lod = LOD_TYPE_MAPPING[atbx_props.lod]
     except:
-        a3ob_props.lod = '30'
+        a3ob_props.lod = str(LOD.UNKNOWN)
         
     a3ob_props.resolution = math.floor(atbx_props.lodDistance)
     a3ob_props.is_a3_lod = True
@@ -312,10 +312,10 @@ def start_conversion():
     
     objects_lod = []
     if settings.convert_lod:
-        objects_lod = [obj for obj in object_pool if obj.visible_get() and obj.type == 'MESH' and obj.armaObjProps.isArmaObject]
+        objects_lod = [obj for obj in object_pool if obj.visible_get() and obj.type == 'MESH' and hasattr(obj, "armaObjProps") and obj.armaObjProps.isArmaObject]
     objects_dtm = []
     if settings.convert_dtm:
-        objects_dtm = [obj for obj in object_pool if obj.visible_get() and obj.type == 'MESH' and obj.armaHFProps.isHeightfield]
+        objects_dtm = [obj for obj in object_pool if obj.visible_get() and obj.type == 'MESH' and hasattr(obj, "armaHFProps") and obj.armaHFProps.isHeightfield]
 
     objects = [objects_lod, objects_dtm]
 

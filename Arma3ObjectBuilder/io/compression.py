@@ -5,7 +5,8 @@ import struct
 
 
 class LZO_Error(Exception):
-    pass
+    def __str__(self):
+        return "LZO - %s" % super().__str__()
 
 
 # Decompression algorithm for bit streams compressed with the LZO1X algorithm.

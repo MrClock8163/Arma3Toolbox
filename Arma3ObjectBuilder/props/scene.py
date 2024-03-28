@@ -510,6 +510,34 @@ class A3OB_PG_rigging(bpy.types.PropertyGroup):
     )
 
 
+class A3OB_PG_materials_template(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty()
+    path: bpy.props.StringProperty()
+
+
+class A3OB_PG_materials(bpy.types.PropertyGroup):
+    templates: bpy.props.CollectionProperty(type=A3OB_PG_materials_template)
+    templates_index: bpy.props.IntProperty(name="Selection Index", description="")
+    folder: bpy.props.StringProperty(
+        name = "Folder",
+        description = "Source folder of the texture files",
+        subtype = 'DIR_PATH'
+    )
+    basename: bpy.props.StringProperty(
+        name = "Name",
+        description = "Name of the texture set to be processed"
+    )
+    check_files_exist: bpy.props.BoolProperty(
+        name = "Ensure Files Exist",
+        description = "If the textures files do not actually exist on the expected paths, use the default values of the template",
+        default = True
+    )
+    overwrite_existing: bpy.props.BoolProperty(
+        name = "Overwrite",
+        description = "Overwrite the target RVMAT file if it already exists"
+    )
+
+
 classes = (
     A3OB_PG_outliner_proxy,
     A3OB_PG_outliner_lod,
@@ -529,7 +557,9 @@ classes = (
     A3OB_PG_rigging_bone,
     A3OB_PG_rigging_skeleton,
     A3OB_PG_rigging,
-    A3OB_PG_proxy_access
+    A3OB_PG_proxy_access,
+    A3OB_PG_materials_template,
+    A3OB_PG_materials
 )
 
 
@@ -548,11 +578,13 @@ def register():
     bpy.types.Scene.a3ob_rigging = bpy.props.PointerProperty(type=A3OB_PG_rigging)
     bpy.types.Scene.a3ob_colors = bpy.props.PointerProperty(type=A3OB_PG_colors)
     bpy.types.Scene.a3ob_proxy_access = bpy.props.PointerProperty(type=A3OB_PG_proxy_access)
+    bpy.types.Scene.a3ob_materials = bpy.props.PointerProperty(type=A3OB_PG_materials)
     
     print("\t" + "Properties: scene")
     
     
 def unregister():
+    del bpy.types.Scene.a3ob_materials
     del bpy.types.Scene.a3ob_proxy_access
     del bpy.types.Scene.a3ob_colors
     del bpy.types.Scene.a3ob_rigging

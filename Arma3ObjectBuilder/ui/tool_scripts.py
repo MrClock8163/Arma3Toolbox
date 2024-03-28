@@ -15,6 +15,11 @@ scripts = {
         "RTM batch": "import_rtm_batch.py",
         "OFP2_ManSkeleton": "ofp2_manskeleton.py"
     },
+    "rvmat": {
+        "PBR shader (VBS)": "pbr_vbs.rvmat_template",
+        "Super Shader - Cloth": "super_cloth.rvmat_template",
+        "Super Shader - Weapon": "super_weapon.rvmat_template"
+    },
     "misc": {
         "Convert ATBX to A3OB": "convert_atbx_to_a3ob.py",
         "Convert BMTR to plain RTM": "convert_bmtr_to_rtm.py"
@@ -49,6 +54,13 @@ class A3OB_MT_scripts_vertex_groups(bpy.types.Menu):
         add_operators(self.layout, scripts["vertex_groups"])
 
 
+class A3OB_MT_scripts_rvmat(bpy.types.Menu):
+    bl_label = "RVMAT Templates"
+
+    def draw(self, context):
+        add_operators(self.layout, scripts["rvmat"])
+
+
 class A3OB_MT_scripts_misc(bpy.types.Menu):
     bl_label = "Misc"
 
@@ -65,12 +77,14 @@ class A3OB_MT_scripts(bpy.types.Menu):
         layout = self.layout
         layout.menu("A3OB_MT_scripts_import")
         layout.menu("A3OB_MT_scripts_vertex_groups")
+        layout.menu("A3OB_MT_scripts_rvmat")
         layout.menu("A3OB_MT_scripts_misc")
 
 
 classes = (
     A3OB_MT_scripts_import,
     A3OB_MT_scripts_vertex_groups,
+    A3OB_MT_scripts_rvmat,
     A3OB_MT_scripts_misc,
     A3OB_MT_scripts
 )

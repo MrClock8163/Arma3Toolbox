@@ -41,18 +41,18 @@ class A3OB_OP_import_armature(bpy.types.Operator, bpy_extras.io_utils.ImportHelp
     def execute(self, context):
         scene_props = context.scene.a3ob_rigging
         if not utils.is_valid_idx(self.skeleton_index, scene_props.skeletons):
-            self.report({'ERROR'}, "No skeleton was selected")
+            utils.op_report(self, {'ERROR'}, "No skeleton was selected")
             return {'FINISHED'}
         
         skeleton = scene_props.skeletons[self.skeleton_index]
         if riggingutils.bone_order_from_skeleton(skeleton) is None:
-            self.report({'ERROR'}, "Skeleton contains circular references or undefined bone parents, cannot reconstruct armature")
+            utils.op_report(self, {'ERROR'}, "Invalid skeleton definiton, run skeleton validation for RTM for more info")
             return {'FINISHED'}
 
         try:
             arm.import_armature(self, skeleton)
         except Exception as ex:
-            self.report({'ERROR'}, "%s (check the system console)" % str(ex))
+            utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
             traceback.print_exc()
 
         return {'FINISHED'}
