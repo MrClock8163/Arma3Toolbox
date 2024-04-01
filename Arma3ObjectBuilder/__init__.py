@@ -2,7 +2,7 @@ bl_info = {
     "name": "Arma 3 Object Builder",
     "description": "Collection of tools for editing Arma 3 content",
     "author": "MrClock (present add-on), Hans-Joerg \"Alwarren\" Frieden (original ArmaToolbox add-on)",
-    "version": (2, 3, 1),
+    "version": (3, 0, 0, "dev"),
     "blender": (2, 90, 0),
     "location": "Object Builder panels",
     "warning": "Development",
@@ -17,11 +17,13 @@ if "bpy" in locals():
     
     importlib.reload(props)
     importlib.reload(ui)
+    importlib.reload(nodes)
     importlib.reload(flagutils)
 
 else:
     from . import props
     from . import ui
+    from . import nodes
     from .utilities import flags as flagutils
 
 import bpy
@@ -340,7 +342,8 @@ modules = (
     ui.tool_validation,
     ui.tool_rigging,
     ui.tool_utilities,
-    ui.tool_scripts
+    ui.tool_scripts,
+    nodes
 )
 
 

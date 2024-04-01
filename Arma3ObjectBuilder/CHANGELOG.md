@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.0.0 dev (Blender 2.90 -> 4.1)
+
+
 ## [v2.3.1](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.3.1) (Blender 2.90 -> 4.1)
 
 ### Fixed
