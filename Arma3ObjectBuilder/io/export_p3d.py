@@ -371,7 +371,7 @@ def get_lod_data(operator, context, validator, temp_collection):
         # community wiki: https://community.bistudio.com/wiki/Section_Count.
         # Some corrections: https://mrcmodding.gitbook.io/home/documents/sections.
         if operator.sort_sections:
-            sort_sections(obj)
+            sort_sections(main_obj)
         
         for copy, is_valid_copy in zip(main_obj.a3ob_properties_object.copies, is_valid_copies):
             main_obj_copy = duplicate_object(main_obj, temp_collection)
