@@ -185,13 +185,6 @@ class A3OB_PT_export_rtm_frames(bpy.types.Panel):
             layout.prop(operator, "frame_count")
 
 
-        # layout.prop(operator, "clamp")
-        # col = layout.column(align=True)
-        # col.prop(operator, "frame_start")
-        # col.prop(operator, "frame_end")
-        # col.enabled = operator.clamp
-
-
 class A3OB_OP_import_rtm(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     """Import action from Arma 3 RTM"""
 
@@ -363,6 +356,18 @@ classes = (
     A3OB_PT_import_rtm_main,
     A3OB_PT_import_rtm_mapping
 )
+
+if bpy.app.version >= (4, 1, 0):
+    class A3OB_FH_import_rtm(bpy.types.FileHandler):
+        bl_label = "File handler for RTM import"
+        bl_import_operator = "a3ob.import_rtm"
+        bl_file_extensions = ".rtm"
+    
+        @classmethod
+        def poll_drop(cls, context):
+            return context.area and context.area.type == 'VIEW_3D'
+
+    classes = (*classes, A3OB_FH_import_rtm)
 
 
 def menu_func_export(self, context):

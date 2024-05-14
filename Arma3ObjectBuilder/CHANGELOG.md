@@ -1,5 +1,15 @@
 # Changelog
 
+## [v2.3.2](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.3.2) (Blender 2.90 -> 4.1)
+
+### Added
+
+- import-export:
+  - ASC import drag-and-drop support (Blender 4.1 and above)
+  - P3D import drag-and-drop support (Blender 4.1 and above)
+  - RTM import drag-and-drop support (Blender 4.1 and above)
+  - Skeleton import drag-and-drop support (Blender 4.1 and above)
+
 ## [v2.3.1](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.3.1) (Blender 2.90 -> 4.1)
 
 ### Fixed

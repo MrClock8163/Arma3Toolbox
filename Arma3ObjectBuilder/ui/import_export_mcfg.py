@@ -165,6 +165,18 @@ classes = (
     A3OB_PT_export_mcfg_main
 )
 
+if bpy.app.version >= (4, 1, 0):
+    class A3OB_FH_import_mcfg(bpy.types.FileHandler):
+        bl_label = "File handler for MCFG import"
+        bl_import_operator = "a3ob.import_mcfg"
+        bl_file_extensions = ".cfg"
+    
+        @classmethod
+        def poll_drop(cls, context):
+            return context.area and context.area.type == 'VIEW_3D'
+
+    classes = (*classes, A3OB_FH_import_mcfg)
+
 
 def menu_func_import(self, context):
     self.layout.operator(A3OB_OP_import_mcfg.bl_idname, text="Arma 3 skeletons (model.cfg)")

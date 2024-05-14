@@ -199,6 +199,18 @@ classes = (
     A3OB_PT_export_asc_dimensions
 )
 
+if bpy.app.version >= (4, 1, 0):
+    class A3OB_FH_import_asc(bpy.types.FileHandler):
+        bl_label = "File handler for ASC import"
+        bl_import_operator = "a3ob.import_asc"
+        bl_file_extensions = ".asc"
+    
+        @classmethod
+        def poll_drop(cls, context):
+            return context.area and context.area.type == 'VIEW_3D'
+
+    classes = (*classes, A3OB_FH_import_asc)
+
 
 def menu_func_import(self, context):
     self.layout.operator(A3OB_OP_import_asc.bl_idname, text="Esri Grid ASCII (.asc)")
