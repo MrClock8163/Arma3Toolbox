@@ -506,6 +506,18 @@ classes = (
     A3OB_PT_export_p3d_post
 )
 
+if bpy.app.version >= (4, 1, 0):
+    class A3OB_FH_import_p3d(bpy.types.FileHandler):
+        bl_label = "File handler for P3D import"
+        bl_import_operator = "a3ob.import_p3d"
+        bl_file_extensions = ".p3d"
+    
+        @classmethod
+        def poll_drop(cls, context):
+            return context.area and context.area.type == 'VIEW_3D'
+
+    classes = (*classes, A3OB_FH_import_p3d)
+
 
 def menu_func_import(self, context):
     self.layout.operator(A3OB_OP_import_p3d.bl_idname, text="Arma 3 model (.p3d)")
