@@ -118,6 +118,7 @@ class A3OB_OT_proxy_extract(bpy.types.Operator):
     first_lod_only: bpy.props.BoolProperty(default=True)
     translate_selections: bpy.props.BoolProperty()
     cleanup_empty_selections: bpy.props.BoolProperty()
+    sections: bpy.props.EnumProperty(items=(("PRESERVE", "", ""),), default="PRESERVE")
     absolute_paths: bpy.props.BoolProperty(default=True)
     filepath: bpy.props.StringProperty()
     
