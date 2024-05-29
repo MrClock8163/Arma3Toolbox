@@ -1,5 +1,11 @@
 # Changelog
 
+## [v2.3.3](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.3.3) (Blender 2.90 -> 4.1)
+
+### Fixed
+
+- Extract Proxy would fail due to missing internal property
+
 ## [v2.3.2](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.3.2) (Blender 2.90 -> 4.1)
 
 ### Added

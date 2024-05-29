@@ -118,6 +118,7 @@ class A3OB_OT_proxy_extract(bpy.types.Operator):
     first_lod_only: bpy.props.BoolProperty(default=True)
     translate_selections: bpy.props.BoolProperty()
     cleanup_empty_selections: bpy.props.BoolProperty()
+    sections: bpy.props.EnumProperty(items=(("PRESERVE", "", ""),), default="PRESERVE")
     absolute_paths: bpy.props.BoolProperty(default=True)
     filepath: bpy.props.StringProperty()
     
@@ -136,6 +137,11 @@ class A3OB_OT_proxy_extract(bpy.types.Operator):
         with open(self.filepath, "rb") as file:
             try:
                 lod_objects = import_p3d.read_file(self, context, file)
+                imported_object = lod_objects[0]
+                imported_object.matrix_world = proxy_object.matrix_world
+                imported_object.name = os.path.basename(self.filepath)
+                imported_object.data.name = os.path.basename(self.filepath)
+                bpy.data.meshes.remove(proxy_object.data)
                 self.report({'INFO'}, "Successfully extracted proxy (check the logs in the system console)")
             except struct.error as ex:
                 self.report({'ERROR'}, "Unexpected EndOfFile (check the system console)")
@@ -144,12 +150,6 @@ class A3OB_OT_proxy_extract(bpy.types.Operator):
                 self.report({'ERROR'}, "%s (check the system console)" % ex)
                 traceback.print_exc()
         
-        imported_object = lod_objects[0]
-        imported_object.matrix_world = proxy_object.matrix_world
-        imported_object.name = os.path.basename(self.filepath)
-        imported_object.data.name = os.path.basename(self.filepath)
-        bpy.data.meshes.remove(proxy_object.data)
-            
         return {'FINISHED'}
 
 
