@@ -5,7 +5,7 @@ bl_info = {
     "version": (2, 3, 3),
     "blender": (2, 90, 0),
     "location": "Object Builder panels",
-    "warning": "Development",
+    "warning": "",
     "doc_url": "https://mrcmodding.gitbook.io/arma-3-object-builder/home",
     "tracker_url": "https://github.com/MrClock8163/Arma3ObjectBuilder/issues",
     "category": "3D View"
