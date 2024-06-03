@@ -12,6 +12,14 @@ body:
           - you can reproduce the issue
           - you use the latest version of the add-on
         - Learn the difference between a "bug" and a "feature that works differently than I'd like" (you can make a change request for the latter)
+  - type: input
+    id: version_bl
+    attributes:
+      label: Blender version
+      description: What version of Blender are you using?
+      placeholder: eg. v2.90.0
+    validations:
+      required: true
   - type: dropdown
     id: version
     attributes:
@@ -19,7 +27,7 @@ body:
       description: What version of the add-on are you using?
       options:
         - Release
-        - Live codebase
+        - Development (dev-branch live codebase)
     validations:
       required: true
   - type: textarea
