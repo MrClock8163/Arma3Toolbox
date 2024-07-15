@@ -2,6 +2,10 @@
 
 ## [v2.3.5](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.3.5) (Blender 2.90 -> 4.2)
 
+### Added
+
+- autocomplete suggestions for LOD named properties (Blender 3.3 and above)
+
 ### Fixed
 
 - sharp edges data block is no longer exported if no actual sharp edges are detected
