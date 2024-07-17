@@ -5,10 +5,10 @@ type = "add-on"
 id = "Arma3ObjectBuilder"
 name = "Arma 3 Object Builder"
 tagline = "Comprehensive add-on for modding Arma 3"
-version = "2.3.4"
+version = "2.3.5"
 blender_version_min = "4.2.0"
 website = "https://mrcmodding.gitbook.io/arma-3-object-builder/home"
-tags = ["Import-Export", "Game Engine", "3D View"]
+tags = ["Import-Export", "Game Engine", "Object"]
 license = ["SPDX:GPL-3.0-or-later"]
 
 [permissions]
