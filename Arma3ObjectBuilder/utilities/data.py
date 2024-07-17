@@ -757,7 +757,8 @@ common_data = {
         "Weapon: suppressor": r"P:\a3\data_f\proxies\weapon_slots\muzzle.p3d",
         "Weapon: magazine": r"P:\a3\data_f\proxies\weapon_slots\magazineslot.p3d",
         "Weapon: bipod": r"P:\a3\data_f_mark\proxies\weapon_slots\underbarrel.p3d",
-        "Driver: offroad": r"P:\a3\data_f\proxies\passenger_low01\cargo01.p3d",
+        "Driver: offroad": r"P:\a3\data_f\proxies\driver_offroad\driver.p3d",
+        "Passenger: offroad": r"P:\a3\data_f\proxies\passenger_low01\cargo01.p3d",
         "Gunner: hunter": r"P:\a3\data_f\proxies\gunner_hunter\gunner.p3d",
         "Commander: hunter": r"P:\a3\data_f\proxies\gunner_hunter\commander.p3d",
         "Light volume: car": r"P:\a3\data_f\volumelightcar.p3d"

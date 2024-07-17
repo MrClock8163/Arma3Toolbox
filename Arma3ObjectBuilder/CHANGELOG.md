@@ -9,6 +9,7 @@
 ### Fixed
 
 - sharp edges data block is no longer exported if no actual sharp edges are detected
+- `Driver: offroad` common proxy had incorrect path
 
 ## [v2.3.4](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.3.4) (Blender 2.90 -> 4.2)
 
