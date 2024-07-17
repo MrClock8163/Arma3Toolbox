@@ -6,6 +6,9 @@ from ..utilities import proxy as proxyutils
 from ..utilities import flags as flagutils
 
 
+bl_version = bpy.app.version
+
+
 class A3OB_OT_proxy_add(bpy.types.Operator):
     """Add an Arma 3 proxy object and parent to the active object"""
     
@@ -510,9 +513,10 @@ class A3OB_OT_flags_face_clear(bpy.types.Operator):
 class A3OB_UL_namedprops(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         layout.alignment = 'LEFT'
-        layout.prop(item, "name", text="", emboss=False)
+        layout.label(text="", icon='PROPERTIES')
+        layout.prop(item, "name", text="", emboss=bool(bl_version >= (3, 3, 0)))
         layout.label(text="=")
-        layout.prop(item, "value", text="", emboss=False)
+        layout.prop(item, "value", text="", emboss=bool(bl_version >= (3, 3, 0)))
 
 
 class A3OB_UL_lod_copies(bpy.types.UIList):

@@ -494,6 +494,9 @@ def process_tagg_sharp(bm):
     else:
         output.data.edges = [(edge.verts[0].index, edge.verts[1].index) for edge in bm.edges if not edge.smooth and edge.is_contiguous]
 
+    if len(output.data.edges) == 0:
+        output.active = False
+
     return output
 
 
@@ -566,7 +569,8 @@ def process_taggs_selections(obj, bm):
 def process_taggs(obj, bm, logger):
     object_props = obj.a3ob_properties_object
     taggs = [process_tagg_sharp(bm)]
-    logger.log("Collected sharp edges")
+    if taggs[0].active:
+        logger.log("Collected sharp edges")
 
     uv_index = 0
     for layer in bm.loops.layers.uv.values():
@@ -581,7 +585,7 @@ def process_taggs(obj, bm, logger):
     logger.log("Collected named properties")
 
     # Vertex mass should only be exported for the Geometry LOD
-    if object_props.lod == '6':
+    if object_props.lod == str(p3d.P3D_LOD_Resolution.GEOMETRY):
         layer = bm.verts.layers.float.get("a3ob_mass")
         if layer:
             taggs.append(process_tagg_mass(bm, layer))

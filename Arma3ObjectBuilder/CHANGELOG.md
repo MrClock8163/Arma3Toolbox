@@ -1,5 +1,26 @@
 # Changelog
 
+## [v2.3.5](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.3.5) (Blender 2.90 -> 4.2)
+
+### Added
+
+- autocomplete suggestions for LOD named properties (Blender 3.3 and above)
+
+### Fixed
+
+- sharp edges data block is no longer exported if no actual sharp edges are detected
+- `Driver: offroad` common proxy had incorrect path
+
+## v2.3.4 (Blender 2.90 -> 4.2)
+
+### Added
+
+- extension manifest `blender_manifest.toml`
+
+### Changed
+
+- updated internal references for compatibility with **Blender 4.2**+
+
 ## [v2.3.3](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.3.3) (Blender 2.90 -> 4.1)
 
 ### Fixed

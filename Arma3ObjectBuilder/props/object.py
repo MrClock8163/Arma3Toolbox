@@ -10,6 +10,9 @@ from ..utilities import flags as flagutils
 from ..utilities import data
 
 
+bl_version = bpy.app.version
+
+
 def proxy_name_update(self, context):
     if not self.is_a3_proxy:
         return
@@ -20,21 +23,34 @@ def proxy_name_update(self, context):
     obj.data.name = name
 
 
-class A3OB_PG_properties_named_property(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty(
-        name = "Name",
-        description = "Property name",
-        maxlen = 63
-        # search = lambda self, context, edit_text: [item for item in data.known_namedprops if item.lower().startswith(edit_text.lower())],
-        # search_options = {'SORT', 'SUGGESTION'}
-    )
-    value: bpy.props.StringProperty(
-        name = "Value",
-        description = "Property value",
-        maxlen = 63
-        # search = lambda self, context, edit_text: [item for item in data.known_namedprops.get(self.name.lower(), []) if item.startswith(edit_text.lower())],
-        # search_options = {'SORT', 'SUGGESTION'}
-    )
+if bl_version >= (3, 3, 0):
+    class A3OB_PG_properties_named_property(bpy.types.PropertyGroup):
+        name: bpy.props.StringProperty(
+            name = "Name",
+            description = "Property name",
+            maxlen = 63,
+            search = lambda self, context, edit_text: [item for item in data.known_namedprops if item.lower().startswith(edit_text.lower())],
+            search_options = {'SORT', 'SUGGESTION'}
+        )
+        value: bpy.props.StringProperty(
+            name = "Value",
+            description = "Property value",
+            maxlen = 63,
+            search = lambda self, context, edit_text: [item for item in data.known_namedprops.get(self.name.lower(), []) if item.startswith(edit_text.lower())],
+            search_options = {'SORT', 'SUGGESTION'}
+        )
+else:
+    class A3OB_PG_properties_named_property(bpy.types.PropertyGroup):
+        name: bpy.props.StringProperty(
+            name = "Name",
+            description = "Property name",
+            maxlen = 63
+        )
+        value: bpy.props.StringProperty(
+            name = "Value",
+            description = "Property value",
+            maxlen = 63
+        )
 
 
 class A3OB_PG_properties_flag_vertex(bpy.types.PropertyGroup):

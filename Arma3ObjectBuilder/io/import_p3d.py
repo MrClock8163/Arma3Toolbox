@@ -365,7 +365,7 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
         process_materials(operator, mesh, bm, lod, materials, materials_lookup)
         logger.log("Assigned materials")
     
-    if lod_index == 6 and 'MASS' in operator.additional_data:
+    if lod_index == p3d.P3D_LOD_Resolution.GEOMETRY and 'MASS' in operator.additional_data:
         process_mass(bm, lod)
         logger.log("Added vertex masses")
     
