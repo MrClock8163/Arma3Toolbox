@@ -2,7 +2,7 @@ bl_info = {
     "name": "Arma 3 Object Builder",
     "description": "Collection of tools for editing Arma 3 content",
     "author": "MrClock (present add-on), Hans-Joerg \"Alwarren\" Frieden (original ArmaToolbox add-on)",
-    "version": (2, 3, 5),
+    "version": (2, 4, 0, "dev"),
     "blender": (2, 90, 0),
     "location": "Object Builder panels",
     "warning": "",
@@ -339,6 +339,7 @@ modules = (
     ui.tool_proxies,
     ui.tool_validation,
     ui.tool_rigging,
+    ui.tool_maps,
     ui.tool_utilities,
     ui.tool_scripts
 )
