@@ -330,6 +330,7 @@ modules = (
     ui.import_export_rtm,
     ui.import_export_mcfg,
     ui.import_export_armature,
+    ui.import_export_tbcsv,
     ui.import_export_asc,
     ui.tool_outliner,
     ui.tool_mass,
@@ -339,7 +340,6 @@ modules = (
     ui.tool_proxies,
     ui.tool_validation,
     ui.tool_rigging,
-    ui.tool_maps,
     ui.tool_utilities,
     ui.tool_scripts
 )

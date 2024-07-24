@@ -3,12 +3,12 @@ from . import import_export_asc
 from . import import_export_mcfg
 from . import import_export_p3d
 from . import import_export_rtm
+from . import import_export_tbcsv
 from . import props_action
 from . import props_material
 from . import props_object_mesh
 from . import tool_outliner
 from . import tool_hitpoint
-from . import tool_maps
 from . import tool_mass
 from . import tool_materials
 from . import tool_paths

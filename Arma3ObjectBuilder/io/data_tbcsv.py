@@ -66,7 +66,7 @@ class TBCSV_File:
         return output
     
     def write(self, file):
-        writer = csv.writer(file, quoting=csv.QUOTE_STRINGS, delimiter=";")
+        writer = csv.writer(file, quoting=csv.QUOTE_NONNUMERIC, delimiter=";", lineterminator="\n")
         for obj in self.objects:
             writer.writerow(obj.print())
     
