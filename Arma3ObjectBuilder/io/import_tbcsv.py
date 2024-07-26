@@ -13,7 +13,7 @@ def build_matrices(objects):
     
     for obj in objects:
         trans = obj.transform
-        rot = mathutils.Euler([math.radians(angle) for angle in trans.rot], 'XYZ').to_matrix().to_4x4()
+        rot = mathutils.Euler([math.radians(angle) for angle in trans.rot], 'ZXY').to_matrix().to_4x4()
         locrot = rot + mathutils.Matrix.Translation(trans.loc) - mathutils.Matrix.Identity(4)
         mat = locrot @ mathutils.Matrix.Scale(trans.scale, 4)
 

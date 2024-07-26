@@ -12,7 +12,7 @@ def matrix_to_transform(mat):
     trans = tb.TBCSV_Transform()
 
     loc, rot, scale = mat.decompose()
-    yaw, pitch, roll = rot.to_euler('XYZ')
+    yaw, pitch, roll = rot.to_euler('ZXY')
     east, north, elev = loc
 
     trans.loc = (east, north, elev)
