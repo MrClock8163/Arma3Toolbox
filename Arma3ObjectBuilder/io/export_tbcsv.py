@@ -7,6 +7,7 @@ import time
 import math
 
 import bpy
+import mathutils
 
 from . import data_tbcsv as tb
 from ..utilities.logger import ProcessLogger
@@ -33,12 +34,12 @@ def get_object_name(obj, operator):
     return ""
 
 
-def matrix_to_transform(mat):
+def matrix_to_transform(operator, mat):
     trans = tb.TBCSV_Transform()
 
     loc, rot, scale = mat.decompose()
     pitch, roll, yaw = rot.to_euler('ZXY')
-    east, north, elev = loc
+    east, north, elev = (loc + mathutils.Vector((*operator.coord_shift, 0)))
 
     trans.loc = (east, north, elev)
     trans.rot = (math.degrees(-yaw), math.degrees(pitch), math.degrees(roll))
@@ -76,7 +77,7 @@ def write_file(operator, context, file):
             continue
 
         entry = tb.TBCSV_Object(name)
-        entry.transform = matrix_to_transform(obj.matrix_world)
+        entry.transform = matrix_to_transform(operator, obj.matrix_world)
         tbcsv.objects.append(entry)
     
     logger.log("Exported objects: %d" % len(tbcsv.objects))

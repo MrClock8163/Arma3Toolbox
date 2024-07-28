@@ -38,6 +38,13 @@ class A3OB_OP_import_tbcsv(bpy.types.Operator, bpy_extras.io_utils.ImportHelper)
         description = "Remove template objects after the import process finished",
         default = True
     )
+    coord_shift: bpy.props.FloatVectorProperty(
+        name = "Shift",
+        description = "Shift imported coordinate to recenter them in the scene",
+        subtype = 'XYZ',
+        size = 2,
+        default = (-200000, 0)
+    )
     
     def draw(self, context):
         layout = self.layout
@@ -49,6 +56,7 @@ class A3OB_OP_import_tbcsv(bpy.types.Operator, bpy_extras.io_utils.ImportHelper)
             layout.prop(self, "name_prop")
         
         layout.prop(self, "cleanup_templates")
+        layout.prop(self, "coord_shift")
 
     def execute(self, context):
         with open(self.filepath, "rt") as file:
@@ -112,6 +120,13 @@ class A3OB_OP_export_tbcsv(bpy.types.Operator, bpy_extras.io_utils.ExportHelper)
         name = "Name Property",
         description = "Name of the custom string property containing the export name"
     )
+    coord_shift: bpy.props.FloatVectorProperty(
+        name = "Shift",
+        description = "Shift exported coordinates",
+        subtype = 'XYZ',
+        size = 2,
+        default = (200000, 0)
+    )
     
     def draw(self, context):
         layout = self.layout
@@ -125,6 +140,8 @@ class A3OB_OP_export_tbcsv(bpy.types.Operator, bpy_extras.io_utils.ExportHelper)
         layout.prop(self, "name_source")
         if self.name_source == 'PROPERTY':
             layout.prop(self, "name_prop")
+            
+        layout.prop(self, "coord_shift")
 
     def execute(self, context):
         if not self.collection and self.name_source == 'COLLECTION':

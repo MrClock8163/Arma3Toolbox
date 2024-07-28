@@ -13,12 +13,13 @@ from . import data_tbcsv as tb
 from ..utilities.logger import ProcessLogger
 
 
-def object_records(tbcsv):    
+def object_records(operator, tbcsv):    
     for obj in tbcsv.objects:
         trans = obj.transform
         yaw, pitch, roll = trans.rot
         rot = mathutils.Euler([math.radians(angle) for angle in [pitch, roll, -yaw]], 'ZXY').to_matrix().to_4x4()
-        locrot = rot + mathutils.Matrix.Translation(trans.loc) - mathutils.Matrix.Identity(4)
+        loc = mathutils.Vector(trans.loc) + mathutils.Vector((*operator.coord_shift, 0))
+        locrot = rot + mathutils.Matrix.Translation(loc) - mathutils.Matrix.Identity(4)
         mat = locrot @ mathutils.Matrix.Scale(trans.scale, 4)
         yield obj.name, mat
 
@@ -80,10 +81,11 @@ def read_file(operator, context, file):
     logger.log("Needed template objects: %d" % len(template_names))
     templates, unknowns = find_template_objects(context, operator, template_names)
     logger.log("Found template objects: %d" % len(templates))
-    logger.log("No template object found for: %s" % (", ".join(["\"%s\"" % item for item in unknowns])))
+    if len(unknowns) > 0:
+        logger.log("No template object found for: %s" % (", ".join(["\"%s\"" % item for item in unknowns])))
 
     count_found = 0
-    for name, mat in object_records(tbcsv):
+    for name, mat in object_records(operator, tbcsv):
         if spawn_from_template(context, templates, name, mat):
             count_found += 1
 
