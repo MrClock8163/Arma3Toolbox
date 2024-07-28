@@ -1,4 +1,5 @@
-import csv
+# Class structure and read-write methods for handling the object list format
+# used for interoperability with Terrain Builder
 
 
 class TBCSV_Error(Exception):
@@ -16,7 +17,7 @@ class TBCSV_Transform:
         east, north, elev = self.loc
         yaw, pitch, roll = self.rot
 
-        return (east, north, yaw, pitch, roll, self.scale, elev)
+        return ";".join(["%.8f" % value for value in (east, north, yaw, pitch, roll, self.scale, elev)])
 
 
 class TBCSV_Object:
@@ -26,11 +27,15 @@ class TBCSV_Object:
     
     @classmethod
     def parse(cls, data):
-        name, east, north, yaw, pitch, roll, scale, elev = data
+        fields = data.rstrip(";").split(";")
+        if len(fields) != 8:
+            raise TBCSV_Error("Invalid row, unexpected field count: \"%s\"" % data)
+        
+        name, east, north, yaw, pitch, roll, scale, elev = fields
 
         output = cls()
         try:
-            output.name = str(name)
+            output.name = name[1:-1]
             output.transform = TBCSV_Transform((float(east), float(north), float(elev)), (float(yaw), float(pitch), float(roll)), float(scale))
         except Exception as e:
             raise TBCSV_Error(e)
@@ -38,7 +43,7 @@ class TBCSV_Object:
         return output
     
     def print(self):
-        return [self.name, *self.transform.print()]
+        return "\"%s\";%s\n" % (self.name, self.transform.print())
 
 
 class TBCSV_File:
@@ -50,8 +55,10 @@ class TBCSV_File:
     def read(cls, file):
         output = cls()
 
-        for line in csv.reader(file, delimiter=";"):
-            output.objects.append(TBCSV_Object.parse(line))
+        for line in file:
+            if line == "\n":
+                continue
+            output.objects.append(TBCSV_Object.parse(line.strip()))
 
         return output
     
@@ -66,9 +73,8 @@ class TBCSV_File:
         return output
     
     def write(self, file):
-        writer = csv.writer(file, quoting=csv.QUOTE_NONNUMERIC, delimiter=";", lineterminator="\n")
         for obj in self.objects:
-            writer.writerow(obj.print())
+            file.write(obj.print())
     
     def write_file(self, filepath):
         with open(filepath, "wt") as file:

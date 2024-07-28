@@ -1,5 +1,4 @@
 import traceback
-import struct
 
 import bpy
 import bpy_extras
@@ -21,34 +20,44 @@ class A3OB_OP_import_tbcsv(bpy.types.Operator, bpy_extras.io_utils.ImportHelper)
         default = "*.txt",
         options = {'HIDDEN'}
     )
-    targets: bpy.props.EnumProperty(
-        name = "Objects",
-        description = "Scope of objects to set positions on",
+    name_source: bpy.props.EnumProperty(
+        name = "Name Source",
+        description = "Name to match to the imported object names",
         items = (
-            ('ALL', "All", "All objects in the project"),
-            ('SCENE', "Scene", "Objects in active scene"),
-            ('SELECTION', "Selection", "Objects in active selection"),
+            ('OBJECT', "Object", "Import name is the object name without the automatic index suffix (eg.: .001)"),
+            ('PROPERTY', "Property", "Import name is taken from custom string property")
         ),
-        default = 'SCENE'
+        default = 'OBJECT'
     )
-    elevations: bpy.props.EnumProperty(
-        name = "Elevations",
-        description = "Elevation type",
-        items = (
-            ('RELATIVE', "Relative", "Relative to ground level"),
-            ('ABSOLUTE', "Absolute", "Relative to sea level")
-        ),
-        default = 'ABSOLUTE'
+    name_prop: bpy.props.StringProperty(
+        name = "Name Property",
+        description = "Name of the custom string property containing the import name"
+    )
+    cleanup_templates: bpy.props.BoolProperty(
+        name = "Cleanup Templates",
+        description = "Remove template objects after the import process finished",
+        default = True
     )
     
     def draw(self, context):
-        pass
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+
+        layout.prop(self, "name_source")
+        if self.name_source == 'PROPERTY':
+            layout.prop(self, "name_prop")
+        
+        layout.prop(self, "cleanup_templates")
 
     def execute(self, context):
         with open(self.filepath, "rt") as file:
             try:
                 count_read, count_found = import_tbcsv.read_file(self, context, file)
-                utils.op_report(self, {'INFO'}, "Successfully imported %d/%d object positions (check the logs in the system console)" % (count_found, count_read))
+                if count_found > 0:
+                    utils.op_report(self, {'INFO'}, "Successfully imported %d/%d object positions (check the logs in the system console)" % (count_found, count_read))
+                else:
+                    utils.op_report(self, {'WARNING'}, "Could not spawn any objects, template objects were not found (check the logs in the system console)")
             except import_tbcsv.tb.TBCSV_Error as ex:
                 utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
             except Exception as ex:
@@ -56,32 +65,6 @@ class A3OB_OP_import_tbcsv(bpy.types.Operator, bpy_extras.io_utils.ImportHelper)
                 traceback.print_exc()
 
         return {'FINISHED'}
-
-
-class A3OB_PT_import_tbcsv_main(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "Main"
-    bl_parent_id = "FILE_PT_operator"
-    bl_options = {'HIDE_HEADER'}
-    
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-        
-        return operator.bl_idname == "A3OB_OT_import_tbcsv"
-    
-    def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        col = layout.column(align=True)
-        col.prop(operator, "targets", expand=True)
-        layout.prop(operator, "elevations")
 
 
 class A3OB_OP_export_tbcsv(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
@@ -102,8 +85,8 @@ class A3OB_OP_export_tbcsv(bpy.types.Operator, bpy_extras.io_utils.ExportHelper)
         default = "",
     )
     targets: bpy.props.EnumProperty(
-        name = "Objects",
-        description = "Scope of objects to set positions on",
+        name = "Source",
+        description = "Scope of objects to set positions on (NOT APPLICABLE TO COLLECTION EXPORTS!)",
         items = (
             ('ALL', "All", "All objects in the project"),
             ('SCENE', "Scene", "Objects in active scene"),
@@ -111,11 +94,43 @@ class A3OB_OP_export_tbcsv(bpy.types.Operator, bpy_extras.io_utils.ExportHelper)
         ),
         default = 'SCENE'
     )
+    only_lods: bpy.props.BoolProperty(
+        name = "Only LOD Objects",
+        description = "Inlcude only those meshes that are marked as LOD objects"
+    )
+    name_source: bpy.props.EnumProperty(
+        name = "Name Source",
+        description = "Method to determine under what name to export the objects",
+        items = (
+            ('COLLECTION', "Collection", "Export objects with the name of the containing collection (ONLY AVAILABLE ON COLLECTION EXPORTS!)"),
+            ('OBJECT', "Object", "Export name is the object name without the automatic index suffix (eg.: .001)"),
+            ('PROPERTY', "Property", "Export name is taken from custom string property")
+        ),
+        default = 'OBJECT'
+    )
+    name_prop: bpy.props.StringProperty(
+        name = "Name Property",
+        description = "Name of the custom string property containing the export name"
+    )
     
     def draw(self, context):
-        pass
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+
+        col = layout.column(align=True)
+        col.prop(self, "targets", expand=True)
+
+        layout.prop(self, "only_lods")
+        layout.prop(self, "name_source")
+        if self.name_source == 'PROPERTY':
+            layout.prop(self, "name_prop")
 
     def execute(self, context):
+        if not self.collection and self.name_source == 'COLLECTION':
+            utils.op_report(self, {'ERROR'}, "Collection name can only be used when exporting a collection")
+            return {'FINISHED'}
+
         if not utils.OutputManager.can_access_path(self.filepath):
             utils.op_report(self, {'ERROR'}, "Cannot write to target file (file likely in use by another blocking process)")
             return {'FINISHED'}
@@ -124,7 +139,10 @@ class A3OB_OP_export_tbcsv(bpy.types.Operator, bpy_extras.io_utils.ExportHelper)
         with output as file:
             try:
                 count = export_tbcsv.write_file(self, context, file)
-                utils.op_report(self, {'INFO'}, "Successfully exported %d object positions (check the logs in the system console)" % count)
+                if count > 0:
+                    utils.op_report(self, {'INFO'}, "Successfully exported %d object positions (check the logs in the system console)" % count)
+                else:
+                    utils.op_report(self, {'WARNING'}, "Could not export any object positions (check the logs in the system console)")
                 output.success = True
             except import_tbcsv.tb.TBCSV_Error as ex:
                 utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
@@ -135,38 +153,11 @@ class A3OB_OP_export_tbcsv(bpy.types.Operator, bpy_extras.io_utils.ExportHelper)
         return {'FINISHED'}
 
 
-class A3OB_PT_export_tbcsv_main(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "Main"
-    bl_parent_id = "FILE_PT_operator"
-    bl_options = {'HIDE_HEADER'}
-    
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-        
-        return operator.bl_idname == "A3OB_OT_export_tbcsv"
-    
-    def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        col = layout.column(align=True)
-        col.prop(operator, "targets", expand=True)
-
-
-
 classes = (
     A3OB_OP_import_tbcsv,
-    A3OB_PT_import_tbcsv_main,
-    A3OB_OP_export_tbcsv,
-    A3OB_PT_export_tbcsv_main
+    A3OB_OP_export_tbcsv
 )
+
 
 if bpy.app.version >= (4, 1, 0):
     class A3OB_FH_tbcsv(bpy.types.FileHandler):
