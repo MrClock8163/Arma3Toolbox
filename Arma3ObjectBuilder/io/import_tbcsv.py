@@ -67,7 +67,7 @@ def spawn_from_template(context, templates, name, mat):
 
 def cleanup_templates(templates):
     for obj in templates.values():
-        bpy.data.meshes.remove(obj.data)
+        bpy.data.objects.remove(obj)
 
 
 def read_file(operator, context, file):
