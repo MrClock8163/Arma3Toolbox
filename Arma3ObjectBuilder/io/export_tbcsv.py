@@ -39,9 +39,9 @@ def matrix_to_transform(operator, mat):
 
     loc, rot, scale = mat.decompose()
     pitch, roll, yaw = rot.to_euler('ZXY')
-    east, north, elev = (loc + mathutils.Vector((*operator.coord_shift, 0)))
-
-    trans.loc = (east, north, elev)
+    east, north, elev = loc
+    
+    trans.loc = (east + operator.coord_shift[0], north + operator.coord_shift[1], elev)
     trans.rot = (math.degrees(-yaw), math.degrees(pitch), math.degrees(roll))
     trans.scale = math.fsum([comp for comp in scale]) / 3
 

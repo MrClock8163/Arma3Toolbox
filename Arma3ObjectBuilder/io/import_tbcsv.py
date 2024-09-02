@@ -17,8 +17,9 @@ def object_records(operator, tbcsv):
     for obj in tbcsv.objects:
         trans = obj.transform
         yaw, pitch, roll = trans.rot
+        east, north, elev = trans.loc
         rot = mathutils.Euler([math.radians(angle) for angle in [pitch, roll, -yaw]], 'ZXY').to_matrix().to_4x4()
-        loc = mathutils.Vector(trans.loc) + mathutils.Vector((*operator.coord_shift, 0))
+        loc = mathutils.Vector((east + operator.coord_shift[0], north + operator.coord_shift[1], elev))
         locrot = rot + mathutils.Matrix.Translation(loc) - mathutils.Matrix.Identity(4)
         mat = locrot @ mathutils.Matrix.Scale(trans.scale, 4)
         yield obj.name, mat
