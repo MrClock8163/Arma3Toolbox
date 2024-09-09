@@ -7,7 +7,6 @@ import time
 import math
 
 import bpy
-import mathutils
 
 from . import data_tbcsv as tb
 from ..utilities.logger import ProcessLogger
