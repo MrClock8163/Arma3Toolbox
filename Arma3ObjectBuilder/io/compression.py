@@ -22,37 +22,28 @@ def lzo1x_decompress(file, expected):
     output = bytearray()
 
     def check_free_space(length):
-        output_length = len(output)
-        free_space = expected - output_length
+        free_space = expected - len(output)
         if free_space < length:
-            raise LZO_Error("Output overrun (free buffer: %d, match length: %d)" % (expected - output_length, length))
+            raise LZO_Error("Output overrun (free buffer: %d, match length: %d)" % (free_space, length))
 
     def read1():
-        nonlocal file
         return struct.unpack('B', file.read(1))[0]
 
     def read(size):
-        nonlocal file
         return struct.unpack('%dB' % size, file.read(size))
     
     def read_le16():
-        nonlocal file
         return struct.unpack('<H', file.read(2))[0]
     
     def extend(items):
         nonlocal output
         output.extend(items)
-    
-    def append(item):
-        nonlocal output
-        output.append(item)
 
     def copy_literal(length):
         check_free_space(length)
         extend(read(length))
     
     def copy_match(distance, length):
-        nonlocal output
         output_length = len(output)
 
         if output_length < distance:
@@ -63,15 +54,12 @@ def lzo1x_decompress(file, expected):
         # It is valid to have length that is longer than the back pointer distance, which creates a repeating pattern,
         # copying the same bytes that were copied in this same command.
         # For this reason, we cannot simply take a slice of the output at the given point with the given length, as
-        # some of the bytes might not yet be there. We have to copy 1 by 1, like the C implementations.
-        ptr = output_length - distance
-        for i in range(length):
-            append(output[ptr])
-            ptr += 1
+        # some of the bytes might not yet be there. We have to copy in chunks with size of the backpointer distance.
+        start = output_length - distance
+        extend(output[start:] * (length // distance)) # copy as many whole chunks as possible
+        extend(output[start:(start + (length % distance))]) # copy remainder
     
     def get_length(x, mask):
-        nonlocal file
-
         length = x & mask
         if not length:
             while True:
@@ -91,8 +79,25 @@ def lzo1x_decompress(file, expected):
         state = min(4, length)
         x = read1()
     
-    while True:        
-        if x > 127:
+    while True:
+        if x <= 15:
+            if not state:
+                length = 3 + get_length(x, 15)
+                copy_literal(length)
+                state = 4
+            elif state < 4:
+                length = 2
+                state = x & 3
+                distance = (read1() << 2) + (x >> 2) + 1
+                copy_match(distance, length)
+                copy_literal(state)
+            elif state == 4:
+                length = 3
+                state = x & 3
+                distance = (read1() << 2) + (x >> 2) + 2049
+                copy_match(distance, length)
+                copy_literal(state)
+        elif x > 127:
             state = x & 3
             length = 5 + ((x >> 5) & 3)
             distance = (read1() << 3) + ((x >> 2) & 7) + 1
@@ -111,7 +116,7 @@ def lzo1x_decompress(file, expected):
             state = extra & 3
             copy_match(distance, length)
             copy_literal(state)
-        elif x > 15:
+        else:
             length = 2 + get_length(x, 7)
             extra = read_le16()
             distance = 16384 + ((x & 8) << 11) + (extra >> 2)
@@ -124,24 +129,7 @@ def lzo1x_decompress(file, expected):
             
             copy_match(distance, length)
             copy_literal(state)
-        else:
-            if not state:
-                length = 3 + get_length(x, 15)
-                copy_literal(length)
-                state = 4
-            elif state < 4:
-                length = 2
-                state = x & 3
-                distance = (read1() << 2) + (x >> 2) + 1
-                copy_match(distance, length)
-                copy_literal(state)
-            elif state == 4:
-                length = 3
-                state = x & 3
-                distance = (read1() << 2) + (x >> 2) + 2049
-                copy_match(distance, length)
-                copy_literal(state)
-        
+
         x = read1()
 
     if expected - len(output):

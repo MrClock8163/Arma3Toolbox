@@ -1,5 +1,21 @@
 # Changelog
 
+## [v2.4.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.4.0) (Blender 2.90 -> 4.2)
+
+### Added
+
+- import-export:
+  - Terrain Builder object list import
+  - Terrain Builder object list export
+
+### Changed
+
+- LZO1X decompression for BMTR files was improved
+
+### Fixed
+
+- the mandatory part of the LOD validation during export was mistakenly using the Warnings Are Errors setting even if verbose LOD validation was not enabled
+
 ## [v2.3.5](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.3.5) (Blender 2.90 -> 4.2)
 
 ### Added

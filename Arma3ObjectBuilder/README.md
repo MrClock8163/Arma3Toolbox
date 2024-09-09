@@ -20,6 +20,8 @@ The documentation can be found on [GitBook](https://mrcmodding.gitbook.io/arma-3
 The add-on can be installed after either downloading a packaged release, or cloning the repository and manually packing it.
 For information about add-on installation, visit the official [Blender documentation](https://docs.blender.org/manual/en/latest/editors/preferences/addons.html) page about add-ons.
 
+For Blender 4.2 and higher, the add-on can also be installed from the official [Extensions repository](https://extensions.blender.org/add-ons/arma3objectbuilder).
+
 ## License
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
