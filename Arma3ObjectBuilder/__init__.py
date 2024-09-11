@@ -13,18 +13,18 @@ bl_info = {
 
 
 if "bpy" in locals():
-    import importlib
-    
-    importlib.reload(props)
-    importlib.reload(ui)
-    importlib.reload(flagutils)
+    io.reload()
+    props.reload()
+    ui.reload()
+    utilities.reload()
 
-else:
-    from . import props
-    from . import ui
-    from .utilities import flags as flagutils
 
 import bpy
+
+from . import io
+from . import props
+from . import ui
+from . import utilities
 
 
 def outliner_enable_update(self, context):
@@ -124,13 +124,13 @@ class A3OB_OT_prefs_edit_flag_vertex(bpy.types.Operator):
     
     def invoke(self, context, event):
         prefs = context.preferences.addons[__package__].preferences
-        flagutils.set_flag_vertex(self, prefs.flag_vertex)
+        utilities.flags.set_flag_vertex(self, prefs.flag_vertex)
 
         return context.window_manager.invoke_props_dialog(self)
     
     def execute(self, context):
         prefs = context.preferences.addons[__package__].preferences
-        prefs.flag_vertex = flagutils.get_flag_vertex(self)
+        prefs.flag_vertex = utilities.flags.get_flag_vertex(self)
 
         return {'FINISHED'}
 
@@ -176,13 +176,13 @@ class A3OB_OT_prefs_edit_flag_face(bpy.types.Operator):
     
     def invoke(self, context, event):
         prefs = context.preferences.addons[__package__].preferences
-        flagutils.set_flag_face(self, prefs.flag_face)
+        utilities.flags.set_flag_face(self, prefs.flag_face)
 
         return context.window_manager.invoke_props_dialog(self)
     
     def execute(self, context):
         prefs = context.preferences.addons[__package__].preferences
-        prefs.flag_face = flagutils.get_flag_face(self)
+        prefs.flag_face = utilities.flags.get_flag_face(self)
 
         return {'FINISHED'}
 
