@@ -40,12 +40,16 @@ class P3D_TAGG_DataSharpEdges():
     def read(cls, file, length = 0):
         output = cls()
         
-        for i in range(length // 8):
-            point_1, point_2 = binary.read_ulongs(file, 2)
-            
+        count_values = length // 4
+        data = binary.read_ulongs(file, count_values)
+
+        for i in range(0, count_values, 2):
+            point_1 = data[i]
+            point_2 = data[i + 1]
+
             if point_1 == point_2:
                 continue
-            
+
             output.edges.append((point_1, point_2))
         
         return output
@@ -98,8 +102,7 @@ class P3D_TAGG_DataMass():
         return len(self.masses) * 4
     
     def write(self, file):
-        for value in self.masses.values():
-            binary.write_float(file, value)
+        binary.write_float(file, *self.masses.values())
 
 
 class P3D_TAGG_DataUVSet():
@@ -110,10 +113,10 @@ class P3D_TAGG_DataUVSet():
     @classmethod
     def read(cls, file, length = 0):
         output = cls()
-        count_values = (length - 4) // 4
         output.id = binary.read_ulong(file)
+        count_values = (length - 4) // 4
         data = binary.read_floats(file, count_values)
-        output.uvs = {i: (data[i * 2], 1 - data[i * 2 + 1]) for i in range(count_values // 2)}
+        output.uvs = {i // 2: (data[i], 1 - data[i + 1]) for i in range(0, count_values, 2)}
 
         return output
     
@@ -209,17 +212,19 @@ class P3D_TAGG():
         output.name = binary.read_asciiz(file)
         length = binary.read_ulong(file)
         
-        
         if output.name == "#EndOfFile#":
             if length != 0:
                 raise P3D_Error("Invalid EOF")
             
             output.active = False
         elif output.name == "#SharpEdges#":
+            if length % 8 != 0:
+                raise P3D_Error("Invalid sharp edges length: %d" % length)
+            
             output.data = P3D_TAGG_DataSharpEdges.read(file, length)
         elif output.name == "#Property#":
             if length != 128:
-                raise P3D_Error("Invalid name property length: %d" % length)
+                raise P3D_Error("Invalid named property length: %d" % length)
             
             output.data = P3D_TAGG_DataProperty.read(file)
         elif output.name == "#Mass#":
@@ -252,7 +257,7 @@ class P3D_TAGG():
         if not self.name.startswith("proxy:"):
             return False
         
-        regex_proxy = "proxy:.*\.\d+"
+        regex_proxy = r"proxy:.*\.\d+"
         return re.match(regex_proxy, self.name)
     
     def is_selection(self):
@@ -652,7 +657,7 @@ class P3D_LOD():
     def renumber_components(self):
         counter = 1
         for tagg in self.taggs:
-            if not re.match("component\d+", tagg.name, re.IGNORECASE):
+            if not re.match(r"component\d+", tagg.name, re.IGNORECASE):
                 continue
             
             tagg.name = "component%02d" % counter
@@ -665,7 +670,7 @@ class P3D_LOD():
     # they have to be replaced by formatted placeholders and later looked up
     # from a dictionary when needed.
     def proxies_to_placeholders(self):
-        regex_proxy = "proxy:(.*)\.(\d+)"
+        regex_proxy = r"proxy:(.*)\.(\d+)"
 
         lookup = {}
 
