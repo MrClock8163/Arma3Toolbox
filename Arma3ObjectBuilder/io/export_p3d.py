@@ -406,14 +406,14 @@ def process_vertices(bm):
 # {idx 0: (x, y, z), ...: (..., ..., ...), ....}
 # {loop idx 0: normal idx X, loop idx 1: normal idx Y, ...}
 def process_normals(mesh):
-    output = {}
+    output = []
     normals_index = {}
     normals_lookup_dict = {}
     
     for i, normal in computils.mesh_static_normals_iterator(mesh):
         if normal not in normals_index:
             normals_index[normal] = len(normals_index)
-            output[len(output)] = normal
+            output.append(normal)
         
         normals_lookup_dict[i] = normals_index[normal]
 

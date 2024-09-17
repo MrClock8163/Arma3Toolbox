@@ -422,7 +422,7 @@ class P3D_LOD():
         self.resolution = P3D_LOD_Resolution()
 
         self.verts = []
-        self.normals = {}
+        self.normals = []
         self.faces = {}
         self.taggs = []
     
@@ -445,7 +445,7 @@ class P3D_LOD():
         return -x, -y, -z
     
     def read_normals(self, file, count_normals):
-        self.normals = {i: self.read_normal(file) for i in range(count_normals)}
+        self.normals = [self.read_normal(file) for i in range(count_normals)]
     
     @staticmethod
     def read_face(file):
@@ -523,8 +523,8 @@ class P3D_LOD():
         file.write(struct.pack('<fff', -normal[0], -normal[2], -normal[1]))
     
     def write_normals(self, file):
-        for i in self.normals:
-            self.write_normal(file, self.normals[i])
+        for vector in self.normals:
+            self.write_normal(file, vector)
     
     def write_face(self, file, face):
         count_sides = len(face[0])
@@ -576,15 +576,18 @@ class P3D_LOD():
     # which potentially result in a not normalized vector, which causes issues
     # in Blender, so the vectors need to be renormalized before usage.
     def renormalize_normals(self):
-        for i in self.normals:
-            normal = self.normals[i]
+        renormalized = []
+        for normal in self.normals:
             length = math.sqrt(normal[0]**2 + normal[1]**2 + normal[2]**2)
             
             if length == 0:
+                renormalized.append(normal)
                 continue
                 
             coef = 1 / length
-            self.normals[i] = (normal[0] * coef, normal[1] * coef, normal[2] * coef)
+            renormalized.append((normal[0] * coef, normal[1] * coef, normal[2] * coef))
+        
+        self.normals = renormalized
     
     def pydata(self):
         verts = [vert[0:3] for vert in self.verts]
