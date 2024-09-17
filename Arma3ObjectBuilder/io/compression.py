@@ -2,6 +2,8 @@
 
 
 import struct
+from io import BufferedReader
+from collections import Iterable
 
 
 class LZO_Error(Exception):
@@ -16,34 +18,34 @@ class LZO_Error(Exception):
 # https://github.com/FFmpeg/FFmpeg/blob/master/libavutil/lzo.c
 # The original LZO implementations as defined by Markus F.X.J. Oberhumer:
 # https://www.oberhumer.com/opensource/lzo/
-def lzo1x_decompress(file, expected):
+def lzo1x_decompress(file: BufferedReader, expected: int) -> tuple[int, bytearray]:
     state = 0
     start = file.tell()
     output = bytearray()
 
-    def check_free_space(length):
+    def check_free_space(length: int) -> None:
         free_space = expected - len(output)
         if free_space < length:
             raise LZO_Error("Output overrun (free buffer: %d, match length: %d)" % (free_space, length))
 
-    def read1():
+    def read1() -> int:
         return struct.unpack('B', file.read(1))[0]
 
-    def read(size):
+    def read(size: int) -> tuple[int]:
         return struct.unpack('%dB' % size, file.read(size))
     
-    def read_le16():
+    def read_le16() -> int:
         return struct.unpack('<H', file.read(2))[0]
     
-    def extend(items):
+    def extend(items: Iterable[int]) -> None:
         nonlocal output
         output.extend(items)
 
-    def copy_literal(length):
+    def copy_literal(length: int) -> None:
         check_free_space(length)
         extend(read(length))
     
-    def copy_match(distance, length):
+    def copy_match(distance: int, length: int) -> None:
         output_length = len(output)
 
         if output_length < distance:
@@ -59,7 +61,7 @@ def lzo1x_decompress(file, expected):
         extend(output[start:] * (length // distance)) # copy as many whole chunks as possible
         extend(output[start:(start + (length % distance))]) # copy remainder
     
-    def get_length(x, mask):
+    def get_length(x: int, mask: int) -> None:
         length = x & mask
         if not length:
             while True:
