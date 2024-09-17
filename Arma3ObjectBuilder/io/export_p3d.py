@@ -504,13 +504,7 @@ def process_tagg_uvset(bm, layer):
     output = p3d.P3D_TAGG()
     output.name = "#UVSet#"
     output.data = p3d.P3D_TAGG_DataUVSet()
-    uvs = {}
-
-    for face in bm.faces:
-        for loop in face.loops:
-            uvs[loop.index] = (loop[layer].uv[0], loop[layer].uv[1])
-
-    output.data.uvs = dict(sorted(uvs.items()))
+    output.data.uvs = [(loop[layer].uv[0], loop[layer].uv[1]) for face in bm.faces for loop in face.loops]
 
     return output
 

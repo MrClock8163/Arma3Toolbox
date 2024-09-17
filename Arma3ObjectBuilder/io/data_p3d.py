@@ -108,7 +108,7 @@ class P3D_TAGG_DataMass():
 class P3D_TAGG_DataUVSet():
     def __init__(self):
         self.id = 0
-        self.uvs = {}
+        self.uvs = []
     
     @classmethod
     def read(cls, file, length = 0):
@@ -116,7 +116,7 @@ class P3D_TAGG_DataUVSet():
         output.id = binary.read_ulong(file)
         count_values = (length - 4) // 4
         data = binary.read_floats(file, count_values)
-        output.uvs = {i // 2: (data[i], 1 - data[i + 1]) for i in range(0, count_values, 2)}
+        output.uvs = [(data[i], 1 - data[i + 1]) for i in range(0, count_values, 2)]
 
         return output
     
@@ -125,8 +125,8 @@ class P3D_TAGG_DataUVSet():
     
     def write(self, file):
         binary.write_ulong(file, self.id)
-        for value in self.uvs.values():
-            binary.write_float(file, value[0], 1 - value[1])
+        for u, v in self.uvs:
+            binary.write_float(file, u, 1 - v)
 
 
 class P3D_TAGG_DataSelection():
