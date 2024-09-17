@@ -152,6 +152,7 @@ def process_mass(bm, lod):
     for tagg in lod.taggs:
         if tagg.name == "#Mass#":
             data = tagg.data
+            break
     
     if not data:
         return

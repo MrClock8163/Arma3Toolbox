@@ -89,12 +89,12 @@ class P3D_TAGG_DataProperty():
 
 class P3D_TAGG_DataMass():
     def __init__(self):
-        self.masses = {}
+        self.masses = ()
     
     @classmethod
     def read(cls, file, count_verts):
         output = cls()
-        output.masses = {i: value for i, value in enumerate(binary.read_floats(file, count_verts))}
+        output.masses = binary.read_floats(file, count_verts)
         
         return output
     
@@ -102,7 +102,7 @@ class P3D_TAGG_DataMass():
         return len(self.masses) * 4
     
     def write(self, file):
-        binary.write_float(file, *self.masses.values())
+        binary.write_float(file, *self.masses)
 
 
 class P3D_TAGG_DataUVSet():

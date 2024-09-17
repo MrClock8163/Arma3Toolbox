@@ -3,7 +3,6 @@
 
 import struct
 from io import BufferedReader
-from collections import Iterable
 
 
 class LZO_Error(Exception):
@@ -37,7 +36,7 @@ def lzo1x_decompress(file: BufferedReader, expected: int) -> tuple[int, bytearra
     def read_le16() -> int:
         return struct.unpack('<H', file.read(2))[0]
     
-    def extend(items: Iterable[int]) -> None:
+    def extend(items: tuple[int]) -> None:
         nonlocal output
         output.extend(items)
 

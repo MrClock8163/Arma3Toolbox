@@ -530,8 +530,7 @@ def process_tagg_mass(bm, layer):
     output.name = "#Mass#"
     output.data = p3d.P3D_TAGG_DataMass()
 
-    for vert in bm.verts:
-        output.data.masses[vert.index] = vert[layer]
+    output.data.masses = [vert[layer] for vert in bm.verts]
 
     return output
 
