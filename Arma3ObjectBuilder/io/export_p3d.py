@@ -438,7 +438,7 @@ def process_materials(obj, relative):
 # Produce the face data dictionary from the obj and  bmesh data.
 # {face 0: ([vert 0, vert 1, vert 2], [normal 0, normal 1, normal 2], [(uv 0 0, uv 0 1), (...), ...], texture, material, flag), ...}
 def process_faces(obj, bm, normals_lookup, relative):
-    output = {}
+    output = []
     # Materials need to be precompiled to speed up the face access.
     materials = process_materials(obj, relative)
 
@@ -458,7 +458,7 @@ def process_faces(obj, bm, normals_lookup, relative):
             normals.append(normals_lookup[loop.index])
             uvs.append((loop[uv_layer].uv[0], 1 - loop[uv_layer].uv[1]) if uv_layer else (0, 0))
 
-        output[face.index] = [verts, normals, uvs, *materials[face.material_index], face[flag_layer]]
+        output.append([verts, normals, uvs, *materials[face.material_index], face[flag_layer]])
 
     return output
 

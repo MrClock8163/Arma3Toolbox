@@ -423,7 +423,7 @@ class P3D_LOD():
 
         self.verts = []
         self.normals = []
-        self.faces = {}
+        self.faces = []
         self.taggs = []
     
     def __eq__(self, other):
@@ -470,7 +470,7 @@ class P3D_LOD():
         return [vertices, normals, uvs, texture, material, flag]
 
     def read_faces(self, file, count_faces):
-        self.faces = {i: self.read_face(file) for i in range(count_faces)}
+        self.faces = [self.read_face(file) for i in range(count_faces)]
 
     @classmethod
     def read(cls, file):
@@ -541,8 +541,8 @@ class P3D_LOD():
         binary.write_asciiz(file, face[4])
     
     def write_faces(self, file):
-        for i in self.faces:
-            self.write_face(file, self.faces[i])
+        for face in self.faces:
+            self.write_face(file, face)
 
 
     def write(self, file):
@@ -591,7 +591,7 @@ class P3D_LOD():
     
     def pydata(self):
         verts = [vert[0:3] for vert in self.verts]
-        faces = [self.faces[idx][0] for idx in self.faces]
+        faces = [face[0] for face in self.faces]
 
         return verts, [], faces
     
@@ -602,8 +602,7 @@ class P3D_LOD():
     # from the parent MLOD object, so the dictionary is edited in place, not 
     # returned.
     def get_materials(self, materials = {}):
-        for item in self.faces:
-            face = self.faces[item]
+        for face in self.faces:
             texture = face[3]
             material = face[4]
 
@@ -619,8 +618,7 @@ class P3D_LOD():
         last_idx = None
         face_idx = 0
 
-        for i in self.faces:
-            face = self.faces[i]
+        for face in self.faces:
             texture = face[3]
             material = face[4]
             
@@ -642,8 +640,7 @@ class P3D_LOD():
         slot_indices = []
         material_slot_indices = {}
 
-        for i in self.faces:
-            face = self.faces[i]
+        for face in self.faces:
             texture = face[3]
             material = face[4]
 
@@ -709,7 +706,7 @@ class P3D_LOD():
     # of all UVSets, unique by ID. If UVSet 0 is also found as a TAGG, the TAGG
     # data takes precedence over the embedded values.
     def uvsets(self):
-        sets = {0: [uv for idx in self.faces for uv in self.faces[idx][2]]}
+        sets = {0: [uv for face in self.faces for uv in face[2]]}
         for tagg in self.taggs:
             if tagg.name != "#UVSet#":
                 continue
@@ -721,7 +718,7 @@ class P3D_LOD():
     # Generate loop normals list that can be directly used by the Blender API
     # mesh.normals_split_custom_set() function
     def loop_normals(self):
-        return [self.normals[item] for face in self.faces.values() for item in face[1]]
+        return [self.normals[item] for face in self.faces for item in face[1]]
     
     # Collect and group the used vertex flag values for setting up
     # the flag data layer and flag groups object data.
@@ -744,23 +741,22 @@ class P3D_LOD():
     # the flag data layer and flag groups object data.
     def flag_groups_face(self):
         groups = {}
-        values = {}
+        values = []
 
-        for idx in self.faces:
-            flag = self.faces[idx][5]
+        for face in self.faces:
+            flag = face[5]
             group = groups.get(flag)
             if group is None:
                 group = len(groups)
                 groups[flag] = group
             
-            values[idx] = group
+            values.append(group)
 
         return list(groups.keys()), values
     
     # Change every file path, and selection name to lower case for a uniform output.
     def force_lowercase(self):
-        for idx in self.faces:
-            face = self.faces[idx]
+        for face in self.faces:
             face[3] = face[3].lower()
             face[4] = face[4].lower()
         
