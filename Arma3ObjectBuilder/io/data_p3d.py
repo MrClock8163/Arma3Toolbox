@@ -421,7 +421,7 @@ class P3D_LOD():
         self.flags = 0x00000000
         self.resolution = P3D_LOD_Resolution()
 
-        self.verts = {}
+        self.verts = []
         self.normals = {}
         self.faces = {}
         self.taggs = []
@@ -437,7 +437,7 @@ class P3D_LOD():
         return x, y, z, flag
     
     def read_verts(self, file, count_verts):
-        self.verts = {i: self.read_vert(file) for i in range(count_verts)}
+        self.verts = [self.read_vert(file) for i in range(count_verts)]
 
     @staticmethod
     def read_normal(file):
@@ -516,8 +516,8 @@ class P3D_LOD():
         file.write(struct.pack('<fffI', vert[0], vert[2], vert[1], vert[3]))
     
     def write_verts(self, file):
-        for i in self.verts:
-            self.write_vert(file, self.verts[i])
+        for vert in self.verts:
+            self.write_vert(file, vert)
     
     def write_normal(self, file, normal):
         file.write(struct.pack('<fff', -normal[0], -normal[2], -normal[1]))
@@ -587,7 +587,7 @@ class P3D_LOD():
             self.normals[i] = (normal[0] * coef, normal[1] * coef, normal[2] * coef)
     
     def pydata(self):
-        verts = [self.verts[i][0:3] for i in self.verts]
+        verts = [vert[0:3] for vert in self.verts]
         faces = [self.faces[idx][0] for idx in self.faces]
 
         return verts, [], faces
@@ -724,16 +724,16 @@ class P3D_LOD():
     # the flag data layer and flag groups object data.
     def flag_groups_vertex(self):
         groups = {}
-        values = {}
+        values = []
 
-        for idx in self.verts:
-            flag = self.verts[idx][3]
+        for vert in self.verts:
+            flag = vert[3]
             group = groups.get(flag)
             if group is None:
                 group = len(groups)
                 groups[flag] = group
             
-            values[idx] = group
+            values.append(group)
         
         return list(groups.keys()), values
     

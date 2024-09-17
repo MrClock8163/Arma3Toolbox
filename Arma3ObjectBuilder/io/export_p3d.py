@@ -393,15 +393,10 @@ def get_lod_data(operator, context, validator, temp_collection):
     return lod_list
 
 
-# Produce the vertex dictionary from the bmesh data.
-# {idx 0: (x, y, z, flag), ...: (..., ..., ..., ...), ...}
+# Produce the vertex list from the bmesh data.
 def process_vertices(bm):
     layer = flagutils.get_layer_flags_vertex(bm)
-
-    output = {}
-
-    for vert in bm.verts:
-        output[vert.index] = (*vert.co, vert[layer])
+    output = [(*vert.co, vert[layer]) for vert in bm.verts]
 
     return output
 
