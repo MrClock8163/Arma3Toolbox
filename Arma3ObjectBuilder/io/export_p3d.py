@@ -540,7 +540,7 @@ def process_taggs_selections(obj, bm):
 
     for vert in bm.verts:
         for idx in vert[layer].keys():
-            output[idx].data.weight_verts[vert.index] = vert[layer][idx]
+            output[idx].data.weight_verts.append((vert.index, vert[layer][idx]))
     
     # If all vertices of a face belong to a selection, then the face belongs to the 
     # selection as well.
@@ -549,7 +549,7 @@ def process_taggs_selections(obj, bm):
         unique = set(indices)
         for idx in unique:
             if indices.count(idx) == len(face.loops):
-                output[idx].data.weight_faces[face.index] = 1
+                output[idx].data.weight_faces.append((face.index, 1))
 
     return output.values()
 

@@ -133,8 +133,8 @@ class P3D_TAGG_DataSelection():
     def __init__(self):
         self.count_verts = 0
         self.count_faces = 0
-        self.weight_verts = {}
-        self.weight_faces = {}
+        self.weight_verts = []
+        self.weight_faces = []
     
     @classmethod
     def decode_weight(cls, weight):
@@ -169,7 +169,7 @@ class P3D_TAGG_DataSelection():
         
         data_verts = bytearray(file.read(count_verts))
 
-        output.weight_verts = {i: cls.decode_weight(value) for i, value in enumerate(data_verts) if value > 0}
+        output.weight_verts = [(i, cls.decode_weight(value)) for i, value in enumerate(data_verts) if value > 0]
         file.read(count_faces)
 
         return output
@@ -179,12 +179,12 @@ class P3D_TAGG_DataSelection():
     
     def write(self, file):        
         bytes_verts = bytearray(self.count_verts)
-        for idx in self.weight_verts:
-            bytes_verts[idx] = self.encode_weight(self.weight_verts[idx])
+        for idx, weight in self.weight_verts:
+            bytes_verts[idx] = self.encode_weight(weight)
         
         bytes_faces = bytearray(self.count_faces)
-        for idx in self.weight_faces:
-            bytes_faces[idx] = self.encode_weight(self.weight_faces[idx])
+        for idx, weight in self.weight_faces:
+            bytes_faces[idx] = self.encode_weight(weight)
         
         file.write(bytes_verts)
         file.write(bytes_faces)
