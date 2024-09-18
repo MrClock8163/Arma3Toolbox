@@ -138,25 +138,17 @@ class P3D_TAGG_DataSelection():
     
     @classmethod
     def decode_weight(cls, weight):
-        if weight == 0 or weight == 1:
+        if weight in (0, 1):
             return weight
-            
-        value = (256 - weight) / 255
         
-        if value > 1:
-            return 0
-            
-        return value
+        return (255 - weight) / 254
     
     @classmethod
     def encode_weight(cls, weight):
-        if weight == 0 or weight == 1:
+        if weight in (0, 1):
             return int(weight)
             
-        value = round(256 - 255 * weight)
-        
-        if value == 256:
-            return 0
+        value = round(255 - 254 * weight)
             
         return value
     
@@ -168,9 +160,10 @@ class P3D_TAGG_DataSelection():
         output.count_faces = count_faces
         
         data_verts = bytearray(file.read(count_verts))
-
         output.weight_verts = [(i, cls.decode_weight(value)) for i, value in enumerate(data_verts) if value > 0]
         file.read(count_faces)
+        # data_faces = bytearray(file.read(count_faces))
+        # output.weight_faces = [(i, cls.decode_weight(value)) for i, value in enumerate(data_faces) if value > 0]
 
         return output
     
