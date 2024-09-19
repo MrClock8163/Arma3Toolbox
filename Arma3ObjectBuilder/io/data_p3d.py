@@ -7,7 +7,6 @@
 import struct
 import math
 import re
-from decimal import Decimal, Context
 
 from . import binary_handler as binary
 
@@ -274,7 +273,7 @@ class P3D_LOD_Resolution():
     HITPOINTS = 13
     VIEW_GEOMETRY = 14
     FIRE_GEOMETRY = 15
-    VIEW_CARGO_GEOMERTRY = 16
+    VIEW_CARGO_GEOMETRY = 16
     VIEW_CARGO_FIRE_GEOMETRY = 17
     VIEW_COMMANDER = 18
     VIEW_COMMANDER_GEOMETRY = 19
@@ -288,57 +287,47 @@ class P3D_LOD_Resolution():
     SHADOW_VIEW_PILOT = 27
     SHADOW_VIEW_GUNNER = 28
     WRECKAGE = 29
-    UNDERGROUND = 30 # Geometry PhysX Old for Arma 3
+    UNDERGROUND = 30
     GROUNDLAYER = 31
     NAVIGATION = 32
-    # SHADOWBUFFER = ...
     UNKNOWN = -1
 
-    INDEX_MAP = {
-        (0.0, 0): VISUAL, # Visual
-        (1.0, 3): VIEW_GUNNER, # View Gunner
-        (1.1, 3): VIEW_PILOT, # View Pilot
-        (1.2, 3): VIEW_CARGO, # View Cargo
-        (1.0, 4): SHADOW, # Shadow
-        # (1.1, 4): SHADOWBUFFER,
-        (1.3, 4): GROUNDLAYER, # GroundLayer (VBS)
-        (2.0, 4): EDIT, # Edit
-        (1.0, 13): GEOMETRY, # Geometry
-        (2.0, 13): GEOMETRY_BUOY, # Geometry Buoyancy
-        (3.0, 13): UNDERGROUND, # Underground (VBS), Geometry PhysX (old) for Arma 3
-        (4.0, 13): GEOMETRY_PHYSX, # Geometry PhysX
-        (5.0, 13): NAVIGATION, # Navigation (VBS)
-        (1.0, 15): MEMORY, # Memory
-        (2.0, 15): LANDCONTACT, # Land Contact
-        (3.0, 15): ROADWAY, # Roadway
-        (4.0, 15): PATHS, # Paths
-        (5.0, 15): HITPOINTS, # Hit Points
-        (6.0, 15): VIEW_GEOMETRY, # View Geometry
-        (7.0, 15): FIRE_GEOMETRY, # Fire Geometry
-        (8.0, 15): VIEW_CARGO_GEOMERTRY, # View Cargo Geometry
-        (9.0, 15): VIEW_CARGO_FIRE_GEOMETRY, # View Cargo Fire Geometry
-        (1.0, 16): VIEW_COMMANDER, # View Commander
-        (1.1, 16): VIEW_COMMANDER_GEOMETRY, # View Commander Geometry
-        (1.2, 16): VIEW_COMMANDER_FIRE_GEOMETRY, # View Commander Fire Geometry
-        (1.3, 16): VIEW_PILOT_GEOMETRY, # View Pilot Geometry
-        (1.4, 16): VIEW_PILOT_FIRE_GEOMETRY, # View Pilot Fire Geometry
-        (1.5, 16): VIEW_GUNNER_GEOMETRY, # View Gunner Geometry
-        (1.6, 16): VIEW_GUNNER_FIRE_GEOMETRY, # View Gunner Fire Geometry
-        (1.7, 16): SUBPARTS, # Sub Parts
-        (1.8, 16): SHADOW_VIEW_CARGO, # Cargo View Shadow Volume
-        (1.9, 16): SHADOW_VIEW_PILOT, # Pilot View Shadow Volume
-        (2.0, 16): SHADOW_VIEW_GUNNER, # Gunner View Shadow Volume
-        (2.1, 16): WRECKAGE, # Wreckage
-        (-1.0, 0): UNKNOWN # Unknown
-    }
-
-    RESOLUTION_POS = { # decimal places in normalized format
-        VIEW_CARGO: 3,
-        SHADOW: 4,
-        # SHADOWBUFFER: 4,
-        EDIT: 4,
-        VIEW_CARGO_GEOMERTRY: 2,
-        SHADOW_VIEW_CARGO: 3
+    SIGNATURE_MAP = {
+        # "0.000e+00": VISUAL, # (+ resolution)
+        "1.000e+03": VIEW_GUNNER,
+        "1.100e+03": VIEW_PILOT,
+        # "1.200e+03": VIEW_CARGO, # (+ resolution)
+        # "1.000e+04": SHADOW, # (+ resolution)
+        # "1.100e+04": SHADOWBUFFER,
+        "1.300e+04": GROUNDLAYER, # Shadow Volume 3000 for Arma 3
+        # "2.000e+04": EDIT, # (+ resolution)
+        "1.000e+13": GEOMETRY,
+        "2.000e+13": GEOMETRY_BUOY,
+        "3.000e+13": UNDERGROUND, # Geometry PhysX (old) for Arma 3
+        "4.000e+13": GEOMETRY_PHYSX,
+        "5.000e+13": NAVIGATION, # Resolution 5e13 for Arma 3
+        "1.000e+15": MEMORY,
+        "2.000e+15": LANDCONTACT,
+        "3.000e+15": ROADWAY,
+        "4.000e+15": PATHS,
+        "5.000e+15": HITPOINTS,
+        "6.000e+15": VIEW_GEOMETRY,
+        "7.000e+15": FIRE_GEOMETRY,
+        # "8.000e+15": VIEW_CARGO_GEOMETRY, (+ resolution * 1e13)
+        "9.000e+15": VIEW_CARGO_FIRE_GEOMETRY,
+        "1.000e+16": VIEW_COMMANDER,
+        "1.100e+16": VIEW_COMMANDER_GEOMETRY,
+        "1.200e+16": VIEW_COMMANDER_FIRE_GEOMETRY,
+        "1.300e+16": VIEW_PILOT_GEOMETRY,
+        "1.400e+16": VIEW_PILOT_FIRE_GEOMETRY,
+        "1.500e+16": VIEW_GUNNER_GEOMETRY,
+        "1.600e+16": VIEW_GUNNER_FIRE_GEOMETRY,
+        "1.700e+16": SUBPARTS,
+        # "1.800e+16": SHADOW_VIEW_CARGO, # (+ resolution * 1e13)
+        "1.900e+16": SHADOW_VIEW_PILOT,
+        "2.000e+16": SHADOW_VIEW_GUNNER,
+        "2.100e+16": WRECKAGE,
+        # (-1.0, 0): UNKNOWN
     }
 
     def __init__(self, lod = 0, res = 0):
@@ -354,40 +343,49 @@ class P3D_LOD_Resolution():
 
     @classmethod
     def encode(cls, lod, resolution):
-        if lod == cls.VISUAL or lod == cls.UNKNOWN:
-            return resolution 
+        if lod in (cls.VISUAL, cls.UNKNOWN):
+            return resolution
         
-        lookup = {v: k for k, v in cls.INDEX_MAP.items()}
-
-        coef, exp = lookup[lod]
-        pos = cls.RESOLUTION_POS.get(lod, None)
-
-        resolution_sign = (resolution * 10**(exp - pos)) if pos is not None else 0
+        lookup = {v: k for k, v in cls.SIGNATURE_MAP.items()}
+        signature = lookup.get(lod)
+        if signature is not None:
+            return float(signature)
         
-        return coef * 10**exp + resolution_sign
-
+        if lod == cls.VIEW_CARGO:
+            return 1.2e3 + resolution
+        elif lod == cls.SHADOW:
+            return 1.0e4 + resolution
+        elif lod == cls.EDIT:
+            return 2.0e4 + resolution
+        elif lod == cls.VIEW_CARGO_GEOMETRY:
+            return 8.0e15 + resolution * 1e13
+        elif lod == cls.SHADOW_VIEW_CARGO:
+            return 1.8e16 + resolution * 1e13
+    
     @classmethod
     def decode(cls, signature):
         if signature < 1e3:
             return cls.VISUAL, round(signature)
-        elif 1e4 <= signature < 1.2e4:
+        elif 1.2e3 <= signature < 1.3e3:
+            return cls.VIEW_CARGO, round(signature - 1.2e3)
+        elif 1.0e4 <= signature < 1.2e4:
             return cls.SHADOW, round(signature - 1e4)
+        elif 2e4 <= signature < 3e4:
+            return cls.EDIT, round(signature - 2e4)
         
-        num = Decimal(signature)
-        exp = num.normalize(Context(2)).adjusted()
-        
-        coef = float((num / 10**exp))
-        base = round(coef, 1) if exp in (3, 4, 16) else round(coef)
+        string = "%.3e" % signature
+        lod = cls.SIGNATURE_MAP.get(string)
+        if lod is not None:
+            return lod, 0
 
-        lod = cls.INDEX_MAP.get((base, exp), cls.UNKNOWN)
-        pos = cls.RESOLUTION_POS.get(lod, None)
+        exp = int(string[-2:])
+        if exp == 15:
+            return cls.VIEW_CARGO_GEOMETRY, int(string[2:4])
+        elif exp == 16:
+            return cls.SHADOW_VIEW_CARGO, int(string[2:5])
 
-        if lod == cls.UNKNOWN:
-            return lod, round(signature)
-
-        resolution = int(round((coef - base) * 10**pos, pos)) if pos is not None else 0
-        
-        return lod, resolution
+        print(signature, string)
+        return cls.UNKNOWN, round(signature)
     
     @classmethod
     def from_float(cls, value):

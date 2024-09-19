@@ -719,7 +719,7 @@ class Validator():
                     str(LOD.GEOMETRY_PHYSX),
                     str(LOD.VIEW_GEOMETRY),
                     str(LOD.FIRE_GEOMETRY),
-                    str(LOD.VIEW_CARGO_GEOMERTRY),
+                    str(LOD.VIEW_CARGO_GEOMETRY),
                     str(LOD.VIEW_CARGO_FIRE_GEOMETRY),
                     str(LOD.VIEW_COMMANDER_GEOMETRY),
                     str(LOD.VIEW_COMMANDER_FIRE_GEOMETRY),
