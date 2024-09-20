@@ -21,7 +21,7 @@ class P3D_Error(Exception):
 class P3D_TAGG_DataEmpty():
     @classmethod
     def read(cls, file, length):
-        file.read(length)
+        file.seek(length, 1)
         return cls()
     
     def length(self):
@@ -160,7 +160,7 @@ class P3D_TAGG_DataSelection():
         
         data_verts = bytearray(file.read(count_verts))
         output.weight_verts = [(i, cls.decode_weight(value)) for i, value in enumerate(data_verts) if value > 0]
-        file.read(count_faces)
+        file.seek(count_faces, 1) # skip face selection data
         # data_faces = bytearray(file.read(count_faces))
         # output.weight_faces = [(i, cls.decode_weight(value)) for i, value in enumerate(data_faces) if value > 0]
 
@@ -223,11 +223,10 @@ class P3D_TAGG():
             output.data = P3D_TAGG_DataMass.read(file, count_verts)
         elif output.name == "#UVSet#":
             output.data = P3D_TAGG_DataUVSet.read(file, length)
-        elif not output.name.startswith("#") and not output.name.endswith("#"):
+        elif output.is_selection():
             output.data = P3D_TAGG_DataSelection.read(file, count_verts, count_faces)
         else:
-            # Consume unneeded TAGGs
-            file.read(length)
+            file.seek(length, 1) # Skip unneeded TAGG data
             output.active = False
         
         return output
@@ -452,7 +451,7 @@ class P3D_LOD():
             uvs.append((u, 1 - v))
 
         if count_sides < 4:
-            file.read(16)
+            file.seek(16, 1)
         
         flag = binary.read_ulong(file)
         texture = binary.read_asciiz(file)
