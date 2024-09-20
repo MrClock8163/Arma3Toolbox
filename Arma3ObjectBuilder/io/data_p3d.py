@@ -753,6 +753,9 @@ class P3D_LOD():
         for tagg in self.taggs:
             if tagg.is_selection():
                 tagg.name = tagg.name.lower()
+            elif type(tagg.data) is P3D_TAGG_DataProperty:
+                tagg.data.key = tagg.data.key.lower()
+                tagg.data.value = tagg.data.value.lower()
 
 
 class P3D_MLOD():
