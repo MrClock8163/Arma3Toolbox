@@ -122,8 +122,8 @@ def process_selections(bm, lod):
             continue
         
         weights = tagg.data.weight_verts
-        for idx in weights:
-            bm.verts[idx][layer][count_selections] = weights[idx]
+        for idx, weight in weights:
+            bm.verts[idx][layer][count_selections] = weight
 
         count_selections += 1
         
@@ -152,6 +152,7 @@ def process_mass(bm, lod):
     for tagg in lod.taggs:
         if tagg.name == "#Mass#":
             data = tagg.data
+            break
     
     if not data:
         return

@@ -71,9 +71,8 @@ lod_has_resolution = {
     LOD.VISUAL,
     LOD.VIEW_CARGO,
     LOD.SHADOW,
-    # LOD.SHADOWBUFFER,
     LOD.EDIT,
-    LOD.VIEW_CARGO_GEOMERTRY,
+    LOD.VIEW_CARGO_GEOMETRY,
     LOD.SHADOW_VIEW_CARGO
 }
 
@@ -90,7 +89,6 @@ lod_visuals = {
 
 lod_shadows = {
     LOD.SHADOW,
-    # LOD.SHADOWBUFFER,
     LOD.SHADOW_VIEW_CARGO,
     LOD.SHADOW_VIEW_PILOT,
     LOD.SHADOW_VIEW_GUNNER
@@ -103,7 +101,7 @@ lod_geometries = {
     LOD.GEOMETRY_PHYSX,
     LOD.VIEW_GEOMETRY,
     LOD.FIRE_GEOMETRY,
-    LOD.VIEW_CARGO_GEOMERTRY,
+    LOD.VIEW_CARGO_GEOMETRY,
     LOD.VIEW_CARGO_FIRE_GEOMETRY,
     LOD.VIEW_COMMANDER_GEOMETRY,
     LOD.VIEW_COMMANDER_FIRE_GEOMETRY,
@@ -127,7 +125,6 @@ lod_info = {
     LOD.VIEW_PILOT: ("View - Pilot", "First person view"),
     LOD.VIEW_CARGO: ("View - Cargo", "Passenger first person view"),
     LOD.SHADOW: ("Shadow Volume", "Shadow casting geometry"),
-    # LOD.SHADOWBUFFER: ("Shadow Buffer", "Shadow buffer geometry"),
     LOD.EDIT: ("Edit", "Temporary layer"),
     LOD.GEOMETRY: ("Geometry", "Object collision geometry and occluders"),
     LOD.GEOMETRY_BUOY: ("Geometry Buoyancy", "Buoyant object geometry (Displacement for VBS)"),
@@ -139,7 +136,7 @@ lod_info = {
     LOD.HITPOINTS: ("Hit-points", "Hit point cloud"),
     LOD.VIEW_GEOMETRY: ("View Geometry", "View occlusion for AI"),
     LOD.FIRE_GEOMETRY: ("Fire Geometry", "Hitbox geometry"),
-    LOD.VIEW_CARGO_GEOMERTRY: ("View - Cargo Geometry", "Passenger view collision geometry and occluders"),
+    LOD.VIEW_CARGO_GEOMETRY: ("View - Cargo Geometry", "Passenger view collision geometry and occluders"),
     LOD.VIEW_CARGO_FIRE_GEOMETRY: ("View - Cargo Fire Geometry", "Passenger view hitbox geometry"),
     LOD.VIEW_COMMANDER: ("View - Commander", "Commander first person view"),
     LOD.VIEW_COMMANDER_GEOMETRY: ("View - Commander Geometry", "Commander view collision geometry and occluders"),
@@ -174,7 +171,6 @@ lod_groups_type = {
     **dict.fromkeys(
         [
             LOD.SHADOW,
-            # LOD.SHADOWBUFFER,
             LOD.SHADOW_VIEW_CARGO,
             LOD.SHADOW_VIEW_PILOT,
             LOD.SHADOW_VIEW_GUNNER
@@ -188,7 +184,7 @@ lod_groups_type = {
             LOD.GEOMETRY_PHYSX,
             LOD.VIEW_GEOMETRY,
             LOD.FIRE_GEOMETRY,
-            LOD.VIEW_CARGO_GEOMERTRY,
+            LOD.VIEW_CARGO_GEOMETRY,
             LOD.VIEW_CARGO_FIRE_GEOMETRY,
             LOD.VIEW_COMMANDER_GEOMETRY,
             LOD.VIEW_COMMANDER_FIRE_GEOMETRY,
@@ -236,7 +232,7 @@ lod_groups_context = {
             LOD.VIEW_GUNNER,
             LOD.VIEW_PILOT,
             LOD.VIEW_CARGO,
-            LOD.VIEW_CARGO_GEOMERTRY,
+            LOD.VIEW_CARGO_GEOMETRY,
             LOD.VIEW_CARGO_FIRE_GEOMETRY,
             LOD.VIEW_COMMANDER,
             LOD.VIEW_COMMANDER_GEOMETRY,
@@ -254,7 +250,6 @@ lod_groups_context = {
     **dict.fromkeys(
         [
             LOD.SHADOW,
-            # LOD.SHADOWBUFFER,
             LOD.GEOMETRY
         ],
         "General"
