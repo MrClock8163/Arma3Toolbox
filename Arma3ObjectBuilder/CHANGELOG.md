@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.4.1-dev (Blender 2.90 -> 4.2)
+
+### Changes
+
+- internal handling of the P3D data was simplified and improved
+- named properties are now properly lowercased with the Force Lowercase export option
+
 ## [v2.4.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.4.0) (Blender 2.90 -> 4.2)
 
 ### Added
