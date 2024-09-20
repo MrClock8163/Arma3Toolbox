@@ -382,7 +382,7 @@ class P3D_LOD_Resolution():
         if exp == 15:
             return cls.VIEW_CARGO_GEOMETRY, int(string[2:4])
         elif exp == 16:
-            return cls.SHADOW_VIEW_CARGO, int(string[2:5])
+            return cls.SHADOW_VIEW_CARGO, int(string[3:5])
 
         print(signature, string)
         return cls.UNKNOWN, round(signature)
