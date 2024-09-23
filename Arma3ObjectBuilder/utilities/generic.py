@@ -9,6 +9,7 @@ import bpy
 import bpy_extras.mesh_utils as meshutils
 import bmesh
 
+from ..io import ExportFileHandler
 from .. import __package__ as addon_name
 from . import data
 
@@ -47,6 +48,14 @@ def strip_extension(path):
 
 def get_addon_preferences():
     return bpy.context.preferences.addons[addon_name].preferences
+
+
+def get_export_handler(filepath, mode):
+    addon_prefs = get_addon_preferences()
+    backup = addon_prefs.create_backups
+    preserve = addon_prefs.preserve_faulty_output
+
+    return ExportFileHandler(filepath, mode, backup, preserve)
 
 
 def is_valid_idx(index, subscriptable):

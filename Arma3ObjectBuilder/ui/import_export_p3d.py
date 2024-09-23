@@ -1,10 +1,7 @@
-import traceback
-import struct
-
 import bpy
 import bpy_extras
 
-from ..io import import_p3d, export_p3d, ExportFile
+from ..io import import_p3d, export_p3d
 from ..utilities import generic as utils
 
 
@@ -324,12 +321,9 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             utils.op_report(self, {'ERROR'}, "There are no LODs to export")
             return {'FINISHED'}
         
-        addon_prefs = utils.get_addon_preferences()
-        backup = addon_prefs.create_backups
-        preserve = addon_prefs.preserve_faulty_output
         temp_collection = export_p3d.create_temp_collection(context)
 
-        with ExportFile(self.filepath, "wb", backup, preserve) as file:
+        with utils.get_export_handler(self.filepath, "wb") as file:
             lod_count, exported_count = export_p3d.write_file(self, context, file, temp_collection)
             if lod_count == exported_count:
                 utils.op_report(self, {'INFO'}, "Successfully exported all %d LODs (check the logs in the system console)" % exported_count)

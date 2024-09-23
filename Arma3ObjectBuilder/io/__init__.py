@@ -21,7 +21,7 @@ from . import import_rtm
 from . import import_tbcsv
 
 
-class ExportFile():
+class ExportFileHandler():
     def __init__(self, filepath, mode, backup, preserve_faulty):
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         self.filepath = filepath
