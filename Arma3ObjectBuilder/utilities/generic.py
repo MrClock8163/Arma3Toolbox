@@ -3,7 +3,6 @@
 
 import os
 import json
-from datetime import datetime
 from contextlib import contextmanager
 
 import bpy
@@ -96,55 +95,6 @@ def query_bmesh(obj):
             yield bm
         finally:
             bm.free()
-
-
-class OutputManager():
-    def __init__(self, filepath, mode = "w"):
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        self.filepath = filepath
-        self.temppath = "%s.%s.temp" % (filepath, timestamp)
-        self.backup = "%s.%s.bak" % (filepath, timestamp)
-        self.mode = mode
-        self.file = None
-        self.success = False
-
-    def __enter__(self):
-        file = open(self.temppath, self.mode)
-        self.file = file
-
-        return file
-
-    def __exit__(self, exc_type, exc_value, exc_tb):
-        self.file.close()
-        addon_prefs = get_addon_preferences()
-
-        if self.success:
-            if os.path.isfile(self.filepath) and addon_prefs.create_backups:
-                self.force_rename(self.filepath, self.filepath + ".bak")
-
-            self.force_rename(self.temppath, self.filepath)
-        
-        elif not addon_prefs.preserve_faulty_output:
-            os.remove(self.temppath)
-        
-        return False
-    
-    @staticmethod
-    def force_rename(old, new):
-        if os.path.isfile(new):
-            os.remove(new)
-        
-        os.rename(old, new)
-    
-    # Very dirty check, but works for now
-    @staticmethod
-    def can_access_path(path):
-        try:
-            open(path, "ab").close()
-            os.rename(path, path)
-            return True
-        except:
-            return False
 
 
 def get_loose_components(obj):
