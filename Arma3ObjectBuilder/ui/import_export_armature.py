@@ -1,5 +1,3 @@
-import traceback
-
 import bpy
 import bpy_extras
 
@@ -49,11 +47,7 @@ class A3OB_OP_import_armature(bpy.types.Operator, bpy_extras.io_utils.ImportHelp
             utils.op_report(self, {'ERROR'}, "Invalid skeleton definiton, run skeleton validation for RTM for more info")
             return {'FINISHED'}
 
-        try:
-            arm.import_armature(self, skeleton)
-        except Exception as ex:
-            utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
-            traceback.print_exc()
+        arm.import_armature(self, skeleton)
 
         return {'FINISHED'}
 
