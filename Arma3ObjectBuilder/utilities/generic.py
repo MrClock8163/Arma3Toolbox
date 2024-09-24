@@ -9,7 +9,7 @@ import bpy
 import bpy_extras.mesh_utils as meshutils
 import bmesh
 
-from ..io import ExportFileHandler
+from ..io.file_handler import ExportFileHandler
 from .. import __package__ as addon_name
 from . import data
 

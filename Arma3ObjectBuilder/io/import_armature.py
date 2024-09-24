@@ -6,7 +6,6 @@ import bpy
 from mathutils import Vector
 
 from . import data_p3d
-from . import import_mcfg as mcfg
 from ..utilities.logger import ProcessLogger
 
 
@@ -31,7 +30,7 @@ def extract_pivot_coords(lod):
         if len(data.weight_verts) < 1:
             continue
 
-        vert_idx = list(data.weight_verts.keys())[0]
+        vert_idx = data.weight_verts[0][0]
         vert_co = lod.verts[vert_idx][0:3]
 
         pivot_points[tagg.name.lower()] = Vector(vert_co)
