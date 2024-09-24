@@ -732,7 +732,7 @@ ofp2_manskeleton = {
 
 def get_rvmat_templates():
     import os
-    from ..utilities.generic import get_addon_directory
+    from .. import get_addon_directory
 
     template_dir = os.path.join(get_addon_directory(), "scripts")
 

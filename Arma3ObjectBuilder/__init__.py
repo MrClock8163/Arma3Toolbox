@@ -12,14 +12,24 @@ bl_info = {
 }
 
 
+import os
+
 if "bpy" in locals():
     io.reload()
     props.reload()
     ui.reload()
     utilities.reload()
 
-
 import bpy
+
+
+def get_addon_preferences():
+    return bpy.context.preferences.addons[__package__].preferences
+
+
+def get_addon_directory():
+    return os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
+
 
 from . import io
 from . import props

@@ -9,8 +9,8 @@ import bpy
 import bpy_extras.mesh_utils as meshutils
 import bmesh
 
+from .. import get_addon_preferences
 from ..io.file_handler import ExportFileHandler
-from .. import __package__ as addon_name
 from . import data
 
 
@@ -44,10 +44,6 @@ def abspath(path):
 
 def strip_extension(path):
     return os.path.splitext(path)[0]
-
-
-def get_addon_preferences():
-    return bpy.context.preferences.addons[addon_name].preferences
 
 
 def get_export_handler(filepath, mode):
@@ -233,10 +229,6 @@ def format_path(path, root = "", to_relative = True, extension = True):
         path = strip_extension(path)
         
     return path
-
-
-def get_addon_directory():
-    return os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 
 
 def get_cfg_convert():

@@ -3,6 +3,7 @@ import os
 import bpy
 from bpy.app.handlers import persistent
 
+from .. import get_addon_preferences
 from ..utilities import generic as utils
 from ..utilities import masses as massutils
 from ..utilities import lod as lodutils
@@ -255,7 +256,7 @@ class A3OB_PG_properties_object_proxy(bpy.types.PropertyGroup):
     )
     
     def to_placeholder(self, relative):
-        addon_prefs = utils.get_addon_preferences()
+        addon_prefs = get_addon_preferences()
 
         path = utils.format_path(utils.abspath(self.proxy_path), utils.abspath(addon_prefs.project_root), relative, False)
         if relative and len(path) > 0 and path[0] != "\\":
