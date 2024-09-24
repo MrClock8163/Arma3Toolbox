@@ -141,7 +141,7 @@ class A3OB_OP_export_tbcsv(bpy.types.Operator, bpy_extras.io_utils.ExportHelper)
             utils.op_report(self, {'ERROR'}, "Collection name can only be used when exporting a collection")
             return {'FINISHED'}
         
-        with utils.get_export_handler(self.filepath, "wt") as file:
+        with utils.ExportFileHandler(self.filepath, "wt") as file:
             count = export_tbcsv.write_file(self, context, file)
 
         if count > 0:

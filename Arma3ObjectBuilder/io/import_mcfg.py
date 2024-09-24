@@ -6,6 +6,7 @@ import os
 import tempfile
 import subprocess
 
+from .. import get_addon_preferences
 from . import data_rap as rap
 from ..utilities import generic as utils
 from ..utilities.logger import ProcessLogger
@@ -30,6 +31,10 @@ class Bone():
         self.parent = self.parent.lower()
 
         return self
+
+
+def get_cfg_convert():
+    return os.path.join(get_addon_preferences().a3_tools, "cfgconvert/cfgconvert.exe")
 
 
 # The model.cfg reading is dependent on the import_rap module,
@@ -60,7 +65,7 @@ def cfgconvert(filepath, exepath):
 
 # Derapify the previously converted model.cfg.
 def read_mcfg(filepath):
-    exepath = utils.get_cfg_convert()
+    exepath = get_cfg_convert()
     if not os.path.isfile(exepath):
         return None
 

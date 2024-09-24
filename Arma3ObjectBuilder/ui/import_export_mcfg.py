@@ -34,7 +34,7 @@ class A3OB_OP_import_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
     @classmethod
     def poll(cls, context):
-        return os.path.isfile(utils.get_cfg_convert())
+        return os.path.isfile(import_mcfg.get_cfg_convert())
 
     def draw(self, context):
         pass
@@ -110,7 +110,7 @@ class A3OB_OP_export_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             utils.op_report(self, {'ERROR'}, "Invalid skeleton definiton, run skeleton validation for more info")
             return {'FINISHED'}
         
-        with utils.get_export_handler(self.filepath, "w") as file:
+        with utils.ExportFileHandler(self.filepath, "w") as file:
             export_mcfg.write_file(self, skeleton, file)
 
         return {'FINISHED'}

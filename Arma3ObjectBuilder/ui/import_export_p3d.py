@@ -323,7 +323,7 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         
         temp_collection = export_p3d.create_temp_collection(context)
 
-        with utils.get_export_handler(self.filepath, "wb") as file:
+        with utils.ExportFileHandler(self.filepath, "wb") as file:
             lod_count, exported_count = export_p3d.write_file(self, context, file, temp_collection)
             if lod_count == exported_count:
                 utils.op_report(self, {'INFO'}, "Successfully exported all %d LODs (check the logs in the system console)" % exported_count)

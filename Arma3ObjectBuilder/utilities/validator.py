@@ -7,7 +7,7 @@ import math
 import bmesh
 import bpy
 
-from ..io.data_p3d import P3D_LOD_Resolution as LOD
+from .data import LOD
 
 
 class ValidatorResult():

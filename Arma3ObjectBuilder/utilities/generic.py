@@ -4,28 +4,14 @@
 import os
 import json
 from contextlib import contextmanager
+from datetime import datetime
 
 import bpy
 import bpy_extras.mesh_utils as meshutils
 import bmesh
 
 from .. import get_addon_preferences
-from ..io.file_handler import ExportFileHandler
 from . import data
-
-
-def print_context():
-    print("=======================")
-    for attr in dir(bpy.context):
-        print(attr, eval('bpy.context.%s' %  attr))
-    print("=======================")
-
-
-def show_info_box(message, title = "", icon = 'INFO'):
-    def draw(self, context):
-        self.layout.label(text=message)
-        
-    bpy.context.window_manager.popup_menu(draw, title=title, icon=icon)
 
 
 # For some reason, not all operator reports are printed to the console. The behavior seems to be context dependent,
@@ -40,18 +26,6 @@ def abspath(path):
         return path
     
     return os.path.abspath(bpy.path.abspath(path))
-
-
-def strip_extension(path):
-    return os.path.splitext(path)[0]
-
-
-def get_export_handler(filepath, mode):
-    addon_prefs = get_addon_preferences()
-    backup = addon_prefs.create_backups
-    preserve = addon_prefs.preserve_faulty_output
-
-    return ExportFileHandler(filepath, mode, backup, preserve)
 
 
 def is_valid_idx(index, subscriptable):
@@ -226,13 +200,9 @@ def format_path(path, root = "", to_relative = True, extension = True):
         path = make_relative(path, root)
         
     if not extension:
-        path = strip_extension(path)
+        path = os.path.splitext(path)[0]
         
     return path
-
-
-def get_cfg_convert():
-    return os.path.join(get_addon_preferences().a3_tools, "cfgconvert/cfgconvert.exe")
 
 
 def load_common_data(scene):
@@ -273,24 +243,38 @@ def get_icon(name):
     return icon
 
 
-def register_icons():
-    import bpy.utils.previews
-    
-    themes_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../icons"))
-    for theme in os.listdir(themes_dir):
-        theme_icons = bpy.utils.previews.new()
-        
-        icons_dir = os.path.join(themes_dir, theme)
-        for filename in os.listdir(icons_dir):
-            theme_icons.load(os.path.splitext(os.path.basename(filename))[0].lower(), os.path.join(icons_dir, filename), 'IMAGE')
-        
-        preview_collection[theme.lower()] = theme_icons
-    
+class ExportFileHandler():
+    def __init__(self, filepath, mode):
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        self.filepath = filepath
+        self.temppath = "%s.%s.temp" % (filepath, timestamp)
+        self.mode = mode
+        self.file = None
+        addon_pref = get_addon_preferences()
+        self.backup_old = addon_pref.create_backups
+        self.preserve_faulty = addon_pref.preserve_faulty_output
 
-def unregister_icons():
-    import bpy.utils.previews
+    def __enter__(self):
+        file = open(self.temppath, self.mode)
+        self.file = file
+
+        return file
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.file.close()
+
+        if exc_type is None:
+            if os.path.isfile(self.filepath) and self.backup_old:
+                self.force_rename(self.filepath, self.filepath + ".bak")
+
+            self.force_rename(self.temppath, self.filepath)
+        
+        elif not self.preserve_faulty:
+            os.remove(self.temppath)
     
-    for icon in preview_collection.values():
-        bpy.utils.previews.remove(icon)
-    
-    preview_collection.clear()
+    @staticmethod
+    def force_rename(old, new):
+        if os.path.isfile(new):
+            os.remove(new)
+        
+        os.rename(old, new)

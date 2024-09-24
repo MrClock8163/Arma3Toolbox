@@ -5,9 +5,9 @@ from . import scene
 
 
 def reload():
-    import importlib
+    from importlib import reload
 
-    importlib.reload(action)
-    importlib.reload(material)
-    importlib.reload(object)
-    importlib.reload(scene)
+    reload(action)
+    reload(material)
+    reload(object)
+    reload(scene)

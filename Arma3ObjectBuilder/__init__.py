@@ -15,10 +15,10 @@ bl_info = {
 import os
 
 if "bpy" in locals():
+    utilities.reload()
     io.reload()
     props.reload()
     ui.reload()
-    utilities.reload()
 
 import bpy
 
@@ -28,13 +28,13 @@ def get_addon_preferences():
 
 
 def get_addon_directory():
-    return os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
+    return os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
 
 
+from . import utilities
 from . import io
 from . import props
 from . import ui
-from . import utilities
 
 
 def outliner_enable_update(self, context):
@@ -355,9 +355,31 @@ modules = (
 )
 
 
+def register_icons():
+    import bpy.utils.previews
+    
+    themes_dir = os.path.abspath(os.path.join(get_addon_directory(), "icons"))
+    for theme in os.listdir(themes_dir):
+        theme_icons = bpy.utils.previews.new()
+        
+        icons_dir = os.path.join(themes_dir, theme)
+        for filename in os.listdir(icons_dir):
+            theme_icons.load(os.path.splitext(os.path.basename(filename))[0].lower(), os.path.join(icons_dir, filename), 'IMAGE')
+        
+        utilities.generic.preview_collection[theme.lower()] = theme_icons
+    
+
+def unregister_icons():
+    import bpy.utils.previews
+    
+    for icon in utilities.generic.preview_collection.values():
+        bpy.utils.previews.remove(icon)
+    
+    utilities.generic.preview_collection.clear()
+
+
 def register():
     from bpy.utils import register_class
-    from .utilities import generic
         
     print("Registering Arma 3 Object Builder ( '" + __package__ + "' )")
     
@@ -367,18 +389,17 @@ def register():
     for mod in modules:
         mod.register()
     
-    generic.register_icons()
+    register_icons()
     
     print("Register done")
 
 
 def unregister():
     from bpy.utils import unregister_class
-    from .utilities import generic
 
     print("Unregistering Arma 3 Object Builder ( '" + __package__ + "' )")
     
-    generic.unregister_icons()
+    unregister_icons()
     
     for mod in reversed(modules):
         mod.unregister()
