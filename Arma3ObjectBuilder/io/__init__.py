@@ -1,5 +1,6 @@
 from . import binary_handler
 from . import compression
+from . import file_handler
 from . import data_asc
 from . import data_p3d
 from . import data_rap
@@ -23,6 +24,7 @@ def reload():
 
     importlib.reload(binary_handler)
     importlib.reload(compression)
+    importlib.reload(file_handler)
     importlib.reload(data_asc)
     importlib.reload(data_p3d)
     importlib.reload(data_rap)

@@ -1,5 +1,3 @@
-import traceback
-
 import bpy
 import bpy_extras
 
@@ -60,17 +58,12 @@ class A3OB_OP_import_tbcsv(bpy.types.Operator, bpy_extras.io_utils.ImportHelper)
 
     def execute(self, context):
         with open(self.filepath, "rt") as file:
-            try:
-                count_read, count_found = import_tbcsv.read_file(self, context, file)
-                if count_found > 0:
-                    utils.op_report(self, {'INFO'}, "Successfully imported %d/%d object positions (check the logs in the system console)" % (count_found, count_read))
-                else:
-                    utils.op_report(self, {'WARNING'}, "Could not spawn any objects, template objects were not found (check the logs in the system console)")
-            except import_tbcsv.tb.TBCSV_Error as ex:
-                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
-            except Exception as ex:
-                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
-                traceback.print_exc()
+            count_read, count_found = import_tbcsv.read_file(self, context, file)
+
+        if count_found > 0:
+            utils.op_report(self, {'INFO'}, "Successfully imported %d/%d object positions (check the logs in the system console)" % (count_found, count_read))
+        else:
+            utils.op_report(self, {'WARNING'}, "Could not spawn any objects, template objects were not found (check the logs in the system console)")
 
         return {'FINISHED'}
 
@@ -147,25 +140,14 @@ class A3OB_OP_export_tbcsv(bpy.types.Operator, bpy_extras.io_utils.ExportHelper)
         if not self.collection and self.name_source == 'COLLECTION':
             utils.op_report(self, {'ERROR'}, "Collection name can only be used when exporting a collection")
             return {'FINISHED'}
-
-        if not utils.OutputManager.can_access_path(self.filepath):
-            utils.op_report(self, {'ERROR'}, "Cannot write to target file (file likely in use by another blocking process)")
-            return {'FINISHED'}
         
-        output = utils.OutputManager(self.filepath, "wt")
-        with output as file:
-            try:
-                count = export_tbcsv.write_file(self, context, file)
-                if count > 0:
-                    utils.op_report(self, {'INFO'}, "Successfully exported %d object positions (check the logs in the system console)" % count)
-                else:
-                    utils.op_report(self, {'WARNING'}, "Could not export any object positions (check the logs in the system console)")
-                output.success = True
-            except import_tbcsv.tb.TBCSV_Error as ex:
-                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
-            except Exception as ex:
-                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
-                traceback.print_exc()
+        with utils.get_export_handler(self.filepath, "wt") as file:
+            count = export_tbcsv.write_file(self, context, file)
+
+        if count > 0:
+            utils.op_report(self, {'INFO'}, "Successfully exported %d object positions (check the logs in the system console)" % count)
+        else:
+            utils.op_report(self, {'WARNING'}, "Could not export any object positions (check the logs in the system console)")
 
         return {'FINISHED'}
 
