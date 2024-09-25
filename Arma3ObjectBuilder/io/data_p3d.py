@@ -416,36 +416,40 @@ class P3D_LOD():
         self.faces = []
         self.taggs = []
     
+    struct_vert = struct.Struct('<fffI')
+    struct_normal = struct.Struct('<fff')
+    struct_face = struct.Struct('<IIff')
+    
     def __eq__(self, other):
         return type(other) is type(self) and other.resolution == self.resolution
     
     # Reading
 
-    @staticmethod
-    def read_vert(file):
-        x, z, y, flag = struct.unpack('<fffI', file.read(16))
+    @classmethod
+    def read_vert(cls, file):
+        x, z, y, flag = cls.struct_vert.unpack(file.read(16))
         return x, y, z, flag
     
     def read_verts(self, file, count_verts):
         self.verts = [self.read_vert(file) for i in range(count_verts)]
 
-    @staticmethod
-    def read_normal(file):
-        x, z, y = struct.unpack('<fff', file.read(12))
+    @classmethod
+    def read_normal(cls, file):
+        x, z, y = cls.struct_normal.unpack(file.read(12))
         return -x, -y, -z
     
     def read_normals(self, file, count_normals):
         self.normals = [self.read_normal(file) for i in range(count_normals)]
     
-    @staticmethod
-    def read_face(file):
+    @classmethod
+    def read_face(cls, file):
         count_sides = binary.read_ulong(file)
         vertices = []
         normals = []
         uvs = []
 
         for i in range(count_sides):
-            vert, norm, u, v = struct.unpack('<IIff', file.read(16))
+            vert, norm, u, v = cls.struct_face.unpack(file.read(16))
             vertices.append(vert)
             normals.append(norm)
             uvs.append((u, 1 - v))
@@ -503,14 +507,14 @@ class P3D_LOD():
     # Writing
     
     def write_vert(self, file, vert):
-        file.write(struct.pack('<fffI', vert[0], vert[2], vert[1], vert[3]))
+        file.write(self.struct_vert.pack(vert[0], vert[2], vert[1], vert[3]))
     
     def write_verts(self, file):
         for vert in self.verts:
             self.write_vert(file, vert)
     
     def write_normal(self, file, normal):
-        file.write(struct.pack('<fff', -normal[0], -normal[2], -normal[1]))
+        file.write(self.struct_normal.pack(-normal[0], -normal[2], -normal[1]))
     
     def write_normals(self, file):
         for vector in self.normals:
@@ -521,7 +525,7 @@ class P3D_LOD():
         binary.write_ulong(file, count_sides)
 
         for i in range(count_sides):
-            file.write(struct.pack('<IIff', face[0][i], face[1][i], face[2][i][0], face[2][i][1]))
+            file.write(self.struct_face.pack(face[0][i], face[1][i], face[2][i][0], face[2][i][1]))
         
         if count_sides < 4:
             file.write(bytearray(16))
