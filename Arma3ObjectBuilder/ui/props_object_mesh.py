@@ -1,6 +1,6 @@
 import bpy
 
-from .. import get_addon_preferences
+from .. import AddonInfo
 from ..utilities import generic as utils
 from ..utilities import data
 from ..utilities import proxy as proxyutils
@@ -270,7 +270,7 @@ class A3OB_OT_flags_vertex_add(bpy.types.Operator):
         flag_props = obj.a3ob_properties_object_flags
         item = flag_props.vertex.add()
         item.name = "New Flag Group"
-        item.set_flag(get_addon_preferences().flag_vertex)
+        item.set_flag(AddonInfo.prefs.flag_vertex)
         flag_props.vertex_index = len(flag_props.vertex) - 1
         
         return {'FINISHED'}
@@ -399,7 +399,7 @@ class A3OB_OT_flags_face_add(bpy.types.Operator):
         flag_props = obj.a3ob_properties_object_flags
         item = flag_props.face.add()
         item.name = "New Flag Group"
-        item.set_flag(get_addon_preferences().flag_face)
+        item.set_flag(AddonInfo.prefs.flag_face)
         flag_props.face_index = len(flag_props.face) - 1
         
         return {'FINISHED'}

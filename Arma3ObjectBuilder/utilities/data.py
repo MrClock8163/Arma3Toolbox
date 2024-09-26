@@ -766,9 +766,9 @@ ofp2_manskeleton = {
 
 def get_rvmat_templates():
     import os
-    from .. import get_addon_directory
+    from .. import AddonInfo
 
-    template_dir = os.path.join(get_addon_directory(), "scripts")
+    template_dir = os.path.join(AddonInfo.dir, "scripts")
 
     templates = {
         "PBR (VBS)": os.path.join(template_dir, "pbr_vbs.rvmat_template"),

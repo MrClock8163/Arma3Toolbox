@@ -6,7 +6,7 @@ import os
 import tempfile
 import subprocess
 
-from .. import get_addon_preferences
+from .. import AddonInfo
 from . import data_rap as rap
 from ..utilities import generic as utils
 from ..utilities.logger import ProcessLogger
@@ -34,7 +34,7 @@ class Bone():
 
 
 def get_cfg_convert():
-    return os.path.join(get_addon_preferences().a3_tools, "cfgconvert/cfgconvert.exe")
+    return os.path.join(AddonInfo.prefs.a3_tools, "cfgconvert/cfgconvert.exe")
 
 
 # The model.cfg reading is dependent on the import_rap module,

@@ -10,7 +10,7 @@ import bpy
 import bpy_extras.mesh_utils as meshutils
 import bmesh
 
-from .. import get_addon_preferences
+from .. import AddonInfo
 from . import data
 
 
@@ -33,7 +33,7 @@ def is_valid_idx(index, subscriptable):
 
 
 def draw_panel_header(panel):
-    if not get_addon_preferences().show_info_links:
+    if not AddonInfo.prefs.show_info_links:
         return
         
     row = panel.layout.row(align=True)
@@ -161,7 +161,7 @@ def replace_slashes(path):
 # Attempt to restore absolute paths to the set project root (P drive by default).
 def restore_absolute(path, extension = ""):
     path = replace_slashes(path.strip().lower())
-    addon_prefs = get_addon_preferences()
+    addon_prefs = AddonInfo.prefs
     
     if path == "":
         return ""
@@ -206,7 +206,7 @@ def format_path(path, root = "", to_relative = True, extension = True):
 
 
 def load_common_data(scene):
-    prefs = get_addon_preferences()
+    prefs = AddonInfo.prefs
     custom_path = abspath(prefs.custom_data)
     builtin = data.common_data
     json_data = {}
@@ -236,7 +236,7 @@ preview_collection = {}
 def get_icon(name):
     icon = 0
     try:
-        icon = preview_collection[get_addon_preferences().icon_theme.lower()][name].icon_id
+        icon = preview_collection[AddonInfo.prefs.icon_theme.lower()][name].icon_id
     except:
         pass
         
@@ -250,7 +250,7 @@ class ExportFileHandler():
         self.temppath = "%s.%s.temp" % (filepath, timestamp)
         self.mode = mode
         self.file = None
-        addon_pref = get_addon_preferences()
+        addon_pref = AddonInfo.prefs
         self.backup_old = addon_pref.create_backups
         self.preserve_faulty = addon_pref.preserve_faulty_output
 

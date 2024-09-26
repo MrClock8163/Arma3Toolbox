@@ -23,12 +23,9 @@ if "bpy" in locals():
 import bpy
 
 
-def get_addon_preferences():
-    return bpy.context.preferences.addons[__package__].preferences
-
-
-def get_addon_directory():
-    return os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
+class AddonInfo:
+    prefs = None
+    dir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
 
 
 from . import utilities
@@ -62,8 +59,7 @@ class A3OB_OT_prefs_find_a3_tools(bpy.types.Operator):
             from winreg import OpenKey, QueryValueEx, HKEY_CURRENT_USER
             key = OpenKey(HKEY_CURRENT_USER, r"software\bohemia interactive\arma 3 tools")
             value, _type = QueryValueEx(key, "path")
-            prefs = context.preferences.addons[__package__].preferences
-            prefs.a3_tools = value
+            AddonInfo.prefs.a3_tools = value
             
         except Exception:
             self.report({'ERROR'}, "The Arma 3 Tools installation could not be found, it has to be set manually")
@@ -358,7 +354,7 @@ modules = (
 def register_icons():
     import bpy.utils.previews
     
-    themes_dir = os.path.abspath(os.path.join(get_addon_directory(), "icons"))
+    themes_dir = os.path.abspath(os.path.join(AddonInfo.dir, "icons"))
     for theme in os.listdir(themes_dir):
         theme_icons = bpy.utils.previews.new()
         
@@ -380,17 +376,19 @@ def unregister_icons():
 
 def register():
     from bpy.utils import register_class
-        
+    
     print("Registering Arma 3 Object Builder ( '" + __package__ + "' )")
     
     for cls in classes:
         register_class(cls)
     
+    AddonInfo.prefs = bpy.context.preferences.addons[__package__].preferences
+    
     for mod in modules:
         mod.register()
     
     register_icons()
-    
+
     print("Register done")
 
 

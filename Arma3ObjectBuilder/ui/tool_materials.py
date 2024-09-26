@@ -2,7 +2,7 @@ import os
 
 import bpy
 
-from .. import get_addon_preferences
+from .. import AddonInfo
 from ..utilities import generic as utils
 from ..utilities import materials as matutils
 
@@ -28,7 +28,7 @@ class A3OB_OT_materials_templates_generate(bpy.types.Operator):
 
         path = scene_props.templates[scene_props.templates_index].path
         template = matutils.RVMATTemplate(path)
-        success = template.write_output(get_addon_preferences().project_root, scene_props.folder, scene_props.basename, scene_props.check_files_exist)
+        success = template.write_output(AddonInfo.prefs.project_root, scene_props.folder, scene_props.basename, scene_props.check_files_exist)
 
         if success:
             self.report({'INFO'}, "Successfully generated %s.rvmat" % scene_props.basename)
