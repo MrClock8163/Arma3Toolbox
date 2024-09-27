@@ -1,6 +1,7 @@
 import bpy
 from bpy.app.handlers import persistent
 
+from .. import AddonInfo
 from ..utilities import generic as utils
 from ..utilities import outliner as linerutils
 
@@ -108,7 +109,7 @@ class A3OB_PT_outliner(bpy.types.Panel):
     
     @classmethod
     def poll(cls, context):
-        return utils.get_addon_preferences().outliner == 'ENABLED'
+        return AddonInfo.prefs.outliner == 'ENABLED'
     
     def draw_header(self, context):
         utils.draw_panel_header(self)
@@ -176,7 +177,7 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     
-    if utils.get_addon_preferences().outliner == 'ENABLED':
+    if AddonInfo.prefs.outliner == 'ENABLED':
         bpy.app.handlers.depsgraph_update_post.append(depsgraph_update_post_handler)
     
     print("\t" + "UI: Outliner")

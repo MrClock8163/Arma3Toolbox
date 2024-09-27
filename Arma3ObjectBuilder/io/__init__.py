@@ -1,6 +1,5 @@
 from . import binary_handler
 from . import compression
-from . import file_handler
 from . import data_asc
 from . import data_p3d
 from . import data_rap
@@ -20,24 +19,23 @@ from . import import_tbcsv
 
 
 def reload():
-    import importlib
+    from importlib import reload
 
-    importlib.reload(binary_handler)
-    importlib.reload(compression)
-    importlib.reload(file_handler)
-    importlib.reload(data_asc)
-    importlib.reload(data_p3d)
-    importlib.reload(data_rap)
-    importlib.reload(data_rtm)
-    importlib.reload(data_tbcsv)
-    importlib.reload(export_asc)
-    importlib.reload(export_mcfg)
-    importlib.reload(export_p3d)
-    importlib.reload(export_rtm)
-    importlib.reload(export_tbcsv)
-    importlib.reload(import_armature)
-    importlib.reload(import_asc)
-    importlib.reload(import_mcfg)
-    importlib.reload(import_p3d)
-    importlib.reload(import_rtm)
-    importlib.reload(import_tbcsv)
+    reload(binary_handler)
+    reload(compression)
+    reload(data_asc)
+    reload(data_p3d)
+    reload(data_rap)
+    reload(data_rtm)
+    reload(data_tbcsv)
+    reload(export_asc)
+    reload(export_mcfg)
+    reload(export_p3d)
+    reload(export_rtm)
+    reload(export_tbcsv)
+    reload(import_armature)
+    reload(import_asc)
+    reload(import_mcfg)
+    reload(import_p3d)
+    reload(import_rtm)
+    reload(import_tbcsv)

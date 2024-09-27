@@ -11,6 +11,7 @@ import bpy
 import bmesh
 
 from . import data_p3d as p3d
+from .. import AddonInfo
 from ..utilities import generic as utils
 from ..utilities import flags as flagutils
 from ..utilities import compat as computils
@@ -104,7 +105,7 @@ def bake_flags_vertex(obj):
     with utils.edit_bmesh(obj) as bm:
         bm.verts.ensure_lookup_table()
 
-        default_flag = utils.get_addon_preferences().flag_vertex
+        default_flag = AddonInfo.prefs.flag_vertex
 
         layer = flagutils.get_layer_flags_vertex(bm)
         flags_vertex = {i: item.get_flag() for i, item in enumerate(obj.a3ob_properties_object_flags.vertex)}
@@ -120,7 +121,7 @@ def bake_flags_face(obj):
     with utils.edit_bmesh(obj) as bm:
         bm.faces.ensure_lookup_table()
 
-        default_flag = utils.get_addon_preferences().flag_face
+        default_flag = AddonInfo.prefs.flag_face
 
         layer = flagutils.get_layer_flags_face(bm)
         flags_face = {i: item.get_flag() for i, item in enumerate(obj.a3ob_properties_object_flags.face)}

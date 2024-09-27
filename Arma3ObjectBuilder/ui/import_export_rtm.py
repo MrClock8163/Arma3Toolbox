@@ -101,7 +101,7 @@ class A3OB_OP_export_rtm(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             utils.op_report(self, {'ERROR'}, "Invalid skeleton definiton, run skeleton validation for RTM for more info")
             return {'FINISHED'}
 
-        with utils.get_export_handler(self.filepath, "wb") as file:
+        with utils.ExportFileHandler(self.filepath, "wb") as file:
             static, frame_count = export_rtm.write_file(self, context, file, obj, action)
         
             if not self.static_pose and static:

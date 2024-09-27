@@ -2,6 +2,7 @@ import os
 
 import bpy
 
+from .. import AddonInfo
 from ..utilities import structure as structutils
 from ..utilities import generic as utils
 from ..utilities import data
@@ -238,7 +239,7 @@ class A3OB_OT_open_changelog(bpy.types.Operator):
         return True
     
     def execute(self, context):
-        path = os.path.join(utils.get_addon_directory(), "CHANGELOG.md")
+        path = os.path.join(AddonInfo.dir, "CHANGELOG.md")
         bpy.ops.text.open(filepath=path, internal=True)
         self.report({'INFO'}, "See CHANGELOG.md text block")
 

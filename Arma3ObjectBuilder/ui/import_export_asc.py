@@ -114,7 +114,7 @@ class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     def execute(self, context):        
         obj = context.active_object
         
-        with utils.get_export_handler(self.filepath, "wt") as file:
+        with utils.ExportFileHandler(self.filepath, "wt") as file:
             export_asc.write_file(self, context, file, obj)
             utils.op_report(self, {'INFO'}, "Successfuly exported DTM")
         

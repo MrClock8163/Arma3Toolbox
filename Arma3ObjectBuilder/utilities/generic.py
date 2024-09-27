@@ -4,28 +4,14 @@
 import os
 import json
 from contextlib import contextmanager
+from datetime import datetime
 
 import bpy
 import bpy_extras.mesh_utils as meshutils
 import bmesh
 
-from ..io.file_handler import ExportFileHandler
-from .. import __package__ as addon_name
+from .. import AddonInfo
 from . import data
-
-
-def print_context():
-    print("=======================")
-    for attr in dir(bpy.context):
-        print(attr, eval('bpy.context.%s' %  attr))
-    print("=======================")
-
-
-def show_info_box(message, title = "", icon = 'INFO'):
-    def draw(self, context):
-        self.layout.label(text=message)
-        
-    bpy.context.window_manager.popup_menu(draw, title=title, icon=icon)
 
 
 # For some reason, not all operator reports are printed to the console. The behavior seems to be context dependent,
@@ -42,28 +28,12 @@ def abspath(path):
     return os.path.abspath(bpy.path.abspath(path))
 
 
-def strip_extension(path):
-    return os.path.splitext(path)[0]
-
-
-def get_addon_preferences():
-    return bpy.context.preferences.addons[addon_name].preferences
-
-
-def get_export_handler(filepath, mode):
-    addon_prefs = get_addon_preferences()
-    backup = addon_prefs.create_backups
-    preserve = addon_prefs.preserve_faulty_output
-
-    return ExportFileHandler(filepath, mode, backup, preserve)
-
-
 def is_valid_idx(index, subscriptable):
     return len(subscriptable) > 0 and 0 <= index < len(subscriptable)
 
 
 def draw_panel_header(panel):
-    if not get_addon_preferences().show_info_links:
+    if not AddonInfo.prefs.show_info_links:
         return
         
     row = panel.layout.row(align=True)
@@ -191,7 +161,7 @@ def replace_slashes(path):
 # Attempt to restore absolute paths to the set project root (P drive by default).
 def restore_absolute(path, extension = ""):
     path = replace_slashes(path.strip().lower())
-    addon_prefs = get_addon_preferences()
+    addon_prefs = AddonInfo.prefs
     
     if path == "":
         return ""
@@ -230,21 +200,13 @@ def format_path(path, root = "", to_relative = True, extension = True):
         path = make_relative(path, root)
         
     if not extension:
-        path = strip_extension(path)
+        path = os.path.splitext(path)[0]
         
     return path
 
 
-def get_addon_directory():
-    return os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-
-
-def get_cfg_convert():
-    return os.path.join(get_addon_preferences().a3_tools, "cfgconvert/cfgconvert.exe")
-
-
 def load_common_data(scene):
-    prefs = get_addon_preferences()
+    prefs = AddonInfo.prefs
     custom_path = abspath(prefs.custom_data)
     builtin = data.common_data
     json_data = {}
@@ -274,31 +236,45 @@ preview_collection = {}
 def get_icon(name):
     icon = 0
     try:
-        icon = preview_collection[get_addon_preferences().icon_theme.lower()][name].icon_id
+        icon = preview_collection[AddonInfo.prefs.icon_theme.lower()][name].icon_id
     except:
         pass
         
     return icon
 
 
-def register_icons():
-    import bpy.utils.previews
-    
-    themes_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../icons"))
-    for theme in os.listdir(themes_dir):
-        theme_icons = bpy.utils.previews.new()
-        
-        icons_dir = os.path.join(themes_dir, theme)
-        for filename in os.listdir(icons_dir):
-            theme_icons.load(os.path.splitext(os.path.basename(filename))[0].lower(), os.path.join(icons_dir, filename), 'IMAGE')
-        
-        preview_collection[theme.lower()] = theme_icons
-    
+class ExportFileHandler():
+    def __init__(self, filepath, mode):
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        self.filepath = filepath
+        self.temppath = "%s.%s.temp" % (filepath, timestamp)
+        self.mode = mode
+        self.file = None
+        addon_pref = AddonInfo.prefs
+        self.backup_old = addon_pref.create_backups
+        self.preserve_faulty = addon_pref.preserve_faulty_output
 
-def unregister_icons():
-    import bpy.utils.previews
+    def __enter__(self):
+        file = open(self.temppath, self.mode)
+        self.file = file
+
+        return file
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.file.close()
+
+        if exc_type is None:
+            if os.path.isfile(self.filepath) and self.backup_old:
+                self.force_rename(self.filepath, self.filepath + ".bak")
+
+            self.force_rename(self.temppath, self.filepath)
+        
+        elif not self.preserve_faulty:
+            os.remove(self.temppath)
     
-    for icon in preview_collection.values():
-        bpy.utils.previews.remove(icon)
-    
-    preview_collection.clear()
+    @staticmethod
+    def force_rename(old, new):
+        if os.path.isfile(new):
+            os.remove(new)
+        
+        os.rename(old, new)
