@@ -61,5 +61,8 @@ def register():
 
 def unregister():
     del bpy.types.Action.a3ob_properties_action
+    
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)
 
     print("\t" + "Properties: action")
