@@ -15,10 +15,16 @@ bl_info = {
 import os
 
 if "bpy" in locals():
-    utilities.reload()
-    io.reload()
-    props.reload()
-    ui.reload()
+    from importlib import reload
+    
+    if "utilities" in locals():
+        reload(utilities)
+    if "io" in locals():
+        reload(io)
+    if "props" in locals():
+        reload(props)
+    if "ui" in locals():
+        reload(ui)
 
 import bpy
 
