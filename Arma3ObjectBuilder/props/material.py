@@ -2,7 +2,7 @@ import re
 
 import bpy
 
-from .. import AddonInfo
+from .. import get_prefs
 from ..utilities import generic as utils
 from ..utilities import data
 
@@ -80,7 +80,7 @@ class A3OB_PG_properties_material(bpy.types.PropertyGroup):
         self.material_path = utils.restore_absolute(material) if absolute else material
     
     def to_p3d(self, relative):
-        addon_prefs = AddonInfo.prefs
+        addon_prefs = get_prefs()
         texture = ""
         material = ""
 

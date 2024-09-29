@@ -1,6 +1,6 @@
 import bpy
 
-from .. import AddonInfo
+from .. import get_icon
 from ..utilities import generic as utils
 from ..utilities import masses as massutils
 
@@ -156,14 +156,14 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
         col = layout.column(align=True)
         if scene_props.source == 'MASS':
             col.prop(scene_props, "mass")
-            col.operator("a3ob.vertex_mass_set", icon_value=AddonInfo.get_icon("op_mass_set"))
-            col.operator("a3ob.vertex_mass_distribute", icon_value=AddonInfo.get_icon("op_mass_distribute"))
+            col.operator("a3ob.vertex_mass_set", icon_value=get_icon("op_mass_set"))
+            col.operator("a3ob.vertex_mass_distribute", icon_value=get_icon("op_mass_distribute"))
         elif scene_props.source == 'DENSITY':
             col.prop(scene_props, "density")
-            col.operator("a3ob.vertex_mass_set_density", icon_value=AddonInfo.get_icon("op_mass_set_density"))
+            col.operator("a3ob.vertex_mass_set_density", icon_value=get_icon("op_mass_set_density"))
         
         col.separator()
-        col.operator("a3ob.vertex_mass_clear", icon_value=AddonInfo.get_icon("op_mass_clear"))
+        col.operator("a3ob.vertex_mass_clear", icon_value=get_icon("op_mass_clear"))
 
 
 class A3OB_PT_vertex_mass_analyze(bpy.types.Panel):
@@ -205,8 +205,8 @@ class A3OB_PT_vertex_mass_analyze(bpy.types.Panel):
         row_method = layout.row(align=True)
         row_method.prop(scene_props, "method", text="Method", expand=True)
         
-        layout.operator("a3ob.vertex_mass_visualize", icon_value=AddonInfo.get_icon("op_visualize"))
-        layout.operator("a3ob.vertex_mass_center", icon_value=AddonInfo.get_icon("op_mass_center"))
+        layout.operator("a3ob.vertex_mass_visualize", icon_value=get_icon("op_visualize"))
+        layout.operator("a3ob.vertex_mass_center", icon_value=get_icon("op_mass_center"))
         
         layout.label(text="Stats:")
         col_stats = layout.column(align=True)

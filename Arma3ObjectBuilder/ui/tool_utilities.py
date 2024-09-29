@@ -2,7 +2,7 @@ import os
 
 import bpy
 
-from .. import AddonInfo
+from .. import get_icon, addon_dir
 from ..utilities import structure as structutils
 from ..utilities import data
 
@@ -238,7 +238,7 @@ class A3OB_OT_open_changelog(bpy.types.Operator):
         return True
     
     def execute(self, context):
-        path = os.path.join(AddonInfo.dir, "CHANGELOG.md")
+        path = os.path.join(addon_dir, "CHANGELOG.md")
         bpy.ops.text.open(filepath=path, internal=True)
         self.report({'INFO'}, "See CHANGELOG.md text block")
 
@@ -525,19 +525,19 @@ def menu_func(self, context):
     self.layout.separator()
     col = self.layout.column()
     col.ui_units_x = 5.2
-    col.menu("A3OB_MT_object_builder", icon_value=AddonInfo.get_icon("addon"))
+    col.menu("A3OB_MT_object_builder", icon_value=get_icon("addon"))
 
 
 def vertex_groups_func(self, context):
     layout = self.layout
     row = layout.row(align=True)
     row.alignment = 'RIGHT'
-    row.menu("A3OB_MT_vertex_groups", text="", icon_value=AddonInfo.get_icon("addon"))
+    row.menu("A3OB_MT_vertex_groups", text="", icon_value=get_icon("addon"))
 
 
 def menu_help_func(self, context):
     self.layout.separator()
-    self.layout.menu("A3OB_MT_help", icon_value=AddonInfo.get_icon("addon"))
+    self.layout.menu("A3OB_MT_help", icon_value=get_icon("addon"))
 
 
 def register():

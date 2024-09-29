@@ -1,6 +1,6 @@
 import bpy
 
-from .. import AddonInfo
+from .. import get_icon
 from ..utilities import generic as utils
 from ..utilities.validator import Validator
 from ..utilities.logger import ProcessLogger
@@ -79,7 +79,7 @@ class A3OB_PT_validation(bpy.types.Panel):
         layout.prop(scene_props, "relative_paths")
             
         layout.separator()
-        layout.operator("a3ob.validate_for_lod", text="Validate", icon_value=AddonInfo.get_icon("op_validate"))
+        layout.operator("a3ob.validate_for_lod", text="Validate", icon_value=get_icon("op_validate"))
         
 
 classes = (

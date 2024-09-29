@@ -1,6 +1,6 @@
 import bpy
 
-from .. import AddonInfo
+from .. import get_icon
 from ..utilities import generic as utils
 from ..utilities import clouds as cloudutils
 
@@ -66,7 +66,7 @@ class A3OB_PT_hitpoints(bpy.types.Panel):
         col_selection = layout.column(align=True, heading="Selection:")
         col_selection.prop(scene_props, "selection", text="", icon='MESH_DATA')
         
-        layout.operator("a3ob.hitpoints_generate", text="Generate", icon_value=AddonInfo.get_icon("op_hitpoints_generate"))
+        layout.operator("a3ob.hitpoints_generate", text="Generate", icon_value=get_icon("op_hitpoints_generate"))
 
 
 classes = (

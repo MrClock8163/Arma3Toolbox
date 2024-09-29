@@ -23,20 +23,21 @@ if "bpy" in locals():
 import bpy
 
 
-class AddonInfo:
-    prefs = None
-    dir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
-    icons = {}
+addon_prefs = None
+addon_dir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
+addon_icons = {}
 
-    @classmethod
-    def get_icon(cls, name):
-        icon = 0
-        try:
-            icon = cls.icons[cls.prefs.icon_theme.lower()][name].icon_id
-        except Exception:
-            pass
+def get_icon(name):
+    icon = 0
+    try:
+        icon = addon_icons[addon_prefs.icon_theme.lower()][name].icon_id
+    except Exception:
+        pass
 
-        return icon
+    return icon
+
+def get_prefs():
+    return addon_prefs
 
 
 from . import utilities
@@ -70,7 +71,7 @@ class A3OB_OT_prefs_find_a3_tools(bpy.types.Operator):
             from winreg import OpenKey, QueryValueEx, HKEY_CURRENT_USER
             key = OpenKey(HKEY_CURRENT_USER, r"software\bohemia interactive\arma 3 tools")
             value, _type = QueryValueEx(key, "path")
-            AddonInfo.prefs.a3_tools = value
+            addon_prefs.a3_tools = value
             
         except Exception:
             self.report({'ERROR'}, "The Arma 3 Tools installation could not be found, it has to be set manually")
@@ -365,7 +366,7 @@ modules = (
 def register_icons():
     import bpy.utils.previews
     
-    themes_dir = os.path.join(AddonInfo.dir, "icons")
+    themes_dir = os.path.join(addon_dir, "icons")
     for theme in os.listdir(themes_dir):
         theme_icons = bpy.utils.previews.new()
         
@@ -373,16 +374,16 @@ def register_icons():
         for filename in os.listdir(icons_dir):
             theme_icons.load(os.path.splitext(os.path.basename(filename))[0].lower(), os.path.join(icons_dir, filename), 'IMAGE')
         
-        AddonInfo.icons[theme.lower()] = theme_icons
+        addon_icons[theme.lower()] = theme_icons
     
 
 def unregister_icons():
     import bpy.utils.previews
     
-    for icon in AddonInfo.icons.values():
+    for icon in addon_icons.values():
         bpy.utils.previews.remove(icon)
     
-    AddonInfo.icons.clear()
+    addon_icons.clear()
 
 
 def register():
@@ -393,7 +394,8 @@ def register():
     for cls in classes:
         register_class(cls)
     
-    AddonInfo.prefs = bpy.context.preferences.addons[__package__].preferences
+    global addon_prefs
+    addon_prefs = bpy.context.preferences.addons[__package__].preferences
     
     for mod in modules:
         mod.register()

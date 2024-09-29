@@ -2,7 +2,7 @@ import os
 
 import bpy
 
-from .. import AddonInfo
+from .. import get_icon, addon_dir
 
 
 scripts = {
@@ -28,7 +28,7 @@ scripts = {
 
 
 def get_scripts_directory():
-    return os.path.join(AddonInfo.dir, "scripts")
+    return os.path.join(addon_dir, "scripts")
 
 
 def add_operators(layout, files):
@@ -92,7 +92,7 @@ classes = (
 
 def draw_scripts_menu(self, context):
     self.layout.separator()
-    self.layout.menu("A3OB_MT_scripts", text="Object Builder", icon_value=AddonInfo.get_icon("addon"))
+    self.layout.menu("A3OB_MT_scripts", text="Object Builder", icon_value=get_icon("addon"))
 
 
 def register():
