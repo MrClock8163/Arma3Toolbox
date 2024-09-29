@@ -26,6 +26,17 @@ import bpy
 class AddonInfo:
     prefs = None
     dir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
+    icons = {}
+
+    @classmethod
+    def get_icon(cls, name):
+        icon = 0
+        try:
+            icon = cls.icons[cls.prefs.icon_theme.lower()][name].icon_id
+        except Exception:
+            pass
+
+        return icon
 
 
 from . import utilities
@@ -354,7 +365,7 @@ modules = (
 def register_icons():
     import bpy.utils.previews
     
-    themes_dir = os.path.abspath(os.path.join(AddonInfo.dir, "icons"))
+    themes_dir = os.path.join(AddonInfo.dir, "icons")
     for theme in os.listdir(themes_dir):
         theme_icons = bpy.utils.previews.new()
         
@@ -362,16 +373,16 @@ def register_icons():
         for filename in os.listdir(icons_dir):
             theme_icons.load(os.path.splitext(os.path.basename(filename))[0].lower(), os.path.join(icons_dir, filename), 'IMAGE')
         
-        utilities.generic.preview_collection[theme.lower()] = theme_icons
+        AddonInfo.icons[theme.lower()] = theme_icons
     
 
 def unregister_icons():
     import bpy.utils.previews
     
-    for icon in utilities.generic.preview_collection.values():
+    for icon in AddonInfo.icons.values():
         bpy.utils.previews.remove(icon)
     
-    utilities.generic.preview_collection.clear()
+    AddonInfo.icons.clear()
 
 
 def register():

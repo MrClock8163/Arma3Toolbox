@@ -150,7 +150,7 @@ class A3OB_PT_materials_templates(bpy.types.Panel):
 
         col_list = layout.column(align=True)
         col_list.template_list("A3OB_UL_materials_templates", "A3OB_materials_templates", scene_props, "templates", scene_props, "templates_index", item_dyntip_propname="path")
-        col_list.operator("a3ob.materials_templates_reload", icon_value=utils.get_icon("op_refresh"))
+        col_list.operator("a3ob.materials_templates_reload", icon_value=AddonInfo.get_icon("op_refresh"))
 
         layout.prop(scene_props, "folder")
         layout.prop(scene_props, "basename")

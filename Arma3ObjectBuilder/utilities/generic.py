@@ -230,19 +230,6 @@ def load_common_data(scene):
     scene_props.items_index = 0
 
 
-preview_collection = {}
-
-
-def get_icon(name):
-    icon = 0
-    try:
-        icon = preview_collection[AddonInfo.prefs.icon_theme.lower()][name].icon_id
-    except:
-        pass
-        
-    return icon
-
-
 class ExportFileHandler():
     def __init__(self, filepath, mode):
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")

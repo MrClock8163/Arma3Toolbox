@@ -3,7 +3,6 @@ import os
 import bpy
 
 from .. import AddonInfo
-from ..utilities.generic import get_icon
 
 
 scripts = {
@@ -93,7 +92,7 @@ classes = (
 
 def draw_scripts_menu(self, context):
     self.layout.separator()
-    self.layout.menu("A3OB_MT_scripts", text="Object Builder", icon_value=get_icon("addon"))
+    self.layout.menu("A3OB_MT_scripts", text="Object Builder", icon_value=AddonInfo.get_icon("addon"))
 
 
 def register():
