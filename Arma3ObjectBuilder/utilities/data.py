@@ -1,9 +1,6 @@
 # Various hard coded data used in I/O and throughout the UI.
 
 
-from ..io.data_p3d import P3D_LOD_Resolution as LOD
-
-
 flags_vertex_surface = {
     'NORMAL': 0x00000000,
     'SURFACE_ON': 0x00000001,
@@ -67,13 +64,49 @@ flag_face_merging = 0x01000000
 flag_face_user_mask = 0xfe000000
 
 
+class LOD():
+    VISUAL = 0
+    VIEW_GUNNER = 1
+    VIEW_PILOT = 2
+    VIEW_CARGO = 3
+    SHADOW = 4
+    EDIT = 5
+    GEOMETRY = 6
+    GEOMETRY_BUOY = 7
+    GEOMETRY_PHYSX = 8
+    MEMORY = 9
+    LANDCONTACT = 10
+    ROADWAY = 11
+    PATHS = 12
+    HITPOINTS = 13
+    VIEW_GEOMETRY = 14
+    FIRE_GEOMETRY = 15
+    VIEW_CARGO_GEOMETRY = 16
+    VIEW_CARGO_FIRE_GEOMETRY = 17
+    VIEW_COMMANDER = 18
+    VIEW_COMMANDER_GEOMETRY = 19
+    VIEW_COMMANDER_FIRE_GEOMETRY = 20
+    VIEW_PILOT_GEOMETRY = 21
+    VIEW_PILOT_FIRE_GEOMETRY = 22
+    VIEW_GUNNER_GEOMETRY = 23
+    VIEW_GUNNER_FIRE_GEOMETRY = 24
+    SUBPARTS = 25
+    SHADOW_VIEW_CARGO = 26
+    SHADOW_VIEW_PILOT = 27
+    SHADOW_VIEW_GUNNER = 28
+    WRECKAGE = 29
+    UNDERGROUND = 30
+    GROUNDLAYER = 31
+    NAVIGATION = 32
+    UNKNOWN = -1
+
+
 lod_has_resolution = {
     LOD.VISUAL,
     LOD.VIEW_CARGO,
     LOD.SHADOW,
-    # LOD.SHADOWBUFFER,
     LOD.EDIT,
-    LOD.VIEW_CARGO_GEOMERTRY,
+    LOD.VIEW_CARGO_GEOMETRY,
     LOD.SHADOW_VIEW_CARGO
 }
 
@@ -90,7 +123,6 @@ lod_visuals = {
 
 lod_shadows = {
     LOD.SHADOW,
-    # LOD.SHADOWBUFFER,
     LOD.SHADOW_VIEW_CARGO,
     LOD.SHADOW_VIEW_PILOT,
     LOD.SHADOW_VIEW_GUNNER
@@ -103,7 +135,7 @@ lod_geometries = {
     LOD.GEOMETRY_PHYSX,
     LOD.VIEW_GEOMETRY,
     LOD.FIRE_GEOMETRY,
-    LOD.VIEW_CARGO_GEOMERTRY,
+    LOD.VIEW_CARGO_GEOMETRY,
     LOD.VIEW_CARGO_FIRE_GEOMETRY,
     LOD.VIEW_COMMANDER_GEOMETRY,
     LOD.VIEW_COMMANDER_FIRE_GEOMETRY,
@@ -127,7 +159,6 @@ lod_info = {
     LOD.VIEW_PILOT: ("View - Pilot", "First person view"),
     LOD.VIEW_CARGO: ("View - Cargo", "Passenger first person view"),
     LOD.SHADOW: ("Shadow Volume", "Shadow casting geometry"),
-    # LOD.SHADOWBUFFER: ("Shadow Buffer", "Shadow buffer geometry"),
     LOD.EDIT: ("Edit", "Temporary layer"),
     LOD.GEOMETRY: ("Geometry", "Object collision geometry and occluders"),
     LOD.GEOMETRY_BUOY: ("Geometry Buoyancy", "Buoyant object geometry (Displacement for VBS)"),
@@ -139,7 +170,7 @@ lod_info = {
     LOD.HITPOINTS: ("Hit-points", "Hit point cloud"),
     LOD.VIEW_GEOMETRY: ("View Geometry", "View occlusion for AI"),
     LOD.FIRE_GEOMETRY: ("Fire Geometry", "Hitbox geometry"),
-    LOD.VIEW_CARGO_GEOMERTRY: ("View - Cargo Geometry", "Passenger view collision geometry and occluders"),
+    LOD.VIEW_CARGO_GEOMETRY: ("View - Cargo Geometry", "Passenger view collision geometry and occluders"),
     LOD.VIEW_CARGO_FIRE_GEOMETRY: ("View - Cargo Fire Geometry", "Passenger view hitbox geometry"),
     LOD.VIEW_COMMANDER: ("View - Commander", "Commander first person view"),
     LOD.VIEW_COMMANDER_GEOMETRY: ("View - Commander Geometry", "Commander view collision geometry and occluders"),
@@ -174,7 +205,6 @@ lod_groups_type = {
     **dict.fromkeys(
         [
             LOD.SHADOW,
-            # LOD.SHADOWBUFFER,
             LOD.SHADOW_VIEW_CARGO,
             LOD.SHADOW_VIEW_PILOT,
             LOD.SHADOW_VIEW_GUNNER
@@ -188,7 +218,7 @@ lod_groups_type = {
             LOD.GEOMETRY_PHYSX,
             LOD.VIEW_GEOMETRY,
             LOD.FIRE_GEOMETRY,
-            LOD.VIEW_CARGO_GEOMERTRY,
+            LOD.VIEW_CARGO_GEOMETRY,
             LOD.VIEW_CARGO_FIRE_GEOMETRY,
             LOD.VIEW_COMMANDER_GEOMETRY,
             LOD.VIEW_COMMANDER_FIRE_GEOMETRY,
@@ -236,7 +266,7 @@ lod_groups_context = {
             LOD.VIEW_GUNNER,
             LOD.VIEW_PILOT,
             LOD.VIEW_CARGO,
-            LOD.VIEW_CARGO_GEOMERTRY,
+            LOD.VIEW_CARGO_GEOMETRY,
             LOD.VIEW_CARGO_FIRE_GEOMETRY,
             LOD.VIEW_COMMANDER,
             LOD.VIEW_COMMANDER_GEOMETRY,
@@ -254,7 +284,6 @@ lod_groups_context = {
     **dict.fromkeys(
         [
             LOD.SHADOW,
-            # LOD.SHADOWBUFFER,
             LOD.GEOMETRY
         ],
         "General"
@@ -737,9 +766,9 @@ ofp2_manskeleton = {
 
 def get_rvmat_templates():
     import os
-    from ..utilities.generic import get_addon_directory
+    from .. import addon_dir
 
-    template_dir = os.path.join(get_addon_directory(), "scripts")
+    template_dir = os.path.join(addon_dir, "scripts")
 
     templates = {
         "PBR (VBS)": os.path.join(template_dir, "pbr_vbs.rvmat_template"),

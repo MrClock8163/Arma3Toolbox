@@ -2,29 +2,54 @@ bl_info = {
     "name": "Arma 3 Object Builder",
     "description": "Collection of tools for editing Arma 3 content",
     "author": "MrClock (present add-on), Hans-Joerg \"Alwarren\" Frieden (original ArmaToolbox add-on)",
-    "version": (2, 4, 0),
+    "version": (2, 4, 1),
     "blender": (2, 90, 0),
     "location": "Object Builder panels",
-    "warning": "",
+    "warning": "Development",
     "doc_url": "https://mrcmodding.gitbook.io/arma-3-object-builder/home",
     "tracker_url": "https://github.com/MrClock8163/Arma3ObjectBuilder/issues",
     "category": "Import-Export"
 }
 
 
-if "bpy" in locals():
-    import importlib
-    
-    importlib.reload(props)
-    importlib.reload(ui)
-    importlib.reload(flagutils)
+import os
 
-else:
-    from . import props
-    from . import ui
-    from .utilities import flags as flagutils
+if "bpy" in locals():
+    from importlib import reload
+    
+    if "utilities" in locals():
+        reload(utilities)
+    if "io" in locals():
+        reload(io)
+    if "props" in locals():
+        reload(props)
+    if "ui" in locals():
+        reload(ui)
 
 import bpy
+
+
+addon_prefs = None
+addon_dir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
+addon_icons = {}
+
+def get_icon(name):
+    icon = 0
+    try:
+        icon = addon_icons[addon_prefs.icon_theme.lower()][name].icon_id
+    except Exception:
+        pass
+
+    return icon
+
+def get_prefs():
+    return addon_prefs
+
+
+from . import utilities
+from . import io
+from . import props
+from . import ui
 
 
 def outliner_enable_update(self, context):
@@ -52,8 +77,7 @@ class A3OB_OT_prefs_find_a3_tools(bpy.types.Operator):
             from winreg import OpenKey, QueryValueEx, HKEY_CURRENT_USER
             key = OpenKey(HKEY_CURRENT_USER, r"software\bohemia interactive\arma 3 tools")
             value, _type = QueryValueEx(key, "path")
-            prefs = context.preferences.addons[__package__].preferences
-            prefs.a3_tools = value
+            addon_prefs.a3_tools = value
             
         except Exception:
             self.report({'ERROR'}, "The Arma 3 Tools installation could not be found, it has to be set manually")
@@ -124,13 +148,13 @@ class A3OB_OT_prefs_edit_flag_vertex(bpy.types.Operator):
     
     def invoke(self, context, event):
         prefs = context.preferences.addons[__package__].preferences
-        flagutils.set_flag_vertex(self, prefs.flag_vertex)
+        utilities.flags.set_flag_vertex(self, prefs.flag_vertex)
 
         return context.window_manager.invoke_props_dialog(self)
     
     def execute(self, context):
         prefs = context.preferences.addons[__package__].preferences
-        prefs.flag_vertex = flagutils.get_flag_vertex(self)
+        prefs.flag_vertex = utilities.flags.get_flag_vertex(self)
 
         return {'FINISHED'}
 
@@ -176,13 +200,13 @@ class A3OB_OT_prefs_edit_flag_face(bpy.types.Operator):
     
     def invoke(self, context, event):
         prefs = context.preferences.addons[__package__].preferences
-        flagutils.set_flag_face(self, prefs.flag_face)
+        utilities.flags.set_flag_face(self, prefs.flag_face)
 
         return context.window_manager.invoke_props_dialog(self)
     
     def execute(self, context):
         prefs = context.preferences.addons[__package__].preferences
-        prefs.flag_face = flagutils.get_flag_face(self)
+        prefs.flag_face = utilities.flags.get_flag_face(self)
 
         return {'FINISHED'}
 
@@ -345,30 +369,54 @@ modules = (
 )
 
 
+def register_icons():
+    import bpy.utils.previews
+    
+    themes_dir = os.path.join(addon_dir, "icons")
+    for theme in os.listdir(themes_dir):
+        theme_icons = bpy.utils.previews.new()
+        
+        icons_dir = os.path.join(themes_dir, theme)
+        for filename in os.listdir(icons_dir):
+            theme_icons.load(os.path.splitext(os.path.basename(filename))[0].lower(), os.path.join(icons_dir, filename), 'IMAGE')
+        
+        addon_icons[theme.lower()] = theme_icons
+    
+
+def unregister_icons():
+    import bpy.utils.previews
+    
+    for icon in addon_icons.values():
+        bpy.utils.previews.remove(icon)
+    
+    addon_icons.clear()
+
+
 def register():
     from bpy.utils import register_class
-    from .utilities import generic
-        
+    
     print("Registering Arma 3 Object Builder ( '" + __package__ + "' )")
     
     for cls in classes:
         register_class(cls)
     
+    global addon_prefs
+    addon_prefs = bpy.context.preferences.addons[__package__].preferences
+    
     for mod in modules:
         mod.register()
     
-    generic.register_icons()
-    
+    register_icons()
+
     print("Register done")
 
 
 def unregister():
     from bpy.utils import unregister_class
-    from .utilities import generic
 
     print("Unregistering Arma 3 Object Builder ( '" + __package__ + "' )")
     
-    generic.unregister_icons()
+    unregister_icons()
     
     for mod in reversed(modules):
         mod.unregister()

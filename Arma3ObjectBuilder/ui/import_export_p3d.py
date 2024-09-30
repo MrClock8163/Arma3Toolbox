@@ -1,6 +1,3 @@
-import traceback
-import struct
-
 import bpy
 import bpy_extras
 
@@ -100,17 +97,8 @@ class A3OB_OP_import_p3d(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     
     def execute(self, context):        
         with open(self.filepath, "rb") as file:
-            try:
-                lod_objects = import_p3d.read_file(self, context, file)
-                utils.op_report(self, {'INFO'}, "Successfully imported %d LODs (check the logs in the system console)" % len(lod_objects))
-            except struct.error as ex:
-                utils.op_report(self, {'ERROR'}, "Unexpected EndOfFile (check the system console)")
-                traceback.print_exc()
-            except import_p3d.p3d.P3D_Error as ex:
-                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
-            except Exception as ex:
-                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
-                traceback.print_exc()
+            lod_objects = import_p3d.read_file(self, context, file)
+            utils.op_report(self, {'INFO'}, "Successfully imported %d LODs (check the logs in the system console)" % len(lod_objects))
         
         return {'FINISHED'}
 
@@ -328,33 +316,22 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     def draw(self, context):
         pass
     
-    def execute(self, context):
-        if not utils.OutputManager.can_access_path(self.filepath):
-            utils.op_report(self, {'ERROR'}, "Cannot write to target file (file likely in use by another blocking process)")
+    def execute(self, context):        
+        if not export_p3d.can_export(self, context):
+            utils.op_report(self, {'ERROR'}, "There are no LODs to export")
             return {'FINISHED'}
         
-        if export_p3d.can_export(self, context):
-            output = utils.OutputManager(self.filepath, "wb")
-            temp_collection = export_p3d.create_temp_collection(context)
-            with output as file:
-                try:
-                    lod_count, exported_count = export_p3d.write_file(self, context, file, temp_collection)
-                    if lod_count == exported_count:
-                        utils.op_report(self, {'INFO'}, "Successfully exported all %d LODs (check the logs in the system console)" % exported_count)
-                    else:
-                        utils.op_report(self, {'WARNING'}, "Only exported %d/%d LODs (check the logs in the system console)" % (exported_count, lod_count))
-                    output.success = True
-                except export_p3d.p3d.P3D_Error as ex:
-                    utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
-                except Exception as ex:
-                    utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
-                    traceback.print_exc()
-            
-            if not utils.get_addon_preferences().preserve_preprocessed_lods:
-                export_p3d.cleanup_temp_collection(temp_collection)
-                
-        else:
-            utils.op_report(self, {'ERROR'}, "There are no LODs to export")
+        temp_collection = export_p3d.create_temp_collection(context)
+
+        with utils.ExportFileHandler(self.filepath, "wb") as file:
+            lod_count, exported_count = export_p3d.write_file(self, context, file, temp_collection)
+            if lod_count == exported_count:
+                utils.op_report(self, {'INFO'}, "Successfully exported all %d LODs (check the logs in the system console)" % exported_count)
+            else:
+                utils.op_report(self, {'WARNING'}, "Only exported %d/%d LODs (check the logs in the system console)" % (exported_count, lod_count))
+        
+        if not utils.AddonInfo.prefs.preserve_preprocessed_lods:
+            export_p3d.cleanup_temp_collection(temp_collection)            
         
         return {'FINISHED'}
 

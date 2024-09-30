@@ -4,6 +4,8 @@
 
 
 import struct
+import functools
+import itertools
 
 
 def read_byte(file):
@@ -76,33 +78,21 @@ def read_char(file, count = 1):
 # In theory all strings in BI files should be strictly ASCII,
 # but on the off chance that a corrupt character is present, the method would fail.
 # Therefore using UTF-8 decoding is more robust, and gives the same result for valid ASCII values.
+# https://stackoverflow.com/a/32775270
 def read_asciiz(file):
-    res = b''
-    
-    while True:
-        a = file.read(1)
-        if a == b'\x00' or a == b'':
-            break
-            
-        res += a
-    
-    return res.decode('utf8', errors="replace")
+    eof = iter(functools.partial(file.read, 1), "")
+    return b"".join(itertools.takewhile(b"\x00".__ne__, eof)).decode('utf8', errors="replace")
 
 def read_asciiz_field(file, field_len):
     field = file.read(field_len)
     if len(field) < field_len:
         raise EOFError("ASCIIZ field ran into unexpected EOF")
     
-    result = bytearray()
-    for value in field:
-        if value == 0:
-            break
-            
-        result.append(value)
-    else:
+    parts = field.split(b"\x00")
+    if len(parts) < 2:
         raise ValueError("ASCIIZ field length overflow")
     
-    return result.decode('utf8', errors="replace")
+    return parts[0].decode('utf8', errors="replace")
         
 def read_lascii(file):
     length = read_byte(file)

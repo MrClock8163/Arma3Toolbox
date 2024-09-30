@@ -1,5 +1,3 @@
-import traceback
-
 import bpy
 import bpy_extras
 
@@ -37,14 +35,8 @@ class A3OB_OP_import_asc(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     
     def execute(self, context):        
         with open(self.filepath) as file:
-            try:
-                import_asc.read_file(self, context, file)
-                utils.op_report(self, {'INFO'}, "Successfully imported DEM")
-            except import_asc.asc.ASC_Error as ex:
-                utils.op_report(self, {'ERROR'}, ex)
-            except Exception as ex:
-                utils.op_report(self, {'ERROR'}, ex)
-                traceback.print_exc()
+            import_asc.read_file(self, context, file)
+            utils.op_report(self, {'INFO'}, "Successfully imported DTM")
         
         return {'FINISHED'}
 
@@ -119,24 +111,12 @@ class A3OB_OP_export_asc(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     def draw(self, context):
         pass
     
-    def execute(self, context):
-        if not utils.OutputManager.can_access_path(self.filepath):
-            utils.op_report(self, {'ERROR'}, "Cannot write to target file (file likely in use by another blocking process)")
-            return {'FINISHED'}
-        
+    def execute(self, context):        
         obj = context.active_object
         
-        output = utils.OutputManager(self.filepath, "w")
-        with output as file:
-            try:
-                export_asc.write_file(self, context, file, obj)
-                output.success = True
-                utils.op_report(self, {'INFO'}, "Successfuly exported DTM")
-            except export_asc.asc.ASC_Error:
-                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
-            except Exception as ex:
-                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
-                traceback.print_exc()
+        with utils.ExportFileHandler(self.filepath, "wt") as file:
+            export_asc.write_file(self, context, file, obj)
+            utils.op_report(self, {'INFO'}, "Successfuly exported DTM")
         
         return {'FINISHED'}
 

@@ -2,6 +2,7 @@ import os
 
 import bpy
 
+from .. import get_prefs, get_icon
 from ..utilities import generic as utils
 from ..utilities import materials as matutils
 
@@ -27,7 +28,7 @@ class A3OB_OT_materials_templates_generate(bpy.types.Operator):
 
         path = scene_props.templates[scene_props.templates_index].path
         template = matutils.RVMATTemplate(path)
-        success = template.write_output(utils.get_addon_preferences().project_root, scene_props.folder, scene_props.basename, scene_props.check_files_exist)
+        success = template.write_output(get_prefs().project_root, scene_props.folder, scene_props.basename, scene_props.check_files_exist)
 
         if success:
             self.report({'INFO'}, "Successfully generated %s.rvmat" % scene_props.basename)
@@ -149,7 +150,7 @@ class A3OB_PT_materials_templates(bpy.types.Panel):
 
         col_list = layout.column(align=True)
         col_list.template_list("A3OB_UL_materials_templates", "A3OB_materials_templates", scene_props, "templates", scene_props, "templates_index", item_dyntip_propname="path")
-        col_list.operator("a3ob.materials_templates_reload", icon_value=utils.get_icon("op_refresh"))
+        col_list.operator("a3ob.materials_templates_reload", icon_value=get_icon("op_refresh"))
 
         layout.prop(scene_props, "folder")
         layout.prop(scene_props, "basename")

@@ -37,15 +37,16 @@ import importlib
 import bpy
 
 name = None
-for addon in bpy.context.preferences.addons.keys():
-    if addon.endswith("Arma3ObjectBuilder"):
-        name = addon
+for addon in bpy.context.preferences.addons:
+    if addon.module.endswith("Arma3ObjectBuilder"):
+        name = addon.module
         break
 else:
     raise Exception("Arma 3 Object Builder could not be found")
 
-a3ob_utils = importlib.import_module(addon).utilities
-a3ob_io = importlib.import_module(addon).io
+a3ob = importlib.import_module(name)
+a3ob_utils = a3ob.utilities
+a3ob_io = a3ob.io
 
 utils = a3ob_utils.generic
 structutils = a3ob_utils.structure
@@ -75,7 +76,7 @@ LOD_TYPE_MAPPING = {
     '5.000e+15': str(LOD.HITPOINTS),
     '6.000e+15': str(LOD.VIEW_GEOMETRY),
     '7.000e+15': str(LOD.FIRE_GEOMETRY),
-    '8.000e+15': str(LOD.VIEW_CARGO_GEOMERTRY),
+    '8.000e+15': str(LOD.VIEW_CARGO_GEOMETRY),
     '9.000e+15': str(LOD.VIEW_CARGO_FIRE_GEOMETRY),
     '1.000e+16': str(LOD.VIEW_COMMANDER),
     '1.100e+16': str(LOD.VIEW_COMMANDER_GEOMETRY),

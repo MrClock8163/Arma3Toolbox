@@ -5,6 +5,7 @@ import struct
 import bpy
 import mathutils
 
+from .. import get_icon
 from ..utilities import generic as utils
 from ..utilities import lod as lodutils
 from ..utilities import compat as computils
@@ -335,14 +336,14 @@ class A3OB_PT_proxies(bpy.types.Panel):
         layout = self.layout
         
         col_align = layout.column(align=True)
-        col_align.operator("a3ob.proxy_align", icon_value=utils.get_icon("op_proxy_align"))
-        col_align.operator("a3ob.proxy_align_object", icon_value=utils.get_icon("op_proxy_align_object"))
-        layout.operator("a3ob.proxy_realign_ocs", icon_value=utils.get_icon("op_proxy_realign"))
-        layout.operator("a3ob.proxy_extract", icon_value=utils.get_icon("op_proxy_extract"))
+        col_align.operator("a3ob.proxy_align", icon_value=get_icon("op_proxy_align"))
+        col_align.operator("a3ob.proxy_align_object", icon_value=get_icon("op_proxy_align_object"))
+        layout.operator("a3ob.proxy_realign_ocs", icon_value=get_icon("op_proxy_realign"))
+        layout.operator("a3ob.proxy_extract", icon_value=get_icon("op_proxy_extract"))
         col_move = layout.column(align=True)
-        col_move.operator("a3ob.proxy_copy", icon_value=utils.get_icon("op_proxy_copy"))
-        col_move.operator("a3ob.proxy_copy_all", icon_value=utils.get_icon("op_proxy_copy_all"))
-        col_move.operator("a3ob.proxy_transfer", icon_value=utils.get_icon("op_proxy_transfer"))
+        col_move.operator("a3ob.proxy_copy", icon_value=get_icon("op_proxy_copy"))
+        col_move.operator("a3ob.proxy_copy_all", icon_value=get_icon("op_proxy_copy_all"))
+        col_move.operator("a3ob.proxy_transfer", icon_value=get_icon("op_proxy_transfer"))
 
 
 class A3OB_UL_lod_objects_selector(bpy.types.UIList):

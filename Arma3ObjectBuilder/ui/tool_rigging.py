@@ -1,5 +1,6 @@
 import bpy
 
+from .. import get_icon
 from ..utilities import generic as utils
 from ..utilities import rigging as riggingutils
 from ..utilities import data
@@ -635,7 +636,7 @@ class A3OB_PT_rigging(bpy.types.Panel):
         col_bones_operators.operator("a3ob.rigging_skeletons_bones_move", text="", icon='TRIA_DOWN').direction = 'DOWN'
 
 
-        layout.operator("a3ob.rigging_pivots_from_armature", icon_value=utils.get_icon("op_pivots_from_armature"))
+        layout.operator("a3ob.rigging_pivots_from_armature", icon_value=get_icon("op_pivots_from_armature"))
 
 
 class A3OB_PT_rigging_weights(bpy.types.Panel):
@@ -655,15 +656,15 @@ class A3OB_PT_rigging_weights(bpy.types.Panel):
         layout = self.layout
 
         col_select = layout.column(align=True)
-        col_select.operator("a3ob.rigging_weights_select_overdetermined", icon_value=utils.get_icon("op_weights_select_overdetermined"))
-        col_select.operator("a3ob.rigging_weights_select_unnormalized", icon_value=utils.get_icon("op_weights_select_unnormalized"))
+        col_select.operator("a3ob.rigging_weights_select_overdetermined", icon_value=get_icon("op_weights_select_overdetermined"))
+        col_select.operator("a3ob.rigging_weights_select_unnormalized", icon_value=get_icon("op_weights_select_unnormalized"))
         
         col_edit = layout.column(align=True)
-        col_edit.operator("a3ob.rigging_weights_prune", icon_value=utils.get_icon("op_weights_prune"))
-        col_edit.operator("a3ob.rigging_weights_prune_overdetermined", icon_value=utils.get_icon("op_weights_prune_overdetermined"))
-        col_edit.operator("a3ob.rigging_weights_normalize", icon_value=utils.get_icon("op_weights_normalize"))
+        col_edit.operator("a3ob.rigging_weights_prune", icon_value=get_icon("op_weights_prune"))
+        col_edit.operator("a3ob.rigging_weights_prune_overdetermined", icon_value=get_icon("op_weights_prune_overdetermined"))
+        col_edit.operator("a3ob.rigging_weights_normalize", icon_value=get_icon("op_weights_normalize"))
 
-        layout.operator("a3ob.rigging_weights_cleanup", icon_value=utils.get_icon("op_weights_cleanup"))
+        layout.operator("a3ob.rigging_weights_cleanup", icon_value=get_icon("op_weights_cleanup"))
 
         layout.prop(scene_props, "prune_threshold")
 

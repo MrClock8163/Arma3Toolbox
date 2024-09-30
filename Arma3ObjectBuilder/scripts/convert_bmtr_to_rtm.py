@@ -41,16 +41,16 @@ import importlib
 import bpy
 
 name = None
-for addon in bpy.context.preferences.addons.keys():
-    if addon.endswith("Arma3ObjectBuilder"):
-        name = addon
+for addon in bpy.context.preferences.addons:
+    if addon.module.endswith("Arma3ObjectBuilder"):
+        name = addon.module
         break
 else:
     raise Exception("Arma 3 Object Builder could not be found")
 
-a3ob_utils = importlib.import_module(addon).utilities
-a3ob_io = importlib.import_module(addon).io
-
+a3ob = importlib.import_module(name)
+a3ob_utils = a3ob.utilities
+a3ob_io = a3ob.io
 rtm = a3ob_io.data_rtm
 data = a3ob_utils.data
 ProcessLogger = a3ob_utils.logger.ProcessLogger

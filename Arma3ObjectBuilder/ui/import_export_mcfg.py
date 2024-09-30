@@ -1,4 +1,3 @@
-import traceback
 import os
 
 import bpy
@@ -35,20 +34,13 @@ class A3OB_OP_import_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
     @classmethod
     def poll(cls, context):
-        return os.path.isfile(utils.get_cfg_convert())
+        return os.path.isfile(import_mcfg.get_cfg_convert())
 
     def draw(self, context):
         pass
 
     def execute(self, context):
-        count_skeletons = 0
-        try:
-            count_skeletons = import_mcfg.read_file(self, context)
-        except import_mcfg.rap.RAP_Error as ex:
-            utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
-        except Exception as ex:
-            utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
-            traceback.print_exc()
+        count_skeletons = import_mcfg.read_file(self, context)
         
         if count_skeletons > 0:
             utils.op_report(self, {'INFO'}, "Successfully imported %d skeleton(s)" % count_skeletons)
@@ -109,27 +101,17 @@ class A3OB_OP_export_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     def draw(self, context):
         pass
 
-    def execute(self, context):
-        if not utils.OutputManager.can_access_path(self.filepath):
-            utils.op_report(self, {'ERROR'}, "Cannot write to target file (file likely in use by another blocking process)")
-            return {'FINISHED'}
-        
+    def execute(self, context):        
         scene_props = context.scene.a3ob_rigging
         skeleton = scene_props.skeletons[self.skeleton_index]
-        output = utils.OutputManager(self.filepath, "w")
 
         validator = Validator(ProcessLoggerNull())
         if not validator.validate_skeleton(skeleton, False, True):
             utils.op_report(self, {'ERROR'}, "Invalid skeleton definiton, run skeleton validation for more info")
             return {'FINISHED'}
         
-        with output as file:
-            try:
-                export_mcfg.write_file(self, skeleton, file)
-                output.success = True
-            except Exception as ex:
-                utils.op_report(self, {'ERROR'}, "%s (check the system console)" % ex)
-                traceback.print_exc()
+        with utils.ExportFileHandler(self.filepath, "w") as file:
+            export_mcfg.write_file(self, skeleton, file)
 
         return {'FINISHED'}
 

@@ -11,6 +11,7 @@ import bpy
 import bmesh
 
 from . import data_p3d as p3d
+from .. import get_prefs
 from ..utilities import generic as utils
 from ..utilities import flags as flagutils
 from ..utilities import compat as computils
@@ -104,7 +105,7 @@ def bake_flags_vertex(obj):
     with utils.edit_bmesh(obj) as bm:
         bm.verts.ensure_lookup_table()
 
-        default_flag = utils.get_addon_preferences().flag_vertex
+        default_flag = get_prefs().flag_vertex
 
         layer = flagutils.get_layer_flags_vertex(bm)
         flags_vertex = {i: item.get_flag() for i, item in enumerate(obj.a3ob_properties_object_flags.vertex)}
@@ -120,7 +121,7 @@ def bake_flags_face(obj):
     with utils.edit_bmesh(obj) as bm:
         bm.faces.ensure_lookup_table()
 
-        default_flag = utils.get_addon_preferences().flag_face
+        default_flag = get_prefs().flag_face
 
         layer = flagutils.get_layer_flags_face(bm)
         flags_face = {i: item.get_flag() for i, item in enumerate(obj.a3ob_properties_object_flags.face)}
@@ -393,15 +394,10 @@ def get_lod_data(operator, context, validator, temp_collection):
     return lod_list
 
 
-# Produce the vertex dictionary from the bmesh data.
-# {idx 0: (x, y, z, flag), ...: (..., ..., ..., ...), ...}
+# Produce the vertex list from the bmesh data.
 def process_vertices(bm):
     layer = flagutils.get_layer_flags_vertex(bm)
-
-    output = {}
-
-    for vert in bm.verts:
-        output[vert.index] = (*vert.co, vert[layer])
+    output = [(*vert.co, vert[layer]) for vert in bm.verts]
 
     return output
 
@@ -411,14 +407,14 @@ def process_vertices(bm):
 # {idx 0: (x, y, z), ...: (..., ..., ...), ....}
 # {loop idx 0: normal idx X, loop idx 1: normal idx Y, ...}
 def process_normals(mesh):
-    output = {}
+    output = []
     normals_index = {}
     normals_lookup_dict = {}
     
     for i, normal in computils.mesh_static_normals_iterator(mesh):
         if normal not in normals_index:
             normals_index[normal] = len(normals_index)
-            output[len(output)] = normal
+            output.append(normal)
         
         normals_lookup_dict[i] = normals_index[normal]
 
@@ -443,7 +439,7 @@ def process_materials(obj, relative):
 # Produce the face data dictionary from the obj and  bmesh data.
 # {face 0: ([vert 0, vert 1, vert 2], [normal 0, normal 1, normal 2], [(uv 0 0, uv 0 1), (...), ...], texture, material, flag), ...}
 def process_faces(obj, bm, normals_lookup, relative):
-    output = {}
+    output = []
     # Materials need to be precompiled to speed up the face access.
     materials = process_materials(obj, relative)
 
@@ -463,7 +459,7 @@ def process_faces(obj, bm, normals_lookup, relative):
             normals.append(normals_lookup[loop.index])
             uvs.append((loop[uv_layer].uv[0], 1 - loop[uv_layer].uv[1]) if uv_layer else (0, 0))
 
-        output[face.index] = [verts, normals, uvs, *materials[face.material_index], face[flag_layer]]
+        output.append([verts, normals, uvs, *materials[face.material_index], face[flag_layer]])
 
     return output
 
@@ -504,13 +500,7 @@ def process_tagg_uvset(bm, layer):
     output = p3d.P3D_TAGG()
     output.name = "#UVSet#"
     output.data = p3d.P3D_TAGG_DataUVSet()
-    uvs = {}
-
-    for face in bm.faces:
-        for loop in face.loops:
-            uvs[loop.index] = (loop[layer].uv[0], loop[layer].uv[1])
-
-    output.data.uvs = dict(sorted(uvs.items()))
+    output.data.uvs = [(loop[layer].uv[0], loop[layer].uv[1]) for face in bm.faces for loop in face.loops]
 
     return output
 
@@ -530,8 +520,7 @@ def process_tagg_mass(bm, layer):
     output.name = "#Mass#"
     output.data = p3d.P3D_TAGG_DataMass()
 
-    for vert in bm.verts:
-        output.data.masses[vert.index] = vert[layer]
+    output.data.masses = [vert[layer] for vert in bm.verts]
 
     return output
 
@@ -552,7 +541,7 @@ def process_taggs_selections(obj, bm):
 
     for vert in bm.verts:
         for idx in vert[layer].keys():
-            output[idx].data.weight_verts[vert.index] = vert[layer][idx]
+            output[idx].data.weight_verts.append((vert.index, vert[layer][idx]))
     
     # If all vertices of a face belong to a selection, then the face belongs to the 
     # selection as well.
@@ -561,7 +550,7 @@ def process_taggs_selections(obj, bm):
         unique = set(indices)
         for idx in unique:
             if indices.count(idx) == len(face.loops):
-                output[idx].data.weight_faces[face.index] = 1
+                output[idx].data.weight_faces.append((face.index, 1))
 
     return output.values()
 

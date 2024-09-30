@@ -7,7 +7,6 @@
 import struct
 import math
 import re
-from decimal import Decimal, Context
 
 from . import binary_handler as binary
 
@@ -22,7 +21,7 @@ class P3D_Error(Exception):
 class P3D_TAGG_DataEmpty():
     @classmethod
     def read(cls, file, length):
-        file.read(length)
+        file.seek(length, 1)
         return cls()
     
     def length(self):
@@ -40,12 +39,16 @@ class P3D_TAGG_DataSharpEdges():
     def read(cls, file, length = 0):
         output = cls()
         
-        for i in range(length // 8):
-            point_1, point_2 = binary.read_ulongs(file, 2)
-            
+        count_values = length // 4
+        data = binary.read_ulongs(file, count_values)
+
+        for i in range(0, count_values, 2):
+            point_1 = data[i]
+            point_2 = data[i + 1]
+
             if point_1 == point_2:
                 continue
-            
+
             output.edges.append((point_1, point_2))
         
         return output
@@ -85,12 +88,12 @@ class P3D_TAGG_DataProperty():
 
 class P3D_TAGG_DataMass():
     def __init__(self):
-        self.masses = {}
+        self.masses = ()
     
     @classmethod
     def read(cls, file, count_verts):
         output = cls()
-        output.masses = {i: value for i, value in enumerate(binary.read_floats(file, count_verts))}
+        output.masses = binary.read_floats(file, count_verts)
         
         return output
     
@@ -98,22 +101,21 @@ class P3D_TAGG_DataMass():
         return len(self.masses) * 4
     
     def write(self, file):
-        for value in self.masses.values():
-            binary.write_float(file, value)
+        binary.write_float(file, *self.masses)
 
 
 class P3D_TAGG_DataUVSet():
     def __init__(self):
         self.id = 0
-        self.uvs = {}
+        self.uvs = []
     
     @classmethod
     def read(cls, file, length = 0):
         output = cls()
-        count_values = (length - 4) // 4
         output.id = binary.read_ulong(file)
+        count_values = (length - 4) // 4
         data = binary.read_floats(file, count_values)
-        output.uvs = {i: (data[i * 2], 1 - data[i * 2 + 1]) for i in range(count_values // 2)}
+        output.uvs = [(data[i], 1 - data[i + 1]) for i in range(0, count_values, 2)]
 
         return output
     
@@ -122,38 +124,30 @@ class P3D_TAGG_DataUVSet():
     
     def write(self, file):
         binary.write_ulong(file, self.id)
-        for value in self.uvs.values():
-            binary.write_float(file, value[0], 1 - value[1])
+        for u, v in self.uvs:
+            binary.write_float(file, u, 1 - v)
 
 
 class P3D_TAGG_DataSelection():
     def __init__(self):
         self.count_verts = 0
         self.count_faces = 0
-        self.weight_verts = {}
-        self.weight_faces = {}
+        self.weight_verts = []
+        self.weight_faces = []
     
     @classmethod
     def decode_weight(cls, weight):
-        if weight == 0 or weight == 1:
+        if weight in (0, 1):
             return weight
-            
-        value = (256 - weight) / 255
         
-        if value > 1:
-            return 0
-            
-        return value
+        return (255 - weight) / 254
     
     @classmethod
     def encode_weight(cls, weight):
-        if weight == 0 or weight == 1:
+        if weight in (0, 1):
             return int(weight)
             
-        value = round(256 - 255 * weight)
-        
-        if value == 256:
-            return 0
+        value = round(255 - 254 * weight)
             
         return value
     
@@ -165,9 +159,10 @@ class P3D_TAGG_DataSelection():
         output.count_faces = count_faces
         
         data_verts = bytearray(file.read(count_verts))
-
-        output.weight_verts = {i: cls.decode_weight(value) for i, value in enumerate(data_verts) if value > 0}
-        file.read(count_faces)
+        output.weight_verts = [(i, cls.decode_weight(value)) for i, value in enumerate(data_verts) if value > 0]
+        file.seek(count_faces, 1) # skip face selection data
+        # data_faces = bytearray(file.read(count_faces))
+        # output.weight_faces = [(i, cls.decode_weight(value)) for i, value in enumerate(data_faces) if value > 0]
 
         return output
     
@@ -176,12 +171,12 @@ class P3D_TAGG_DataSelection():
     
     def write(self, file):        
         bytes_verts = bytearray(self.count_verts)
-        for idx in self.weight_verts:
-            bytes_verts[idx] = self.encode_weight(self.weight_verts[idx])
+        for idx, weight in self.weight_verts:
+            bytes_verts[idx] = self.encode_weight(weight)
         
         bytes_faces = bytearray(self.count_faces)
-        for idx in self.weight_faces:
-            bytes_faces[idx] = self.encode_weight(self.weight_faces[idx])
+        for idx, weight in self.weight_faces:
+            bytes_faces[idx] = self.encode_weight(weight)
         
         file.write(bytes_verts)
         file.write(bytes_faces)
@@ -209,28 +204,29 @@ class P3D_TAGG():
         output.name = binary.read_asciiz(file)
         length = binary.read_ulong(file)
         
-        
         if output.name == "#EndOfFile#":
             if length != 0:
                 raise P3D_Error("Invalid EOF")
             
             output.active = False
         elif output.name == "#SharpEdges#":
+            if length % 8 != 0:
+                raise P3D_Error("Invalid sharp edges length: %d" % length)
+            
             output.data = P3D_TAGG_DataSharpEdges.read(file, length)
         elif output.name == "#Property#":
             if length != 128:
-                raise P3D_Error("Invalid name property length: %d" % length)
+                raise P3D_Error("Invalid named property length: %d" % length)
             
             output.data = P3D_TAGG_DataProperty.read(file)
         elif output.name == "#Mass#":
             output.data = P3D_TAGG_DataMass.read(file, count_verts)
         elif output.name == "#UVSet#":
             output.data = P3D_TAGG_DataUVSet.read(file, length)
-        elif not output.name.startswith("#") and not output.name.endswith("#"):
+        elif output.is_selection():
             output.data = P3D_TAGG_DataSelection.read(file, count_verts, count_faces)
         else:
-            # Consume unneeded TAGGs
-            file.read(length)
+            file.seek(length, 1) # Skip unneeded TAGG data
             output.active = False
         
         return output
@@ -252,7 +248,7 @@ class P3D_TAGG():
         if not self.name.startswith("proxy:"):
             return False
         
-        regex_proxy = "proxy:.*\.\d+"
+        regex_proxy = r"proxy:.*\.\d+"
         return re.match(regex_proxy, self.name)
     
     def is_selection(self):
@@ -276,7 +272,7 @@ class P3D_LOD_Resolution():
     HITPOINTS = 13
     VIEW_GEOMETRY = 14
     FIRE_GEOMETRY = 15
-    VIEW_CARGO_GEOMERTRY = 16
+    VIEW_CARGO_GEOMETRY = 16
     VIEW_CARGO_FIRE_GEOMETRY = 17
     VIEW_COMMANDER = 18
     VIEW_COMMANDER_GEOMETRY = 19
@@ -290,57 +286,47 @@ class P3D_LOD_Resolution():
     SHADOW_VIEW_PILOT = 27
     SHADOW_VIEW_GUNNER = 28
     WRECKAGE = 29
-    UNDERGROUND = 30 # Geometry PhysX Old for Arma 3
+    UNDERGROUND = 30
     GROUNDLAYER = 31
     NAVIGATION = 32
-    # SHADOWBUFFER = ...
     UNKNOWN = -1
 
-    INDEX_MAP = {
-        (0.0, 0): VISUAL, # Visual
-        (1.0, 3): VIEW_GUNNER, # View Gunner
-        (1.1, 3): VIEW_PILOT, # View Pilot
-        (1.2, 3): VIEW_CARGO, # View Cargo
-        (1.0, 4): SHADOW, # Shadow
-        # (1.1, 4): SHADOWBUFFER,
-        (1.3, 4): GROUNDLAYER, # GroundLayer (VBS)
-        (2.0, 4): EDIT, # Edit
-        (1.0, 13): GEOMETRY, # Geometry
-        (2.0, 13): GEOMETRY_BUOY, # Geometry Buoyancy
-        (3.0, 13): UNDERGROUND, # Underground (VBS), Geometry PhysX (old) for Arma 3
-        (4.0, 13): GEOMETRY_PHYSX, # Geometry PhysX
-        (5.0, 13): NAVIGATION, # Navigation (VBS)
-        (1.0, 15): MEMORY, # Memory
-        (2.0, 15): LANDCONTACT, # Land Contact
-        (3.0, 15): ROADWAY, # Roadway
-        (4.0, 15): PATHS, # Paths
-        (5.0, 15): HITPOINTS, # Hit Points
-        (6.0, 15): VIEW_GEOMETRY, # View Geometry
-        (7.0, 15): FIRE_GEOMETRY, # Fire Geometry
-        (8.0, 15): VIEW_CARGO_GEOMERTRY, # View Cargo Geometry
-        (9.0, 15): VIEW_CARGO_FIRE_GEOMETRY, # View Cargo Fire Geometry
-        (1.0, 16): VIEW_COMMANDER, # View Commander
-        (1.1, 16): VIEW_COMMANDER_GEOMETRY, # View Commander Geometry
-        (1.2, 16): VIEW_COMMANDER_FIRE_GEOMETRY, # View Commander Fire Geometry
-        (1.3, 16): VIEW_PILOT_GEOMETRY, # View Pilot Geometry
-        (1.4, 16): VIEW_PILOT_FIRE_GEOMETRY, # View Pilot Fire Geometry
-        (1.5, 16): VIEW_GUNNER_GEOMETRY, # View Gunner Geometry
-        (1.6, 16): VIEW_GUNNER_FIRE_GEOMETRY, # View Gunner Fire Geometry
-        (1.7, 16): SUBPARTS, # Sub Parts
-        (1.8, 16): SHADOW_VIEW_CARGO, # Cargo View Shadow Volume
-        (1.9, 16): SHADOW_VIEW_PILOT, # Pilot View Shadow Volume
-        (2.0, 16): SHADOW_VIEW_GUNNER, # Gunner View Shadow Volume
-        (2.1, 16): WRECKAGE, # Wreckage
-        (-1.0, 0): UNKNOWN # Unknown
-    }
-
-    RESOLUTION_POS = { # decimal places in normalized format
-        VIEW_CARGO: 3,
-        SHADOW: 4,
-        # SHADOWBUFFER: 4,
-        EDIT: 4,
-        VIEW_CARGO_GEOMERTRY: 2,
-        SHADOW_VIEW_CARGO: 3
+    SIGNATURE_MAP = {
+        # "0.000e+00": VISUAL, # (+ resolution)
+        "1.000e+03": VIEW_GUNNER,
+        "1.100e+03": VIEW_PILOT,
+        # "1.200e+03": VIEW_CARGO, # (+ resolution)
+        # "1.000e+04": SHADOW, # (+ resolution)
+        # "1.100e+04": SHADOWBUFFER,
+        "1.300e+04": GROUNDLAYER, # Shadow Volume 3000 for Arma 3
+        # "2.000e+04": EDIT, # (+ resolution)
+        "1.000e+13": GEOMETRY,
+        "2.000e+13": GEOMETRY_BUOY,
+        "3.000e+13": UNDERGROUND, # Geometry PhysX (old) for Arma 3
+        "4.000e+13": GEOMETRY_PHYSX,
+        "5.000e+13": NAVIGATION, # Resolution 5e13 for Arma 3
+        "1.000e+15": MEMORY,
+        "2.000e+15": LANDCONTACT,
+        "3.000e+15": ROADWAY,
+        "4.000e+15": PATHS,
+        "5.000e+15": HITPOINTS,
+        "6.000e+15": VIEW_GEOMETRY,
+        "7.000e+15": FIRE_GEOMETRY,
+        # "8.000e+15": VIEW_CARGO_GEOMETRY, (+ resolution * 1e13)
+        "9.000e+15": VIEW_CARGO_FIRE_GEOMETRY,
+        "1.000e+16": VIEW_COMMANDER,
+        "1.100e+16": VIEW_COMMANDER_GEOMETRY,
+        "1.200e+16": VIEW_COMMANDER_FIRE_GEOMETRY,
+        "1.300e+16": VIEW_PILOT_GEOMETRY,
+        "1.400e+16": VIEW_PILOT_FIRE_GEOMETRY,
+        "1.500e+16": VIEW_GUNNER_GEOMETRY,
+        "1.600e+16": VIEW_GUNNER_FIRE_GEOMETRY,
+        "1.700e+16": SUBPARTS,
+        # "1.800e+16": SHADOW_VIEW_CARGO, # (+ resolution * 1e13)
+        "1.900e+16": SHADOW_VIEW_PILOT,
+        "2.000e+16": SHADOW_VIEW_GUNNER,
+        "2.100e+16": WRECKAGE,
+        # (-1.0, 0): UNKNOWN
     }
 
     def __init__(self, lod = 0, res = 0):
@@ -356,40 +342,49 @@ class P3D_LOD_Resolution():
 
     @classmethod
     def encode(cls, lod, resolution):
-        if lod == cls.VISUAL or lod == cls.UNKNOWN:
-            return resolution 
+        if lod in (cls.VISUAL, cls.UNKNOWN):
+            return resolution
         
-        lookup = {v: k for k, v in cls.INDEX_MAP.items()}
-
-        coef, exp = lookup[lod]
-        pos = cls.RESOLUTION_POS.get(lod, None)
-
-        resolution_sign = (resolution * 10**(exp - pos)) if pos is not None else 0
+        lookup = {v: k for k, v in cls.SIGNATURE_MAP.items()}
+        signature = lookup.get(lod)
+        if signature is not None:
+            return float(signature)
         
-        return coef * 10**exp + resolution_sign
-
+        if lod == cls.VIEW_CARGO:
+            return 1.2e3 + resolution
+        elif lod == cls.SHADOW:
+            return 1.0e4 + resolution
+        elif lod == cls.EDIT:
+            return 2.0e4 + resolution
+        elif lod == cls.VIEW_CARGO_GEOMETRY:
+            return 8.0e15 + resolution * 1e13
+        elif lod == cls.SHADOW_VIEW_CARGO:
+            return 1.8e16 + resolution * 1e13
+    
     @classmethod
     def decode(cls, signature):
         if signature < 1e3:
             return cls.VISUAL, round(signature)
-        elif 1e4 <= signature < 1.2e4:
+        elif 1.2e3 <= signature < 1.3e3:
+            return cls.VIEW_CARGO, round(signature - 1.2e3)
+        elif 1.0e4 <= signature < 1.2e4:
             return cls.SHADOW, round(signature - 1e4)
+        elif 2e4 <= signature < 3e4:
+            return cls.EDIT, round(signature - 2e4)
         
-        num = Decimal(signature)
-        exp = num.normalize(Context(2)).adjusted()
-        
-        coef = float((num / 10**exp))
-        base = round(coef, 1) if exp in (3, 4, 16) else round(coef)
+        string = "%.3e" % signature
+        lod = cls.SIGNATURE_MAP.get(string)
+        if lod is not None:
+            return lod, 0
 
-        lod = cls.INDEX_MAP.get((base, exp), cls.UNKNOWN)
-        pos = cls.RESOLUTION_POS.get(lod, None)
+        exp = int(string[-2:])
+        if exp == 15:
+            return cls.VIEW_CARGO_GEOMETRY, int(string[2:4])
+        elif exp == 16:
+            return cls.SHADOW_VIEW_CARGO, int(string[3:5])
 
-        if lod == cls.UNKNOWN:
-            return lod, round(signature)
-
-        resolution = int(round((coef - base) * 10**pos, pos)) if pos is not None else 0
-        
-        return lod, resolution
+        print(signature, string)
+        return cls.UNKNOWN, round(signature)
     
     @classmethod
     def from_float(cls, value):
@@ -416,47 +411,51 @@ class P3D_LOD():
         self.flags = 0x00000000
         self.resolution = P3D_LOD_Resolution()
 
-        self.verts = {}
-        self.normals = {}
-        self.faces = {}
+        self.verts = []
+        self.normals = []
+        self.faces = []
         self.taggs = []
+    
+    struct_vert = struct.Struct('<fffI')
+    struct_normal = struct.Struct('<fff')
+    struct_face = struct.Struct('<IIff')
     
     def __eq__(self, other):
         return type(other) is type(self) and other.resolution == self.resolution
     
     # Reading
 
-    @staticmethod
-    def read_vert(file):
-        x, z, y, flag = struct.unpack('<fffI', file.read(16))
+    @classmethod
+    def read_vert(cls, file):
+        x, z, y, flag = cls.struct_vert.unpack(file.read(16))
         return x, y, z, flag
     
     def read_verts(self, file, count_verts):
-        self.verts = {i: self.read_vert(file) for i in range(count_verts)}
+        self.verts = [self.read_vert(file) for i in range(count_verts)]
 
-    @staticmethod
-    def read_normal(file):
-        x, z, y = struct.unpack('<fff', file.read(12))
+    @classmethod
+    def read_normal(cls, file):
+        x, z, y = cls.struct_normal.unpack(file.read(12))
         return -x, -y, -z
     
     def read_normals(self, file, count_normals):
-        self.normals = {i: self.read_normal(file) for i in range(count_normals)}
+        self.normals = [self.read_normal(file) for i in range(count_normals)]
     
-    @staticmethod
-    def read_face(file):
+    @classmethod
+    def read_face(cls, file):
         count_sides = binary.read_ulong(file)
         vertices = []
         normals = []
         uvs = []
 
         for i in range(count_sides):
-            vert, norm, u, v = struct.unpack('<IIff', file.read(16))
+            vert, norm, u, v = cls.struct_face.unpack(file.read(16))
             vertices.append(vert)
             normals.append(norm)
             uvs.append((u, 1 - v))
 
         if count_sides < 4:
-            file.read(16)
+            file.seek(16, 1)
         
         flag = binary.read_ulong(file)
         texture = binary.read_asciiz(file)
@@ -465,7 +464,7 @@ class P3D_LOD():
         return [vertices, normals, uvs, texture, material, flag]
 
     def read_faces(self, file, count_faces):
-        self.faces = {i: self.read_face(file) for i in range(count_faces)}
+        self.faces = [self.read_face(file) for i in range(count_faces)]
 
     @classmethod
     def read(cls, file):
@@ -508,25 +507,25 @@ class P3D_LOD():
     # Writing
     
     def write_vert(self, file, vert):
-        file.write(struct.pack('<fffI', vert[0], vert[2], vert[1], vert[3]))
+        file.write(self.struct_vert.pack(vert[0], vert[2], vert[1], vert[3]))
     
     def write_verts(self, file):
-        for i in self.verts:
-            self.write_vert(file, self.verts[i])
+        for vert in self.verts:
+            self.write_vert(file, vert)
     
     def write_normal(self, file, normal):
-        file.write(struct.pack('<fff', -normal[0], -normal[2], -normal[1]))
+        file.write(self.struct_normal.pack(-normal[0], -normal[2], -normal[1]))
     
     def write_normals(self, file):
-        for i in self.normals:
-            self.write_normal(file, self.normals[i])
+        for vector in self.normals:
+            self.write_normal(file, vector)
     
     def write_face(self, file, face):
         count_sides = len(face[0])
         binary.write_ulong(file, count_sides)
 
         for i in range(count_sides):
-            file.write(struct.pack('<IIff', face[0][i], face[1][i], face[2][i][0], face[2][i][1]))
+            file.write(self.struct_face.pack(face[0][i], face[1][i], face[2][i][0], face[2][i][1]))
         
         if count_sides < 4:
             file.write(bytearray(16))
@@ -536,8 +535,8 @@ class P3D_LOD():
         binary.write_asciiz(file, face[4])
     
     def write_faces(self, file):
-        for i in self.faces:
-            self.write_face(file, self.faces[i])
+        for face in self.faces:
+            self.write_face(file, face)
 
 
     def write(self, file):
@@ -571,19 +570,22 @@ class P3D_LOD():
     # which potentially result in a not normalized vector, which causes issues
     # in Blender, so the vectors need to be renormalized before usage.
     def renormalize_normals(self):
-        for i in self.normals:
-            normal = self.normals[i]
+        renormalized = []
+        for normal in self.normals:
             length = math.sqrt(normal[0]**2 + normal[1]**2 + normal[2]**2)
             
             if length == 0:
+                renormalized.append(normal)
                 continue
                 
             coef = 1 / length
-            self.normals[i] = (normal[0] * coef, normal[1] * coef, normal[2] * coef)
+            renormalized.append((normal[0] * coef, normal[1] * coef, normal[2] * coef))
+        
+        self.normals = renormalized
     
     def pydata(self):
-        verts = [self.verts[i][0:3] for i in self.verts]
-        faces = [self.faces[idx][0] for idx in self.faces]
+        verts = [vert[0:3] for vert in self.verts]
+        faces = [face[0] for face in self.faces]
 
         return verts, [], faces
     
@@ -594,8 +596,7 @@ class P3D_LOD():
     # from the parent MLOD object, so the dictionary is edited in place, not 
     # returned.
     def get_materials(self, materials = {}):
-        for item in self.faces:
-            face = self.faces[item]
+        for face in self.faces:
             texture = face[3]
             material = face[4]
 
@@ -611,8 +612,7 @@ class P3D_LOD():
         last_idx = None
         face_idx = 0
 
-        for i in self.faces:
-            face = self.faces[i]
+        for face in self.faces:
             texture = face[3]
             material = face[4]
             
@@ -634,8 +634,7 @@ class P3D_LOD():
         slot_indices = []
         material_slot_indices = {}
 
-        for i in self.faces:
-            face = self.faces[i]
+        for face in self.faces:
             texture = face[3]
             material = face[4]
 
@@ -652,7 +651,7 @@ class P3D_LOD():
     def renumber_components(self):
         counter = 1
         for tagg in self.taggs:
-            if not re.match("component\d+", tagg.name, re.IGNORECASE):
+            if not re.match(r"component\d+", tagg.name, re.IGNORECASE):
                 continue
             
             tagg.name = "component%02d" % counter
@@ -665,7 +664,7 @@ class P3D_LOD():
     # they have to be replaced by formatted placeholders and later looked up
     # from a dictionary when needed.
     def proxies_to_placeholders(self):
-        regex_proxy = "proxy:(.*)\.(\d+)"
+        regex_proxy = r"proxy:(.*)\.(\d+)"
 
         lookup = {}
 
@@ -701,7 +700,7 @@ class P3D_LOD():
     # of all UVSets, unique by ID. If UVSet 0 is also found as a TAGG, the TAGG
     # data takes precedence over the embedded values.
     def uvsets(self):
-        sets = {0: [uv for idx in self.faces for uv in self.faces[idx][2]]}
+        sets = {0: [uv for face in self.faces for uv in face[2]]}
         for tagg in self.taggs:
             if tagg.name != "#UVSet#":
                 continue
@@ -713,22 +712,22 @@ class P3D_LOD():
     # Generate loop normals list that can be directly used by the Blender API
     # mesh.normals_split_custom_set() function
     def loop_normals(self):
-        return [self.normals[item] for face in self.faces.values() for item in face[1]]
+        return [self.normals[item] for face in self.faces for item in face[1]]
     
     # Collect and group the used vertex flag values for setting up
     # the flag data layer and flag groups object data.
     def flag_groups_vertex(self):
         groups = {}
-        values = {}
+        values = []
 
-        for idx in self.verts:
-            flag = self.verts[idx][3]
+        for vert in self.verts:
+            flag = vert[3]
             group = groups.get(flag)
             if group is None:
                 group = len(groups)
                 groups[flag] = group
             
-            values[idx] = group
+            values.append(group)
         
         return list(groups.keys()), values
     
@@ -736,29 +735,31 @@ class P3D_LOD():
     # the flag data layer and flag groups object data.
     def flag_groups_face(self):
         groups = {}
-        values = {}
+        values = []
 
-        for idx in self.faces:
-            flag = self.faces[idx][5]
+        for face in self.faces:
+            flag = face[5]
             group = groups.get(flag)
             if group is None:
                 group = len(groups)
                 groups[flag] = group
             
-            values[idx] = group
+            values.append(group)
 
         return list(groups.keys()), values
     
     # Change every file path, and selection name to lower case for a uniform output.
     def force_lowercase(self):
-        for idx in self.faces:
-            face = self.faces[idx]
+        for face in self.faces:
             face[3] = face[3].lower()
             face[4] = face[4].lower()
         
         for tagg in self.taggs:
             if tagg.is_selection():
                 tagg.name = tagg.name.lower()
+            elif type(tagg.data) is P3D_TAGG_DataProperty:
+                tagg.data.key = tagg.data.key.lower()
+                tagg.data.value = tagg.data.value.lower()
 
 
 class P3D_MLOD():

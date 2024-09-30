@@ -1,5 +1,6 @@
 import bpy
 
+from .. import get_icon
 from ..utilities import generic as utils
 from ..utilities import renaming as renameutils
 
@@ -109,7 +110,7 @@ class A3OB_PT_renaming_paths_bulk(bpy.types.Panel):
         
         col_list.template_list("A3OB_UL_renamable_paths", "A3OB_bulk_rename", scene_props, "path_list", scene_props, "path_list_index")
         row_filter = col_list.row(align=True)
-        row_filter.operator("a3ob.rename_list_refresh", text="", icon_value=utils.get_icon("op_refresh"))
+        row_filter.operator("a3ob.rename_list_refresh", text="", icon_value=get_icon("op_refresh"))
         row_filter.prop(scene_props, "source_filter")
         
         if utils.is_valid_idx(scene_props.path_list_index, scene_props.path_list):
@@ -117,7 +118,7 @@ class A3OB_PT_renaming_paths_bulk(bpy.types.Panel):
             col_edit.prop(scene_props.path_list[scene_props.path_list_index], "path", text="")
             col_edit.prop(scene_props, "new_path", text="")
             col_edit.separator()
-            col_edit.operator("a3ob.rename_path_item", icon_value=utils.get_icon("op_replace"))
+            col_edit.operator("a3ob.rename_path_item", icon_value=get_icon("op_replace"))
 
 
 class A3OB_PT_renaming_paths_root(bpy.types.Panel):
@@ -139,7 +140,7 @@ class A3OB_PT_renaming_paths_root(bpy.types.Panel):
         row_filter = layout.row(align=True)
         row_filter.prop(scene_props, "source_filter")
         
-        layout.operator("a3ob.rename_path_root", icon_value=utils.get_icon("op_replace"))
+        layout.operator("a3ob.rename_path_root", icon_value=get_icon("op_replace"))
 
 
 class A3OB_PT_renaming_vertex_groups(bpy.types.Panel):
@@ -158,7 +159,7 @@ class A3OB_PT_renaming_vertex_groups(bpy.types.Panel):
         col_edit.prop(scene_props, "vgroup_old")
         col_edit.prop(scene_props, "vgroup_new")
         layout.prop(scene_props, "vgroup_match_whole")
-        layout.operator("a3ob.rename_vertex_groups", icon_value=utils.get_icon("op_replace"))
+        layout.operator("a3ob.rename_vertex_groups", icon_value=get_icon("op_replace"))
 
 
 classes = (

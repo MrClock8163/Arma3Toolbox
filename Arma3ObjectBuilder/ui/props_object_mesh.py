@@ -1,5 +1,6 @@
 import bpy
 
+from .. import get_prefs, get_icon
 from ..utilities import generic as utils
 from ..utilities import data
 from ..utilities import proxy as proxyutils
@@ -269,7 +270,7 @@ class A3OB_OT_flags_vertex_add(bpy.types.Operator):
         flag_props = obj.a3ob_properties_object_flags
         item = flag_props.vertex.add()
         item.name = "New Flag Group"
-        item.set_flag(utils.get_addon_preferences().flag_vertex)
+        item.set_flag(get_prefs().flag_vertex)
         flag_props.vertex_index = len(flag_props.vertex) - 1
         
         return {'FINISHED'}
@@ -398,7 +399,7 @@ class A3OB_OT_flags_face_add(bpy.types.Operator):
         flag_props = obj.a3ob_properties_object_flags
         item = flag_props.face.add()
         item.name = "New Flag Group"
-        item.set_flag(utils.get_addon_preferences().flag_face)
+        item.set_flag(get_prefs().flag_face)
         flag_props.face_index = len(flag_props.face) - 1
         
         return {'FINISHED'}
@@ -900,7 +901,7 @@ class A3OB_PT_object_dtm(bpy.types.Panel):
 
 def menu_func(self, context):
     self.layout.separator()
-    self.layout.operator(A3OB_OT_proxy_add.bl_idname, text="Arma 3 Proxy", icon_value=utils.get_icon("op_proxy_add"))
+    self.layout.operator(A3OB_OT_proxy_add.bl_idname, text="Arma 3 Proxy", icon_value=get_icon("op_proxy_add"))
 
 
 classes = (

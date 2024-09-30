@@ -59,14 +59,15 @@ import importlib
 import bpy
 
 name = None
-for addon in bpy.context.preferences.addons.keys():
-    if addon.endswith("Arma3ObjectBuilder"):
-        name = addon
+for addon in bpy.context.preferences.addons:
+    if addon.module.endswith("Arma3ObjectBuilder"):
+        name = addon.module
         break
 else:
     raise Exception("Arma 3 Object Builder could not be found")
 
-read_file = importlib.import_module(addon).io.import_p3d.read_file
+a3ob = importlib.import_module(name)
+read_file = a3ob.io.import_p3d.read_file
 
 
 def main():

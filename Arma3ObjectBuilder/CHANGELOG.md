@@ -1,5 +1,18 @@
 # Changelog
 
+## [v2.4.1](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.4.1) (Blender 2.90 -> 4.2)
+
+### Changes
+
+- internal handling of the P3D data was simplified and improved
+- internal code structure and dependencies were cleaned up
+- improved add-on reloading
+
+### Fixed
+
+- named properties were not properly lowercased with the Force Lowercase export option during P3D export
+- animation action property classes were not properly unregistered when the add-on was deactivated or reloaded
+
 ## [v2.4.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.4.0) (Blender 2.90 -> 4.2)
 
 ### Added
