@@ -1,5 +1,13 @@
 # Changelog
 
+## [v2.4.2](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.4.1) (Blender 2.90 -> 4.2)
+
+CRITICAL HOTFIX
+
+### Fixed
+
+- P3D export would fail due to a leftover missing program function
+
 ## [v2.4.1](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.4.1) (Blender 2.90 -> 4.2)
 
 ### Changes
