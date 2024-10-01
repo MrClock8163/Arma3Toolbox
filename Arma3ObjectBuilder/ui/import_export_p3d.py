@@ -1,6 +1,7 @@
 import bpy
 import bpy_extras
 
+from .. import get_prefs
 from ..io import import_p3d, export_p3d
 from ..utilities import generic as utils
 
@@ -330,7 +331,7 @@ class A3OB_OP_export_p3d(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             else:
                 utils.op_report(self, {'WARNING'}, "Only exported %d/%d LODs (check the logs in the system console)" % (exported_count, lod_count))
         
-        if not utils.AddonInfo.prefs.preserve_preprocessed_lods:
+        if not get_prefs().preserve_preprocessed_lods:
             export_p3d.cleanup_temp_collection(temp_collection)            
         
         return {'FINISHED'}
