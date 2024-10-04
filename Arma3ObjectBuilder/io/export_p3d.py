@@ -726,6 +726,7 @@ def write_file(operator, context, file, temp_collection):
     mlod.write(file)
     
     logger.level_down()
+    wm.progress_end()
     logger.step("P3D export finished in %f sec" % (time.time() - time_file_start))
 
     return len(lod_list), len(mlod_lods)
