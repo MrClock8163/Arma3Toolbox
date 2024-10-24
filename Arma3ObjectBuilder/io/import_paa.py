@@ -22,11 +22,11 @@ def swizzle(r, g, b, a, code):
         if op == ch_idx:
             continue
         
-        target = trg[op & 3]
-        if op >> 3 & 1:
+        target = trg[op & 0b00000011]
+        if op & 0b00001000:
             for i in range(len(target)):
                 target[i] = 1
-        elif op >> 2 & 1:
+        elif op & 0b00000100:
             for i in range(len(target)):
                 target[i] = 1 - frm[i]
     
@@ -40,8 +40,6 @@ def decompress_mip(mip, format):
     elif format == paa.PAA_Type.DXT5:
         decompressor = dxt5_decompress
         lzo_expected = mip.width * mip.height
-    else:
-        return None
     
     if mip.lzo_compressed:
         stream_lzo = BytesIO(mip.data_raw)
