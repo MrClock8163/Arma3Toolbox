@@ -6,8 +6,11 @@
 
 import struct
 from enum import IntEnum
+from io import BytesIO, BufferedReader
+from copy import deepcopy
 
 from . import binary_handler as binary
+from .compression import dxt1_decompress, dxt5_decompress, lzo1x_decompress
 
 
 class PAA_Error(Exception):
@@ -48,6 +51,7 @@ class PAA_MIPMAP():
     def __init__(self):
         self.width = 0
         self.height = 0
+        self.data = None
         self.data_raw = None
         self.lzo_compressed = False
     
@@ -55,8 +59,7 @@ class PAA_MIPMAP():
     def read(cls, file):
         output = cls()
 
-        output.width = binary.read_ushort(file)
-        output.height = binary.read_ushort(file)
+        output.width, output.height = binary.read_ushorts(file, 2)
         if output.width == output.height == 0:
             return output
         
@@ -68,6 +71,49 @@ class PAA_MIPMAP():
         output.data_raw = bytearray(file.read(length))
 
         return output
+    
+    def decompress(self, format):
+        if format == PAA_Type.DXT1:
+            decompressor = dxt1_decompress
+            lzo_expected = self.width * self.height // 2
+        elif format == PAA_Type.DXT5:
+            decompressor = dxt5_decompress
+            lzo_expected = self.width * self.height
+        else:
+            raise PAA_Error("Unsupported format for decompression: %s", format)
+        
+        data = self.data_raw
+        if self.lzo_compressed:
+            stream_lzo = BytesIO(self.data_raw)
+            reader_lzo = BufferedReader(stream_lzo)
+            _, data = lzo1x_decompress(reader_lzo, lzo_expected)
+
+        stream_dxt = BytesIO(data)
+        reader_dxt = BufferedReader(stream_dxt)
+        self.data = decompressor(reader_dxt, self.width, self.height)
+
+    def swizzle(self, code):
+        if self.data is None or len(self.data) != 4:
+            raise PAA_Error("No properly decompressed data found to swizzle")
+        
+        if len(code) != 4:
+            raise PAA_Error("Unexpected swizzle code length: %s", code)
+
+        r, g, b, a = self.data
+        trg = [a, r, g, b]
+        src = deepcopy(trg)
+
+        for op, source, target_idx in zip(code, src, [0, 1, 2, 3]):
+            if op == target_idx:
+                continue
+
+            target = trg[op & 0b00000011]
+            if op & 0b00001000:
+                for i in range(len(target)):
+                    target[i] = 1
+            elif op & 0b00000100:
+                for i in range(len(target)):
+                    target[i] = 1 - source[i]
 
 
 class PAA_File():
@@ -122,3 +168,10 @@ class PAA_File():
         output.source = filepath
 
         return output
+    
+    def get_tagg(self, name):
+        for tagg in self.taggs:
+            if tagg.name == name:
+                return tagg
+        
+        return None
