@@ -153,9 +153,12 @@ def get_bones_compiled(mcfg, skeleton_name):
     if inherit_bones != "":
         bones_inherit = get_bones_compiled(mcfg, inherit_bones)
     
-    output = bones_self + bones_inherit
+    output = []
+    for item in bones_inherit + bones_self:
+        if item not in output:
+            output.append(item)
         
-    return list(set(output))
+    return output
 
 
 def read_file(operator, context):
