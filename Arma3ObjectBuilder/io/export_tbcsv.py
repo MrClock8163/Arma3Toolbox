@@ -49,8 +49,7 @@ def matrix_to_transform(operator, mat):
 
 def write_file(operator, context, file):
     logger = ProcessLogger()
-    logger.step("Map objects list export to %s" % operator.filepath)
-    time_file_start = time.time()
+    logger.start_subproc("Map objects list export to %s" % operator.filepath)
 
     targets = bpy.data.objects
     if operator.targets == 'SCENE':
@@ -59,30 +58,31 @@ def write_file(operator, context, file):
         targets = context.selected_objects
 
     if operator.only_lods:
-        logger.log("Exporting LOD objects only")
+        logger.step("Exporting LOD objects only")
     
     if operator.collection:
         if not bpy.data.collections.get(operator.collection):
             raise tb.TBCSV_Error("Collection (%s) was not found" % operator.collection)
         
-        logger.log("Exporting collection")
+        logger.step("Exporting collection")
         targets = bpy.data.collections.get(operator.collection).objects
 
     tbcsv = tb.TBCSV_File()
     for obj in (target for target in targets if include_object(target, operator)):
         name = get_object_name(obj, operator)
         if not name:
-            logger.log("Could not determine name for %s" % obj.name)
+            logger.step("Could not determine name for %s" % obj.name)
             continue
 
         entry = tb.TBCSV_Object(name)
         entry.transform = matrix_to_transform(operator, obj.matrix_world)
         tbcsv.objects.append(entry)
     
-    logger.log("Exported objects: %d" % len(tbcsv.objects))
+    logger.step("Exported objects: %d" % len(tbcsv.objects))
     
     tbcsv.write(file)
-
-    logger.step("Map objects list export finished in %f sec" % (time.time() - time_file_start))
+    
+    logger.end_subproc()
+    logger.step("Map objects list export finished in %f sec" % (time.time() - logger.times.pop()))
 
     return len(tbcsv.objects)

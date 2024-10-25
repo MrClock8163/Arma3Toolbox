@@ -54,16 +54,13 @@ def get_points(vertices, nrows, ncols):
 
 def write_file(operator, context, file, obj):
     logger = ProcessLogger()
-    time_start = time.time()
-    logger.step("ASC DTM export to %s" % operator.filepath)
-    logger.level_up()
+    logger.start_subproc("ASC DTM export to %s" % operator.filepath)
 
     obj = context.active_object
     if obj.mode == 'EDIT':
         obj.update_from_editmode()
 
-    logger.step("Processing data:")
-    logger.level_up()
+    logger.start_subproc("Processing data:")
         
     if operator.apply_modifiers:
         obj = obj.evaluated_get(context.evaluated_depsgraph_get())
@@ -94,23 +91,20 @@ def write_file(operator, context, file, obj):
         if cellsize is None:
             raise asc.ASC_Error("Could not calculate cellsize")
         logger.step("Calculated cellsize")
-    
-    logger.step("Done in %f sec" % (time.time() - time_start))
         
     raster.cellsize = cellsize
-    logger.level_down()
+    logger.end_subproc(True)
 
-    logger.step("File report:")
-    logger.level_up()
+    logger.start_subproc("File report:")
     logger.step("Dimensions: %d x %d" % (nrows, ncols))
     logger.step("Cell size: %f" % cellsize)
     logger.step("DTM type: %s" % ("raster" if raster.type == asc.ASC_File.TYPE_RASTER else "grid"))
     logger.step("Easting: %f" % object_props.easting)
     logger.step("Northing: %f" % object_props.northing)
     logger.step("NULL indicator: %f" % object_props.nodata)
-    logger.level_down()
+    logger.end_subproc()
 
     raster.write(file)
     
-    logger.level_down()
-    logger.step("ASC export finished in %f sec" % (time.time() - time_start))
+    logger.end_subproc()
+    logger.step("ASC export finished in %.3f sec" % (time.time() - logger.times.pop()))

@@ -163,28 +163,28 @@ def get_bones_compiled(mcfg, skeleton_name):
 
 def read_file(operator, context):
     logger = ProcessLogger()
-    logger.step("Skeleton import from %s" % operator.filepath)
+    logger.start_subproc("Skeleton import from %s" % operator.filepath)
     data = read_mcfg(operator.filepath)
     scene_props = context.scene.a3ob_rigging
 
     if not data:
-        logger.log("Could not read model.cfg file")
-        logger.step("Skeleton import finished")
+        logger.step("Could not read model.cfg file")
+        logger.end_subproc("Skeleton import finished")
         return 0
     
     if operator.force_lowercase:
-        logger.log("Force lowercase")
+        logger.step("Force lowercase")
 
     skeletons = get_skeletons(data)
-    logger.log("Found skeletons:")
-    logger.level_up()
+    logger.start_subproc("Found skeletons:")
+    
     for skelly in skeletons:
         new_skelly = scene_props.skeletons.add()
         new_skelly.name = skelly.name.lower() if operator.force_lowercase else skelly.name
         new_skelly.protected = operator.protected
         
         cfgbones = get_bones_compiled(data, skelly.name)
-        logger.log("%s: %d compiled bones" % (skelly.name, len(cfgbones)))
+        logger.step("%s: %d compiled bones" % (skelly.name, len(cfgbones)))
         if operator.force_lowercase:
             cfgbones = [bone.to_lowercase() for bone in cfgbones]
 
@@ -193,7 +193,8 @@ def read_file(operator, context):
             new_bone.name = bone.name
             new_bone.parent = bone.parent
     
-    logger.level_down()
+    logger.end_subproc()
+    logger.end_subproc()
     logger.step("Skeleton import finished")
         
     return len(skeletons)

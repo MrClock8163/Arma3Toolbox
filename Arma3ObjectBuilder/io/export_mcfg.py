@@ -8,14 +8,14 @@ from ..utilities.logger import ProcessLogger
 
 def write_file(operator, skeleton, file):
     logger = ProcessLogger()
-    logger.step("Skeleton definition export to %s" % operator.filepath)
-    logger.log("Skeleton definition: %s" % skeleton.name)
+    logger.start_subproc("Skeleton definition export to %s" % operator.filepath)
+    logger.step("Skeleton definition: %s" % skeleton.name)
     bones_parents = riggingutils.bone_order_from_skeleton(skeleton)
 
-    logger.log("Bones: %d" % len(bones_parents))
+    logger.step("Bones: %d" % len(bones_parents))
     
     if operator.force_lowercase:
-        logger.log("Force lowercase")
+        logger.step("Force lowercase")
         bones_parents = {k.lower(): v.lower() for k, v in bones_parents.items()}
     
     printer = rap.CFG_Formatter(file)
@@ -35,5 +35,6 @@ def write_file(operator, skeleton, file):
     printer.class_close()
     printer.class_close()
 
-    logger.log("Wrote formatted file")
+    logger.step("Wrote formatted file")
+    logger.end_subproc()
     logger.step("Skeleton export finished")

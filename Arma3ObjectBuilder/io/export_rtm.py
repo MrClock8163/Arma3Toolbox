@@ -115,9 +115,7 @@ def process_props(operator, action_props):
 
 def write_file(operator, context, file, obj, action):
     logger = ProcessLogger()
-    logger.step("RTM export to %s" % operator.filepath)
-
-    time_start = time.time()
+    logger.start_subproc("RTM export to %s" % operator.filepath)
     
     frame_start = operator.frame_start
     frame_end = operator.frame_end
@@ -125,33 +123,32 @@ def write_file(operator, context, file, obj, action):
     frame_mapping = build_frame_list(operator, action)
     static_pose = len(frame_mapping) < 2
     if operator.force_lowercase:
-        logger.log("Force lowercase")
+        logger.step("Force lowercase")
 
     if static_pose:
-        logger.log("Exporting static pose")
+        logger.step("Exporting static pose")
         frame_mapping = [
             (context.scene.frame_current, 0),
             (context.scene.frame_current, 1)
         ]
     else:
-        logger.log("Detected %d frames" % len(frame_mapping))
+        logger.step("Detected %d frames" % len(frame_mapping))
     
-    logger.log("Processing data:")
-    logger.level_up()
+    logger.start_subproc("Processing data:")
 
     rtm_data = rtm.RTM_File()
     rtm_0101 = rtm.RTM_0101()
     if not static_pose:
         rtm_0101.motion = process_motion(context, obj, action, frame_start, frame_end)
-        logger.log("Calculated motion")
+        logger.step("Calculated motion")
 
     bone_map = build_bone_map(operator, context, obj)
     rtm_0101.bones = list(bone_map.values())
-    logger.log("Collected bones")
+    logger.step("Collected bones")
     rtm_0101.frames = [process_frame(context, obj, bone_map, index, phase) for index, phase in frame_mapping]
     
-    logger.log("Collected frames")
-    logger.level_down()
+    logger.step("Collected frames")
+    logger.end_subproc()
 
     action_props = action.a3ob_properties_action
     if not static_pose and len(action_props.props) > 0:
@@ -159,24 +156,21 @@ def write_file(operator, context, file, obj, action):
         rtm_mdat.items = process_props(operator, action_props)
         rtm_data.props = rtm_mdat
         
-    logger.log("File report:")
-    logger.level_up()
+    logger.start_subproc("File report:")
 
     if rtm_data.props:
-        logger.log("RTM_MDAT")
-        logger.level_up()
+        logger.start_subproc("RTM_MDAT")
         for item in rtm_data.props.items:
-            logger.log(item)
-        logger.level_down()
+            logger.step(item)
+        logger.end_subproc()
 
-    logger.log("RTM_0101")
-    logger.level_up()
-    logger.log("Motion: %f, %f, %f" %  tuple(rtm_0101.motion))
-    logger.log("Bones: %d" % len(rtm_0101.bones))
-    logger.log("Frames: %d" % len(rtm_0101.frames))
-    logger.level_down()
+    logger.start_subproc("RTM_0101")
+    logger.step("Motion: %f, %f, %f" %  tuple(rtm_0101.motion))
+    logger.step("Bones: %d" % len(rtm_0101.bones))
+    logger.step("Frames: %d" % len(rtm_0101.frames))
+    logger.end_subproc()
 
-    logger.level_down()
+    logger.end_subproc()
 
     if operator.force_lowercase:
         rtm_0101.force_lowercase()
@@ -185,6 +179,7 @@ def write_file(operator, context, file, obj, action):
 
     rtm_data.write(file)
 
-    logger.step("RTM export finished in %f sec" % (time.time() - time_start))
+    logger.end_subproc()
+    logger.step("RTM export finished in %f sec" % (time.time() - logger.times.pop()))
 
     return static_pose, len(rtm_0101.frames)

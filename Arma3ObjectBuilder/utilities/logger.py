@@ -2,44 +2,41 @@
 # for I/O and other complex operations.
 
 
-class ProcessLogger():
+from time import time
+
+
+class ProcessLogger:
+    def __init__(self, depth = 0):
+        self.times = [time()]
+        self.depth = depth
+
+    def start_subproc(self, message = ""):
+        if message:
+            self.step(message)
+        
+        self.depth += 1
+        self.times.append(time())
     
-    def __init__(self, start_indent = 0):
-        self.indent = start_indent
-        
-    def level_up(self, message = ""):
-        self.indent += 1
-        if message:
-            print("\t" * self.indent, message, sep="")
-        
-    def level_down(self, message = ""):
-        self.indent -= 1
-        
-        if message:
-            print("\t" * self.indent, message, sep="")
-            
-    def step(self, message, time = -1):
-        print("\t" * self.indent, message, sep="")
-        
-        if time > -1:
-            print("\t" * (self.indent + 1), "Done in %f sec" % time, sep="")
-            
-    def log(self, message = ""):
-        print("\t" * (self.indent + 1), message, sep="")
+    def end_subproc(self, showtime = False):
+        endtime = self.times.pop()
+        if showtime:
+            self.step(">> Done in %.3f sec" % (time() - endtime))
+
+        self.depth -= 1
+
+    def step(self, message):
+        print("\t"*self.depth, message, sep="")
 
 
 class ProcessLoggerNull():
-    def __init__(self, start_indent = 0):
+    def __init__(self, depth = 0):
         pass
 
-    def level_up(self, message = ""):
+    def start_subproc(self, message = ""):
         pass
 
-    def level_down(self, message = ""):
+    def end_subproc(self, showtime = False):
         pass
 
-    def step(self, message, time = -1):
-        pass
-
-    def log(self, message = ""):
+    def step(self, message):
         pass

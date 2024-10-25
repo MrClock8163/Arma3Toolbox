@@ -15,7 +15,7 @@ class A3OB_OP_import_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     bl_idname = "a3ob.import_mcfg"
     bl_label = "Import Skeletons"
     bl_options = {'REGISTER', 'UNDO', 'PRESET'}
-    filename_ext = "model.cfg"
+    filename_ext = ".cfg"
     
     filter_glob: bpy.props.StringProperty(
         default = "*.cfg",
@@ -71,13 +71,13 @@ class A3OB_PT_import_mcfg_main(bpy.types.Panel):
         layout.prop(operator, "protected")
 
 
-class A3OB_OP_export_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
+class A3OB_OP_export_mcfg(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     """Export Arma 3 skeleton definition"""
 
     bl_idname = "a3ob.export_mcfg"
     bl_label = "Export Skeleton"
     bl_options = {'REGISTER', 'UNDO', 'PRESET'}
-    filename_ext = "model.cfg"
+    filename_ext = ".cfg"
     
     filter_glob: bpy.props.StringProperty(
         default = "*.cfg",

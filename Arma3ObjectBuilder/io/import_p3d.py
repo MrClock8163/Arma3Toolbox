@@ -293,23 +293,22 @@ def translate_selections(obj):
 
 
 def process_lod(operator, logger, lod, materials, materials_lookup, categories, lod_links):
-    logger.level_up()
-
     lod_index = lod_links[0]
     lod_resolution = lod_links[1]
     lod_name = lodutils.format_lod_name(lod_index, lod_resolution)
 
-    logger.step("File report:")
-    logger.log("Name: %s" % lod_name)
-    logger.log("Signature: %d" % lod.resolution.source)
-    logger.log("Type: P3DM")
-    logger.log("Version: 28.256")
-    logger.log("Vertices: %d" % len(lod.verts))
-    logger.log("Normals: %d" % len(lod.normals))
-    logger.log("Faces: %d" % len(lod.faces))
-    logger.log("Taggs: %d" % (len(lod.taggs) + 1))
+    logger.start_subproc("File report:")
+    logger.step("Name: %s" % lod_name)
+    logger.step("Signature: %d" % lod.resolution.source)
+    logger.step("Type: P3DM")
+    logger.step("Version: 28.256")
+    logger.step("Vertices: %d" % len(lod.verts))
+    logger.step("Normals: %d" % len(lod.normals))
+    logger.step("Faces: %d" % len(lod.faces))
+    logger.step("Taggs: %d" % (len(lod.taggs) + 1))
+    logger.end_subproc()
 
-    logger.step("Processing data:")
+    logger.start_subproc("Processing data:")
     
     mesh = bpy.data.meshes.new(lod_name)
     
@@ -318,7 +317,7 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
     
     obj = bpy.data.objects.new(lod_name, mesh)
 
-    logger.log("Created raw mesh")
+    logger.step("Created raw mesh")
 
     # Setup LOD properties
     object_props = obj.a3ob_properties_object
@@ -337,9 +336,9 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
     
     if 'NORMALS' in operator.additional_data and lod_index in data.lod_visuals:
         if process_normals(mesh, lod):
-            logger.log("Applied split normals")
+            logger.step("Applied split normals")
         else:
-            logger.log("Could not apply split normals")
+            logger.step("Could not apply split normals")
     
     # Process TAGGs
     bm = bmesh.new()
@@ -349,36 +348,36 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
     bm.faces.ensure_lookup_table()
     
     process_sharps(bm, lod)
-    logger.log("Marked sharp edges")
+    logger.step("Marked sharp edges")
     
     if 'UV' in operator.additional_data:
         count_uv = process_uvsets(bm, lod)
-        logger.log("Added UV channels: %d" % count_uv)
+        logger.step("Added UV channels: %d" % count_uv)
     
     selection_names = []
     proxy_lookup = {}
     if 'SELECTIONS' in operator.additional_data:
         proxy_lookup = lod.proxies_to_placeholders()
         selection_names = process_selections(bm, lod)
-        logger.log("Added vertex groups: %d" % (len(selection_names)))
+        logger.step("Added vertex groups: %d" % (len(selection_names)))
     
     if 'MATERIALS' in operator.additional_data:
         process_materials(operator, mesh, bm, lod, materials, materials_lookup)
-        logger.log("Assigned materials")
+        logger.step("Assigned materials")
     
     if lod_index == p3d.P3D_LOD_Resolution.GEOMETRY and 'MASS' in operator.additional_data:
         process_mass(bm, lod)
-        logger.log("Added vertex masses")
+        logger.step("Added vertex masses")
     
     process_properties(obj, lod)
-    logger.log("Added named properties")
+    logger.step("Added named properties")
 
     if 'FLAGS' in operator.additional_data:
         process_flag_groups_vertex(obj, bm, lod)
-        logger.log("Assigned vertex flag groups")
+        logger.step("Assigned vertex flag groups")
 
         process_flag_groups_face(obj, bm, lod)
-        logger.log("Assigned face flag groups")
+        logger.step("Assigned face flag groups")
         
     for name in selection_names:
         obj.vertex_groups.new(name=name)
@@ -395,20 +394,20 @@ def process_lod(operator, logger, lod, materials, materials_lookup, categories, 
     
     if operator.translate_selections:
         translate_selections(obj)
-        logger.log("Translated selections to english")
+        logger.step("Translated selections to english")
     
     if operator.cleanup_empty_selections:
         structutils.cleanup_vertex_groups(obj)
-        logger.log("Cleaned up vertex groups")
+        logger.step("Cleaned up vertex groups")
 
     if operator.proxy_action != 'NOTHING' and 'SELECTIONS' in operator.additional_data:
         empty_material = materials[0] if materials is not None else None
         process_proxies(operator, obj, proxy_lookup, empty_material)
-        logger.log("Processed proxies: %d" % len(proxy_lookup))
+        logger.step("Processed proxies: %d" % len(proxy_lookup))
 
     object_props.is_a3_lod = True
 
-    logger.level_down()
+    logger.end_subproc()
 
     return obj
 
@@ -424,19 +423,17 @@ def read_file(operator, context, file):
     wm.progress_begin(0, 1000)
     wm.progress_update(0)
     logger = ProcessLogger()
-    logger.step("P3D import from %s" % operator.filepath)
-
-    time_file_start = time.time()
+    logger.start_subproc("P3D import from %s" % operator.filepath)
 
     if operator.first_lod_only:
-        logger.log("Importing 1st LOD only")
+        logger.step("Importing 1st LOD only")
     
     time_read_start = time.time()
     mlod = p3d.P3D_MLOD.read(file, operator.first_lod_only)
-    logger.log("File reading done in %f sec" % (time.time() - time_read_start))
+    logger.step("File reading done in %f sec" % (time.time() - time_read_start))
 
-    logger.log("File version: %d" % mlod.version)
-    logger.log("Number of read LODs: %d" % len(mlod.lods))
+    logger.step("File version: %d" % mlod.version)
+    logger.step("Number of read LODs: %d" % len(mlod.lods))
     
     categories, lod_links = categorize_lods(operator, context, mlod)
 
@@ -448,23 +445,22 @@ def read_file(operator, context, file):
     if 'MATERIALS' in operator.additional_data:
         materials_lookup = mlod.get_materials()
         materials = create_blender_materials(materials_lookup, operator.absolute_paths)
-        logger.log("Number of unique materials: %d" % len(materials))
+        logger.step("Number of unique materials: %d" % len(materials))
     
-    logger.log("Processing mesh data:")
-    logger.level_up()
+    logger.start_subproc("Processing mesh data:")
 
     lod_objects = []
     for i, lod in enumerate(mlod.lods):
-        time_lod_start = time.time()
-        logger.step("LOD %d" % (i + 1))
+        logger.start_subproc("LOD %d" % (i + 1))
 
         lod_objects.append(process_lod(operator, logger, lod, materials, materials_lookup, categories, lod_links[i]))
 
-        logger.log("Done in %f sec" % (time.time() - time_lod_start))
+        logger.end_subproc(True)
         wm.progress_update(i + 1)
 
-    logger.level_down()
+    logger.end_subproc()
+    logger.end_subproc()
     wm.progress_end()
-    logger.step("P3D import finished in %f sec" % (time.time() - time_file_start))
+    logger.step("P3D import finished in %f sec" % (time.time() - logger.times.pop()))
     
     return lod_objects
