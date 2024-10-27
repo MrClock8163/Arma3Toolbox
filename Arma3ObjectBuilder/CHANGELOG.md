@@ -1,5 +1,22 @@
 # Changelog
 
+## v2.5.0-dev (Blender 2.90 -> 4.3)
+
+### Added
+
+- import-export
+  - PAA texture import for textures compressed with DXT1 or DXT5 (S3TC BC1 and BC3) algorithms
+- scripts:
+  - script template to create empty "dummy" P3D file
+
+### Changed
+
+- improved LZO1X decompression speeds
+
+### Fixed
+
+- the Rigging tools only allowed 3 bones to be assigned to a vertex instead of the proper limit of 4 (Select Overdetermined, Prune Overdetermined, General Cleanup)
+
 ## [v2.4.2](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.4.2) (Blender 2.90 -> 4.2)
 
 CRITICAL HOTFIX
