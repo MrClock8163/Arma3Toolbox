@@ -1,3 +1,5 @@
+import os
+
 import bpy
 
 from .. import get_icon
@@ -91,7 +93,7 @@ class A3OB_PT_renaming(bpy.types.Panel):
 
 class A3OB_UL_renamable_paths(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
-        layout.label(text=item.path)
+        layout.label(text=item.path, icon='BLANK1' if (os.path.isfile(item.path) or item.path.startswith("#")) else 'ERROR')
 
 
 class A3OB_PT_renaming_paths_bulk(bpy.types.Panel):
