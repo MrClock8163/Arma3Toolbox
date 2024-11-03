@@ -117,7 +117,9 @@ class A3OB_PT_renaming_paths_bulk(bpy.types.Panel):
         
         if utils.is_valid_idx(scene_props.path_list_index, scene_props.path_list):
             col_edit = layout.column(align=True)
-            col_edit.prop(scene_props.path_list[scene_props.path_list_index], "path", text="")
+            row_path = col_edit.row(align=True)
+            row_path.enabled = False
+            row_path.prop(scene_props.path_list[scene_props.path_list_index], "path", text="")
             col_edit.prop(scene_props, "new_path", text="")
             col_edit.separator()
             col_edit.operator("a3ob.rename_path_item", icon_value=get_icon("op_replace"))
