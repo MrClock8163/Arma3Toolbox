@@ -12,10 +12,12 @@
 ### Changed
 
 - improved LZO1X decompression speeds
+- Bulk Renaming now shows warning signs at paths that point to files that do not exist
 
 ### Fixed
 
 - the Rigging tools only allowed 3 bones to be assigned to a vertex instead of the proper limit of 4 (Select Overdetermined, Prune Overdetermined, General Cleanup)
+- Bulk Renaming tool exposed the internal paths making it possible to break the feature until the next list refresh
 
 ## [v2.4.2](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.4.2) (Blender 2.90 -> 4.2)
 
