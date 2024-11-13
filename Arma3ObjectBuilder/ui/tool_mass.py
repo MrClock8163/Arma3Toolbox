@@ -160,6 +160,8 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
             col.operator("a3ob.vertex_mass_distribute", icon_value=get_icon("op_mass_distribute"))
         elif scene_props.source == 'DENSITY':
             col.prop(scene_props, "density")
+            row_dist = col.row(align=True)
+            row_dist.prop(scene_props, "distribution", expand=True)
             col.operator("a3ob.vertex_mass_set_density", icon_value=get_icon("op_mass_set_density"))
         
         col.separator()

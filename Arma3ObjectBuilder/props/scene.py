@@ -142,6 +142,15 @@ class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
         step = 10,
         precision = 3
     )
+    distribution: bpy.props.EnumProperty(
+        name = "Distribution",
+        description = "Mass distribution between verts",
+        items = (
+            ('UNIFORM', "Uniform", "Mass is distributed equally among vertices"),
+            ('WEIGHTED', "Weighted", "Mass distribution is weighted by the affected volume")
+        ),
+        default = 'UNIFORM'
+    )
     mass: bpy.props.FloatProperty(
         name = "Mass",
         description = "Mass to set equally or distribute",
