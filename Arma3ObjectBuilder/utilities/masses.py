@@ -99,13 +99,24 @@ def set_selection_mass_distribute(obj, value):
             vertex[layer] = vertex_value
 
 
-def clear_selection_masses(obj):
+def clear_vmasses(obj):
     with utils.edit_bmesh(obj) as bm:
         layer = bm.verts.layers.float.get("a3ob_mass")
         if not layer:
             return
         
         bm.verts.layers.float.remove(layer)
+
+
+def clear_selection_vmass(obj):
+    with utils.edit_bmesh(obj) as bm:
+        layer = bm.verts.layers.float.get("a3ob_mass")
+        if not layer:
+            return
+        
+        for vert in bm.verts:
+            if vert.select:
+                vert[layer] = 0
 
 
 # Volume is calculated as a signed sum of the volume of tetrahedrons

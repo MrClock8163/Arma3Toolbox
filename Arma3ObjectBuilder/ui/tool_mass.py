@@ -50,7 +50,7 @@ class A3OB_OT_vertex_mass_set_density(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return context.object and context.object.type == 'MESH' and context.object.mode == 'OBJECT' and context.scene.a3ob_mass_editor.source == 'DENSITY'
+        return context.object and context.object.type == 'MESH' and context.scene.a3ob_mass_editor.source == 'DENSITY'
         
     def execute(self, context):
         obj = context.object
@@ -71,7 +71,24 @@ class A3OB_OT_vertex_mass_clear(bpy.types.Operator):
     """Remove vertex mass data layer"""
     
     bl_idname = "a3ob.vertex_mass_clear"
-    bl_label = "Clear Masses"
+    bl_label = "Clear All Masses"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        return context.object and context.object.type == 'MESH' and context.object.mode == 'OBJECT'
+        
+    def execute(self, context):
+        obj = context.object
+        massutils.clear_vmasses(obj)
+        return {'FINISHED'}
+
+
+class A3OB_OT_vertex_mass_selection_clear(bpy.types.Operator):
+    """Clear vertex mass from selected vertices"""
+    
+    bl_idname = "a3ob.vertex_mass_selection_clear"
+    bl_label = "Remove Mass"
     bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
@@ -80,7 +97,7 @@ class A3OB_OT_vertex_mass_clear(bpy.types.Operator):
         
     def execute(self, context):
         obj = context.object
-        massutils.clear_selection_masses(obj)
+        massutils.clear_selection_vmass(obj)
         return {'FINISHED'}
 
 
@@ -177,7 +194,10 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
             box.operator("a3ob.vertex_mass_set_density", icon_value=get_icon("op_mass_set_density"))
         
         col.separator()
-        col.operator("a3ob.vertex_mass_clear", icon_value=get_icon("op_mass_clear"))
+        if context.object and context.object.type == 'MESH' and context.object.mode == 'EDIT':
+            col.operator("a3ob.vertex_mass_selection_clear", icon_value=get_icon("op_mass_clear"))
+        else:
+            col.operator("a3ob.vertex_mass_clear", icon_value=get_icon("op_mass_clear"))
 
 
 class A3OB_PT_vertex_mass_analyze(bpy.types.Panel):
@@ -237,6 +257,7 @@ classes = (
     A3OB_OT_vertex_mass_distribute,
     A3OB_OT_vertex_mass_set_density,
     A3OB_OT_vertex_mass_clear,
+    A3OB_OT_vertex_mass_selection_clear,
     A3OB_OT_vertex_mass_visualize,
     A3OB_OT_vertex_mass_center,
     A3OB_PT_vertex_mass,
