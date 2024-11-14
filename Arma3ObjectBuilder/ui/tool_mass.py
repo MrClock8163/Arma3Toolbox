@@ -50,12 +50,17 @@ class A3OB_OT_vertex_mass_set_density(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return massutils.can_edit_mass(context) and context.scene.a3ob_mass_editor.source == 'DENSITY'
+        return context.object and context.object.type == 'MESH' and context.object.mode == 'OBJECT' and context.scene.a3ob_mass_editor.source == 'DENSITY'
         
     def execute(self, context):
         obj = context.object
         scene = context.scene
-        all_closed = massutils.set_selection_mass_density(obj, scene.a3ob_mass_editor.density)
+        scene_props = scene.a3ob_mass_editor
+        if scene_props.distribution == 'UNIFORM':
+            all_closed = massutils.set_selection_mass_density_uniform(obj, scene_props.density)
+        else:
+            all_closed = massutils.set_selection_mass_density_weighted(obj, scene_props.density)
+
         if not all_closed:
             self.report({'WARNING'}, "Non-closed components were ignored")
         

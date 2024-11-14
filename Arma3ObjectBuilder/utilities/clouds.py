@@ -1,9 +1,12 @@
 # Hit point cloud generation functions.
 
 
+from itertools import product
+
 import bpy
 import bmesh
 from mathutils import Vector
+from mathutils.bvhtree import BVHTree
 
 
 def validate_references(source, target):
@@ -33,6 +36,21 @@ def is_inside(obj, point):
         return False
     
     return (closest - point).dot(normal) > 0
+
+
+def is_inside_raycast(bvh: BVHTree, origin, point):
+    vec = (point - origin).normalized()
+    incr = vec * 0.0001
+    hits = 0
+    while True:
+        loc, _, idx, _ = bvh.ray_cast(point, vec)
+        if idx is None:
+            break
+            
+        hits += 1
+        point = loc + incr
+
+    return hits % 2 != 0
 
 
 def create_selection(obj, selection):
@@ -128,3 +146,50 @@ def generate_hitpoints(operator, context):
     
     if scene_props.selection.strip() != "" and len(target_object.data.vertices) > 0:
         create_selection(target_object, scene_props.selection)
+
+
+def generate_volume_grid(obj, spacing):
+    obj_eval = obj.evaluated_get(bpy.context.evaluated_depsgraph_get())
+    bbox = obj_eval.bound_box
+
+    min_x = min(bbox, key=lambda pos: pos[0])[0]
+    min_y = min(bbox, key=lambda pos: pos[1])[1]
+    min_z = min(bbox, key=lambda pos: pos[2])[2]
+
+    max_x = max(bbox, key=lambda pos: pos[0])[0]
+    max_y = max(bbox, key=lambda pos: pos[1])[1]
+    max_z = max(bbox, key=lambda pos: pos[2])[2]
+
+    points_x = calculate_grid(min_x, max_x, spacing[0])
+    points_y = calculate_grid(min_y, max_y, spacing[1])
+    points_z = calculate_grid(min_z, max_z, spacing[2])
+
+    bvh = BVHTree.FromObject(obj, bpy.context.evaluated_depsgraph_get())
+    points = product(points_x, points_y, points_z)
+    inside = list(filter(lambda co: is_inside_raycast(bvh, obj.location, Vector(co)), points))
+
+    return inside
+
+
+def generate_volume_grid_tris(obj, tris, spacing):
+    bbox = obj.bound_box
+    mesh = obj.data
+
+    min_x = min(bbox, key=lambda pos: pos[0])[0]
+    min_y = min(bbox, key=lambda pos: pos[1])[1]
+    min_z = min(bbox, key=lambda pos: pos[2])[2]
+
+    max_x = max(bbox, key=lambda pos: pos[0])[0]
+    max_y = max(bbox, key=lambda pos: pos[1])[1]
+    max_z = max(bbox, key=lambda pos: pos[2])[2]
+
+    points_x = calculate_grid(min_x, max_x, spacing[0])
+    points_y = calculate_grid(min_y, max_y, spacing[1])
+    points_z = calculate_grid(min_z, max_z, spacing[2])
+
+    verts = [v.co for v in mesh.vertices]
+    bvh = BVHTree.FromPolygons(verts, [tri.vertices for tri in tris])
+    points = product(points_x, points_y, points_z)
+    inside = list(filter(lambda co: is_inside_raycast(bvh, obj.location, Vector(co)), points))
+
+    return inside
