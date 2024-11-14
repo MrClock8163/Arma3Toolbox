@@ -110,7 +110,7 @@ class A3OB_OT_vertex_mass_visualize(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return massutils.can_edit_mass(context)
+        return context.object and context.object.type == 'MESH'
     
     def execute(self, context):
         obj = context.object

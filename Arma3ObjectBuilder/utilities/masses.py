@@ -265,7 +265,6 @@ def interpolate_colors(factors, stops, colorramp):
 
 
 def visualize_mass(obj, scene_props):
-    obj.update_from_editmode()
     with utils.edit_bmesh(obj) as bm:
         bm.verts.ensure_lookup_table()
         
