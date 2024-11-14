@@ -3,8 +3,8 @@
 
 import numpy as np
 import math
+from array import array
 
-import bpy
 import bmesh
 from mathutils import Vector
 from mathutils.kdtree import KDTree
@@ -127,7 +127,7 @@ def calculate_volume(mesh, component):
 # the volume of each component, then distributes an equal weight
 # to the vertices of each component so that:
 # vertex_mass = component_volume * density / count_component_vertices
-def set_selection_mass_density_uniform(obj, density):
+def set_obj_vmass_density_uniform(obj, density):
     obj.update_from_editmode()
     mesh = obj.data
     
@@ -149,35 +149,26 @@ def set_selection_mass_density_uniform(obj, density):
     return all_closed
 
 
-def set_selection_mass_density_weighted(obj, density):
+def set_obj_vmass_density_weighted(obj, density, spacing):
+    obj.update_from_editmode()
     mesh = obj.data
-    
     component_verts, component_tris, all_closed = utils.get_closed_components(obj)
-    stats = [[len(verts), calculate_volume(mesh, tris)] for verts, tris in zip(component_verts, component_tris)] # [vertex count, volume]
-    component_mass = [(volume * density / count_verts) for count_verts, volume in stats]
-    volume = sum([data[1] for data in stats])
-    overall_mass = volume * density
-    
-    bbox = obj.bound_box
-    bbox_min = Vector(bbox[0])
-    bbox_max = Vector(bbox[6])
 
-    diag = bbox_max - bbox_min
-    spacing = max(0.05, min(*diag)/100)
-    weights = [0] * len(mesh.vertices)
-    for verts, tris, mass in zip(component_verts, component_tris, component_mass):
-        points = cloudutils.generate_volume_grid_tris(obj, tris, [spacing]*3)
-
+    weights = array('L', [0] * len(mesh.vertices))
+    for verts, tris in zip(component_verts, component_tris):
         kdt = KDTree(len(verts))
         for idx in verts:
             kdt.insert(mesh.vertices[idx].co, idx)
         kdt.balance()
         
+        points = cloudutils.generate_volume_grid_tris(obj, tris, (spacing, spacing, spacing))
         for coords in points:
-            vec, idx, dist = kdt.find(coords, filter=lambda idx: idx in verts)
+            _, idx, _ = kdt.find(coords, filter=lambda idx: idx in verts)
             weights[idx] += 1
-    weights_sum = sum(weights)
-    mass_per_weight = overall_mass / weights_sum
+
+    obj_volume = math.fsum([calculate_volume(mesh, tris) for tris in component_tris])
+    obj_mass = obj_volume * density
+    mass_per_weight = obj_mass / sum(weights) # mass per weighting unit
 
     with utils.edit_bmesh(obj) as bm:
         bm.verts.ensure_lookup_table()
@@ -186,9 +177,8 @@ def set_selection_mass_density_weighted(obj, density):
         if not layer:
             layer = bm.verts.layers.float.new("a3ob_mass")
         
-        for verts, mass in zip(component_verts, component_mass):
-            for idx in verts:
-                bm.verts[idx][layer] = mass_per_weight * weights[idx]
+        for vert in bm.verts:
+            vert[layer] = mass_per_weight * weights[vert.index]
     
     return all_closed
 

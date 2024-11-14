@@ -142,6 +142,16 @@ class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
         step = 10,
         precision = 3
     )
+    spacing: bpy.props.FloatProperty(
+        name = "Voxel Size",
+        description = "Voxel size for volumetric calculations\n(smaller values result in more accurate weight distribution, but can significantly slow the process down)",
+        default = 0.05,
+        min = 0.001,
+        soft_min = 0.01,
+        max = 1,
+        step = 1,
+        precision = 3
+    )
     distribution: bpy.props.EnumProperty(
         name = "Distribution",
         description = "Mass distribution between verts",

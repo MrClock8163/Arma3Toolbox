@@ -57,9 +57,9 @@ class A3OB_OT_vertex_mass_set_density(bpy.types.Operator):
         scene = context.scene
         scene_props = scene.a3ob_mass_editor
         if scene_props.distribution == 'UNIFORM':
-            all_closed = massutils.set_selection_mass_density_uniform(obj, scene_props.density)
+            all_closed = massutils.set_obj_vmass_density_uniform(obj, scene_props.density)
         else:
-            all_closed = massutils.set_selection_mass_density_weighted(obj, scene_props.density)
+            all_closed = massutils.set_obj_vmass_density_weighted(obj, scene_props.density, scene_props.spacing)
 
         if not all_closed:
             self.report({'WARNING'}, "Non-closed components were ignored")
@@ -156,18 +156,25 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
         
         layout.separator()
         layout.label(text="Overwrite Mass:")
-        layout.prop(scene_props, "source", expand=True)
         
         col = layout.column(align=True)
+        row_header = col.row(align=True)
+        row_header.prop(scene_props, "source", expand=True)
+        box = col.box()
+
         if scene_props.source == 'MASS':
-            col.prop(scene_props, "mass")
-            col.operator("a3ob.vertex_mass_set", icon_value=get_icon("op_mass_set"))
-            col.operator("a3ob.vertex_mass_distribute", icon_value=get_icon("op_mass_distribute"))
+            box.prop(scene_props, "mass")
+            box.operator("a3ob.vertex_mass_set", icon_value=get_icon("op_mass_set"))
+            box.operator("a3ob.vertex_mass_distribute", icon_value=get_icon("op_mass_distribute"))
         elif scene_props.source == 'DENSITY':
-            col.prop(scene_props, "density")
-            row_dist = col.row(align=True)
+            row_dist = box.row(align=True)
             row_dist.prop(scene_props, "distribution", expand=True)
-            col.operator("a3ob.vertex_mass_set_density", icon_value=get_icon("op_mass_set_density"))
+            col_settings = box.column(align=True)
+            col_settings.prop(scene_props, "density")
+            row_spacing = col_settings.row(align=True)
+            row_spacing.prop(scene_props, "spacing")
+            row_spacing.enabled = scene_props.distribution == 'WEIGHTED'
+            box.operator("a3ob.vertex_mass_set_density", icon_value=get_icon("op_mass_set_density"))
         
         col.separator()
         col.operator("a3ob.vertex_mass_clear", icon_value=get_icon("op_mass_clear"))
