@@ -127,7 +127,7 @@ class A3OB_OT_vertex_mass_center(bpy.types.Operator):
     """Move 3D cursor to the center of gravity"""
 
     bl_idname = "a3ob.vertex_mass_center"
-    bl_label = "Center Of Mass"
+    bl_label = "Center of Mass"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod

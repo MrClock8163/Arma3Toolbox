@@ -4,20 +4,25 @@
 
 ### Added
 
-- import-export
+- import-export:
   - PAA texture import for textures compressed with DXT1 or DXT5 (S3TC BC1 and BC3) algorithms
 - scripts:
   - script template to create empty "dummy" P3D file
+- Vertex Mass Editing tool:
+  - Mass From Density with volumetrics weighted distribution
 
 ### Changed
 
 - improved LZO1X decompression speeds
 - Bulk Renaming now shows warning signs at paths that point to files that do not exist
+- made Vertex Mass Editing tools available in both Edit and Object modes when possible
+- adjusted Vertex Mass Editing tool UI layout
 
 ### Fixed
 
 - the Rigging tools only allowed 3 bones to be assigned to a vertex instead of the proper limit of 4 (Select Overdetermined, Prune Overdetermined, General Cleanup)
 - Bulk Renaming tool exposed the internal paths making it possible to break the feature until the next list refresh
+- Center of Mass operator was not accounting for world transformations
 
 ## [v2.4.2](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.4.2) (Blender 2.90 -> 4.2)
 
