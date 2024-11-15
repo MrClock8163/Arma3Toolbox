@@ -89,32 +89,32 @@ class A3OB_PG_mass_editor_stats(bpy.types.PropertyGroup):
     mass_max: bpy.props.FloatProperty(
         name = "Max Mass",
         description = "Highest vertex/component mass value on the mesh",
-        default = -1,
-        min = -1
+        default = 0,
+        min = 0
     )
     mass_min: bpy.props.FloatProperty(
         name = "Min Mass",
         description = "Lowest non-zero vertex/component mass value on the mesh",
-        default = -1,
-        min = -1
+        default = 0,
+        min = 0
     )
     mass_avg: bpy.props.FloatProperty(
         name = "Average Mass",
         description = "Average non-zero vertex/component mass value on the mesh",
-        default = -1,
-        min = -1
+        default = 0,
+        min = 0
     )
     mass_sum: bpy.props.FloatProperty(
         name = "Total Mass",
         description = "Total vertex/component mass on the mesh",
-        default = -1,
-        min = -1
+        default = 0,
+        min = 0
     )
     count_item: bpy.props.IntProperty(
         name = "Count",
         description = "Number of vertices/components in the mesh",
-        default = -1,
-        min = -1
+        default = 0,
+        min = 0
     )
 
 

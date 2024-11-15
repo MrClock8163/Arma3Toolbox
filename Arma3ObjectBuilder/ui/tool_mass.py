@@ -1,3 +1,5 @@
+from math import log10, ceil
+
 import bpy
 
 from .. import get_icon
@@ -229,11 +231,19 @@ class A3OB_PT_vertex_mass_analyze(bpy.types.Panel):
         
         row_stops = layout.row(align=True)
         row_stops.enabled = False
-        row_stops.label(text="%.0f" % scene_props.stats.mass_min)
-        row_stops.label(text="%.0f" % (scene_props.stats.mass_min * 0.75 + scene_props.stats.mass_max * 0.25))
-        row_stops.label(text="%.0f" % (scene_props.stats.mass_min * 0.5 + scene_props.stats.mass_max * 0.5))
-        row_stops.label(text="%.0f" % (scene_props.stats.mass_min * 0.25 + scene_props.stats.mass_max * 0.75))
-        row_stops.label(text="%.0f" % scene_props.stats.mass_max)
+
+        vmass_min = scene_props.stats.mass_min
+        vmass_max = scene_props.stats.mass_max
+
+        frm = "%.0f"
+        if 0 < vmass_max < 1:
+            frm = ("%." + str(ceil(abs(log10(vmass_max))) + 1) + "f")
+        
+        row_stops.label(text=frm % vmass_min)
+        row_stops.label(text=frm % (vmass_min * 0.75 + vmass_max * 0.25))
+        row_stops.label(text=frm % (vmass_min * 0.5 + vmass_max * 0.5))
+        row_stops.label(text=frm % (vmass_min * 0.25 + vmass_max * 0.75))
+        row_stops.label(text=frm % vmass_max)
         
         layout.prop(scene_props, "color_layer_name", text="Layer")
         row_method = layout.row(align=True)
