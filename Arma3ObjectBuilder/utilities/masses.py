@@ -3,11 +3,14 @@
 
 import numpy as np
 import math
+from array import array
 
 import bmesh
 from mathutils import Vector
+from mathutils.kdtree import KDTree
 
 from . import generic as utils
+from . import clouds as cloudutils
 
 
 def can_edit_mass(context):
@@ -96,13 +99,24 @@ def set_selection_mass_distribute(obj, value):
             vertex[layer] = vertex_value
 
 
-def clear_selection_masses(obj):
+def clear_vmasses(obj):
     with utils.edit_bmesh(obj) as bm:
         layer = bm.verts.layers.float.get("a3ob_mass")
         if not layer:
             return
         
         bm.verts.layers.float.remove(layer)
+
+
+def clear_selection_vmass(obj):
+    with utils.edit_bmesh(obj) as bm:
+        layer = bm.verts.layers.float.get("a3ob_mass")
+        if not layer:
+            return
+        
+        for vert in bm.verts:
+            if vert.select:
+                vert[layer] = 0
 
 
 # Volume is calculated as a signed sum of the volume of tetrahedrons
@@ -121,15 +135,15 @@ def calculate_volume(mesh, component):
 
 
 # The function splits the mesh into loose components, calculates
-# the volume of each component, then distributes and equal weight
+# the volume of each component, then distributes an equal weight
 # to the vertices of each component so that:
 # vertex_mass = component_volume * density / count_component_vertices
-def set_selection_mass_density(obj, density):
+def set_obj_vmass_density_uniform(obj, density):
     obj.update_from_editmode()
     mesh = obj.data
     
     component_verts, component_tris, all_closed = utils.get_closed_components(obj)
-    stats = [[len(verts), calculate_volume(mesh, tris)] for verts, tris in zip(component_verts, component_tris)] # [vertex count, volume, mass per vertex]
+    stats = [[len(verts), calculate_volume(mesh, tris)] for verts, tris in zip(component_verts, component_tris)] # [vertex count, volume]
     component_mass = [(volume * density / count_verts) for count_verts, volume in stats]
     
     with utils.edit_bmesh(obj) as bm:
@@ -142,6 +156,40 @@ def set_selection_mass_density(obj, density):
         for verts, mass in zip(component_verts, component_mass):
             for idx in verts:
                 bm.verts[idx][layer] = mass
+    
+    return all_closed
+
+
+def set_obj_vmass_density_weighted(obj, density, spacing):
+    obj.update_from_editmode()
+    mesh = obj.data
+    component_verts, component_tris, all_closed = utils.get_closed_components(obj)
+
+    weights = array('L', [0] * len(mesh.vertices))
+    for verts, tris in zip(component_verts, component_tris):
+        kdt = KDTree(len(verts))
+        for idx in verts:
+            kdt.insert(mesh.vertices[idx].co, idx)
+        kdt.balance()
+        
+        points = cloudutils.generate_volume_grid_tris(obj, tris, (spacing, spacing, spacing))
+        for coords in points:
+            _, idx, _ = kdt.find(coords, filter=lambda idx: idx in verts)
+            weights[idx] += 1
+
+    obj_volume = math.fsum([calculate_volume(mesh, tris) for tris in component_tris])
+    obj_mass = obj_volume * density
+    mass_per_weight = obj_mass / sum(weights) # mass per weighting unit
+
+    with utils.edit_bmesh(obj) as bm:
+        bm.verts.ensure_lookup_table()
+        
+        layer = bm.verts.layers.float.get("a3ob_mass")
+        if not layer:
+            layer = bm.verts.layers.float.new("a3ob_mass")
+        
+        for vert in bm.verts:
+            vert[layer] = mass_per_weight * weights[vert.index]
     
     return all_closed
 
@@ -217,7 +265,6 @@ def interpolate_colors(factors, stops, colorramp):
 
 
 def visualize_mass(obj, scene_props):
-    obj.update_from_editmode()
     with utils.edit_bmesh(obj) as bm:
         bm.verts.ensure_lookup_table()
         

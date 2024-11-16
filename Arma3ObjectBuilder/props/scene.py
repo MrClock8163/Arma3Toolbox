@@ -89,32 +89,32 @@ class A3OB_PG_mass_editor_stats(bpy.types.PropertyGroup):
     mass_max: bpy.props.FloatProperty(
         name = "Max Mass",
         description = "Highest vertex/component mass value on the mesh",
-        default = -1,
-        min = -1
+        default = 0,
+        min = 0
     )
     mass_min: bpy.props.FloatProperty(
         name = "Min Mass",
         description = "Lowest non-zero vertex/component mass value on the mesh",
-        default = -1,
-        min = -1
+        default = 0,
+        min = 0
     )
     mass_avg: bpy.props.FloatProperty(
         name = "Average Mass",
         description = "Average non-zero vertex/component mass value on the mesh",
-        default = -1,
-        min = -1
+        default = 0,
+        min = 0
     )
     mass_sum: bpy.props.FloatProperty(
         name = "Total Mass",
         description = "Total vertex/component mass on the mesh",
-        default = -1,
-        min = -1
+        default = 0,
+        min = 0
     )
     count_item: bpy.props.IntProperty(
         name = "Count",
         description = "Number of vertices/components in the mesh",
-        default = -1,
-        min = -1
+        default = 0,
+        min = 0
     )
 
 
@@ -141,6 +141,25 @@ class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
         soft_max = 1000,
         step = 10,
         precision = 3
+    )
+    spacing: bpy.props.FloatProperty(
+        name = "Voxel Size",
+        description = "Voxel size for volumetric calculations\n(smaller values result in more accurate weight distribution, but can significantly slow the process down)",
+        default = 0.05,
+        min = 0.001,
+        soft_min = 0.01,
+        max = 1,
+        step = 1,
+        precision = 3
+    )
+    distribution: bpy.props.EnumProperty(
+        name = "Distribution",
+        description = "Mass distribution between verts",
+        items = (
+            ('UNIFORM', "Uniform", "Mass is distributed equally among vertices"),
+            ('WEIGHTED', "Weighted", "Mass distribution is weighted by the affected volume")
+        ),
+        default = 'UNIFORM'
     )
     mass: bpy.props.FloatProperty(
         name = "Mass",
