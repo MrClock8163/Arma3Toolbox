@@ -3,6 +3,8 @@ if "binary_handler" in locals():
     
     if "binary_handler" in locals():
         reload(binary_handler)
+    if "config" in locals():
+        reload(config)
     if "compression" in locals():
         reload(compression)
     if "data_asc" in locals():
@@ -44,6 +46,7 @@ if "binary_handler" in locals():
 
 
 from . import binary_handler
+from . import config
 from . import compression
 from . import data_asc
 from . import data_p3d
