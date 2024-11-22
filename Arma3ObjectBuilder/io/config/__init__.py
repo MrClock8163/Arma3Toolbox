@@ -1,3 +1,7 @@
+# Overall handling module for config related data. Providing
+# internal data structures, and IO operations.
+
+
 from importlib import reload
 
 

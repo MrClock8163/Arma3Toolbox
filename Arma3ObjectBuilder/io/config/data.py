@@ -1,3 +1,6 @@
+# Class structure for handling config data structures.
+
+
 class CFG_Error(Exception):
     def __str__(self):
         return "CFG - %s" % super().__str__()

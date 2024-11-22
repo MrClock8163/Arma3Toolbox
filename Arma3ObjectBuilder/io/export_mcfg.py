@@ -32,7 +32,6 @@ def write_file(operator, skeleton, file):
                             }
                         }
                     }
-                    
                 }
             }
         }

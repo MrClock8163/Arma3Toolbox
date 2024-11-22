@@ -1,3 +1,6 @@
+# Parser implementation for reading files using the standard config syntax.
+
+
 from . import tokenizer as t
 from . import data
 

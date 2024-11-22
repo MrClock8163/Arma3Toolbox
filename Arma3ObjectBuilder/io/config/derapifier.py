@@ -1,3 +1,7 @@
+# Reader functions to import data from rapified config files.
+# Format specifications: https://community.bistudio.com/wiki/raP_File_Format_-_Elite
+
+
 from . import data
 from .. import binary_handler as binary
 

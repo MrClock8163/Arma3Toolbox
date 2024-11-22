@@ -1,3 +1,7 @@
+# Tokenizer classes and function implementation for reading files
+# using the standard config syntax (config.cpp, model.cfg, *.rvmat)
+
+
 class Token:
     pass
 
