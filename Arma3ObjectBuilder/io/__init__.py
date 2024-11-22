@@ -11,8 +11,6 @@ if "binary_handler" in locals():
         reload(data_asc)
     if "data_p3d" in locals():
         reload(data_p3d)
-    if "data_rap" in locals():
-        reload(data_rap)
     if "data_rtm" in locals():
         reload(data_rtm)
     if "data_tbcsv" in locals():
@@ -50,7 +48,6 @@ from . import config
 from . import compression
 from . import data_asc
 from . import data_p3d
-from . import data_rap
 from . import data_rtm
 from . import data_tbcsv
 from . import data_paa
