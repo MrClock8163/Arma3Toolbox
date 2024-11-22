@@ -7,11 +7,14 @@ if "tokenizer" in locals():
     reload(tokenizer)
 if "parser" in locals():
     reload(parser)
+if "derapifier" in locals():
+    reload(derapifier)
 
 
 from . import data
 from . import tokenizer
 from . import parser
+from . import derapifier
 
 
 def tokenize(file):
@@ -35,6 +38,14 @@ def wrap(tokens, wrapper):
 
 def parse(tokens):
     return parser.CFGParser(tokens).parse()
+
+
+def derapify(file):
+    return derapifier.Derapifier.read(file)
+
+
+def derapify_file(path):
+    return derapifier.Derapifier.read_file(path)
 
 
 def print_tokens(tokens):
