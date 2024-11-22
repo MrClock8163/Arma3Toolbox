@@ -55,7 +55,7 @@ class CFGArray(CFGNode):
         self.extends = extends
 
     def __repr__(self):
-        return "{...}"
+        return "{ len = %d }" % len(self.members)
 
     def topy(self):
         out = []
@@ -80,10 +80,6 @@ class CFGArray(CFGNode):
         value += "%s}\n" % ("\t" * indent)
 
         return value
-
-
-CFGLiteralTypes = CFGLiteralString | CFGLiteralLong | CFGLiteralFloat
-CFGPropertyTypes = CFGLiteralString | CFGLiteralLong | CFGLiteralFloat | CFGArray
 
 
 class CFGProperty(CFGNode):
@@ -163,7 +159,7 @@ class CFGClass(CFGNode):
             return None
 
         for item in main.classes:
-            if item.name == parentname:
+            if item.name.lower() == parentname.lower():
                 return item
 
         if main.parent is None:
@@ -175,9 +171,9 @@ class CFGClass(CFGNode):
         if len(steps) == 0:
             return self
 
-        step = steps.pop(0)
+        step = steps.pop(0).lower()
         for item in self.classes:
-            if item.name == step:
+            if item.name.lower() == step:
                 if len(steps) == 0:
                     return item
 
@@ -191,7 +187,7 @@ class CFGClass(CFGNode):
 
     def get_prop(self, propname, default=None):
         for item in self.properties:
-            if item.name == propname:
+            if item.name.lower() == propname.lower():
                 return item.value
 
         if self.parent is None:

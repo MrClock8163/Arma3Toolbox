@@ -40,6 +40,10 @@ def parse(tokens):
     return parser.CFGParser(tokens).parse()
 
 
+def from_dict(structure):
+    return data.CFG.from_dict(structure)
+
+
 def derapify(file):
     return derapifier.Derapifier.read(file)
 

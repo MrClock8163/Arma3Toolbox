@@ -157,7 +157,7 @@ class TPlusEquals(Token):
 
 class TIdentifier(Token):
     def __init__(self, value):
-        self.value = value.lower()
+        self.value = value
 
     def __str__(self):
         return self.value
