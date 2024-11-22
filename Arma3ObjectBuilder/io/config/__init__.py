@@ -1,18 +1,21 @@
 from importlib import reload
 
 
+if "data" in locals():
+    reload(data)
 if "tokenizer" in locals():
     reload(tokenizer)
 if "parser" in locals():
     reload(parser)
 
 
+from . import data
 from . import tokenizer
 from . import parser
 
 
 def tokenize(file):
-    return tokenizer.Tokenizer(file).all()
+    return tokenizer.CFGTokenizer(file).all()
 
 
 def tokenize_file(path):
@@ -31,7 +34,7 @@ def wrap(tokens, wrapper):
 
 
 def parse(tokens):
-    return parser.Parser(tokens).parse()
+    return parser.CFGParser(tokens).parse()
 
 
 def print_tokens(tokens):

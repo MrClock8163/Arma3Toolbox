@@ -9,70 +9,112 @@ class TUnknown(Token):
     def __str__(self):
         return self.value
 
+    def __eq__(self, other):
+        return type(self) is type(other)
+
 
 class TClass(Token):
     def __str__(self):
         return "class"
+
+    def __eq__(self, other):
+        return type(self) is type(other)
 
 
 class TDel(Token):
     def __str__(self):
         return "del"
 
+    def __eq__(self, other):
+        return type(self) is type(other)
+
 
 class TEnum(Token):
     def __str__(self):
         return "enum"
+
+    def __eq__(self, other):
+        return type(self) is type(other)
 
 
 class TParOpen(Token):
     def __str__(self):
         return "("
 
+    def __eq__(self, other):
+        return type(self) is type(other)
+
 
 class TParClose(Token):
     def __str__(self):
         return "("
+
+    def __eq__(self, other):
+        return type(self) is type(other)
 
 
 class TBracketOpen(Token):
     def __str__(self):
         return "["
 
+    def __eq__(self, other):
+        return type(self) is type(other)
+
 
 class TBracketClose(Token):
     def __str__(self):
         return "]"
+
+    def __eq__(self, other):
+        return type(self) is type(other)
 
 
 class TBraceOpen(Token):
     def __str__(self):
         return "{"
 
+    def __eq__(self, other):
+        return type(self) is type(other)
+
 
 class TBraceClose(Token):
     def __str__(self):
         return "}"
+
+    def __eq__(self, other):
+        return type(self) is type(other)
 
 
 class TComma(Token):
     def __str__(self):
         return ","
 
+    def __eq__(self, other):
+        return type(self) is type(other)
+
 
 class TColon(Token):
     def __str__(self):
         return ":"
+
+    def __eq__(self, other):
+        return type(self) is type(other)
 
 
 class TSemicolon(Token):
     def __str__(self):
         return ";"
 
+    def __eq__(self, other):
+        return type(self) is type(other)
+
 
 class TEquals(Token):
     def __str__(self):
         return "="
+
+    def __eq__(self, other):
+        return type(self) is type(other)
 
 
 class TPlus(Token):
@@ -82,6 +124,9 @@ class TPlus(Token):
     def __str__(self):
         return "+"
 
+    def __eq__(self, other):
+        return type(self) is type(other)
+
 
 class TMinus(Token):
     def __init__(self):
@@ -90,10 +135,24 @@ class TMinus(Token):
     def __str__(self):
         return "-"
 
+    def __eq__(self, other):
+        return type(self) is type(other)
+
+
+class THasmark(Token):
+    def __init__(self):
+        self.value = "#"
+
+    def __eq__(self, other):
+        return type(self) is type(other)
+
 
 class TPlusEquals(Token):
     def __str__(self):
         return "+="
+
+    def __eq__(self, other):
+        return type(self) is type(other)
 
 
 class TIdentifier(Token):
@@ -103,6 +162,9 @@ class TIdentifier(Token):
     def __str__(self):
         return self.value
 
+    def __eq__(self, other):
+        return type(self) is type(other) and self.value == other.value
+
 
 class TLiteralString(Token):
     def __init__(self, value):
@@ -110,6 +172,9 @@ class TLiteralString(Token):
 
     def __str__(self):
         return "\"%s\"" % self.value
+
+    def __eq__(self, other):
+        return type(self) is type(other) and self.value == other.value
 
 
 class TLiteralLong(Token):
@@ -119,6 +184,9 @@ class TLiteralLong(Token):
     def __str__(self):
         return str(self.value)
 
+    def __eq__(self, other):
+        return type(self) is type(other) and self.value == other.value
+
 
 class TLiteralFloat(Token):
     def __init__(self, value):
@@ -127,8 +195,11 @@ class TLiteralFloat(Token):
     def __str__(self):
         return str(self.value)
 
+    def __eq__(self, other):
+        return type(self) is type(other) and self.value == other.value
 
-class Tokenizer:
+
+class CFGTokenizer:
     symbols = {
         "(": TParOpen,
         ")": TParClose,
@@ -141,7 +212,8 @@ class Tokenizer:
         ";": TSemicolon,
         "=": TEquals,
         "+": TPlus,
-        "-": TMinus
+        "-": TMinus,
+        "#": THasmark
     }
 
     kwrds = {

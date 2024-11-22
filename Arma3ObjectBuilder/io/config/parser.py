@@ -1,237 +1,11 @@
 from . import tokenizer as t
+from . import data
 
 
-class ASTNode:
-    pass
-
-
-class ASTLiteralString(ASTNode):
-    def __init__(self, value):
-        self.value = value
-
-    def __repr__(self):
-        return "\"%s\"" % self.value
-
-    def topy(self):
-        return self.value
-
-    def format(self, indent=0):
-        return "%s\"%s\"" % ("\t" * indent, self.value.replace("\"", "\"\""))
-
-
-class ASTLiteralLong(ASTNode):
-    def __init__(self, value):
-        self.value = value
-
-    def __repr__(self):
-        return "%f" % self.value
-
-    def topy(self):
-        return self.value
-
-    def format(self, indent=0):
-        return "%s%d" % ("\t" * indent, self.value)
-
-
-class ASTLiteralFloat(ASTNode):
-    def __init__(self, value):
-        self.value = value
-
-    def __repr__(self):
-        return "%f" % self.value
-
-    def topy(self):
-        return self.value
-
-    def format(self, indent=0):
-        return "%s%f" % ("\t" * indent, self.value)
-
-
-class ASTArray(ASTNode):
-    def __init__(self, members, extends=False):
-        self.members = members
-        self.extends = extends
-
-    def __repr__(self):
-        return "{...}"
-
-    def topy(self):
-        out = []
-
-        for item in self.members:
-            out.append(item.topy())
-
-        return out
-
-    def format(self, indent=0):
-        padding = "\t" * indent
-
-        if len(self.members) == 0:
-            return "%s\{\}\n" % padding
-
-        value = "%s{\n" % ("\t" * indent)
-        items = []
-        for item in self.members:
-            items.append(item.format(indent + 1))
-
-        value += ",\n".join(items) + "\n"
-        value += "%s}\n" % ("\t" * indent)
-
-        return value
-
-
-class ASTProperty(ASTNode):
-    def __init__(self, name, value):
-        self.name = name
-        self.value = value
-
-    def __repr__(self):
-        return "%s = %s" % (self.name, repr(self.value))
-
-    def format(self, indent=0):
-        value = ""
-        padding = "\t" * indent
-        if type(self.value) is ASTArray:
-            if len(self.value.members) == 0:
-                return "%s%s[] = \{\};\n" % (padding, self.name)
-
-            value = "%s%s[] = {\n" % (padding, self.name)
-            items = []
-            for item in self.value.members:
-                items.append(item.format(indent + 1))
-
-            value += ",\n".join(items) + "\n"
-            value += "%s};\n" % padding
-        else:
-            value = "%s%s = %s;\n" % (padding, self.name, self.value.format())
-
-        return value
-
-
-class ASTClass(ASTNode):
-    def __init__(self, name, parent=None, main=None, isref=False):
-        self.name = name
-        self.parent = parent
-        self.properties = []
-        self.classes = []
-        self.main = main
-        self.isref = isref
-
-    def __repr__(self):
-        if self.isref:
-            return "class %s;" % self.name
-        elif self.parent is None:
-            return "class %s" % self.name
-
-        return "class %s: %s" % (self.name, self.parent.name)
-
-    def get_class(self, steps):
-        if len(steps) == 0:
-            return self
-
-        step = steps.pop(0)
-        for item in self.classes:
-            if item.name == step:
-                if len(steps) == 0:
-                    return item
-
-                return item.get_class(steps)
-
-        if self.parent is None:
-            return None
-
-        steps.insert(0, step)
-        return self.parent.get_class(steps)
-
-    def get_prop(self, propname, default=None):
-        for item in self.properties:
-            if item.name == propname:
-                return item.value
-
-        if self.parent is None:
-            return default
-
-        return self.parent.get_prop(propname, default)
-
-    def format(self, indent=0):
-        padding = "\t" * indent
-        value = ""
-
-        if self.isref:
-            return "%sclass %s;\n" % (padding, self.name)
-
-        if self.parent is not None:
-            value += "%sclass %s: %s {" % (padding,
-                                           self.name, self.parent.name)
-        else:
-            value += "%sclass %s {" % (padding, self.name)
-
-        if len(self.properties) == 0 and len(self.classes) == 0:
-            value += "};"
-            return value
-        else:
-            value += "\n"
-
-        for prop in self.properties:
-            value += prop.format(indent + 1)
-
-        for cls in self.classes:
-            value += cls.format(indent + 1)
-
-        value += "%s};\n" % padding
-        return value
-
-
-class AST:
-    def __init__(self, root):
-        self.root = root
-
-    def __repr__(self):
-        return "AST"
-
-    def get_class(self, path):
-        steps = path.replace(" ", "").split("/")
-        step = steps.pop(0)
-        if step != self.root.name:
-            return None
-        elif len(steps) == 0:
-            return self.root
-
-        return self.root.get_class(steps)
-
-    def get_prop(self, path, default=None):
-        steps = path.replace(" ", "").split("/")
-        step = steps.pop(0)
-
-        if len(steps) == 0 or step != self.root.name:
-            return default
-
-        propname = steps.pop()
-        leaf = self.root.get_class(steps)
-        if leaf is None:
-            return default
-
-        return leaf.get_prop(propname, default)
-
-    def format(self):
-        value = ""
-        for prop in self.root.properties:
-            value += prop.format()
-
-        for cls in self.root.classes:
-            value += cls.format()
-
-        return value
-
-
-class Parser:
+class CFGParser:
     def __init__(self, tokens):
         self.ptr = 0
         self.tokens = tokens
-
-    @classmethod
-    def from_lexxer(cls, lex):
-        return cls(lex.all())
 
     def read_token(self, count=1):
         if self.ptr == len(self.tokens):
@@ -264,7 +38,7 @@ class Parser:
             offset += self.ptr
 
         if not (0 <= offset < token_count):
-            raise ValueError("Offset out of range")
+            raise ValueError("Offset (%d) out of range (0 - %d)" % (offset, token_count-1))
 
         self.ptr = offset
 
@@ -307,40 +81,40 @@ class Parser:
         count = len(items)
 
         if count == 0:
-            return ASTLiteralString("")
+            return data.CFGLiteralString("")
 
         if count == 1:
             itemtype = type(items[0])
             if itemtype is t.TLiteralString:
-                return ASTLiteralString(items[0].value)
+                return data.CFGLiteralString(items[0].value)
             elif itemtype is t.TLiteralLong:
-                return ASTLiteralLong(items[0].value)
+                return data.CFGLiteralLong(items[0].value)
             elif itemtype is t.TLiteralFloat:
-                return ASTLiteralFloat(items[0].value)
+                return data.CFGLiteralFloat(items[0].value)
 
-            return ASTLiteralString(str(items[0]))
+            return data.CFGLiteralString(str(items[0]))
 
         if count == 2 and type(items[0]) in (t.TPlus, t.TMinus):
             if type(items[1]) is t.TLiteralLong:
-                return ASTLiteralLong(items[1].value * (-1 if type(items[0]) is t.TMinus else 1))
+                return data.CFGLiteralLong(items[1].value * (-1 if type(items[0]) is t.TMinus else 1))
             elif type(items[1]) is t.TLiteralFloat:
-                return ASTLiteralFloat(items[1].value * (-1 if type(items[0]) is t.TMinus else 1))
+                return data.CFGLiteralFloat(items[1].value * (-1 if type(items[0]) is t.TMinus else 1))
 
-        return ASTLiteralString(" ".join([("\"%s\"" % t) if type(t) is t.TLiteralString else str(t) for t in items]))
+        return data.CFGLiteralString(" ".join([("\"%s\"" % t) if type(t) is t.TLiteralString else str(t) for t in items]))
 
-    def parse_array(self):
+    def parse_array(self, main, propname):
         if type(self.read_token()) is not t.TBraceOpen:
-            raise Exception("Unexpected token at array start")
+            raise data.CFG_Error("Unexpected token at array start of property (%s) in (%s)" % (propname, main.get_path()))
 
         nexttoken = self.peek_token()
         if nexttoken and type(nexttoken) is t.TBraceClose:
             self.read_token()
-            return ASTArray([])
+            return data.CFGArray([])
 
         members = []
         while nexttoken and type(nexttoken) is not t.TBraceClose:
             if type(nexttoken) is t.TBraceOpen:
-                members.append(self.parse_array())
+                members.append(self.parse_array(main, propname))
 
             elif type(nexttoken) is t.TComma:
                 self.read_token()
@@ -348,11 +122,11 @@ class Parser:
                 nexttype = type(nexttoken)
                 new = None
                 if nexttype is t.TLiteralString:
-                    new = ASTLiteralString(nexttoken.value)
+                    new = data.CFGLiteralString(nexttoken.value)
                 elif nexttype is t.TLiteralLong:
-                    new = ASTLiteralLong(nexttoken.value)
+                    new = data.CFGLiteralLong(nexttoken.value)
                 else:
-                    new = ASTLiteralFloat(nexttoken.value)
+                    new = data.CFGLiteralFloat(nexttoken.value)
 
                 members.append(new)
                 self.read_token()
@@ -361,12 +135,12 @@ class Parser:
 
         self.read_token()
 
-        return ASTArray(members)
+        return data.CFGArray(members)
 
-    def parse_property(self):
+    def parse_property(self, main):
         name = self.parse_identifier()
         if not name:
-            raise Exception("Could not parse property name")
+            raise data.CFG_Error("Could not parse property name in (%s)" % (main.get_path()))
 
         value = None
         if type(self.peek_token()) is t.TEquals:
@@ -374,63 +148,54 @@ class Parser:
             value = self.parse_literal()
             end = self.read_token()
             if not end or type(end) is not t.TSemicolon:
-                raise Exception("Expected semicolon after property assignment")
+                raise data.CFG_Error("Expected semicolon instead of (%s) after assignment of property (%s) in (%s)" % (
+                    end, name, main.get_path()))
 
         elif self.compare_tokens(self.peek_token(2), [t.TBracketOpen, t.TBracketClose]):
             self.read_token(2)
             operator = self.read_token()
             if not operator or type(operator) not in (t.TEquals, t.TPlusEquals):
-                raise Exception("Unexpected array assignment operator")
+                raise data.CFG_Error("Unexpected array assignment operator (%s) for property (%s) in (%s)" % (operator, name, main.get_path()))
 
-            value = self.parse_array()
+            value = self.parse_array(main, name)
             if type(operator) is t.TPlusEquals:
                 value.extends = True
 
             end = self.read_token()
             if not end or type(end) is not t.TSemicolon:
-                raise Exception("Expected semicolon after property assignment")
+                raise data.CFG_Error("Expected semicolon instead of (%s) after assignment of property (%s) in (%s)" % ( end, name, main.get_path()))
 
-        return ASTProperty(name.value, value)
-
-    def resolve_parent(self, main, parentname):
-        for item in main.classes:
-            if item.name == parentname:
-                return item
-
-        if main.parent is None:
-            return None
-
-        return self.resolve_parent(main.parent, parentname)
+        return data.CFGProperty(name.value, value)
 
     def parse_class_header(self, main=None):
         self.read_token()  # skip class keyword
         name = self.parse_identifier()
         if not name:
-            raise Exception("Could not parse class name")
+            raise data.CFG_Error("Could not parse class name in (%s)" % (main.get_path()))
 
         delimiter = self.read_token()
         delimitertype = type(delimiter)
         if delimitertype not in (t.TColon, t.TSemicolon, t.TBraceOpen):
-            raise Exception("Unexpected token after class name")
+            raise data.CFG_Error("Unexpected token (%s) after class name (%s) in (%s)" % (delimiter, name, main.get_path()))
 
         if delimitertype is t.TSemicolon:
-            return ASTClass(name.value, None, main, isref=True)
+            return data.CFGClass(name.value, None, main, isref=True)
         elif delimitertype is t.TBraceOpen:
-            return ASTClass(name.value, None, main)
+            return data.CFGClass(name.value, None, main)
 
         parentname = self.parse_identifier()
         if not parentname:
-            raise Exception("Could not parse class parent name")
+            raise data.CFG_Error("Could not parse class parent name of (%s) in (%s)" % (name, main.get_path()))
 
-        parent = self.resolve_parent(main, parentname.value)
+        parent = data.CFGClass.resolve_parent(main, parentname.value)
         if not parent:
-            raise Exception("Could not resolve class parent")
+            raise data.CFG_Error("Could not resolve class parent (%s) of (%s) in (%s)" % (parentname, name, main.get_path()))
 
         end = self.read_token()
         if not end or type(end) is not t.TBraceOpen:
-            raise Exception("Unexpected token")
+            raise data.CFG_Error("Unexpected token (%s) in class header in (%s)" % (end, main.get_path()))
 
-        return ASTClass(name.value, parent, main)
+        return data.CFGClass(name.value, parent, main)
 
     def parse_class(self, main=None):
         new = self.parse_class_header(main)
@@ -447,28 +212,34 @@ class Parser:
         while peeked and type(peeked) is not t.TBraceClose:
             peekedtype = type(peeked)
             if peekedtype is t.TDel:
-                raise Exception("Class deletion syntax is not supported")
+                raise data.CFG_Error("Class deletion syntax is not supported in (%s)" % (new.get_path()))
             elif peekedtype is t.TEnum:
-                raise Exception("Enum syntax is not supported")
+                raise data.CFG_Error("Enum syntax is not supported in (%s)" % (new.get_path()))
             elif peekedtype is t.TClass:
                 newclass = self.parse_class(new)
                 if newclass.name in clses:
-                    raise Exception("Duplicate class definition")
+                    raise data.CFG_Error("Duplicate class definition (%s) in (%s)" % (newclass.name, new.get_path()))
                 clses.add(newclass.name)
                 new.classes.append(newclass)
             else:
-                newprop = self.parse_property()
+                newprop = self.parse_property(new)
                 if newprop.name not in props:
                     props.add(newprop.name)
                     new.properties.append(newprop)
 
             peeked = self.peek_token()
 
-        if not self.compare_tokens(self.read_token(2), [t.TBraceClose, t.TSemicolon]):
-            raise Exception("Unexpected class ending")
+        end = self.read_token(2)
+        if not self.compare_tokens(end, [t.TBraceClose, t.TSemicolon]):
+            raise data.CFG_Error("Unexpected class ending (%s) in (%s)" % (", ".join([str(item) for item in end]), new.get_path()))
 
         return new
 
     def parse(self):
+        if t.TUnknown("") in self.tokens:
+            raise data.CFG_Error("Cannot parse unknown tokens")
+        if t.THasmark() in self.tokens:
+            raise data.CFG_Error("Preprocessor directives are not supported")
+
         root = self.parse_class()
-        return AST(root)
+        return data.CFG(root)
