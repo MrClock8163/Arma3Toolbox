@@ -1,6 +1,10 @@
+import os
+
 import bpy
 
+from ..io import config
 from ..utilities import generic as utils
+from ..utilities import materials as matutils
 
 
 class A3OB_OT_paste_common_material(bpy.types.Operator):
@@ -68,6 +72,30 @@ class A3OB_OT_paste_common_procedural(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class A3OB_OT_setup_material(bpy.types.Operator):
+    """Setup material from set texture and RVMAT"""
+    
+    bl_idname = "a3ob.setup_material"
+    bl_label = "Setup Material"
+    bl_options = {'REGISTER'}
+    
+    material: bpy.props.StringProperty()
+
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    def execute(self, context):
+        mat = bpy.data.materials.get(self.material)
+        if not mat:
+            utils.op_report(self, {'ERROR'}, "Could not find material: %s" % self.material)
+            return {'FINISHED'}
+        
+        matutils.setup_material(mat)
+
+        return {'FINISHED'}
+
+
 class A3OB_UL_common_procedurals(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         layout.label(text=item.name)
@@ -116,10 +144,15 @@ class A3OB_PT_material(bpy.types.Panel):
         row_material.operator("a3ob.paste_common_material", text="", icon='PASTEDOWN')
         row_material.prop(material_props, "material_path", text="", icon='MATERIAL')
 
+        layout.separator()
+        op_rvmat = layout.operator("a3ob.setup_material")
+        op_rvmat.material = context.material.name
+
 
 classes = (
     A3OB_OT_paste_common_material,
     A3OB_OT_paste_common_procedural,
+    A3OB_OT_setup_material,
     A3OB_UL_common_procedurals,
     A3OB_PT_material,
 )
