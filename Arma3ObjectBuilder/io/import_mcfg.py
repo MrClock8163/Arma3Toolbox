@@ -7,8 +7,7 @@ import tempfile
 import subprocess
 
 from .. import get_prefs
-from . import data_rap as rap
-from ..utilities import generic as utils
+from . import config
 from ..utilities.logger import ProcessLogger
 
 
@@ -63,98 +62,62 @@ def cfgconvert(filepath, exepath):
     return destfile.name
 
 
-# Derapify the previously converted model.cfg.
+# Attempt to read in a model.cfg file. First attempt will be made to parse the filedirectly.
+# If parsing fails, second attempt will be to rapify the model.cfg and reading the binary.
 def read_mcfg(filepath):
-    exepath = get_cfg_convert()
-    if not os.path.isfile(exepath):
-        return None
+    data = None
+    try:
+        tokens = config.tokenize_file(filepath)
+        tokens = config.wrap(tokens, "root")
+        data = config.parse(tokens)
+        return data
+    except:
+        pass
 
-    temppath = cfgconvert(filepath, exepath)
-    
-    if temppath == "":
-        return None
-    
-    data = rap.RAP_Reader.read_file(temppath)
-    
-    os.remove(temppath)
-    
-    return data
+    try:
+        exepath = get_cfg_convert()
+        if not os.path.isfile(exepath):
+            return None
 
-
-# Since the config syntax supports class inheritance, as well as
-# some additional annoying ways to combine skeletons in model.cfg files,
-# the inheritance tree has to be traversed to query properties.
-def get_prop_compiled(mcfg, classname, propname):
-    entry = mcfg.body.find(classname)
-    if not entry or entry.type != rap.RAP.EntryType.CLASS:
-        return None
-    
-    prop = entry.body.find(propname)
-    if prop:
-        return prop.value
-    
-    if entry.body.inherits == "":
-        return None
+        temppath = cfgconvert(filepath, exepath)
         
-    return get_prop_compiled(mcfg, entry.body.inherits, propname)
+        if temppath == "":
+            return None
+        
+        data = config.derapify_file(temppath)
+        os.remove(temppath)
+        return data
+    except:
+        return None
 
 
-def get_skeletons(mcfg):
-    skeletons = mcfg.body.find("CfgSkeletons")
-    if skeletons:
-        return skeletons.body.entries
-    
-    return []
-
-
-def get_bones(skeleton):
-    if skeleton.type == rap.RAP.EntryType.EXTERN:
-        return []
-    
-    bones = skeleton.body.find("skeletonBones")
-    if not bones:
-        return []
-
+def get_bones(bonearray):
     output = []
-    for i in range(0, bones.body.element_count, 2):
+    for i in range(0, len(bonearray), 2):
         new_bone = Bone()
-        new_bone.name = bones.body.elements[i].value
-        new_bone.parent = bones.body.elements[i + 1].value
+        new_bone.name = bonearray[i]
+        new_bone.parent = bonearray[i + 1]
         output.append(new_bone)
         
     return output
 
 
 # Like properties, bones can be inherited from other skeletons with the
-# skeletonInherit property, so the inheritance tree has to traversed again.
+# skeletonInherit property, so the inheritance tree has to traversed.
 def get_bones_compiled(mcfg, skeleton_name):
-    cfg_skeletons = mcfg.body.find("CfgSkeletons")
+    bones_prop = mcfg.get_prop("root/CfgSkeletons/%s/skeletonBones" % skeleton_name)
+    bones_self = []
+    if bones_prop:
+        bones_self = get_bones(bones_prop.topy())
+    
+    bones_inherit = mcfg.get_prop("root/CfgSkeletons/%s/skeletonInherit" % skeleton_name)
+    if bones_inherit is None or bones_inherit == "":
+        return bones_self
+    
+    bones_inherited = get_bones_compiled(mcfg, bones_inherit)
+
     output = []
-    
-    if not cfg_skeletons or cfg_skeletons.type != rap.RAP.EntryType.CLASS:
-        return []
-        
-    skeleton = cfg_skeletons.body.find(skeleton_name)
-    if not skeleton or skeleton.type != rap.RAP.EntryType.CLASS:
-        return []
-    
-    inherit_bones = get_prop_compiled(cfg_skeletons, skeleton_name, "skeletonInherit")
-    if not inherit_bones:
-        inherit_bones = ""
-    
-    bones_self = get_bones(skeleton)
-    bones_inherit = []
-    
-    if not skeleton.body.find("skeletonBones") and skeleton.body.inherits != "":
-        parent = cfg_skeletons.body.find(skeleton.body.inherits)
-        if parent:
-            bones_self = get_bones(parent)
-        
-    if inherit_bones != "":
-        bones_inherit = get_bones_compiled(mcfg, inherit_bones)
-    
-    output = []
-    for item in bones_inherit + bones_self:
+    for item in bones_inherited + bones_self:
         if item not in output:
             output.append(item)
         
@@ -169,25 +132,30 @@ def read_file(operator, context):
 
     if not data:
         logger.step("Could not read model.cfg file")
-        logger.end_subproc("Skeleton import finished")
+        logger.end_subproc("Skeleton import terminated")
         return 0
     
     if operator.force_lowercase:
         logger.step("Force lowercase")
 
-    skeletons = get_skeletons(data)
-    logger.start_subproc("Found skeletons:")
+    skeletons: config.data.CFGClass = data.get_class("root/cfgskeletons")
+    if not skeletons or len(skeletons.classes) == 0:
+        logger.step("Did not find any skeletons")
+        logger.end_subproc("Skeleton import terminated")
+        return 0
     
-    for skelly in skeletons:
+    logger.start_subproc("Found skeletons:")
+    newcount = 0
+    for skelly in skeletons.classes:
+        if skelly.isref:
+            continue
+
         new_skelly = scene_props.skeletons.add()
+        newcount += 1
         new_skelly.name = skelly.name.lower() if operator.force_lowercase else skelly.name
         new_skelly.protected = operator.protected
-        
-        cfgbones = get_bones_compiled(data, skelly.name)
-        logger.step("%s: %d compiled bones" % (skelly.name, len(cfgbones)))
-        if operator.force_lowercase:
-            cfgbones = [bone.to_lowercase() for bone in cfgbones]
 
+        cfgbones = get_bones_compiled(data, skelly.name)
         for bone in cfgbones:
             new_bone = new_skelly.bones.add()
             new_bone.name = bone.name
@@ -197,4 +165,4 @@ def read_file(operator, context):
     logger.end_subproc()
     logger.step("Skeleton import finished")
         
-    return len(skeletons)
+    return newcount

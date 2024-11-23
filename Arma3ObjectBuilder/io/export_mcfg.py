@@ -1,7 +1,7 @@
 # Writer functions to export text formatted model.cfg file.
 
 
-from . import data_rap as rap
+from . import config
 from ..utilities import rigging as riggingutils
 from ..utilities.logger import ProcessLogger
 
@@ -11,29 +11,34 @@ def write_file(operator, skeleton, file):
     logger.start_subproc("Skeleton definition export to %s" % operator.filepath)
     logger.step("Skeleton definition: %s" % skeleton.name)
     bones_parents = riggingutils.bone_order_from_skeleton(skeleton)
-
-    logger.step("Bones: %d" % len(bones_parents))
     
     if operator.force_lowercase:
         logger.step("Force lowercase")
         bones_parents = {k.lower(): v.lower() for k, v in bones_parents.items()}
+
+    logger.step("Bones: %d" % len(bones_parents))
     
-    printer = rap.CFG_Formatter(file)
+    data = {
+        "root": {
+            "classes": {
+                "CfgSkeletons": {
+                    "classes": {
+                        skeleton.name: {
+                            "properties": {
+                                "isDiscrete": 0,
+                                "skeletonInherit": "",
+                                "skeletonBones": [item for records in bones_parents.items() for item in records],
+                                "pivotsModel": "path\\to\\pivots.p3d"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-    printer.class_open("CfgSkeletons")
-    printer.class_open(skeleton.name)
-
-    printer.property_int("isDiscrete", 0)
-    printer.property_string("skeletonInherit", "")
-
-    printer.array_open("skeletonBones")
-    printer.array_items(["\"%s\", \"%s\"" % (k, v) for k, v in bones_parents.items()])
-    printer.array_close()
-    printer.comment("Path to the pivot points model has to be set manually")
-    printer.comment("pivotsModel = \"path\\to\\pivots.p3d\";")
-    
-    printer.class_close()
-    printer.class_close()
+    cfg = config.from_dict(data)
+    file.write(cfg.format())
 
     logger.step("Wrote formatted file")
     logger.end_subproc()
