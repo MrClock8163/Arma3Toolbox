@@ -184,15 +184,32 @@ def setup_color(mat: bpy.types.Material, shadernode: bpy.types.ShaderNodeBsdfPri
             except:
                 return None
 
-        diffnode = tree.nodes.new('ShaderNodeTexImage')
-        diffnode.image = img
-        tree.links.new(diffnode.outputs[0], shadernode.inputs[0])
-        return diffnode
+        texnode = tree.nodes.new('ShaderNodeTexImage')
+        texnode.image = img
+        tree.links.new(texnode.outputs[0], shadernode.inputs[0])
+        return texnode
 
     elif mat_props.texture_type == 'COLOR':
-        shadernode.inputs[0].default_value = mat_props.color_value
+        texnode = tree.nodes.new('ShaderNodeRGB')
+        texnode.inputs[0].default_value = mat_props.color_value
+        tree.links.new(texnode.outputs[0], shadernode.inputs[0])
+        return texnode
     
     return None
+
+
+def setup_color_ambient(mat, shadernode, rvmat):
+    ambient = rvmat.get_prop("rvmat/ambient")
+    if not ambient:
+        return
+    
+    color = ambient.topy()
+
+    try:
+        mat.diffuse_color = color
+        shadernode.inputs[0].default_value = color
+    except:
+        pass
 
 
 def setup_material(mat: bpy.types.Material):
@@ -217,6 +234,8 @@ def setup_material(mat: bpy.types.Material):
         rvmat = config.parse(tokens)
     except:
         return
+    
+    setup_color_ambient(mat, shadernode, rvmat)
     
     shadertype = rvmat.get_prop("rvmat/PixelShaderID")
     if shadertype and shadertype.topy() == "Super":
