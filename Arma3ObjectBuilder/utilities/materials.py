@@ -106,12 +106,17 @@ def setup_nohq(tree, shadernode, rvmat):
         return
     
     texnode = nodes.new('ShaderNodeTexImage')
+    texnode.location = (-1200, -500)
     texnode.image = img
 
     sepnode = nodes.new('ShaderNodeSeparateColor')
+    sepnode.location = (-800, -500)
     mergenode = nodes.new('ShaderNodeCombineColor')
+    mergenode.location = (-400, -500)
     normalnode = nodes.new('ShaderNodeNormalMap')
+    normalnode.location = (-200, -500)
     invnode = nodes.new('ShaderNodeInvert')
+    invnode.location = (-600, -700)
 
     links.new(texnode.outputs[0], sepnode.inputs[0])
     links.new(sepnode.outputs[0], mergenode.inputs[0])
@@ -131,6 +136,7 @@ def setup_mc(tree, shadernode, texnode, rvmat):
         return
     
     mcnode = nodes.new('ShaderNodeTexImage')
+    mcnode.location = (-1200, 400)
     mcnode.image = img
     
     if not texnode:
@@ -138,6 +144,7 @@ def setup_mc(tree, shadernode, texnode, rvmat):
         texnode.outputs[0].default_value = shadernode.inputs[0].default_value
 
     mixnode = nodes.new('ShaderNodeMix')
+    mixnode.location = (-800, 300)
     mixnode.data_type = 'RGBA'
     mixnode.inputs[0].default_value = 1
     
@@ -156,10 +163,13 @@ def setup_smdi(tree, shadernode, rvmat):
         return
     
     texnode = nodes.new('ShaderNodeTexImage')
+    texnode.location = (-1200, -200)
     texnode.image = img
 
     sepnode = nodes.new('ShaderNodeSeparateColor')
+    sepnode.location = (-800, -200)
     invnode = nodes.new('ShaderNodeInvert')
+    invnode.location = (-600, -300)
 
     links.new(texnode.outputs[0], sepnode.inputs[0])
     links.new(sepnode.outputs[2], invnode.inputs[1])
@@ -185,12 +195,14 @@ def setup_color(mat: bpy.types.Material, shadernode: bpy.types.ShaderNodeBsdfPri
                 return None
 
         texnode = tree.nodes.new('ShaderNodeTexImage')
+        texnode.location = (-1200, 100)
         texnode.image = img
         tree.links.new(texnode.outputs[0], shadernode.inputs[0])
         return texnode
 
     elif mat_props.texture_type == 'COLOR':
         texnode = tree.nodes.new('ShaderNodeRGB')
+        texnode.location = (-1200, 100)
         texnode.inputs[0].default_value = mat_props.color_value
         tree.links.new(texnode.outputs[0], shadernode.inputs[0])
         return texnode
@@ -220,7 +232,9 @@ def setup_material(mat: bpy.types.Material):
     tree.nodes.clear()
 
     outnode = tree.nodes.new('ShaderNodeOutputMaterial')
+    outnode.location = (500, 100)
     shadernode = tree.nodes.new('ShaderNodeBsdfPrincipled')
+    shadernode.location = (100, 100)
     tree.links.new(shadernode.outputs[0], outnode.inputs[0])
 
     texnode = setup_color(mat, shadernode)
