@@ -64,7 +64,7 @@ def cfgconvert(filepath, exepath):
 
 # Attempt to read in a model.cfg file. First attempt will be made to parse the filedirectly.
 # If parsing fails, second attempt will be to rapify the model.cfg and reading the binary.
-def read_mcfg(filepath):
+def read_mcfg(filepath, logger):
     data = None
     try:
         tokens = config.tokenize_file(filepath)
@@ -72,22 +72,25 @@ def read_mcfg(filepath):
         data = config.parse(tokens)
         return data
     except:
-        pass
+        logger.step("Failed to directly parse model.cfg -> attempting rapification")
 
     try:
         exepath = get_cfg_convert()
         if not os.path.isfile(exepath):
+            logger.step("Could not find CfgConvert.exe")
             return None
 
         temppath = cfgconvert(filepath, exepath)
         
         if temppath == "":
+            logger.step("Failed to rapify file")
             return None
         
         data = config.derapify_file(temppath)
         os.remove(temppath)
         return data
     except:
+        logger.step("Failed to binarize and read model.cfg")
         return None
 
 
@@ -127,7 +130,7 @@ def get_bones_compiled(mcfg, skeleton_name):
 def read_file(operator, context):
     logger = ProcessLogger()
     logger.start_subproc("Skeleton import from %s" % operator.filepath)
-    data = read_mcfg(operator.filepath)
+    data = read_mcfg(operator.filepath, logger)
     scene_props = context.scene.a3ob_rigging
 
     if not data:
@@ -138,7 +141,7 @@ def read_file(operator, context):
     if operator.force_lowercase:
         logger.step("Force lowercase")
 
-    skeletons: config.data.CFGClass = data.get_class("root/cfgskeletons")
+    skeletons = data.get_class("root/cfgskeletons")
     if not skeletons or len(skeletons.classes) == 0:
         logger.step("Did not find any skeletons")
         logger.end_subproc("Skeleton import terminated")
@@ -156,6 +159,10 @@ def read_file(operator, context):
         new_skelly.protected = operator.protected
 
         cfgbones = get_bones_compiled(data, skelly.name)
+        logger.step("%s: %d compiled bones" % (skelly.name, len(cfgbones)))
+        if operator.force_lowercase:
+            cfgbones = [bone.to_lowercase() for bone in cfgbones]
+
         for bone in cfgbones:
             new_bone = new_skelly.bones.add()
             new_bone.name = bone.name

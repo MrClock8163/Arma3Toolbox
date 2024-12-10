@@ -34,7 +34,7 @@ class A3OB_OP_import_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
     @classmethod
     def poll(cls, context):
-        return os.path.isfile(import_mcfg.get_cfg_convert())
+        return True
 
     def draw(self, context):
         pass
@@ -44,6 +44,8 @@ class A3OB_OP_import_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         
         if count_skeletons > 0:
             utils.op_report(self, {'INFO'}, "Successfully imported %d skeleton(s)" % count_skeletons)
+        
+        utils.op_report(self, {'ERROR'}, "Could not import any skeletons (check the system console)")
         
         return {'FINISHED'}
 
