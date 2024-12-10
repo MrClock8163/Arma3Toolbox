@@ -6,6 +6,7 @@ import bpy
 from .generic import restore_absolute
 from ..io.import_paa import import_file
 from ..io import config
+from ..utilities import compat as computils
 
 
 class RVMATTemplateField:
@@ -109,9 +110,9 @@ def setup_nohq(tree, shadernode, rvmat):
     texnode.location = (-1200, -500)
     texnode.image = img
 
-    sepnode = nodes.new('ShaderNodeSeparateColor')
+    sepnode = computils.create_node_color_separate(nodes)
     sepnode.location = (-800, -500)
-    mergenode = nodes.new('ShaderNodeCombineColor')
+    mergenode = computils.create_node_color_combine(nodes)
     mergenode.location = (-400, -500)
     normalnode = nodes.new('ShaderNodeNormalMap')
     normalnode.location = (-200, -500)
@@ -166,7 +167,7 @@ def setup_smdi(tree, shadernode, rvmat):
     texnode.location = (-1200, -200)
     texnode.image = img
 
-    sepnode = nodes.new('ShaderNodeSeparateColor')
+    sepnode = computils.create_node_color_separate(nodes)
     sepnode.location = (-800, -200)
     invnode = nodes.new('ShaderNodeInvert')
     invnode.location = (-600, -300)

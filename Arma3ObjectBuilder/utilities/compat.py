@@ -26,6 +26,14 @@ def mesh_static_normals_iterator(mesh):
         yield i, loop.normal.copy().freeze()
 
 
+def create_node_color_separate(nodes):
+    return nodes.new('ShaderNodeSeparateRGB')
+
+
+def create_node_color_combine(nodes):
+    return nodes.new('ShaderNodeCombineRGB')
+
+
 # Blender 4.0.0 removed the traditional bpy.ops.xyz.xyz(ctx, **kwargs) type operator calling,
 # and since the new temp_override method was only introduced late in the 3.x.x versions,
 # to maintain compatibility with older releases, the operator call has to be version dependent
@@ -38,6 +46,12 @@ if bl_version > (3, 6, 0):
 
         with bpy.context.temp_override(**ctx):
             op(**kwargs)
+
+    def create_node_color_separate(nodes):
+        return nodes.new('ShaderNodeSeparateColor')
+
+    def create_node_color_combine(nodes):
+        return nodes.new('ShaderNodeCombineColor')
 
 
 # https://developer.blender.org/docs/release_notes/4.1/python_api/#breaking-changes

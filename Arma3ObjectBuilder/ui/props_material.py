@@ -1,8 +1,5 @@
-import os
-
 import bpy
 
-from ..io import config
 from ..utilities import generic as utils
 from ..utilities import materials as matutils
 
@@ -145,7 +142,7 @@ class A3OB_PT_material(bpy.types.Panel):
         row_material.prop(material_props, "material_path", text="", icon='MATERIAL')
 
         layout.separator()
-        op_rvmat = layout.operator("a3ob.setup_material")
+        op_rvmat = layout.operator("a3ob.setup_material", icon='NODE_MATERIAL')
         op_rvmat.material = context.material.name
 
 
