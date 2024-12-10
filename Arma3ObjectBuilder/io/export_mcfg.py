@@ -28,7 +28,7 @@ def write_file(operator, skeleton, file):
                                 "isDiscrete": 0,
                                 "skeletonInherit": "",
                                 "skeletonBones": [item for records in bones_parents.items() for item in records],
-                                "pivotsModel": "path\\to\\pivots.p3d"
+                                "pivotsModel": ""
                             }
                         }
                     }

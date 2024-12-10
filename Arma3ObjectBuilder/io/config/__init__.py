@@ -26,7 +26,7 @@ def tokenize(file):
 
 
 def tokenize_file(path):
-    with open(path, "rt") as file:
+    with open(path, "rt", encoding="utf8") as file:
         return tokenize(file)
 
 

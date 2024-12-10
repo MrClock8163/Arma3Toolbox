@@ -143,17 +143,9 @@ class TMinus(Token):
         return type(self) is type(other)
 
 
-class THasmark(Token):
+class THashmark(Token):
     def __init__(self):
         self.value = "#"
-
-    def __eq__(self, other):
-        return type(self) is type(other)
-
-
-class TPlusEquals(Token):
-    def __str__(self):
-        return "+="
 
     def __eq__(self, other):
         return type(self) is type(other)
@@ -217,7 +209,7 @@ class CFGTokenizer:
         "=": TEquals,
         "+": TPlus,
         "-": TMinus,
-        "#": THasmark
+        "#": THashmark
     }
 
     kwrds = {
@@ -286,36 +278,57 @@ class CFGTokenizer:
 
             self.consume_whitespace()
 
-    def next_float_decimal(self, continuefrom=""):
-        value = continuefrom
-        posback = self.stream.tell()
-        newchar = self.read_char()
-        found_decimal = "." in value
-        while newchar.isdigit() or (newchar == "." and not found_decimal):
-            value += newchar
-            found_decimal |= newchar == "."
-            posback = self.stream.tell()
-            newchar = self.read_char()
-
-        if newchar != "":
-            self.stream.seek(posback)
-
-        return TLiteralFloat(float(value))
-
-    def next_num(self):
+    def read_sequence(self, func):
         value = ""
         posback = self.stream.tell()
         newchar = self.read_char()
-        while newchar.isdigit():
+        while func(newchar):
             value += newchar
             posback = self.stream.tell()
             newchar = self.read_char()
 
-        if newchar == ".":
-            return self.next_float_decimal(value + ".")
-
         if newchar != "":
             self.stream.seek(posback)
+
+        return value
+
+    def continue_num_exponential(self, value=""):
+        self.read_char()
+        value += "e"
+        newchar = self.peek_char()
+        if newchar in ("+", "-"):
+            value += newchar
+            self.read_char()
+
+        value += self.read_sequence(str.isdigit)
+
+        return TLiteralFloat(float(value))
+
+    def continue_num_decimal(self, value=""):
+        value += self.read_char()
+        value += self.read_sequence(str.isdigit)
+
+        if self.peek_char() in ("e", "E", "d", "D"):
+            return self.continue_num_exponential(value)
+
+        return TLiteralFloat(float(value))
+
+    def continue_num_hex(self):
+        self.read_char()
+        return TLiteralLong(int(self.read_sequence(str.isdigit), 16))
+
+    def next_num(self):
+        value = self.read_char()
+        if self.peek_char() in ("x", "X"):
+            return self.continue_num_hex()
+
+        value += self.read_sequence(str.isdigit)
+
+        peeked = self.peek_char()
+        if peeked == ".":
+            return self.continue_num_decimal(value)
+        elif peeked in ("d", "D", "e", "E"):
+            return self.continue_num_exponential(value)
 
         return TLiteralLong(int(value))
 
@@ -332,17 +345,7 @@ class CFGTokenizer:
         return TLiteralString(value)
 
     def next_identifier(self):
-        value = ""
-        posback = self.stream.tell()
-        newchar = self.read_char()
-        while newchar != "" and (newchar.isalnum() or newchar == "_"):
-            value += newchar
-            posback = self.stream.tell()
-            newchar = self.read_char()
-
-        if newchar != "":
-            self.stream.seek(posback)
-
+        value = self.read_sequence(lambda c: c != "" and (c.isalnum() or c == "_"))
         kwrd = self.kwrds.get(value)
         if kwrd:
             return kwrd()
@@ -350,9 +353,6 @@ class CFGTokenizer:
         return TIdentifier(value)
 
     def next(self):
-        if self.peek_char() == "":
-            return None
-
         self.consume_unneeded()
 
         if self.peek_char() == "":
@@ -363,13 +363,11 @@ class CFGTokenizer:
         syntaxtoken = self.symbols.get(nextchar)
         if syntaxtoken:
             return syntaxtoken()
-        elif nextchar == "+" and self.read_char() == "=":
-            return TPlusEquals()
 
         self.stream.seek(posback)
 
         if nextchar == ".":
-            return self.next_float_decimal()
+            return self.continue_num_decimal()
         elif nextchar.isdigit():
             return self.next_num()
         elif nextchar == "\"":

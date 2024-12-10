@@ -36,10 +36,9 @@ def get_cfg_convert():
     return os.path.join(get_prefs().a3_tools, "cfgconvert/cfgconvert.exe")
 
 
-# The model.cfg reading is dependent on the import_rap module,
-# so the model config first needs to be rapified by the Arma 3 Tools.
 # Binary reading is far more reliable, and less messy than trying to
 # parse either the raw config syntax, or the XML output of cfgconvert.
+# It can be used as a fallback option on systems where and Arma 3 Tools are installed.
 def cfgconvert(filepath, exepath):
     current_dir = os.getcwd()
     
@@ -62,7 +61,7 @@ def cfgconvert(filepath, exepath):
     return destfile.name
 
 
-# Attempt to read in a model.cfg file. First attempt will be made to parse the filedirectly.
+# Attempt to read in a model.cfg file. First attempt will be made to parse the file directly.
 # If parsing fails, second attempt will be to rapify the model.cfg and reading the binary.
 def read_mcfg(filepath, logger):
     data = None
@@ -150,7 +149,7 @@ def read_file(operator, context):
     logger.start_subproc("Found skeletons:")
     newcount = 0
     for skelly in skeletons.classes:
-        if skelly.isref:
+        if skelly.isreference():
             continue
 
         new_skelly = scene_props.skeletons.add()

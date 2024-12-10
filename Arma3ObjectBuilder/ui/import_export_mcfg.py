@@ -1,5 +1,3 @@
-import os
-
 import bpy
 import bpy_extras
 
@@ -44,6 +42,7 @@ class A3OB_OP_import_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         
         if count_skeletons > 0:
             utils.op_report(self, {'INFO'}, "Successfully imported %d skeleton(s)" % count_skeletons)
+            return {'FINISHED'}
         
         utils.op_report(self, {'ERROR'}, "Could not import any skeletons (check the system console)")
         
@@ -114,6 +113,7 @@ class A3OB_OP_export_mcfg(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         
         with utils.ExportFileHandler(self.filepath, "w") as file:
             export_mcfg.write_file(self, skeleton, file)
+            utils.op_report(self, {'INFO'}, "Successfuly exported %s" % skeleton.name)
 
         return {'FINISHED'}
 

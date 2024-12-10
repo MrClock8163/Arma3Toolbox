@@ -103,7 +103,7 @@ class CFGParser:
             elif type(items[1]) is t.TLiteralFloat:
                 return data.CFGLiteralFloat(items[1].value * (-1 if type(items[0]) is t.TMinus else 1))
 
-        return data.CFGLiteralString(" ".join([("\"%s\"" % t) if type(t) is t.TLiteralString else str(t) for t in items]))
+        return data.CFGLiteralString(" ".join([("\"%s\"" % token) if type(token) is t.TLiteralString else str(token) for token in items]))
 
     def parse_array(self, main, propname):
         if type(self.read_token()) is not t.TBraceOpen:
@@ -118,23 +118,13 @@ class CFGParser:
         while nexttoken and type(nexttoken) is not t.TBraceClose:
             if type(nexttoken) is t.TBraceOpen:
                 members.append(self.parse_array(main, propname))
-
-            elif type(nexttoken) is t.TComma:
-                self.read_token()
             else:
-                nexttype = type(nexttoken)
-                new = None
-                if nexttype is t.TLiteralString:
-                    new = data.CFGLiteralString(nexttoken.value)
-                elif nexttype is t.TLiteralLong:
-                    new = data.CFGLiteralLong(nexttoken.value)
-                else:
-                    new = data.CFGLiteralFloat(nexttoken.value)
-
-                members.append(new)
-                self.read_token()
+                members.append(self.parse_literal())
 
             nexttoken = self.peek_token()
+            if type(nexttoken) is t.TComma:
+                self.read_token()
+                nexttoken = self.peek_token()
 
         self.read_token()
 
@@ -157,16 +147,21 @@ class CFGParser:
         elif self.compare_tokens(self.peek_token(2), [t.TBracketOpen, t.TBracketClose]):
             self.read_token(2)
             operator = self.read_token()
-            if not operator or type(operator) not in (t.TEquals, t.TPlusEquals):
+            optype = type(operator)
+            extends = False
+            if not operator or optype not in (t.TEquals, t.TPlus) or optype is t.TPlus and type(self.peek_token()) is not t.TEquals:
                 raise data.CFG_Error("Unexpected array assignment operator (%s) for property (%s) in (%s)" % (operator, name, main.get_path()))
 
+            if optype is t.TPlus:
+                self.read_token()
+                extends = True
+
             value = self.parse_array(main, name)
-            if type(operator) is t.TPlusEquals:
-                value.extends = True
+            value.extends = extends
 
             end = self.read_token()
             if not end or type(end) is not t.TSemicolon:
-                raise data.CFG_Error("Expected semicolon instead of (%s) after assignment of property (%s) in (%s)" % ( end, name, main.get_path()))
+                raise data.CFG_Error("Expected semicolon instead of (%s) after assignment of property (%s) in (%s)" % (end, name, main.get_path()))
 
         return data.CFGProperty(name.value, value)
 
@@ -182,7 +177,7 @@ class CFGParser:
             raise data.CFG_Error("Unexpected token (%s) after class name (%s) in (%s)" % (delimiter, name, main.get_path()))
 
         if delimitertype is t.TSemicolon:
-            return data.CFGClass(name.value, None, main, isref=True)
+            return data.CFGClass(name.value, None, main, external=True)
         elif delimitertype is t.TBraceOpen:
             return data.CFGClass(name.value, None, main)
 
@@ -202,7 +197,7 @@ class CFGParser:
 
     def parse_class(self, main=None):
         new = self.parse_class_header(main)
-        if new.isref:
+        if new.external:
             return new
 
         clses = set()
@@ -241,7 +236,7 @@ class CFGParser:
     def parse(self):
         if t.TUnknown("") in self.tokens:
             raise data.CFG_Error("Cannot parse unknown tokens")
-        if t.THasmark() in self.tokens:
+        if t.THashmark() in self.tokens:
             raise data.CFG_Error("Preprocessor directives are not supported")
 
         root = self.parse_class()
