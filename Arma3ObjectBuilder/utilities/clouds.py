@@ -40,7 +40,7 @@ def is_inside(obj, point):
 
 def is_inside_raycast(bvh: BVHTree, origin, point):
     vec = (point - origin).normalized()
-    incr = vec * 0.0001
+    incr = vec * 0.000001
     hits = 0
     while True:
         loc, _, idx, _ = bvh.ray_cast(point, vec)

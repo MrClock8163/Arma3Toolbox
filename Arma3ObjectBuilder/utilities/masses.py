@@ -164,7 +164,9 @@ def set_obj_vmass_density_weighted(obj, density, spacing):
     obj.update_from_editmode()
     mesh = obj.data
     component_verts, component_tris, all_closed = utils.get_closed_components(obj)
-
+    if len(component_verts) == 0 or len(component_tris) == 0:
+        return False
+    
     weights = array('L', [0] * len(mesh.vertices))
     for verts, tris in zip(component_verts, component_tris):
         kdt = KDTree(len(verts))
