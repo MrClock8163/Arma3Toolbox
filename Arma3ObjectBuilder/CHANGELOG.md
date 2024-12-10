@@ -6,6 +6,7 @@
 
 - import-export:
   - PAA texture import for textures compressed with DXT1 or DXT5 (S3TC BC1 and BC3) algorithms
+  - new config data parser and unified handler module
 - scripts:
   - script template to create empty "dummy" P3D file
 - Vertex Mass Editing tool:
@@ -13,10 +14,13 @@
 
 ### Changed
 
-- improved LZO1X decompression speeds
-- Bulk Renaming now shows warning signs at paths that point to files that do not exist
-- made Vertex Mass Editing tools available in both Edit and Object modes when possible
-- adjusted Vertex Mass Editing tool UI layout
+- import-export:
+  - improved LZO1X decompression speeds
+  - model.cfg import is now available without Arma 3 Tools as well (if native parsing is successful)
+- tools:
+  - Bulk Renaming now shows warning signs at paths that point to files that do not exist
+  - Vertex Mass Editing tools are now available in both Edit and Object modes when possible
+  - adjusted Vertex Mass Editing tool UI layout
 
 ### Fixed
 
