@@ -82,18 +82,13 @@ def generate_hitpoints(operator, context):
         return
     
     source_object = source
-    
-    # Edge bevel and triangulation need to applied to the source mesh
-    # in order to mitigate the chances of a false positive occuring.
-    if scene_props.triangulate == 'BEFORE':
-        modifier_triangulate = source_object.modifiers.new("A3OB_HitPointTris", 'TRIANGULATE')
         
     modifier_bevel = source_object.modifiers.new("A3OB_HitPointBevel", 'BEVEL')
-    modifier_bevel.segments = scene_props.bevel_segments
-    modifier_bevel.width = scene_props.bevel_offset
-    
-    if scene_props.triangulate == 'AFTER':
-        modifier_triangulate = source_object.modifiers.new("A3OB_HitPointTris", 'TRIANGULATE')
+    modifier_bevel.segments = 1
+    modifier_bevel.width = 0.001
+    modifier_bevel.limit_method = 'NONE'
+
+    modifier_triangulate = source_object.modifiers.new("A3OB_HitPointTris", 'TRIANGULATE')
 
     source_object_eval = source_object.evaluated_get(bpy.context.evaluated_depsgraph_get())
 

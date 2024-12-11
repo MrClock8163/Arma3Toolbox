@@ -54,15 +54,6 @@ class A3OB_PT_hitpoints(bpy.types.Panel):
         col = layout.column(align=True)
         col.prop(scene_props,"spacing")
         
-        col_bevel = layout.column(align=True, heading="Bevel:")
-        col_bevel.prop(scene_props, "bevel_offset", text="Offset")
-        col_bevel.prop(scene_props, "bevel_segments", text="Segments")
-        col_bevel.separator()
-        row_triangulate = col_bevel.row(align=True)
-        row_triangulate.use_property_split = True
-        row_triangulate.use_property_decorate = False
-        row_triangulate.prop(scene_props, "triangulate", text="Triangulate", expand=True)
-        
         col_selection = layout.column(align=True, heading="Selection:")
         col_selection.prop(scene_props, "selection", text="", icon='MESH_DATA')
         
