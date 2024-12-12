@@ -181,7 +181,11 @@ def set_obj_vmass_density_weighted(obj, density, spacing):
 
     obj_volume = math.fsum([calculate_volume(mesh, tris) for tris in component_tris])
     obj_mass = obj_volume * density
-    mass_per_weight = obj_mass / sum(weights) # mass per weighting unit
+
+    weights_sum = sum(weights)
+    if weights_sum == 0:
+        return False
+    mass_per_weight = obj_mass / weights_sum # mass per weighting unit
 
     with utils.edit_bmesh(obj) as bm:
         bm.verts.ensure_lookup_table()

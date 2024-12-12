@@ -81,6 +81,9 @@ def generate_hitpoints(operator, context):
     if not source or len(source.data.polygons) == 0:
         return
     
+    if source.scale.x == 0 or source.scale.y == 0 or source.scale.z == 0:
+        return
+    
     source_object = source
         
     modifier_bevel = source_object.modifiers.new("A3OB_HitPointBevel", 'BEVEL')
@@ -90,22 +93,17 @@ def generate_hitpoints(operator, context):
 
     modifier_triangulate = source_object.modifiers.new("A3OB_HitPointTris", 'TRIANGULATE')
 
-    source_object_eval = source_object.evaluated_get(bpy.context.evaluated_depsgraph_get())
+    source_object_eval = source_object.evaluated_get(context.evaluated_depsgraph_get())
 
     bbox = source_object_eval.bound_box
+    scale = source_object_eval.scale
     
-    # Dirty way to find the 2 characteristic points of the bounding box.
-    min_x = min(bbox, key=lambda pos: pos[0])[0]
-    min_y = min(bbox, key=lambda pos: pos[1])[1]
-    min_z = min(bbox, key=lambda pos: pos[2])[2]
+    point_min = bbox[0]
+    point_max = bbox[6]
 
-    max_x = max(bbox, key=lambda pos: pos[0])[0]
-    max_y = max(bbox, key=lambda pos: pos[1])[1]
-    max_z = max(bbox, key=lambda pos: pos[2])[2]
-    
-    points_x = calculate_grid(min_x, max_x, scene_props.spacing[0])
-    points_y = calculate_grid(min_y, max_y, scene_props.spacing[1])
-    points_z = calculate_grid(min_z, max_z, scene_props.spacing[2])
+    points_x = calculate_grid(point_min[0], point_max[0], scene_props.spacing[0] / scale.x)
+    points_y = calculate_grid(point_min[1], point_max[1], scene_props.spacing[1] / scale.y)
+    points_z = calculate_grid(point_min[2], point_max[2], scene_props.spacing[2] / scale.z)
 
     bm = bmesh.new()
 
@@ -146,18 +144,16 @@ def generate_hitpoints(operator, context):
 def generate_volume_grid(obj, spacing):
     obj_eval = obj.evaluated_get(bpy.context.evaluated_depsgraph_get())
     bbox = obj_eval.bound_box
+    scale = obj_eval.scale
+    if scale.x == 0 or scale.y == 0 or scale.z == 0:
+        return []
 
-    min_x = min(bbox, key=lambda pos: pos[0])[0]
-    min_y = min(bbox, key=lambda pos: pos[1])[1]
-    min_z = min(bbox, key=lambda pos: pos[2])[2]
+    point_min = bbox[0]
+    point_max = bbox[6]
 
-    max_x = max(bbox, key=lambda pos: pos[0])[0]
-    max_y = max(bbox, key=lambda pos: pos[1])[1]
-    max_z = max(bbox, key=lambda pos: pos[2])[2]
-
-    points_x = calculate_grid(min_x, max_x, spacing[0])
-    points_y = calculate_grid(min_y, max_y, spacing[1])
-    points_z = calculate_grid(min_z, max_z, spacing[2])
+    points_x = calculate_grid(point_min[0], point_max[0], spacing[0] / scale.x)
+    points_y = calculate_grid(point_min[1], point_max[1], spacing[1] / scale.y)
+    points_z = calculate_grid(point_min[2], point_max[2], spacing[2] / scale.z)
 
     bvh = BVHTree.FromObject(obj, bpy.context.evaluated_depsgraph_get())
     points = product(points_x, points_y, points_z)
@@ -169,18 +165,16 @@ def generate_volume_grid(obj, spacing):
 def generate_volume_grid_tris(obj, tris, spacing):
     bbox = obj.bound_box
     mesh = obj.data
+    scale = obj.scale
+    if scale.x == 0 or scale.y == 0 or scale.z == 0:
+        return []
 
-    min_x = min(bbox, key=lambda pos: pos[0])[0]
-    min_y = min(bbox, key=lambda pos: pos[1])[1]
-    min_z = min(bbox, key=lambda pos: pos[2])[2]
+    point_min = bbox[0]
+    point_max = bbox[6]
 
-    max_x = max(bbox, key=lambda pos: pos[0])[0]
-    max_y = max(bbox, key=lambda pos: pos[1])[1]
-    max_z = max(bbox, key=lambda pos: pos[2])[2]
-
-    points_x = calculate_grid(min_x, max_x, spacing[0])
-    points_y = calculate_grid(min_y, max_y, spacing[1])
-    points_z = calculate_grid(min_z, max_z, spacing[2])
+    points_x = calculate_grid(point_min[0], point_max[0], spacing[0] / scale.x)
+    points_y = calculate_grid(point_min[1], point_max[1], spacing[1] / scale.y)
+    points_z = calculate_grid(point_min[2], point_max[2], spacing[2] / scale.z)
 
     verts = [v.co for v in mesh.vertices]
     bvh = BVHTree.FromPolygons(verts, [tri.vertices for tri in tris])
