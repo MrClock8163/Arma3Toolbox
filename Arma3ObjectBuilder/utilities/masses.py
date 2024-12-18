@@ -160,6 +160,94 @@ def set_obj_vmass_density_uniform(obj, density):
     return all_closed
 
 
+def calc_cell_radius(center, bm):
+    bm.verts.ensure_lookup_table()
+    return max([(vert.co - center).length for vert in bm.verts])
+
+
+def calc_cell_volume(bm_whole, kdt, idx):
+    bm = bm_whole.copy()
+    bm.verts.ensure_lookup_table()
+
+    center = bm.verts[idx].co
+    radius = calc_cell_radius(center, bm)
+    verts = [co for co, _, _ in kdt.find_range(center, radius)]
+    verts.pop(0)
+    for co in verts:
+        vec = co - center
+        pos = co.lerp(center, 0.5)
+
+        results = bmesh.ops.bisect_plane(bm, dist=0.0001, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], plane_co=pos, plane_no=vec, clear_outer=True)
+        bmesh.ops.triangle_fill(bm, edges=[e for e in results["geom_cut"] if type(e) is bmesh.types.BMEdge], use_dissolve=True, use_beauty=True)
+
+        radius = calc_cell_radius(center, bm)
+        inliers = len(kdt.find_range(center, radius)) - 1
+        del verts[inliers:]
+    
+    volume = bm.calc_volume()
+    bm.free()
+
+    return volume
+
+
+def bmesh_from_component(mesh, verts, tris):
+    bm = bmesh.new()
+
+    lookup = {}
+    for idx in verts:
+        vert = bm.verts.new(mesh.vertices[idx].co)
+        lookup[idx] = vert
+    
+    bm.verts.index_update()
+
+    for tri in tris:
+        bm.faces.new([lookup[idx] for idx in tri.vertices])
+
+    return bm
+
+
+def calc_component_cells(mesh, verts, tris):
+    bm = bmesh_from_component(mesh, verts, tris)
+
+    kdt = KDTree(len(bm.verts))
+    for v in bm.verts:
+        kdt.insert(v.co, v.index)
+    kdt.balance()
+
+    cells = {}
+    for i in range(len(bm.verts)):
+        cells[verts[i]] = calc_cell_volume(bm, kdt, i)
+    
+    bm.free()
+
+    return cells
+
+
+def calc_vertex_volumes(obj):
+    comp_verts, comp_tris, no_ignored = utils.get_closed_components(obj)
+
+    volumes = {}
+    for verts, tris in zip(comp_verts, comp_tris):
+        volumes.update(calc_component_cells(obj.data, verts, tris))
+
+    return volumes, no_ignored
+
+
+def set_obj_vmass_density_voronoi(obj, density):
+    volumes, all_closed = calc_vertex_volumes(obj)
+
+    with utils.edit_bmesh(obj) as bm:
+        bm.verts.ensure_lookup_table()
+        layer = bm.verts.layers.float.get("a3ob_mass")
+        if not layer:
+            layer = bm.verts.layers.float.new("a3ob_mass")
+        
+        for idx, volume in volumes.items():
+            bm.verts[idx][layer] = volume * density
+    
+    return all_closed
+
+
 def set_obj_vmass_density_weighted(obj, density, spacing):
     obj.update_from_editmode()
     mesh = obj.data
