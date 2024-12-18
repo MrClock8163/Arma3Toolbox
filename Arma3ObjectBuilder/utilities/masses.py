@@ -134,7 +134,7 @@ def calculate_volume(mesh, component):
     return math.fsum(volumes)
 
 
-# The function splits the mesh into loose components, calculates
+# The function queries the closed components of a mesh, calculates
 # the volume of each component, then distributes an equal weight
 # to the vertices of each component so that:
 # vertex_mass = component_volume * density / count_component_vertices
@@ -160,19 +160,19 @@ def set_obj_vmass_density_uniform(obj, density):
     return all_closed
 
 
-def calc_cell_radius(center, bm):
+def bmesh_radius(bm, center: Vector()):
     bm.verts.ensure_lookup_table()
     return max([(vert.co - center).length for vert in bm.verts])
 
 
-def calc_cell_volume(bm_whole, kdt, idx):
+def cell_volume(bm_whole, kdt, vidx):
     bm = bm_whole.copy()
     bm.verts.ensure_lookup_table()
 
-    center = bm.verts[idx].co
-    radius = calc_cell_radius(center, bm)
+    center = bm.verts[vidx].co
+    radius = bmesh_radius(bm, center)
     verts = [co for co, _, _ in kdt.find_range(center, radius)]
-    verts.pop(0)
+    verts.pop(0) # First result is the currrent center itself
     for co in verts:
         vec = co - center
         pos = co.lerp(center, 0.5)
@@ -180,9 +180,9 @@ def calc_cell_volume(bm_whole, kdt, idx):
         results = bmesh.ops.bisect_plane(bm, dist=0.0001, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], plane_co=pos, plane_no=vec, clear_outer=True)
         bmesh.ops.triangle_fill(bm, edges=[e for e in results["geom_cut"] if type(e) is bmesh.types.BMEdge], use_dissolve=True, use_beauty=True)
 
-        radius = calc_cell_radius(center, bm)
-        inliers = len(kdt.find_range(center, radius)) - 1
-        del verts[inliers:]
+        radius = bmesh_radius(bm, center)
+        inliers = len(kdt.find_range(center, radius)) - 1 # Disregard first element
+        del verts[inliers:] # Modify the iterated list to strip off the far away points outside the radius
     
     volume = bm.calc_volume()
     bm.free()
@@ -190,7 +190,7 @@ def calc_cell_volume(bm_whole, kdt, idx):
     return volume
 
 
-def bmesh_from_component(mesh, verts, tris):
+def component_bmesh(mesh, verts, tris):
     bm = bmesh.new()
 
     lookup = {}
@@ -206,8 +206,8 @@ def bmesh_from_component(mesh, verts, tris):
     return bm
 
 
-def calc_component_cells(mesh, verts, tris):
-    bm = bmesh_from_component(mesh, verts, tris)
+def component_vertex_volumes(mesh, verts, tris):
+    bm = component_bmesh(mesh, verts, tris)
 
     kdt = KDTree(len(bm.verts))
     for v in bm.verts:
@@ -216,25 +216,31 @@ def calc_component_cells(mesh, verts, tris):
 
     cells = {}
     for i in range(len(bm.verts)):
-        cells[verts[i]] = calc_cell_volume(bm, kdt, i)
+        cells[verts[i]] = cell_volume(bm, kdt, i)
     
     bm.free()
 
     return cells
 
 
-def calc_vertex_volumes(obj):
+def vertex_volumes(obj):
     comp_verts, comp_tris, no_ignored = utils.get_closed_components(obj)
 
     volumes = {}
     for verts, tris in zip(comp_verts, comp_tris):
-        volumes.update(calc_component_cells(obj.data, verts, tris))
+        volumes.update(component_vertex_volumes(obj.data, verts, tris))
 
     return volumes, no_ignored
 
 
-def set_obj_vmass_density_voronoi(obj, density):
-    volumes, all_closed = calc_vertex_volumes(obj)
+# Volume weighted vertex mass distribution from given volumetric density.
+# Calculations are based on 3D Voronoi cells around each vertex.
+# This method is superior (although slower) to uniform distribution,
+# as not only the overall mass is correct, but the position of the center
+# of mass as well.
+def set_obj_vmass_density_weighted(obj, density):
+    obj.update_from_editmode()
+    volumes, all_closed = vertex_volumes(obj)
 
     with utils.edit_bmesh(obj) as bm:
         bm.verts.ensure_lookup_table()
@@ -244,46 +250,6 @@ def set_obj_vmass_density_voronoi(obj, density):
         
         for idx, volume in volumes.items():
             bm.verts[idx][layer] = volume * density
-    
-    return all_closed
-
-
-def set_obj_vmass_density_weighted(obj, density, spacing):
-    obj.update_from_editmode()
-    mesh = obj.data
-    component_verts, component_tris, all_closed = utils.get_closed_components(obj)
-    if len(component_verts) == 0 or len(component_tris) == 0:
-        return False
-    
-    weights = array('L', [0] * len(mesh.vertices))
-    for verts, tris in zip(component_verts, component_tris):
-        kdt = KDTree(len(verts))
-        for idx in verts:
-            kdt.insert(mesh.vertices[idx].co, idx)
-        kdt.balance()
-        
-        points = cloudutils.generate_volume_grid_tris(obj, tris, (spacing, spacing, spacing))
-        for coords in points:
-            _, idx, _ = kdt.find(coords, filter=lambda idx: idx in verts)
-            weights[idx] += 1
-
-    obj_volume = math.fsum([calculate_volume(mesh, tris) for tris in component_tris])
-    obj_mass = obj_volume * density
-
-    weights_sum = sum(weights)
-    if weights_sum == 0:
-        return False
-    mass_per_weight = obj_mass / weights_sum # mass per weighting unit
-
-    with utils.edit_bmesh(obj) as bm:
-        bm.verts.ensure_lookup_table()
-        
-        layer = bm.verts.layers.float.get("a3ob_mass")
-        if not layer:
-            layer = bm.verts.layers.float.new("a3ob_mass")
-        
-        for vert in bm.verts:
-            vert[layer] = mass_per_weight * weights[vert.index]
     
     return all_closed
 

@@ -115,7 +115,6 @@ def get_closed_components(obj):
     with query_bmesh(obj) as bm:
         bm.faces.ensure_lookup_table()
 
-        chunk: list[bpy.types.MeshLoopTriangle]
         for chunk in chunks:
             if not is_contiguous_chunk(bm, chunk):
                 no_ignored = False

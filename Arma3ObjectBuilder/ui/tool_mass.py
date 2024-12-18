@@ -61,7 +61,7 @@ class A3OB_OT_vertex_mass_set_density(bpy.types.Operator):
         if scene_props.distribution == 'UNIFORM':
             all_closed = massutils.set_obj_vmass_density_uniform(obj, scene_props.density)
         else:
-            all_closed = massutils.set_obj_vmass_density_weighted(obj, scene_props.density, scene_props.spacing)
+            all_closed = massutils.set_obj_vmass_density_weighted(obj, scene_props.density)
 
         if not all_closed:
             self.report({'WARNING'}, "Non-closed or flat components were ignored")
