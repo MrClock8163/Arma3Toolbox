@@ -9,8 +9,8 @@
   - new config data parser and unified handler module
 - scripts:
   - script template to create empty "dummy" P3D file
-- Vertex Mass Editing tool:
-  - Mass From Density with volumetrics weighted distribution
+- tools:
+  - Mass From Density with volumetrics weighted distribution (Vertex Mass Editing tool)
 
 ### Changed
 
@@ -21,6 +21,7 @@
   - Bulk Renaming now shows warning signs at paths that point to files that do not exist
   - Vertex Mass Editing tools are now available in both Edit and Object modes when possible
   - adjusted Vertex Mass Editing tool UI layout
+  - Hit Point Cloud tool no longer has modifier settings
 
 ### Fixed
 

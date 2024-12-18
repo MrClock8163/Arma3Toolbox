@@ -264,28 +264,6 @@ class A3OB_PG_hitpoint_generator(bpy.types.PropertyGroup):
         default = (0.2, 0.2, 0.2),
         size = 3
     )
-    bevel_offset: bpy.props.FloatProperty(
-        name = "Bevel Offset",
-        description = "Offset value of bevel to apply to every edge of the source object",
-        min = 0,
-        default = 0.1
-    )
-    bevel_segments: bpy.props.IntProperty(
-        name = "Bevel Segments",
-        description = "Number of segments of bevel to apply to every edge of the source object",
-        min = 1,
-        max = 10,
-        default = 4
-    )
-    triangulate: bpy.props.EnumProperty(
-        name = "Triangulation Order",
-        description = "Triangulate before, or after bevelling",
-        items = (
-            ('BEFORE', "Before", "Apply triangulation before the bevel"),
-            ('AFTER', "After", "Apply triangulation after the bevel")
-        ),
-        default = 'AFTER'
-    )
     selection: bpy.props.StringProperty(name="Selection", description="Vertex group to add the generated points to")
 
 

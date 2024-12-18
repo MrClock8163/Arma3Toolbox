@@ -64,7 +64,7 @@ class A3OB_OT_vertex_mass_set_density(bpy.types.Operator):
             all_closed = massutils.set_obj_vmass_density_weighted(obj, scene_props.density, scene_props.spacing)
 
         if not all_closed:
-            self.report({'WARNING'}, "Non-closed components were ignored")
+            self.report({'WARNING'}, "Non-closed or flat components were ignored")
         
         return {'FINISHED'}
 
@@ -236,7 +236,7 @@ class A3OB_PT_vertex_mass_analyze(bpy.types.Panel):
         vmass_max = scene_props.stats.mass_max
 
         frm = "%.0f"
-        if 0 < vmass_max < 1:
+        if 0 < vmass_max <= 1:
             frm = ("%." + str(ceil(abs(log10(vmass_max))) + 1) + "f")
         
         row_stops.label(text=frm % vmass_min)
