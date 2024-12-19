@@ -65,10 +65,7 @@ def set_selection_mass(self, value):
             vertex[layer] += correction
 
 
-def set_selection_mass_each(obj, value):
-    if obj.type != 'MESH':
-        return
-    
+def set_selection_mass_each(obj, value):    
     with utils.edit_bmesh(obj) as bm:
     
         layer = bm.verts.layers.float.get("a3ob_mass")
@@ -84,12 +81,8 @@ def set_selection_mass_each(obj, value):
                 vertex[layer] = round(value, 3)
 
    
-def set_selection_mass_distribute(obj, value):
-    if obj.type != 'MESH':
-        return
-    
+def set_selection_mass_distribute_uniform(obj, value):    
     with utils.edit_bmesh(obj) as bm:
-    
         layer = bm.verts.layers.float.get("a3ob_mass")
         if layer is None:
             layer = bm.verts.layers.float.new("a3ob_mass")
@@ -104,6 +97,28 @@ def set_selection_mass_distribute(obj, value):
         vertex_value = value / len(verts)
         for vertex in verts:
             vertex[layer] = vertex_value
+
+   
+def set_selection_mass_distribute_weighted(obj, value):
+    obj.update_from_editmode()
+    volumes, all_closed = vertex_volumes(obj)
+    obj_volume = math.fsum([value for value in volumes.values()])
+    if obj_volume == 0:
+        return True
+    
+    unit_value = value / obj_volume
+
+    with utils.edit_bmesh(obj) as bm:
+        bm.verts.ensure_lookup_table()
+        
+        layer = bm.verts.layers.float.get("a3ob_mass")
+        if layer is None:
+            layer = bm.verts.layers.float.new("a3ob_mass")
+        
+        for idx, volume in volumes.items():
+            bm.verts[idx][layer] = volume * unit_value
+        
+    return all_closed
 
 
 def clear_vmasses(obj):

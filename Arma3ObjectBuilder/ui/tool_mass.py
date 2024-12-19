@@ -41,7 +41,14 @@ class A3OB_OT_vertex_mass_distribute(bpy.types.Operator):
     def execute(self, context):
         obj = context.object
         scene = context.scene
-        massutils.set_selection_mass_distribute(obj, scene.a3ob_mass_editor.value)
+        scene_props = scene.a3ob_mass_editor
+        
+        if scene_props.distribution == 'UNIFORM':
+            massutils.set_selection_mass_distribute_uniform(obj, scene.a3ob_mass_editor.value)
+        else:
+            all_closed = massutils.set_selection_mass_distribute_weighted(obj, scene.a3ob_mass_editor.value)
+            if not all_closed:
+                self.report({'WARNING'}, "Non-closed or flat components were ignored")
         return {'FINISHED'}
 
 
