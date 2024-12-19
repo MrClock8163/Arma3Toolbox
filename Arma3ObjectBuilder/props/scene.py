@@ -146,7 +146,7 @@ class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
         description = "Mass distribution between vertices",
         items = (
             ('UNIFORM', "Uniform", "Distribute mass equally among vertices"),
-            ('WEIGHTED', "Weighted", "Distribute mass weighted by the cell volumes (3D Voronoi) linked to vertices of closed components")
+            ('WEIGHTED', "Weighted", "Distribute mass weighted by the cell volumes (3D Voronoi) around vertices of closed components")
         ),
         default = 'UNIFORM'
     )

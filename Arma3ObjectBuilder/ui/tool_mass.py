@@ -31,13 +31,26 @@ class A3OB_OT_vertex_mass_distribute(bpy.types.Operator):
     
     bl_idname = "a3ob.vertex_mass_distribute"
     bl_label = "Distribute Mass"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER'}
     
     @classmethod
     def poll(cls, context):
         obj = context.object
         return obj and obj.type == 'MESH' and context.scene.a3ob_mass_editor.value_type == 'MASS'
+            
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text="Volume cell calculations become extremely slow at high mesh resolutions.")
+        layout.label(text="Are you sure that you want to proceed?")
+
+    def invoke(self, context, event):
+        obj = context.object
+        scene_props = context.scene.a3ob_mass_editor
+        if len(obj.data.vertices) > 1000 and scene_props.distribution != 'UNIFORM':
+            return context.window_manager.invoke_props_dialog(self, width=500)
         
+        return self.execute(context)
+    
     def execute(self, context):
         obj = context.object
         scene = context.scene
@@ -48,7 +61,11 @@ class A3OB_OT_vertex_mass_distribute(bpy.types.Operator):
         else:
             all_closed = massutils.set_selection_mass_distribute_weighted(obj, scene.a3ob_mass_editor.value)
             if not all_closed:
-                self.report({'WARNING'}, "Non-closed or flat components were ignored")
+                if obj.mode == 'OBJECT':
+                    self.report({'WARNING'}, "Non-closed or flat components were ignored")
+                else:
+                    self.report({'WARNING'}, "Non-closed, partially selected or flat components were ignored")
+
         return {'FINISHED'}
 
 
@@ -57,13 +74,27 @@ class A3OB_OT_vertex_mass_set_density(bpy.types.Operator):
     
     bl_idname = "a3ob.vertex_mass_set_density"
     bl_label = "Mass From Density"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER'}
     
     @classmethod
     def poll(cls, context):
         obj = context.object
         return obj and obj.type == 'MESH' and context.scene.a3ob_mass_editor.value_type == 'DENSITY'
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text="Volume cell calculations become extremely slow at high mesh resolutions.")
+        layout.label(text="Are you sure that you want to proceed?")
+
+    def invoke(self, context, event):
+        obj = context.object
+        scene_props = context.scene.a3ob_mass_editor
+        if len(obj.data.vertices) > 1000 and scene_props.distribution != 'UNIFORM':
+            return context.window_manager.invoke_props_dialog(self, width=500)
         
+        return self.execute(context)
+
+
     def execute(self, context):
         obj = context.object
         scene = context.scene
@@ -74,7 +105,10 @@ class A3OB_OT_vertex_mass_set_density(bpy.types.Operator):
             all_closed = massutils.set_obj_vmass_density_weighted(obj, scene_props.value)
 
         if not all_closed:
-            self.report({'WARNING'}, "Non-closed or flat components were ignored")
+            if obj.mode == 'OBJECT':
+                self.report({'WARNING'}, "Non-closed or flat components were ignored")
+            else:
+                self.report({'WARNING'}, "Non-closed, partially selected or flat components were ignored")
         
         return {'FINISHED'}
 

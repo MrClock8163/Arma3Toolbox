@@ -104,13 +104,13 @@ def set_selection_mass_distribute_weighted(obj, value):
     volumes, all_closed = vertex_volumes(obj)
     obj_volume = math.fsum([value for value in volumes.values()])
     if obj_volume == 0:
-        return True
+        return False
     
     unit_value = value / obj_volume
 
     with utils.edit_bmesh(obj) as bm:
         bm.verts.ensure_lookup_table()
-        
+
         layer = bm.verts.layers.float.get("a3ob_mass")
         if layer is None:
             layer = bm.verts.layers.float.new("a3ob_mass")

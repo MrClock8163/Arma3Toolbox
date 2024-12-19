@@ -130,6 +130,7 @@ def get_closed_components(obj, selected_only = False):
                 continue
 
             if selected_only and obj.mode == 'EDIT' and not is_selected(bm, chunk):
+                no_ignored = False
                 continue
 
             component_tris.append(chunk)
