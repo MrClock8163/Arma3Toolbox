@@ -143,10 +143,10 @@ class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
     )
     distribution: bpy.props.EnumProperty(
         name = "Distribution",
-        description = "Mass distribution between verts",
+        description = "Mass distribution between vertices",
         items = (
-            ('UNIFORM', "Uniform", "Mass is distributed equally among vertices"),
-            ('WEIGHTED', "Weighted", "Mass distribution is weighted by the affected volume")
+            ('UNIFORM', "Uniform", "Distribute mass equally among vertices"),
+            ('WEIGHTED', "Weighted", "Distribute mass weighted by the cell volumes (3D Voronoi) linked to vertices of closed components")
         ),
         default = 'UNIFORM'
     )

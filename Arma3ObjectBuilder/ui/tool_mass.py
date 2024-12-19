@@ -191,18 +191,14 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
         row_type.prop(scene_props, "value_type", expand=True)
         col.prop(scene_props, "value")
 
-        col.separator()
+        box_op_set = col.box()
+        box_op_set.operator("a3ob.vertex_mass_set", icon_value=get_icon("op_mass_set"))
 
-        box_op_mass = col.box()
-        box_op_mass.operator("a3ob.vertex_mass_set", icon_value=get_icon("op_mass_set"))
-        box_op_mass.operator("a3ob.vertex_mass_distribute", icon_value=get_icon("op_mass_distribute"))
-        box_op_mass.enabled = scene_props.value_type == 'MASS'
-
-        box_op_density = col.box()
-        row_distribution = box_op_density.row(align=True)
+        box_op_calc = col.box()
+        row_distribution = box_op_calc.row(align=True)
         row_distribution.prop(scene_props, "distribution", expand=True)
-        box_op_density.operator("a3ob.vertex_mass_set_density", icon_value=get_icon("op_mass_set_density"))
-        box_op_density.enabled = scene_props.value_type == 'DENSITY'
+        box_op_calc.operator("a3ob.vertex_mass_distribute", icon_value=get_icon("op_mass_distribute"))
+        box_op_calc.operator("a3ob.vertex_mass_set_density", icon_value=get_icon("op_mass_set_density"))
         
         col.separator()
         if context.object and context.object.type == 'MESH' and context.object.mode == 'EDIT':
