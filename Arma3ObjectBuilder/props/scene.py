@@ -123,23 +123,21 @@ class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
         name = "Enable Vertex Mass Tools",
         description = "Dynamic calculation of the vertex masses can be performace heavy on large meshes"
     )
-    source: bpy.props.EnumProperty(
-        name = "Source",
-        description = "Type of source for mass calculations",
+    value_type: bpy.props.EnumProperty(
+        name = "Value Type",
+        description = "Type of the given value",
         items = (
-            ('MASS', "Mass", "The masses are calculated from discrete mass values"),
-            ('DENSITY', "Density", "The masses are calculated from volumetric density")
+            ('MASS', "Mass", "Value is mass, given in kg units"),
+            ('DENSITY', "Density", "Value is volumetric density, given in kg/m3 units")
         ),
         default = 'MASS'
     )
-    density: bpy.props.FloatProperty(
-        name = "Density",
-        description = "Volumetric density of mesh (kg/m3)",
-        default = 1.0,
-        min = 0.1,
+    value: bpy.props.FloatProperty(
+        name = "Value",
+        description = "Value to operate with",
+        min = 0,
         max = 1000000,
-        soft_max = 1000,
-        step = 10,
+        soft_max = 100000,
         precision = 3
     )
     distribution: bpy.props.EnumProperty(
@@ -150,16 +148,6 @@ class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
             ('WEIGHTED', "Weighted", "Mass distribution is weighted by the affected volume")
         ),
         default = 'UNIFORM'
-    )
-    mass: bpy.props.FloatProperty(
-        name = "Mass",
-        description = "Mass to set equally or distribute",
-        unit = 'MASS',
-        min = 0,
-        max = 1000000,
-        soft_max = 100000,
-        step = 10,
-        precision = 3
     )
     method: bpy.props.EnumProperty(
         name = "Visualization Method",

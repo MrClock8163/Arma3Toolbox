@@ -16,12 +16,12 @@ class A3OB_OT_vertex_mass_set(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return massutils.can_edit_mass(context) and context.scene.a3ob_mass_editor.source == 'MASS'
+        return massutils.can_edit_mass(context) and context.scene.a3ob_mass_editor.value_type == 'MASS'
         
     def execute(self, context):
         obj = context.object
         scene = context.scene
-        massutils.set_selection_mass_each(obj, scene.a3ob_mass_editor.mass)
+        massutils.set_selection_mass_each(obj, scene.a3ob_mass_editor.value)
         return {'FINISHED'}
 
 
@@ -34,12 +34,12 @@ class A3OB_OT_vertex_mass_distribute(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return massutils.can_edit_mass(context) and context.scene.a3ob_mass_editor.source == 'MASS'
+        return massutils.can_edit_mass(context) and context.scene.a3ob_mass_editor.value_type == 'MASS'
         
     def execute(self, context):
         obj = context.object
         scene = context.scene
-        massutils.set_selection_mass_distribute(obj, scene.a3ob_mass_editor.mass)
+        massutils.set_selection_mass_distribute(obj, scene.a3ob_mass_editor.value)
         return {'FINISHED'}
 
 
@@ -52,16 +52,16 @@ class A3OB_OT_vertex_mass_set_density(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return context.object and context.object.type == 'MESH' and context.scene.a3ob_mass_editor.source == 'DENSITY'
+        return context.object and context.object.type == 'MESH' and context.scene.a3ob_mass_editor.value_type == 'DENSITY'
         
     def execute(self, context):
         obj = context.object
         scene = context.scene
         scene_props = scene.a3ob_mass_editor
         if scene_props.distribution == 'UNIFORM':
-            all_closed = massutils.set_obj_vmass_density_uniform(obj, scene_props.density)
+            all_closed = massutils.set_obj_vmass_density_uniform(obj, scene_props.value)
         else:
-            all_closed = massutils.set_obj_vmass_density_weighted(obj, scene_props.density)
+            all_closed = massutils.set_obj_vmass_density_weighted(obj, scene_props.value)
 
         if not all_closed:
             self.report({'WARNING'}, "Non-closed or flat components were ignored")
@@ -174,23 +174,24 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
             row_dynamic.prop(obj, "a3ob_selection_mass")
         
         layout.separator()
-        layout.label(text="Overwrite Mass:")
         
         col = layout.column(align=True)
-        row_header = col.row(align=True)
-        row_header.prop(scene_props, "source", expand=True)
-        box = col.box()
+        row_type = col.row(align=True)
+        row_type.prop(scene_props, "value_type", expand=True)
+        col.prop(scene_props, "value")
 
-        if scene_props.source == 'MASS':
-            box.prop(scene_props, "mass")
-            box.operator("a3ob.vertex_mass_set", icon_value=get_icon("op_mass_set"))
-            box.operator("a3ob.vertex_mass_distribute", icon_value=get_icon("op_mass_distribute"))
-        elif scene_props.source == 'DENSITY':
-            row_dist = box.row(align=True)
-            row_dist.prop(scene_props, "distribution", expand=True)
-            col_settings = box.column(align=True)
-            col_settings.prop(scene_props, "density")
-            box.operator("a3ob.vertex_mass_set_density", icon_value=get_icon("op_mass_set_density"))
+        col.separator()
+
+        box_op_mass = col.box()
+        box_op_mass.operator("a3ob.vertex_mass_set", icon_value=get_icon("op_mass_set"))
+        box_op_mass.operator("a3ob.vertex_mass_distribute", icon_value=get_icon("op_mass_distribute"))
+        box_op_mass.enabled = scene_props.value_type == 'MASS'
+
+        box_op_density = col.box()
+        row_distribution = box_op_density.row(align=True)
+        row_distribution.prop(scene_props, "distribution", expand=True)
+        box_op_density.operator("a3ob.vertex_mass_set_density", icon_value=get_icon("op_mass_set_density"))
+        box_op_density.enabled = scene_props.value_type == 'DENSITY'
         
         col.separator()
         if context.object and context.object.type == 'MESH' and context.object.mode == 'EDIT':
