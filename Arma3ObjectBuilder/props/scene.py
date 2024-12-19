@@ -135,6 +135,7 @@ class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
     value: bpy.props.FloatProperty(
         name = "Value",
         description = "Value to operate with",
+        default = 1,
         min = 0,
         max = 1000000,
         soft_max = 100000,

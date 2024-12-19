@@ -66,7 +66,7 @@ def set_selection_mass(self, value):
 
 
 def set_selection_mass_each(obj, value):
-    if obj.type != 'MESH' or obj.mode != 'EDIT':
+    if obj.type != 'MESH':
         return
     
     with utils.edit_bmesh(obj) as bm:
@@ -74,14 +74,18 @@ def set_selection_mass_each(obj, value):
         layer = bm.verts.layers.float.get("a3ob_mass")
         if layer is None:
             layer = bm.verts.layers.float.new("a3ob_mass")
-            
-        for vertex in bm.verts:
+        
+        verts = bm.verts
+        if obj.mode == 'EDIT':
+            verts = [vertex for vertex in bm.verts if vertex.select]
+
+        for vertex in verts:
             if vertex.select:
                 vertex[layer] = round(value, 3)
 
    
 def set_selection_mass_distribute(obj, value):
-    if obj.type != 'MESH' or obj.mode != 'EDIT':
+    if obj.type != 'MESH':
         return
     
     with utils.edit_bmesh(obj) as bm:
@@ -89,8 +93,11 @@ def set_selection_mass_distribute(obj, value):
         layer = bm.verts.layers.float.get("a3ob_mass")
         if layer is None:
             layer = bm.verts.layers.float.new("a3ob_mass")
+        
+        verts = bm.verts
+        if obj.mode == 'EDIT':
+            verts = [vertex for vertex in bm.verts if vertex.select]
             
-        verts = [vertex for vertex in bm.verts if vertex.select]
         if len(verts) == 0:
             return
             
@@ -142,7 +149,7 @@ def set_obj_vmass_density_uniform(obj, density):
     obj.update_from_editmode()
     mesh = obj.data
     
-    component_verts, component_tris, all_closed = utils.get_closed_components(obj)
+    component_verts, component_tris, all_closed = utils.get_closed_components(obj, True)
     stats = [[len(verts), calculate_volume(mesh, tris)] for verts, tris in zip(component_verts, component_tris)] # [vertex count, volume]
     component_mass = [(volume * density / count_verts) for count_verts, volume in stats]
     
@@ -224,7 +231,7 @@ def component_vertex_volumes(mesh, verts, tris):
 
 
 def vertex_volumes(obj):
-    comp_verts, comp_tris, no_ignored = utils.get_closed_components(obj)
+    comp_verts, comp_tris, no_ignored = utils.get_closed_components(obj, True)
 
     volumes = {}
     for verts, tris in zip(comp_verts, comp_tris):

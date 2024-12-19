@@ -16,7 +16,8 @@ class A3OB_OT_vertex_mass_set(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return massutils.can_edit_mass(context) and context.scene.a3ob_mass_editor.value_type == 'MASS'
+        obj = context.object
+        return obj and obj.type == 'MESH' and context.scene.a3ob_mass_editor.value_type == 'MASS'
         
     def execute(self, context):
         obj = context.object
@@ -34,7 +35,8 @@ class A3OB_OT_vertex_mass_distribute(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return massutils.can_edit_mass(context) and context.scene.a3ob_mass_editor.value_type == 'MASS'
+        obj = context.object
+        return obj and obj.type == 'MESH' and context.scene.a3ob_mass_editor.value_type == 'MASS'
         
     def execute(self, context):
         obj = context.object
@@ -52,7 +54,8 @@ class A3OB_OT_vertex_mass_set_density(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return context.object and context.object.type == 'MESH' and context.scene.a3ob_mass_editor.value_type == 'DENSITY'
+        obj = context.object
+        return obj and obj.type == 'MESH' and context.scene.a3ob_mass_editor.value_type == 'DENSITY'
         
     def execute(self, context):
         obj = context.object
@@ -78,7 +81,8 @@ class A3OB_OT_vertex_mass_clear(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return context.object and context.object.type == 'MESH' and context.object.mode == 'OBJECT'
+        obj = context.object
+        return obj and obj.type == 'MESH' and context.object.mode == 'OBJECT'
         
     def execute(self, context):
         obj = context.object
