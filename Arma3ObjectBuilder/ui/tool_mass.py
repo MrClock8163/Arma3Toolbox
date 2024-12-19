@@ -190,9 +190,6 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
             row_dist.prop(scene_props, "distribution", expand=True)
             col_settings = box.column(align=True)
             col_settings.prop(scene_props, "density")
-            row_spacing = col_settings.row(align=True)
-            row_spacing.prop(scene_props, "spacing")
-            row_spacing.enabled = scene_props.distribution == 'WEIGHTED'
             box.operator("a3ob.vertex_mass_set_density", icon_value=get_icon("op_mass_set_density"))
         
         col.separator()
