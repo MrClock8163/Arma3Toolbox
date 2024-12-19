@@ -203,7 +203,7 @@ def cell_volume(bm_whole, kdt, vidx):
         bmesh.ops.triangle_fill(bm, edges=[e for e in results["geom_cut"] if type(e) is bmesh.types.BMEdge], use_dissolve=True, use_beauty=True)
 
         radius = bmesh_radius(bm, center)
-        inliers = len(kdt.find_range(center, radius)) - 1 # Disregard first element
+        inliers = len(kdt.find_range(center, 2 * radius)) - 1 # Disregard first element
         del verts[inliers:] # Modify the iterated list to strip off the far away points outside the radius
     
     volume = bm.calc_volume()
