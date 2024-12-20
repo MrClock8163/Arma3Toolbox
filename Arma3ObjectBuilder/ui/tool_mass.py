@@ -46,7 +46,7 @@ class A3OB_OT_vertex_mass_distribute(bpy.types.Operator):
     def invoke(self, context, event):
         obj = context.object
         scene_props = context.scene.a3ob_mass_editor
-        if len(obj.data.vertices) > 1000 and scene_props.distribution != 'UNIFORM':
+        if len(obj.data.vertices) > 500 and scene_props.distribution != 'UNIFORM':
             return context.window_manager.invoke_props_dialog(self, width=500)
         
         return self.execute(context)
@@ -89,7 +89,7 @@ class A3OB_OT_vertex_mass_set_density(bpy.types.Operator):
     def invoke(self, context, event):
         obj = context.object
         scene_props = context.scene.a3ob_mass_editor
-        if len(obj.data.vertices) > 1000 and scene_props.distribution != 'UNIFORM':
+        if len(obj.data.vertices) > 500 and scene_props.distribution != 'UNIFORM':
             return context.window_manager.invoke_props_dialog(self, width=500)
         
         return self.execute(context)

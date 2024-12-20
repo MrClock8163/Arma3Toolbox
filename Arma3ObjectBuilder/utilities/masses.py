@@ -200,7 +200,11 @@ def cell_volume(bm_whole, kdt, vidx):
         pos = co.lerp(center, 0.5)
 
         results = bmesh.ops.bisect_plane(bm, dist=0.0001, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], plane_co=pos, plane_no=vec, clear_outer=True)
-        bmesh.ops.triangle_fill(bm, edges=[e for e in results["geom_cut"] if type(e) is bmesh.types.BMEdge], use_dissolve=True, use_beauty=True)
+        cut = results["geom_cut"]
+        if len(cut) == 0:
+            continue
+
+        bmesh.ops.triangle_fill(bm, edges=[e for e in cut if type(e) is bmesh.types.BMEdge], use_dissolve=True, use_beauty=True)
 
         radius = bmesh_radius(bm, center)
         inliers = len(kdt.find_range(center, 2 * radius)) - 1 # Disregard first element
