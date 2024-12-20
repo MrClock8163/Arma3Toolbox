@@ -91,7 +91,7 @@ def get_loose_components(obj):
     return component_verts, component_tris
 
 
-def get_closed_components(obj):
+def get_closed_components(obj, selected_only = False):
     def is_contiguous_chunk(bm, chunk):
         if len(chunk) < 4:
             return False
@@ -104,6 +104,14 @@ def get_closed_components(obj):
 
         return True
     
+    def is_selected(bm: bmesh.types.BMesh, chunk):
+        vert_indices = list({vidx for tri in chunk for vidx in tri.vertices})
+        for idx in vert_indices:
+            if not bm.verts[idx].select:
+                return False
+        
+        return True
+    
     mesh = obj.data
     mesh.calc_loop_triangles()
     chunks = meshutils.mesh_linked_triangles(mesh)
@@ -113,11 +121,15 @@ def get_closed_components(obj):
     no_ignored = True
 
     with query_bmesh(obj) as bm:
+        bm.verts.ensure_lookup_table()
         bm.faces.ensure_lookup_table()
 
-        chunk: list[bpy.types.MeshLoopTriangle]
         for chunk in chunks:
             if not is_contiguous_chunk(bm, chunk):
+                no_ignored = False
+                continue
+
+            if selected_only and obj.mode == 'EDIT' and not is_selected(bm, chunk):
                 no_ignored = False
                 continue
 

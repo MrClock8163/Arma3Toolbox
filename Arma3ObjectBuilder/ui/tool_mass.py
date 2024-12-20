@@ -16,12 +16,13 @@ class A3OB_OT_vertex_mass_set(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return massutils.can_edit_mass(context) and context.scene.a3ob_mass_editor.source == 'MASS'
+        obj = context.object
+        return obj and obj.type == 'MESH' and context.scene.a3ob_mass_editor.value_type == 'MASS'
         
     def execute(self, context):
         obj = context.object
         scene = context.scene
-        massutils.set_selection_mass_each(obj, scene.a3ob_mass_editor.mass)
+        massutils.set_selection_mass_each(obj, scene.a3ob_mass_editor.value)
         return {'FINISHED'}
 
 
@@ -30,16 +31,41 @@ class A3OB_OT_vertex_mass_distribute(bpy.types.Operator):
     
     bl_idname = "a3ob.vertex_mass_distribute"
     bl_label = "Distribute Mass"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER'}
     
     @classmethod
     def poll(cls, context):
-        return massutils.can_edit_mass(context) and context.scene.a3ob_mass_editor.source == 'MASS'
+        obj = context.object
+        return obj and obj.type == 'MESH' and context.scene.a3ob_mass_editor.value_type == 'MASS'
+            
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text="Volume cell calculations become extremely slow at high mesh resolutions.")
+        layout.label(text="Are you sure that you want to proceed?")
+
+    def invoke(self, context, event):
+        obj = context.object
+        scene_props = context.scene.a3ob_mass_editor
+        if len(obj.data.vertices) > 500 and scene_props.distribution != 'UNIFORM':
+            return context.window_manager.invoke_props_dialog(self, width=500)
         
+        return self.execute(context)
+    
     def execute(self, context):
         obj = context.object
         scene = context.scene
-        massutils.set_selection_mass_distribute(obj, scene.a3ob_mass_editor.mass)
+        scene_props = scene.a3ob_mass_editor
+        
+        if scene_props.distribution == 'UNIFORM':
+            massutils.set_selection_mass_distribute_uniform(obj, scene.a3ob_mass_editor.value)
+        else:
+            all_closed = massutils.set_selection_mass_distribute_weighted(obj, scene.a3ob_mass_editor.value)
+            if not all_closed:
+                if obj.mode == 'OBJECT':
+                    self.report({'WARNING'}, "Non-closed or flat components were ignored")
+                else:
+                    self.report({'WARNING'}, "Non-closed, partially selected or flat components were ignored")
+
         return {'FINISHED'}
 
 
@@ -48,23 +74,41 @@ class A3OB_OT_vertex_mass_set_density(bpy.types.Operator):
     
     bl_idname = "a3ob.vertex_mass_set_density"
     bl_label = "Mass From Density"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER'}
     
     @classmethod
     def poll(cls, context):
-        return context.object and context.object.type == 'MESH' and context.scene.a3ob_mass_editor.source == 'DENSITY'
+        obj = context.object
+        return obj and obj.type == 'MESH' and context.scene.a3ob_mass_editor.value_type == 'DENSITY'
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text="Volume cell calculations become extremely slow at high mesh resolutions.")
+        layout.label(text="Are you sure that you want to proceed?")
+
+    def invoke(self, context, event):
+        obj = context.object
+        scene_props = context.scene.a3ob_mass_editor
+        if len(obj.data.vertices) > 500 and scene_props.distribution != 'UNIFORM':
+            return context.window_manager.invoke_props_dialog(self, width=500)
         
+        return self.execute(context)
+
+
     def execute(self, context):
         obj = context.object
         scene = context.scene
         scene_props = scene.a3ob_mass_editor
         if scene_props.distribution == 'UNIFORM':
-            all_closed = massutils.set_obj_vmass_density_uniform(obj, scene_props.density)
+            all_closed = massutils.set_obj_vmass_density_uniform(obj, scene_props.value)
         else:
-            all_closed = massutils.set_obj_vmass_density_weighted(obj, scene_props.density, scene_props.spacing)
+            all_closed = massutils.set_obj_vmass_density_weighted(obj, scene_props.value)
 
         if not all_closed:
-            self.report({'WARNING'}, "Non-closed or flat components were ignored")
+            if obj.mode == 'OBJECT':
+                self.report({'WARNING'}, "Non-closed or flat components were ignored")
+            else:
+                self.report({'WARNING'}, "Non-closed, partially selected or flat components were ignored")
         
         return {'FINISHED'}
 
@@ -78,7 +122,8 @@ class A3OB_OT_vertex_mass_clear(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return context.object and context.object.type == 'MESH' and context.object.mode == 'OBJECT'
+        obj = context.object
+        return obj and obj.type == 'MESH' and context.object.mode == 'OBJECT'
         
     def execute(self, context):
         obj = context.object
@@ -174,26 +219,20 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
             row_dynamic.prop(obj, "a3ob_selection_mass")
         
         layout.separator()
-        layout.label(text="Overwrite Mass:")
         
         col = layout.column(align=True)
-        row_header = col.row(align=True)
-        row_header.prop(scene_props, "source", expand=True)
-        box = col.box()
+        row_type = col.row(align=True)
+        row_type.prop(scene_props, "value_type", expand=True)
+        col.prop(scene_props, "value")
 
-        if scene_props.source == 'MASS':
-            box.prop(scene_props, "mass")
-            box.operator("a3ob.vertex_mass_set", icon_value=get_icon("op_mass_set"))
-            box.operator("a3ob.vertex_mass_distribute", icon_value=get_icon("op_mass_distribute"))
-        elif scene_props.source == 'DENSITY':
-            row_dist = box.row(align=True)
-            row_dist.prop(scene_props, "distribution", expand=True)
-            col_settings = box.column(align=True)
-            col_settings.prop(scene_props, "density")
-            row_spacing = col_settings.row(align=True)
-            row_spacing.prop(scene_props, "spacing")
-            row_spacing.enabled = scene_props.distribution == 'WEIGHTED'
-            box.operator("a3ob.vertex_mass_set_density", icon_value=get_icon("op_mass_set_density"))
+        box_op_set = col.box()
+        box_op_set.operator("a3ob.vertex_mass_set", icon_value=get_icon("op_mass_set"))
+
+        box_op_calc = col.box()
+        row_distribution = box_op_calc.row(align=True)
+        row_distribution.prop(scene_props, "distribution", expand=True)
+        box_op_calc.operator("a3ob.vertex_mass_distribute", icon_value=get_icon("op_mass_distribute"))
+        box_op_calc.operator("a3ob.vertex_mass_set_density", icon_value=get_icon("op_mass_set_density"))
         
         col.separator()
         if context.object and context.object.type == 'MESH' and context.object.mode == 'EDIT':

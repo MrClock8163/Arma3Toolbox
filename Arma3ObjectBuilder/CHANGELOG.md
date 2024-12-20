@@ -8,9 +8,7 @@
   - PAA texture import for textures compressed with DXT1 or DXT5 (S3TC BC1 and BC3) algorithms
   - new config data parser and unified handler module
 - scripts:
-  - script template to create empty "dummy" P3D file
-- tools:
-  - Mass From Density with volumetrics weighted distribution (Vertex Mass Editing tool)
+  - utility script to create empty "dummy" P3D file
 
 ### Changed
 
@@ -18,10 +16,17 @@
   - improved LZO1X decompression speeds
   - model.cfg import is now available without Arma 3 Tools as well (if native parsing is successful)
 - tools:
+  - Vertex Mass Editing:
+    - tools are now available in both Edit and Object modes
+      - in Edit mode the functions operate on the selected parts only
+      - in Object mode the functions operate on the entire mesh
+    - Distribute Mass now supports volume weighted distribution (on closed components)
+    - Mass From Density now supports volume weighted distribution (on closed components)
+    - UI layout was reorganized
   - Bulk Renaming now shows warning signs at paths that point to files that do not exist
-  - Vertex Mass Editing tools are now available in both Edit and Object modes when possible
-  - adjusted Vertex Mass Editing tool UI layout
-  - Hit Point Cloud tool no longer has modifier settings
+  - Hit Point Cloud:
+    - exposed modifier settings were removed
+    - internal process was simplified
 
 ### Fixed
 
