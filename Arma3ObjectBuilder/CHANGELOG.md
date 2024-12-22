@@ -131,7 +131,7 @@ CRITICAL HOTFIX
   - LOD - Generic ruleset:
     - warning for more than 2 UV channels on a LOD object
   - LOD - Shadow ruleset:
-    - warning for unconventinal LOD indices (not 0, 10, 1000, 1010 or 1020)
+    - warning for unconventional LOD indices (not 0, 10, 1000, 1010 or 1020)
     - warning if LOD has `lodnoshadow = 1` named property
   - LOD - Underground (VBS) ruleset
   - LOD - Groundlayer (VBS) ruleset
@@ -201,7 +201,7 @@ CRITICAL HOTFIX
 
 ### Changed
 
-- Blender 4.1 compatiblity:
+- Blender 4.1 compatibility:
   - updated P3D import and export to be compatible with the new Blender API
   - updated Validation tool to be compatible with the new Blender API
 - common data:
@@ -291,7 +291,7 @@ CRITICAL HOTFIX
 - LOD resolution would be incorrectly exported for Shadow Volume - View Cargo
 - fixed possible issue in P3D export when the material index of a face is out of the material range for some reason
 - add-on installation would fail on non-windows systems
-- ASC import would delete source file if an error occured during importing
+- ASC import would delete source file if an error occurred during importing
 - User value would not be displayed correctly in the default Face Flag editing options
 
 ### Removed
@@ -356,7 +356,7 @@ CRITICAL HOTFIX
 ### Fixed
 
 - RTM export would not delete faulty outputs and raise an exception due to a missing module import
-- P3D import would sometimes fail due to mismatching normals-loops count (on topoologically defective models)
+- P3D import would sometimes fail due to mismatching normals-loops count (on topologically defective models)
 - ASCIIZ strings and characters were mistakenly decoded as UTF-8 (with no practical consequence)
 - P3D output would become potentially faulty if non-manifold edges were marked as sharp
 
