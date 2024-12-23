@@ -33,14 +33,13 @@ addon_prefs = None
 addon_dir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
 addon_icons = {}
 
-def get_icon(name):
-    icon = 0
-    try:
-        icon = addon_icons[addon_prefs.icon_theme.lower()][name].icon_id
-    except Exception:
-        pass
 
-    return icon
+def get_icon(name):
+    try:
+        return addon_icons[addon_prefs.icon_theme.lower()][name].icon_id
+    except Exception:
+        return 0
+
 
 def get_prefs():
     return addon_prefs
