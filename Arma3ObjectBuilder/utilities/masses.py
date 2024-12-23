@@ -3,14 +3,12 @@
 
 import numpy as np
 import math
-from array import array
 
 import bmesh
 from mathutils import Vector
 from mathutils.kdtree import KDTree
 
 from . import generic as utils
-from . import clouds as cloudutils
 
 
 def can_edit_mass(context):
@@ -77,8 +75,7 @@ def set_selection_mass_each(obj, value):
             verts = [vertex for vertex in bm.verts if vertex.select]
 
         for vertex in verts:
-            if vertex.select:
-                vertex[layer] = round(value, 3)
+            vertex[layer] = value
 
    
 def set_selection_mass_distribute_uniform(obj, value):    
