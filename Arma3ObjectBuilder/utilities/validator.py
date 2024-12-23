@@ -58,7 +58,6 @@ class ValidatorComponent():
     def validate_verbose(self, warns_errs):
         strict, optional, info = self.conditions()
         is_valid = True
-        self.logger.level_up()
 
         for item in strict:
             result = item()
@@ -76,8 +75,6 @@ class ValidatorComponent():
             result = item()
             self.logger.step("INFO: %s" % result.comment)
 
-        self.logger.level_down()
-
         return is_valid
 
     
@@ -87,8 +84,9 @@ class ValidatorComponent():
         if lazy:
             is_valid = self.validate_lazy(warns_errs)
         else:
-            self.logger.step("RULESET: %s" % self.__doc__)
+            self.logger.start_subproc("RULESET: %s" % self.__doc__)
             is_valid = self.validate_verbose(warns_errs)
+            self.logger.end_subproc()
 
         return is_valid
 
@@ -738,8 +736,7 @@ class Validator():
         }
 
     def validate_lod(self, obj, lod, lazy = False, warns_errs = True, relative_paths = False):
-        self.logger.step("Validating %s" % obj.name)
-        self.logger.level_up()
+        self.logger.start_subproc("Validating %s" % obj.name)
         if warns_errs:
             self.logger.step("Warnings are errors")
 
@@ -756,14 +753,13 @@ class Validator():
 
         bm.free()
         self.logger.step("Validation %s" % ("PASSED" if is_valid else "FAILED"))
-        self.logger.level_down()
+        self.logger.end_subproc()
         self.logger.step("Finished validation")
 
         return is_valid
     
     def validate_skeleton(self, skeleton, for_rtm = False, lazy = False):
-        self.logger.step("Validating %s" % skeleton.name)
-        self.logger.level_up()
+        self.logger.start_subproc("Validating %s" % skeleton.name)
 
         is_valid = True
         components = [ValidatorSkeletonGeneric]
@@ -774,7 +770,7 @@ class Validator():
             is_valid &= item(skeleton, self.logger).validate(lazy, False)
         
         self.logger.step("Validation %s" % ("PASSED" if is_valid else "FAILED"))
-        self.logger.level_down()
+        self.logger.end_subproc()
         self.logger.step("Finished validation")
 
         return is_valid

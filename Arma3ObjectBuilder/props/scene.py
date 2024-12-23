@@ -89,32 +89,32 @@ class A3OB_PG_mass_editor_stats(bpy.types.PropertyGroup):
     mass_max: bpy.props.FloatProperty(
         name = "Max Mass",
         description = "Highest vertex/component mass value on the mesh",
-        default = -1,
-        min = -1
+        default = 0,
+        min = 0
     )
     mass_min: bpy.props.FloatProperty(
         name = "Min Mass",
         description = "Lowest non-zero vertex/component mass value on the mesh",
-        default = -1,
-        min = -1
+        default = 0,
+        min = 0
     )
     mass_avg: bpy.props.FloatProperty(
         name = "Average Mass",
         description = "Average non-zero vertex/component mass value on the mesh",
-        default = -1,
-        min = -1
+        default = 0,
+        min = 0
     )
     mass_sum: bpy.props.FloatProperty(
         name = "Total Mass",
         description = "Total vertex/component mass on the mesh",
-        default = -1,
-        min = -1
+        default = 0,
+        min = 0
     )
     count_item: bpy.props.IntProperty(
         name = "Count",
         description = "Number of vertices/components in the mesh",
-        default = -1,
-        min = -1
+        default = 0,
+        min = 0
     )
 
 
@@ -123,34 +123,32 @@ class A3OB_PG_mass_editor(bpy.types.PropertyGroup):
         name = "Enable Vertex Mass Tools",
         description = "Dynamic calculation of the vertex masses can be performace heavy on large meshes"
     )
-    source: bpy.props.EnumProperty(
-        name = "Source",
-        description = "Type of source for mass calculations",
+    value_type: bpy.props.EnumProperty(
+        name = "Value Type",
+        description = "Type of the given value",
         items = (
-            ('MASS', "Mass", "The masses are calculated from discrete mass values"),
-            ('DENSITY', "Density", "The masses are calculated from volumetric density")
+            ('MASS', "Mass", "Value is mass, given in kg units"),
+            ('DENSITY', "Density", "Value is volumetric density, given in kg/m3 units")
         ),
         default = 'MASS'
     )
-    density: bpy.props.FloatProperty(
-        name = "Density",
-        description = "Volumetric density of mesh (kg/m3)",
-        default = 1.0,
-        min = 0.1,
-        max = 1000000,
-        soft_max = 1000,
-        step = 10,
-        precision = 3
-    )
-    mass: bpy.props.FloatProperty(
-        name = "Mass",
-        description = "Mass to set equally or distribute",
-        unit = 'MASS',
+    value: bpy.props.FloatProperty(
+        name = "Value",
+        description = "Value to operate with",
+        default = 1,
         min = 0,
         max = 1000000,
         soft_max = 100000,
-        step = 10,
         precision = 3
+    )
+    distribution: bpy.props.EnumProperty(
+        name = "Distribution",
+        description = "Mass distribution between vertices",
+        items = (
+            ('UNIFORM', "Uniform", "Distribute mass equally among vertices"),
+            ('WEIGHTED', "Weighted", "Distribute mass weighted by the cell volumes (3D Voronoi) around vertices of closed components")
+        ),
+        default = 'UNIFORM'
     )
     method: bpy.props.EnumProperty(
         name = "Visualization Method",
@@ -244,28 +242,6 @@ class A3OB_PG_hitpoint_generator(bpy.types.PropertyGroup):
         min = 0.01,
         default = (0.2, 0.2, 0.2),
         size = 3
-    )
-    bevel_offset: bpy.props.FloatProperty(
-        name = "Bevel Offset",
-        description = "Offset value of bevel to apply to every edge of the source object",
-        min = 0,
-        default = 0.1
-    )
-    bevel_segments: bpy.props.IntProperty(
-        name = "Bevel Segments",
-        description = "Number of segments of bevel to apply to every edge of the source object",
-        min = 1,
-        max = 10,
-        default = 4
-    )
-    triangulate: bpy.props.EnumProperty(
-        name = "Triangulation Order",
-        description = "Triangulate before, or after bevelling",
-        items = (
-            ('BEFORE', "Before", "Apply triangulation before the bevel"),
-            ('AFTER', "After", "Apply triangulation after the bevel")
-        ),
-        default = 'AFTER'
     )
     selection: bpy.props.StringProperty(name="Selection", description="Vertex group to add the generated points to")
 

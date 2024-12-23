@@ -73,29 +73,29 @@ def cleanup_templates(templates):
 
 def read_file(operator, context, file):
     logger = ProcessLogger()
-    logger.step("Map objects list import from %s" % operator.filepath)
-    time_file_start = time.time()
+    logger.start_subproc("Map objects list import from %s" % operator.filepath)
 
     tbcsv = tb.TBCSV_File.read(file)
-    logger.log("Read objects: %d" % len(tbcsv.objects))
+    logger.step("Read objects: %d" % len(tbcsv.objects))
     template_names = get_template_names(tbcsv)
-    logger.log("Needed template objects: %d" % len(template_names))
+    logger.step("Needed template objects: %d" % len(template_names))
     templates, unknowns = find_template_objects(context, operator, template_names)
-    logger.log("Found template objects: %d" % len(templates))
+    logger.step("Found template objects: %d" % len(templates))
     if len(unknowns) > 0:
-        logger.log("No template object found for: %s" % (", ".join(["\"%s\"" % item for item in unknowns])))
+        logger.step("No template object found for: %s" % (", ".join(["\"%s\"" % item for item in unknowns])))
 
     count_found = 0
     for name, mat in object_records(operator, tbcsv):
         if spawn_from_template(context, templates, name, mat):
             count_found += 1
 
-    logger.log("Spawned objects: %d" % count_found)
+    logger.step("Spawned objects: %d" % count_found)
     
     if operator.cleanup_templates:
         cleanup_templates(templates)
-        logger.log("Cleaned up template objects")
+        logger.step("Cleaned up template objects")
 
-    logger.step("Map objects list import finished in %f sec" % (time.time() - time_file_start))
+    logger.end_subproc()
+    logger.step("Map objects list import finished in %f sec" % (time.time() - logger.times.pop()))
 
     return len(tbcsv.objects), count_found

@@ -1,3 +1,5 @@
+from math import log10, ceil
+
 import bpy
 
 from .. import get_icon
@@ -14,12 +16,13 @@ class A3OB_OT_vertex_mass_set(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return massutils.can_edit_mass(context) and context.scene.a3ob_mass_editor.source == 'MASS'
+        obj = context.object
+        return obj and obj.type == 'MESH' and context.scene.a3ob_mass_editor.value_type == 'MASS'
         
     def execute(self, context):
         obj = context.object
         scene = context.scene
-        massutils.set_selection_mass_each(obj, scene.a3ob_mass_editor.mass)
+        massutils.set_selection_mass_each(obj, scene.a3ob_mass_editor.value)
         return {'FINISHED'}
 
 
@@ -28,16 +31,41 @@ class A3OB_OT_vertex_mass_distribute(bpy.types.Operator):
     
     bl_idname = "a3ob.vertex_mass_distribute"
     bl_label = "Distribute Mass"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER'}
     
     @classmethod
     def poll(cls, context):
-        return massutils.can_edit_mass(context) and context.scene.a3ob_mass_editor.source == 'MASS'
+        obj = context.object
+        return obj and obj.type == 'MESH' and context.scene.a3ob_mass_editor.value_type == 'MASS'
+            
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text="Volume cell calculations become extremely slow at high mesh resolutions.")
+        layout.label(text="Are you sure that you want to proceed?")
+
+    def invoke(self, context, event):
+        obj = context.object
+        scene_props = context.scene.a3ob_mass_editor
+        if len(obj.data.vertices) > 500 and scene_props.distribution != 'UNIFORM':
+            return context.window_manager.invoke_props_dialog(self, width=500)
         
+        return self.execute(context)
+    
     def execute(self, context):
         obj = context.object
         scene = context.scene
-        massutils.set_selection_mass_distribute(obj, scene.a3ob_mass_editor.mass)
+        scene_props = scene.a3ob_mass_editor
+        
+        if scene_props.distribution == 'UNIFORM':
+            massutils.set_selection_mass_distribute_uniform(obj, scene.a3ob_mass_editor.value)
+        else:
+            all_closed = massutils.set_selection_mass_distribute_weighted(obj, scene.a3ob_mass_editor.value)
+            if not all_closed:
+                if obj.mode == 'OBJECT':
+                    self.report({'WARNING'}, "Non-closed or flat components were ignored")
+                else:
+                    self.report({'WARNING'}, "Non-closed, partially selected or flat components were ignored")
+
         return {'FINISHED'}
 
 
@@ -46,18 +74,41 @@ class A3OB_OT_vertex_mass_set_density(bpy.types.Operator):
     
     bl_idname = "a3ob.vertex_mass_set_density"
     bl_label = "Mass From Density"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER'}
     
     @classmethod
     def poll(cls, context):
-        return massutils.can_edit_mass(context) and context.scene.a3ob_mass_editor.source == 'DENSITY'
+        obj = context.object
+        return obj and obj.type == 'MESH' and context.scene.a3ob_mass_editor.value_type == 'DENSITY'
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text="Volume cell calculations become extremely slow at high mesh resolutions.")
+        layout.label(text="Are you sure that you want to proceed?")
+
+    def invoke(self, context, event):
+        obj = context.object
+        scene_props = context.scene.a3ob_mass_editor
+        if len(obj.data.vertices) > 500 and scene_props.distribution != 'UNIFORM':
+            return context.window_manager.invoke_props_dialog(self, width=500)
         
+        return self.execute(context)
+
+
     def execute(self, context):
         obj = context.object
         scene = context.scene
-        all_closed = massutils.set_selection_mass_density(obj, scene.a3ob_mass_editor.density)
+        scene_props = scene.a3ob_mass_editor
+        if scene_props.distribution == 'UNIFORM':
+            all_closed = massutils.set_obj_vmass_density_uniform(obj, scene_props.value)
+        else:
+            all_closed = massutils.set_obj_vmass_density_weighted(obj, scene_props.value)
+
         if not all_closed:
-            self.report({'WARNING'}, "Non-closed components were ignored")
+            if obj.mode == 'OBJECT':
+                self.report({'WARNING'}, "Non-closed or flat components were ignored")
+            else:
+                self.report({'WARNING'}, "Non-closed, partially selected or flat components were ignored")
         
         return {'FINISHED'}
 
@@ -66,7 +117,25 @@ class A3OB_OT_vertex_mass_clear(bpy.types.Operator):
     """Remove vertex mass data layer"""
     
     bl_idname = "a3ob.vertex_mass_clear"
-    bl_label = "Clear Masses"
+    bl_label = "Clear All Masses"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        obj = context.object
+        return obj and obj.type == 'MESH' and context.object.mode == 'OBJECT'
+        
+    def execute(self, context):
+        obj = context.object
+        massutils.clear_vmasses(obj)
+        return {'FINISHED'}
+
+
+class A3OB_OT_vertex_mass_selection_clear(bpy.types.Operator):
+    """Clear vertex mass from selected vertices"""
+    
+    bl_idname = "a3ob.vertex_mass_selection_clear"
+    bl_label = "Remove Mass"
     bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
@@ -75,7 +144,7 @@ class A3OB_OT_vertex_mass_clear(bpy.types.Operator):
         
     def execute(self, context):
         obj = context.object
-        massutils.clear_selection_masses(obj)
+        massutils.clear_selection_vmass(obj)
         return {'FINISHED'}
 
 
@@ -88,7 +157,7 @@ class A3OB_OT_vertex_mass_visualize(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return massutils.can_edit_mass(context)
+        return context.object and context.object.type == 'MESH'
     
     def execute(self, context):
         obj = context.object
@@ -103,18 +172,18 @@ class A3OB_OT_vertex_mass_center(bpy.types.Operator):
     """Move 3D cursor to the center of gravity"""
 
     bl_idname = "a3ob.vertex_mass_center"
-    bl_label = "Center Of Mass"
+    bl_label = "Center of Mass"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
     def poll(cls, context):
-        return massutils.can_edit_mass(context)
+        return context.object and context.object.type == 'MESH'
     
     def execute(self, context):
         obj = context.object
         center = massutils.find_center_of_gravity(obj)
-
-        context.scene.cursor.location = center
+        if center is not None:
+            context.scene.cursor.location = obj.matrix_world @ center
     
         return {'FINISHED'}
 
@@ -150,20 +219,26 @@ class A3OB_PT_vertex_mass(bpy.types.Panel):
             row_dynamic.prop(obj, "a3ob_selection_mass")
         
         layout.separator()
-        layout.label(text="Overwrite Mass:")
-        layout.prop(scene_props, "source", expand=True)
         
         col = layout.column(align=True)
-        if scene_props.source == 'MASS':
-            col.prop(scene_props, "mass")
-            col.operator("a3ob.vertex_mass_set", icon_value=get_icon("op_mass_set"))
-            col.operator("a3ob.vertex_mass_distribute", icon_value=get_icon("op_mass_distribute"))
-        elif scene_props.source == 'DENSITY':
-            col.prop(scene_props, "density")
-            col.operator("a3ob.vertex_mass_set_density", icon_value=get_icon("op_mass_set_density"))
+        row_type = col.row(align=True)
+        row_type.prop(scene_props, "value_type", expand=True)
+        col.prop(scene_props, "value")
+
+        box_op_set = col.box()
+        box_op_set.operator("a3ob.vertex_mass_set", icon_value=get_icon("op_mass_set"))
+
+        box_op_calc = col.box()
+        row_distribution = box_op_calc.row(align=True)
+        row_distribution.prop(scene_props, "distribution", expand=True)
+        box_op_calc.operator("a3ob.vertex_mass_distribute", icon_value=get_icon("op_mass_distribute"))
+        box_op_calc.operator("a3ob.vertex_mass_set_density", icon_value=get_icon("op_mass_set_density"))
         
         col.separator()
-        col.operator("a3ob.vertex_mass_clear", icon_value=get_icon("op_mass_clear"))
+        if context.object and context.object.type == 'MESH' and context.object.mode == 'EDIT':
+            col.operator("a3ob.vertex_mass_selection_clear", icon_value=get_icon("op_mass_clear"))
+        else:
+            col.operator("a3ob.vertex_mass_clear", icon_value=get_icon("op_mass_clear"))
 
 
 class A3OB_PT_vertex_mass_analyze(bpy.types.Panel):
@@ -195,11 +270,19 @@ class A3OB_PT_vertex_mass_analyze(bpy.types.Panel):
         
         row_stops = layout.row(align=True)
         row_stops.enabled = False
-        row_stops.label(text="%.0f" % scene_props.stats.mass_min)
-        row_stops.label(text="%.0f" % (scene_props.stats.mass_min * 0.75 + scene_props.stats.mass_max * 0.25))
-        row_stops.label(text="%.0f" % (scene_props.stats.mass_min * 0.5 + scene_props.stats.mass_max * 0.5))
-        row_stops.label(text="%.0f" % (scene_props.stats.mass_min * 0.25 + scene_props.stats.mass_max * 0.75))
-        row_stops.label(text="%.0f" % scene_props.stats.mass_max)
+
+        vmass_min = scene_props.stats.mass_min
+        vmass_max = scene_props.stats.mass_max
+
+        frm = "%.0f"
+        if 0 < vmass_max <= 1:
+            frm = ("%." + str(ceil(abs(log10(vmass_max))) + 1) + "f")
+        
+        row_stops.label(text=frm % vmass_min)
+        row_stops.label(text=frm % (vmass_min * 0.75 + vmass_max * 0.25))
+        row_stops.label(text=frm % (vmass_min * 0.5 + vmass_max * 0.5))
+        row_stops.label(text=frm % (vmass_min * 0.25 + vmass_max * 0.75))
+        row_stops.label(text=frm % vmass_max)
         
         layout.prop(scene_props, "color_layer_name", text="Layer")
         row_method = layout.row(align=True)
@@ -223,6 +306,7 @@ classes = (
     A3OB_OT_vertex_mass_distribute,
     A3OB_OT_vertex_mass_set_density,
     A3OB_OT_vertex_mass_clear,
+    A3OB_OT_vertex_mass_selection_clear,
     A3OB_OT_vertex_mass_visualize,
     A3OB_OT_vertex_mass_center,
     A3OB_PT_vertex_mass,

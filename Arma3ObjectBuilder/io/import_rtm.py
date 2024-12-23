@@ -178,77 +178,71 @@ def get_bone_hierarchy(bones, parent = ""):
 
 def import_file(operator, context, file):
     logger = ProcessLogger()
-    logger.step("RTM import from %s" % operator.filepath)
+    logger.start_subproc("RTM import from %s" % operator.filepath)
 
     obj = context.active_object
     if not obj or obj.type != 'ARMATURE':
-        logger.log("No target armature found, aborting import")
-        logger.step("RTM import finished")
+        logger.step("No target armature found, aborting import")
+        logger.end_subproc("RTM import finished")
         return 0
     
     rtm_data = rtm.read_rtm_universal(file)
     
-    logger.log("File report:")
-    logger.level_up()
+    logger.start_subproc("File report:")
     if type(rtm_data) is rtm.BMTR_File:
-        logger.log("BMTR")
-        logger.level_up()
-        logger.log("Version: %d" % rtm_data.version)
-        logger.log("Motion vector: %s" % str(rtm_data.motion))
-        logger.log("Bones: %d" % len(rtm_data.bones))
-        logger.log("Properties: %d" % len(rtm_data.props))
-        logger.log("Phases: %d" % len(rtm_data.phases))
-        logger.log("Frames: %d" % len(rtm_data.frames))
-        logger.level_down()
+        logger.start_subproc("BMTR:")
+        logger.step("Version: %d" % rtm_data.version)
+        logger.step("Motion vector: %s" % str(rtm_data.motion))
+        logger.step("Bones: %d" % len(rtm_data.bones))
+        logger.step("Properties: %d" % len(rtm_data.props))
+        logger.step("Phases: %d" % len(rtm_data.phases))
+        logger.step("Frames: %d" % len(rtm_data.frames))
+        logger.end_subproc()
 
         bone_parents = get_bone_hierarchy(obj.data.bones)
         rtm_data = rtm_data.as_rtm(bone_parents)
-        logger.log("Converted BMTR to plain RTM")
+        logger.step("Converted BMTR to plain RTM")
 
     rtm_0101 = rtm_data.anim
     rtm_mdat = rtm_data.props
 
     if rtm_mdat:
-        logger.log("RTM_MDAT")
-        logger.level_up()
+        logger.start_subproc("RTM_MDAT:")
         for item in rtm_mdat.items:
-            logger.log(item)
+            logger.step(item)
 
-        logger.level_down()
+        logger.end_subproc()
 
-    logger.log("RTM_0101")
-    logger.level_up()
-    logger.log("Motion vector: %s" % str(rtm_0101.motion))
-    logger.log("Bones: %d" % len(rtm_0101.bones))
-    logger.log("Frames: %d" % len(rtm_0101.frames))
-    logger.level_down()
-    logger.level_down()
+    logger.start_subproc("RTM_0101:")
+    logger.step("Motion vector: %s" % str(rtm_0101.motion))
+    logger.step("Bones: %d" % len(rtm_0101.bones))
+    logger.step("Frames: %d" % len(rtm_0101.frames))
+    logger.end_subproc()
+    logger.end_subproc()
 
-    logger.log("Processing data:")
-    logger.level_up()
-    
-    logger.log("Target armature: %s" % obj.name)
+    logger.start_subproc("Processing data:")
+    logger.step("Target armature: %s" % obj.name)
 
     action = create_action(operator, obj)
-    logger.log("Created action: %s" % action.name)
+    logger.step("Created action: %s" % action.name)
 
     transforms = build_transform_lookup(rtm_0101)
-    logger.log("Built transform lookup")
+    logger.step("Built transform lookup")
 
     motion = build_motion_lookup(operator, rtm_0101)
-    logger.log("Built motion lookup")
+    logger.step("Built motion lookup")
 
     frames = build_frame_mapping(operator, rtm_0101)
     operator.frame_start = frames[0]
     operator.frame_end = frames[len(rtm_0101.frames) - 1]
-    logger.log("Built frame mapping")
+    logger.step("Built frame mapping")
 
     if operator.mute_constraints:
         mute_constraints(obj, [item.lower() for item in rtm_0101.bones])
-        logger.log("Muted bone constraints")
+        logger.step("Muted bone constraints")
 
     import_keyframes(obj, action, transforms, frames, motion)
-    logger.log("Created keyframes")
+    logger.step("Created keyframes")
 
     if operator.make_active:
         context.scene.frame_start = operator.frame_start
@@ -266,6 +260,7 @@ def import_file(operator, context, file):
             new_item.name = name
             new_item.value = value
     
-    logger.level_down()
+    logger.end_subproc()
+    logger.end_subproc()
     logger.step("RTM import finished")
     return len(set(frames.values()))

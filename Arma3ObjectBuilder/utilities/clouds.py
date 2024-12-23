@@ -1,9 +1,12 @@
 # Hit point cloud generation functions.
 
 
+from itertools import product
+
 import bpy
 import bmesh
 from mathutils import Vector
+from mathutils.bvhtree import BVHTree
 
 
 def validate_references(source, target):
@@ -35,6 +38,21 @@ def is_inside(obj, point):
     return (closest - point).dot(normal) > 0
 
 
+def is_inside_raycast(bvh: BVHTree, origin, point):
+    vec = (point - origin).normalized()
+    incr = vec * 0.000001
+    hits = 0
+    while True:
+        loc, _, idx, _ = bvh.ray_cast(point, vec)
+        if idx is None:
+            break
+            
+        hits += 1
+        point = loc + incr
+
+    return hits % 2 != 0
+
+
 def create_selection(obj, selection):
     group = obj.vertex_groups.get(selection, None)
     if not group:
@@ -63,36 +81,29 @@ def generate_hitpoints(operator, context):
     if not source or len(source.data.polygons) == 0:
         return
     
-    source_object = source
+    if source.scale.x == 0 or source.scale.y == 0 or source.scale.z == 0:
+        return
     
-    # Edge bevel and triangulation need to applied to the source mesh
-    # in order to mitigate the chances of a false positive occuring.
-    if scene_props.triangulate == 'BEFORE':
-        modifier_triangulate = source_object.modifiers.new("A3OB_HitPointTris", 'TRIANGULATE')
+    source_object = source
         
     modifier_bevel = source_object.modifiers.new("A3OB_HitPointBevel", 'BEVEL')
-    modifier_bevel.segments = scene_props.bevel_segments
-    modifier_bevel.width = scene_props.bevel_offset
-    
-    if scene_props.triangulate == 'AFTER':
-        modifier_triangulate = source_object.modifiers.new("A3OB_HitPointTris", 'TRIANGULATE')
+    modifier_bevel.segments = 1
+    modifier_bevel.width = 0.001
+    modifier_bevel.limit_method = 'NONE'
 
-    source_object_eval = source_object.evaluated_get(bpy.context.evaluated_depsgraph_get())
+    modifier_triangulate = source_object.modifiers.new("A3OB_HitPointTris", 'TRIANGULATE')
+
+    source_object_eval = source_object.evaluated_get(context.evaluated_depsgraph_get())
 
     bbox = source_object_eval.bound_box
+    scale = source_object_eval.scale
     
-    # Dirty way to find the 2 characteristic points of the bounding box.
-    min_x = min(bbox, key=lambda pos: pos[0])[0]
-    min_y = min(bbox, key=lambda pos: pos[1])[1]
-    min_z = min(bbox, key=lambda pos: pos[2])[2]
+    point_min = bbox[0]
+    point_max = bbox[6]
 
-    max_x = max(bbox, key=lambda pos: pos[0])[0]
-    max_y = max(bbox, key=lambda pos: pos[1])[1]
-    max_z = max(bbox, key=lambda pos: pos[2])[2]
-    
-    points_x = calculate_grid(min_x, max_x, scene_props.spacing[0])
-    points_y = calculate_grid(min_y, max_y, scene_props.spacing[1])
-    points_z = calculate_grid(min_z, max_z, scene_props.spacing[2])
+    points_x = calculate_grid(point_min[0], point_max[0], scene_props.spacing[0] / scale.x)
+    points_y = calculate_grid(point_min[1], point_max[1], scene_props.spacing[1] / scale.y)
+    points_z = calculate_grid(point_min[2], point_max[2], scene_props.spacing[2] / scale.z)
 
     bm = bmesh.new()
 
@@ -128,3 +139,46 @@ def generate_hitpoints(operator, context):
     
     if scene_props.selection.strip() != "" and len(target_object.data.vertices) > 0:
         create_selection(target_object, scene_props.selection)
+
+
+def generate_volume_grid(obj, spacing):
+    obj_eval = obj.evaluated_get(bpy.context.evaluated_depsgraph_get())
+    bbox = obj_eval.bound_box
+    scale = obj_eval.scale
+    if scale.x == 0 or scale.y == 0 or scale.z == 0:
+        return []
+
+    point_min = bbox[0]
+    point_max = bbox[6]
+
+    points_x = calculate_grid(point_min[0], point_max[0], spacing[0] / scale.x)
+    points_y = calculate_grid(point_min[1], point_max[1], spacing[1] / scale.y)
+    points_z = calculate_grid(point_min[2], point_max[2], spacing[2] / scale.z)
+
+    bvh = BVHTree.FromObject(obj, bpy.context.evaluated_depsgraph_get())
+    points = product(points_x, points_y, points_z)
+    inside = list(filter(lambda co: is_inside_raycast(bvh, obj.location, Vector(co)), points))
+
+    return inside
+
+
+def generate_volume_grid_tris(obj, tris, spacing):
+    bbox = obj.bound_box
+    mesh = obj.data
+    scale = obj.scale
+    if scale.x == 0 or scale.y == 0 or scale.z == 0:
+        return []
+
+    point_min = bbox[0]
+    point_max = bbox[6]
+
+    points_x = calculate_grid(point_min[0], point_max[0], spacing[0] / scale.x)
+    points_y = calculate_grid(point_min[1], point_max[1], spacing[1] / scale.y)
+    points_z = calculate_grid(point_min[2], point_max[2], spacing[2] / scale.z)
+
+    verts = [v.co for v in mesh.vertices]
+    bvh = BVHTree.FromPolygons(verts, [tri.vertices for tri in tris])
+    points = product(points_x, points_y, points_z)
+    inside = list(filter(lambda co: is_inside_raycast(bvh, obj.location, Vector(co)), points))
+
+    return inside

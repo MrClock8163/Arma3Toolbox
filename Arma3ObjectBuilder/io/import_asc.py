@@ -43,25 +43,22 @@ def build_faces(nrows, ncols):
 def read_file(operator, context, file):
     logger = ProcessLogger()
     time_start = time.time()
-    logger.step("ASC DTM import from %s" % operator.filepath)
-    logger.level_up()
+    logger.start_subproc("ASC DTM import from %s" % operator.filepath)
 
     raster = asc.ASC_File.read(file)
     logger.step("File reading done in %f sec" % (time.time() - time_start))
     
     nrows, ncols = raster.get_dimensions()
     east, north = raster.pos
-    logger.step("File report:")
-    logger.level_up()
+    logger.start_subproc("File report:")
     logger.step("Dimensions: %d x %d" % (nrows, ncols))
     logger.step("Cell size: %f" % raster.cellsize)
     logger.step("DTM type: %s" % ("raster" if raster.type == asc.ASC_File.TYPE_RASTER else "grid"))
     logger.step("Easting: %f" % east)
     logger.step("Northing: %f" % north)
-    logger.level_down()
+    logger.end_subproc()
 
-    logger.step("Processing data:")
-    logger.level_up()
+    logger.start_subproc("Processing data:")
     points = build_points(raster, operator.hscale, operator.vscale)
     logger.step("Built points: %d" % len(points))
 
@@ -88,6 +85,6 @@ def read_file(operator, context, file):
     object_props.northing = north
     object_props.nodata = raster.nodata if raster.nodata is not None else -9999.0
     
-    logger.level_down()
-    logger.level_down()
-    logger.step("ASC export finished in %f sec" % (time.time() - time_start))
+    logger.end_subproc()
+    logger.end_subproc()
+    logger.step("ASC export finished in %f sec" % (time.time() - logger.times.pop()))

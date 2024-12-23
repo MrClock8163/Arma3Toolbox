@@ -491,7 +491,7 @@ def process_tagg_sharp(bm):
         output.data.edges = [(edge.verts[0].index, edge.verts[1].index) for edge in bm.edges if not edge.smooth and edge.is_contiguous]
 
     if len(output.data.edges) == 0:
-        output.active = False
+        None
 
     return output
 
@@ -526,15 +526,15 @@ def process_tagg_mass(bm, layer):
 
 
 def process_taggs_selections(obj, bm):
-    output = {}
+    output = []
 
-    for i, group in enumerate(obj.vertex_groups):
+    for group in obj.vertex_groups:
         new_tagg = p3d.P3D_TAGG()
         new_tagg.name = group.name
         new_tagg.data = p3d.P3D_TAGG_DataSelection()
         new_tagg.data.count_verts = len(bm.verts)
         new_tagg.data.count_faces = len(bm.faces)
-        output[i] = new_tagg
+        output.append(new_tagg)
 
     bm.verts.layers.deform.verify()
     layer = bm.verts.layers.deform.active
@@ -551,15 +551,17 @@ def process_taggs_selections(obj, bm):
         for idx in unique:
             if indices.count(idx) == len(face.loops):
                 output[idx].data.weight_faces.append((face.index, 1))
-
-    return output.values()
+    
+    return output
 
 
 def process_taggs(obj, bm, logger):
     object_props = obj.a3ob_properties_object
-    taggs = [process_tagg_sharp(bm)]
-    if taggs[0].active:
-        logger.log("Collected sharp edges")
+    taggs = []
+    tagg_sharps = process_tagg_sharp(bm)
+    if tagg_sharps is not None:
+        taggs.append(tagg_sharps)
+        logger.step("Collected sharp edges")
 
     uv_index = 0
     for layer in bm.loops.layers.uv.values():
@@ -567,21 +569,21 @@ def process_taggs(obj, bm, logger):
         uvset.data.id = uv_index
         taggs.append(uvset)
         uv_index += 1
-    logger.log("Collected UV sets")
+    logger.step("Collected UV sets")
     
     for prop in object_props.properties:
         taggs.append(process_tagg_property(prop))
-    logger.log("Collected named properties")
+    logger.step("Collected named properties")
 
     # Vertex mass should only be exported for the Geometry LOD
     if object_props.lod == str(p3d.P3D_LOD_Resolution.GEOMETRY):
         layer = bm.verts.layers.float.get("a3ob_mass")
         if layer:
             taggs.append(process_tagg_mass(bm, layer))
-            logger.log("Collected vertex masses")
+            logger.step("Collected vertex masses")
 
     taggs.extend(process_taggs_selections(obj, bm))
-    logger.log("Collected selections")
+    logger.step("Collected selections")
 
     return taggs
 
@@ -595,15 +597,13 @@ def process_lod(operator, obj, proxy_lookup, is_valid, processed_signatures, log
     object_props = obj.a3ob_properties_object
     lod_name = object_props.get_name()
 
-    logger.level_up()
     logger.step("Type: %s" % lod_name)
 
     if not is_valid:
-        logger.log("Failed validation -> skipping LOD (run manual validation for details)")
-        logger.level_down()
+        logger.step(">> Failed validation -> skipping LOD (run manual validation for details)")
         return None
 
-    logger.step("Processing data:")
+    logger.start_subproc("Processing data:")
     output = p3d.P3D_LOD()
     lod_idx = int(object_props.lod)
     if lod_idx != data.lod_unknown:
@@ -615,8 +615,8 @@ def process_lod(operator, obj, proxy_lookup, is_valid, processed_signatures, log
     if signature in processed_signatures and operator.lod_collisions != 'IGNORE':
         if operator.lod_collisions == 'FAIL':
             raise p3d.P3D_Error("Duplicate LODs detected")
-        logger.log("Duplicate -> skipping LOD")
-        logger.level_down()
+        logger.step(">> Duplicate -> skipping LOD")
+        logger.end_subproc()
         return None
     else:
         processed_signatures.add(signature)
@@ -625,7 +625,7 @@ def process_lod(operator, obj, proxy_lookup, is_valid, processed_signatures, log
 
     normals, normals_lookup_dict = process_normals(mesh)
     output.normals = normals
-    logger.log("Collected vertex normals")
+    logger.step("Collected vertex normals")
 
     bm = bmesh.new()
     bm.from_mesh(mesh)
@@ -635,35 +635,36 @@ def process_lod(operator, obj, proxy_lookup, is_valid, processed_signatures, log
     bm.faces.ensure_lookup_table()
 
     output.verts = process_vertices(bm)
-    logger.log("Collected vertices")
+    logger.step("Collected vertices")
     output.faces = process_faces(obj, bm, normals_lookup_dict, operator.relative_paths)
-    logger.log("Collected faces")
+    logger.step("Collected faces")
     output.taggs = process_taggs(obj, bm, logger)
 
     if operator.renumber_components:
         output.renumber_components()
-        logger.log("Renumbered component selections")
+        logger.step("Renumbered component selections")
     
     if operator.translate_selections:
         translate_selections(output)
-        logger.log("Translated selections to czech")
+        logger.step("Translated selections to czech")
 
     bm.free()
 
     # The placeholder proxy selection names must be replaced with the actual names.
     output.placeholders_to_proxies(proxy_lookup)
-    logger.log("Finalized proxy selection names")
+    logger.step("Finalized proxy selection names")
+    logger.end_subproc()
 
-    logger.step("File report:")
-    logger.log("Signature: %d" % float(output.resolution))
-    logger.log("Type: P3DM")
-    logger.log("Version: 28.256")
-    logger.log("Vertices: %d" % len(output.verts))
-    logger.log("Normals: %d" % len(output.normals))
-    logger.log("Faces: %d" % len(output.faces))
-    logger.log("Taggs: %d" % (len(output.taggs) + 1))
+    logger.start_subproc("File report:")
+    logger.step("Signature: %d" % float(output.resolution))
+    logger.step("Type: P3DM")
+    logger.step("Version: 28.256")
+    logger.step("Vertices: %d" % len(output.verts))
+    logger.step("Normals: %d" % len(output.normals))
+    logger.step("Faces: %d" % len(output.faces))
+    logger.step("Taggs: %d" % (len(output.taggs) + 1))
 
-    logger.level_down()
+    logger.end_subproc()
 
     return output
 
@@ -678,36 +679,35 @@ def write_file(operator, context, file, temp_collection):
         validator.setup_lod_specific()
     
     logger = ProcessLogger()
-    logger.step("P3D export to %s" % operator.filepath)
-
-    time_file_start = time.time()
+    logger.start_subproc("P3D export to %s" % operator.filepath)
 
     # Gather all exportable LOD objects, duplicate them, merge their components, and validate for LOD type.
     # Produce the final mesh data, proxy lookup table and validity for each LOD.
     lod_list = get_lod_data(operator, context, validator, temp_collection)
     
-    logger.log("Preprocessing done in %f sec" % (time.time() - time_file_start))
-    logger.log("Detected %d LOD objects" % len(lod_list))
+    logger.step("Preprocessing done in %f sec" % (time.time() - logger.times[0]))
+    logger.step("Detected %d LOD objects" % len(lod_list))
 
     mlod = p3d.P3D_MLOD()
-    logger.log("File type: MLOD")
-    logger.log("File version: %d" % 257)
+    logger.step("File type: MLOD")
+    logger.step("File version: %d" % 257)
 
-    logger.log("Processing LOD data:")
-    logger.level_up()
+    logger.step("Processing LOD data:")
+    logger.start_subproc()
 
     mlod_lods = []
     processed_signatures = set()
     for i, (lod, proxy_lookup, is_valid) in enumerate(lod_list):
-        time_lod_start = time.time()
-        logger.step("LOD %d: %s" % (i + 1, lod["a3ob_original_object"]))
+        logger.start_subproc("LOD %d: %s" % (i + 1, lod["a3ob_original_object"]))
 
         new_lod = process_lod(operator, lod, proxy_lookup, is_valid, processed_signatures, logger)
         if new_lod:
             mlod_lods.append(new_lod)
 
-        logger.log("Done in %f sec" % (time.time() - time_lod_start))
+        logger.end_subproc(True)
         wm.progress_update(i + 1)
+    
+    logger.end_subproc()
 
     if len(mlod_lods) == 0:
         raise p3d.P3D_Error("All LODs failed validation, cannot write P3D with 0 LODs")
@@ -723,7 +723,8 @@ def write_file(operator, context, file, temp_collection):
 
     mlod.write(file)
     
-    logger.level_down()
-    logger.step("P3D export finished in %f sec" % (time.time() - time_file_start))
+    logger.end_subproc()
+    wm.progress_end()
+    logger.step("P3D export finished in %f sec" % (time.time() - logger.times.pop()))
 
     return len(lod_list), len(mlod_lods)

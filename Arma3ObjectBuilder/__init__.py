@@ -2,10 +2,10 @@ bl_info = {
     "name": "Arma 3 Object Builder",
     "description": "Collection of tools for editing Arma 3 content",
     "author": "MrClock (present add-on), Hans-Joerg \"Alwarren\" Frieden (original ArmaToolbox add-on)",
-    "version": (2, 4, 2),
+    "version": (2, 5, 0),
     "blender": (2, 90, 0),
     "location": "Object Builder panels",
-    "warning": "Development",
+    "warning": "",
     "doc_url": "https://mrcmodding.gitbook.io/arma-3-object-builder/home",
     "tracker_url": "https://github.com/MrClock8163/Arma3ObjectBuilder/issues",
     "category": "Import-Export"
@@ -33,14 +33,13 @@ addon_prefs = None
 addon_dir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
 addon_icons = {}
 
-def get_icon(name):
-    icon = 0
-    try:
-        icon = addon_icons[addon_prefs.icon_theme.lower()][name].icon_id
-    except Exception:
-        pass
 
-    return icon
+def get_icon(name):
+    try:
+        return addon_icons[addon_prefs.icon_theme.lower()][name].icon_id
+    except Exception:
+        return 0
+
 
 def get_prefs():
     return addon_prefs
@@ -356,6 +355,7 @@ modules = (
     ui.import_export_armature,
     ui.import_export_tbcsv,
     ui.import_export_asc,
+    ui.import_export_paa,
     ui.tool_outliner,
     ui.tool_mass,
     ui.tool_materials,

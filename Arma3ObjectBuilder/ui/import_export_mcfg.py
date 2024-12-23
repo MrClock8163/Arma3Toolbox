@@ -1,5 +1,3 @@
-import os
-
 import bpy
 import bpy_extras
 
@@ -15,7 +13,7 @@ class A3OB_OP_import_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     bl_idname = "a3ob.import_mcfg"
     bl_label = "Import Skeletons"
     bl_options = {'REGISTER', 'UNDO', 'PRESET'}
-    filename_ext = "model.cfg"
+    filename_ext = ".cfg"
     
     filter_glob: bpy.props.StringProperty(
         default = "*.cfg",
@@ -34,7 +32,7 @@ class A3OB_OP_import_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
     @classmethod
     def poll(cls, context):
-        return os.path.isfile(import_mcfg.get_cfg_convert())
+        return True
 
     def draw(self, context):
         pass
@@ -44,6 +42,9 @@ class A3OB_OP_import_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         
         if count_skeletons > 0:
             utils.op_report(self, {'INFO'}, "Successfully imported %d skeleton(s)" % count_skeletons)
+            return {'FINISHED'}
+        
+        utils.op_report(self, {'ERROR'}, "Could not import any skeletons (check the system console)")
         
         return {'FINISHED'}
 
@@ -71,13 +72,13 @@ class A3OB_PT_import_mcfg_main(bpy.types.Panel):
         layout.prop(operator, "protected")
 
 
-class A3OB_OP_export_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
+class A3OB_OP_export_mcfg(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     """Export Arma 3 skeleton definition"""
 
     bl_idname = "a3ob.export_mcfg"
     bl_label = "Export Skeleton"
     bl_options = {'REGISTER', 'UNDO', 'PRESET'}
-    filename_ext = "model.cfg"
+    filename_ext = ".cfg"
     
     filter_glob: bpy.props.StringProperty(
         default = "*.cfg",
@@ -112,6 +113,7 @@ class A3OB_OP_export_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         
         with utils.ExportFileHandler(self.filepath, "w") as file:
             export_mcfg.write_file(self, skeleton, file)
+            utils.op_report(self, {'INFO'}, "Successfuly exported %s" % skeleton.name)
 
         return {'FINISHED'}
 

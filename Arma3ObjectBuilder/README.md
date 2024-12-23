@@ -7,13 +7,18 @@ Arma 3 Object Builder is a free, community add-on for Blender to help content de
 - P3D import-export
 - ASC import-export
 - RTM import-export
+- PAA import
+- skeleton import-export (model.cfg)
+- object list import-export (for Terrain Builder)
 - armature reconstruction
 - various editing tools
-- utility functions
+- utility functions and scripts
 
 ## Documentation
 
 The documentation can be found on [GitBook](https://mrcmodding.gitbook.io/arma-3-object-builder/home). As the add-on changes, the documentation will be updated.
+
+A series of introductory videos is also in production, and can be found on [YouTube](https://youtube.com/playlist?list=PL1L8e_Shj5DErJinP8vtLTImQ5PY4K9IN&si=U_AGJSK5mSi6VrjG). Videos may or may not exist about every feature, and any particular video might end up outdated as the add-on is developed. The written documentation always takes precedence.
 
 ## Installation
 

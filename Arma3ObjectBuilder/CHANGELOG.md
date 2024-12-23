@@ -1,5 +1,39 @@
 # Changelog
 
+## [v2.5.0](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.5.0) (Blender 2.90 -> 4.3)
+
+### Added
+
+- import-export:
+  - PAA texture import for textures compressed with DXT1 or DXT5 (S3TC BC1 and BC3) algorithms
+  - new config data parser and unified handler module
+- scripts:
+  - utility script to create empty "dummy" P3D file
+
+### Changed
+
+- import-export:
+  - improved LZO1X decompression speeds
+  - model.cfg import is now available without Arma 3 Tools as well (if native parsing is successful)
+- tools:
+  - Vertex Mass Editing:
+    - tools are now available in both Edit and Object modes
+      - in Edit mode the functions operate on the selected parts only
+      - in Object mode the functions operate on the entire mesh
+    - Distribute Mass now supports volume weighted distribution (on closed components)
+    - Mass From Density now supports volume weighted distribution (on closed components)
+    - UI layout was reorganized
+  - Bulk Renaming now shows warning signs at paths that point to files that do not exist
+  - Hit Point Cloud:
+    - exposed modifier settings were removed
+    - internal process was simplified
+
+### Fixed
+
+- the Rigging tools only allowed 3 bones to be assigned to a vertex instead of the proper limit of 4 (Select Overdetermined, Prune Overdetermined, General Cleanup)
+- Bulk Renaming tool exposed the internal paths making it possible to break the feature until the next list refresh
+- Center of Mass operator was not accounting for world transformations
+
 ## [v2.4.2](https://github.com/MrClock8163/Arma3ObjectBuilder/releases/tag/v2.4.2) (Blender 2.90 -> 4.2)
 
 CRITICAL HOTFIX
@@ -97,7 +131,7 @@ CRITICAL HOTFIX
   - LOD - Generic ruleset:
     - warning for more than 2 UV channels on a LOD object
   - LOD - Shadow ruleset:
-    - warning for unconventinal LOD indices (not 0, 10, 1000, 1010 or 1020)
+    - warning for unconventional LOD indices (not 0, 10, 1000, 1010 or 1020)
     - warning if LOD has `lodnoshadow = 1` named property
   - LOD - Underground (VBS) ruleset
   - LOD - Groundlayer (VBS) ruleset
@@ -167,7 +201,7 @@ CRITICAL HOTFIX
 
 ### Changed
 
-- Blender 4.1 compatiblity:
+- Blender 4.1 compatibility:
   - updated P3D import and export to be compatible with the new Blender API
   - updated Validation tool to be compatible with the new Blender API
 - common data:
@@ -257,7 +291,7 @@ CRITICAL HOTFIX
 - LOD resolution would be incorrectly exported for Shadow Volume - View Cargo
 - fixed possible issue in P3D export when the material index of a face is out of the material range for some reason
 - add-on installation would fail on non-windows systems
-- ASC import would delete source file if an error occured during importing
+- ASC import would delete source file if an error occurred during importing
 - User value would not be displayed correctly in the default Face Flag editing options
 
 ### Removed
@@ -322,7 +356,7 @@ CRITICAL HOTFIX
 ### Fixed
 
 - RTM export would not delete faulty outputs and raise an exception due to a missing module import
-- P3D import would sometimes fail due to mismatching normals-loops count (on topoologically defective models)
+- P3D import would sometimes fail due to mismatching normals-loops count (on topologically defective models)
 - ASCIIZ strings and characters were mistakenly decoded as UTF-8 (with no practical consequence)
 - P3D output would become potentially faulty if non-manifold edges were marked as sharp
 
