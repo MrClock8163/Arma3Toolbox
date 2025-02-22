@@ -22,7 +22,7 @@ class A3OB_PT_object_dtm(bpy.types.Panel, utils.PanelHeaderLinkMixin):
         
     def draw(self, context):
         obj = context.object
-        object_props = obj.a3ob_properties_object_dtm
+        object_props = obj.a3ob_asc
         
         layout = self.layout
         

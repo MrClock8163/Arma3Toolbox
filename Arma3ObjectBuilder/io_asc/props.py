@@ -1,7 +1,7 @@
 import bpy
 
 
-class A3OB_PG_properties_object_dtm(bpy.types.PropertyGroup):
+class A3OB_GT_dtm(bpy.types.PropertyGroup):
     data_type: bpy.props.EnumProperty(
         name = "Data Type",
         description = "Type of data arrangement",
@@ -45,7 +45,7 @@ class A3OB_PG_properties_object_dtm(bpy.types.PropertyGroup):
 
 
 classes = (
-    A3OB_PG_properties_object_dtm,
+    A3OB_GT_dtm,
 )
 
 
@@ -53,11 +53,11 @@ def register_props():
     for cls in classes:
         bpy.utils.register_class(cls)
 
-    bpy.types.Object.a3ob_properties_object_dtm = bpy.props.PointerProperty(type=A3OB_PG_properties_object_dtm)
+    bpy.types.Object.a3ob_asc = bpy.props.PointerProperty(type=A3OB_GT_dtm)
 
 
 def unregister_props():
-    del bpy.types.Object.a3ob_properties_object_dtm
+    del bpy.types.Object.a3ob_asc
 
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

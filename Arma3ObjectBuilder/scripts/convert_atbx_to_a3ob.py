@@ -259,7 +259,7 @@ def convert_mesh(obj, converted_materials, cleanup, logger):
 
 def convert_dtm(obj, cleanup, logger):
     atbx_props = obj.armaHFProps
-    a3ob_props = obj.a3ob_properties_object_dtm
+    a3ob_props = obj.a3ob_asc
     
     a3ob_props.cellsize_source = 'MANUAL'
     a3ob_props.cellsize = atbx_props.cellSize

@@ -67,7 +67,7 @@ def write_file(operator, context, file, obj):
         logger.step("Applied modifiers")
         
     mesh = obj.data
-    object_props = obj.a3ob_properties_object_dtm
+    object_props = obj.a3ob_asc
     
     raster = asc.ASC_File()
     raster.type = asc.ASC_File.TYPE_RASTER if object_props.data_type == 'RASTER' else asc.ASC_File.TYPE_GRID

@@ -72,7 +72,7 @@ def read_file(operator, context, file):
     obj = bpy.data.objects.new("DTM", mesh)
     context.scene.collection.objects.link(obj)
     
-    object_props = obj.a3ob_properties_object_dtm
+    object_props = obj.a3ob_asc
     object_props.cellsize_source = 'MANUAL'
     object_props.cellsize = raster.cellsize
     
