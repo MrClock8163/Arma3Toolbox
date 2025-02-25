@@ -16,10 +16,10 @@ def build_frame_list(operator, action):
 
     frames = []
     if operator.frame_source == 'LIST':
-        if not action or len(action.a3ob_properties_action.frames) == 0:
+        if not action or len(action.a3ob_rtm.frames) == 0:
             return []
         
-        frames = [item.index for item in action.a3ob_properties_action.frames if operator.frame_start <= item.index <= operator.frame_end]
+        frames = [item.index for item in action.a3ob_rtm.frames if operator.frame_start <= item.index <= operator.frame_end]
     elif operator.frame_source == 'SAMPLE_STEP':
         frames = list(range(operator.frame_start, operator.frame_end, operator.frame_step))
     elif operator.frame_source == 'SAMPLE_COUNT':
@@ -51,7 +51,7 @@ def build_bone_map(operator, context, obj):
 # For movement animations, a motion vector is supported. Motion
 # can be manually set, or calculated from the start and end position of a selected bone.
 def process_motion(context, obj, action, frame_start, frame_end):
-    action_props = action.a3ob_properties_action
+    action_props = action.a3ob_rtm
     
     motion_vector = mathutils.Vector((0, 0, 0))
     if not action:
@@ -150,7 +150,7 @@ def write_file(operator, context, file, obj, action):
     logger.step("Collected frames")
     logger.end_subproc()
 
-    action_props = action.a3ob_properties_action
+    action_props = action.a3ob_rtm
     if not static_pose and len(action_props.props) > 0:
         rtm_mdat = rtm.RTM_MDAT()
         rtm_mdat.items = process_props(operator, action_props)

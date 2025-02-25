@@ -30,7 +30,7 @@ class A3OB_OT_rtm_frames_add(bpy.types.Operator):
         
     def execute(self, context):
         action = get_action(context.object)
-        action_props = action.a3ob_properties_action
+        action_props = action.a3ob_rtm
         
         for frame in action_props.frames:
             if frame.index == context.scene.frame_current:
@@ -56,11 +56,11 @@ class A3OB_OT_rtm_frames_remove(bpy.types.Operator):
         if not action:
             return False
         
-        action_props = action.a3ob_properties_action
+        action_props = action.a3ob_rtm
         return utils.is_valid_idx(action_props.frames_index, action_props.frames)
         
     def execute(self, context):
-        action_props = get_action(context.object).a3ob_properties_action
+        action_props = get_action(context.object).a3ob_rtm
         
         action_props.frames.remove(action_props.frames_index)
         if len(action_props.frames) == 0:
@@ -81,10 +81,10 @@ class A3OB_OT_rtm_frames_clear(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         action = get_action(context.object)
-        return action and len(action.a3ob_properties_action.frames) > 0
+        return action and len(action.a3ob_rtm.frames) > 0
         
     def execute(self, context):
-        action_props = get_action(context.object).a3ob_properties_action
+        action_props = get_action(context.object).a3ob_rtm
         
         action_props.frames.clear()
         action_props.frames_index = -1
@@ -137,7 +137,7 @@ class A3OB_OT_rtm_frames_add_range(bpy.types.Operator):
         
     def execute(self, context):
         action = get_action(context.object)
-        action_props = action.a3ob_properties_action
+        action_props = action.a3ob_rtm
 
         current_frames = [frame.index for frame in action_props.frames]
 
@@ -170,7 +170,7 @@ class A3OB_OT_rtm_props_add(bpy.types.Operator):
         
     def execute(self, context):
         action = get_action(context.object)
-        action_props = action.a3ob_properties_action
+        action_props = action.a3ob_rtm
         
         item = action_props.props.add()
         item.index = context.scene.frame_current
@@ -191,11 +191,11 @@ class A3OB_OT_rtm_props_remove(bpy.types.Operator):
         if not action:
             return False
         
-        action_props = action.a3ob_properties_action
+        action_props = action.a3ob_rtm
         return utils.is_valid_idx(action_props.props_index, action_props.props)
         
     def execute(self, context):
-        action_props = get_action(context.object).a3ob_properties_action
+        action_props = get_action(context.object).a3ob_rtm
         
         action_props.props.remove(action_props.props_index)
         if len(action_props.props) == 0:
@@ -216,10 +216,10 @@ class A3OB_OT_rtm_props_clear(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         action = get_action(context.object)
-        return action and len(action.a3ob_properties_action.props) > 0
+        return action and len(action.a3ob_rtm.props) > 0
         
     def execute(self, context):
-        action_props = get_action(context.object).a3ob_properties_action
+        action_props = get_action(context.object).a3ob_rtm
         
         action_props.props.clear()
         action_props.props_index = -1
@@ -240,12 +240,12 @@ class A3OB_OT_rtm_props_move(bpy.types.Operator):
         if not action:
             return False
         
-        action_props = action.a3ob_properties_action
+        action_props = action.a3ob_rtm
         return utils.is_valid_idx(action_props.props_index, action_props.props)
         
     def execute(self, context):
         action = get_action(context.object)
-        action_props = action.a3ob_properties_action
+        action_props = action.a3ob_rtm
         
         item = action_props.props[action_props.props_index]
         item.index = context.scene.frame_current
@@ -310,7 +310,7 @@ class A3OB_PT_action(bpy.types.Panel, utils.PanelHeaderLinkMixin):
         
     def draw(self, context):
         action = get_action(context.object)
-        action_props = action.a3ob_properties_action
+        action_props = action.a3ob_rtm
         
         layout = self.layout
         col = layout.column()
@@ -343,7 +343,7 @@ class A3OB_PT_action_frames(bpy.types.Panel):
         
     def draw(self, context):
         action = get_action(context.object)
-        action_props = action.a3ob_properties_action
+        action_props = action.a3ob_rtm
         
         layout = self.layout
         
@@ -377,7 +377,7 @@ class A3OB_PT_action_props(bpy.types.Panel):
     
     def draw(self, context):
         action = get_action(context.object)
-        action_props = action.a3ob_properties_action
+        action_props = action.a3ob_rtm
 
         layout = self.layout
 

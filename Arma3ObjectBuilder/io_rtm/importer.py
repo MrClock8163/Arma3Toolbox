@@ -248,7 +248,7 @@ def import_file(operator, context, file):
         context.scene.frame_start = operator.frame_start
         context.scene.frame_end = operator.frame_end
 
-    action_props = action.a3ob_properties_action
+    action_props = action.a3ob_rtm
 
     if not operator.apply_motion:
         action_props.motion_vector = rtm_0101.motion

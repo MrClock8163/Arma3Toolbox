@@ -1,17 +1,17 @@
 import bpy
 
 
-class A3OB_PG_rtm_keyframe(bpy.types.PropertyGroup):
+class A3OB_GT_rtm_keyframe(bpy.types.PropertyGroup):
     index: bpy.props.IntProperty(name="Frame Index", description="Index of frame to export")
 
 
-class A3OB_PG_rtm_property(bpy.types.PropertyGroup):
+class A3OB_GT_rtm_property(bpy.types.PropertyGroup):
     index: bpy.props.IntProperty(name="Frame Index", description="Property frame index")
     name: bpy.props.StringProperty(name="Name", description="Name of frame property")
     value: bpy.props.StringProperty(name="Value", description="Value of frame property")
 
 
-class A3OB_PG_properties_action(bpy.types.PropertyGroup):
+class A3OB_GT_rtm(bpy.types.PropertyGroup):
     motion_source: bpy.props.EnumProperty(
         name = "Motion Source",
         description = "Source of motion vector",
@@ -32,21 +32,21 @@ class A3OB_PG_properties_action(bpy.types.PropertyGroup):
     frames: bpy.props.CollectionProperty(
         name = "RTM frames",
         description = "List of frames to export to RTM",
-        type = A3OB_PG_rtm_keyframe
+        type = A3OB_GT_rtm_keyframe
     )
     frames_index: bpy.props.IntProperty(name="Active Frame Index")
     props: bpy.props.CollectionProperty(
         name = "RTM frame properties",
         description = "List of frame properties to export to RTM",
-        type = A3OB_PG_rtm_property
+        type = A3OB_GT_rtm_property
     )
     props_index: bpy.props.IntProperty(name="Active Property Index")
 
 
 classes = (
-    A3OB_PG_rtm_keyframe,
-    A3OB_PG_rtm_property,
-    A3OB_PG_properties_action
+    A3OB_GT_rtm_keyframe,
+    A3OB_GT_rtm_property,
+    A3OB_GT_rtm
 )
 
 
@@ -54,11 +54,11 @@ def register_props():
     for cls in classes:
         bpy.utils.register_class(cls)
     
-    bpy.types.Action.a3ob_properties_action = bpy.props.PointerProperty(type=A3OB_PG_properties_action)
+    bpy.types.Action.a3ob_rtm = bpy.props.PointerProperty(type=A3OB_GT_rtm)
 
 
 def unregister_props():
-    del bpy.types.Action.a3ob_properties_action
+    del bpy.types.Action.a3ob_rtm
 
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
