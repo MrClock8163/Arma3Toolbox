@@ -130,7 +130,7 @@ def read_file(operator, context):
     logger = ProcessLogger()
     logger.start_subproc("Skeleton import from %s" % operator.filepath)
     data = read_mcfg(operator.filepath, logger)
-    scene_props = context.scene.a3ob_rigging
+    scene_props = context.scene.a3ob_mcfg
 
     if not data:
         logger.step("Could not read model.cfg file")

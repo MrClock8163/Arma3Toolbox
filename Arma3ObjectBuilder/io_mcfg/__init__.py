@@ -1,11 +1,93 @@
 import bpy
 import bpy_extras
 
-from . import importer, exporter
+from . import props, importer, exporter
 from .validator import SkeletonValidator
 from .. import utils
 from .. import utils_io
 from ..logger import ProcessLoggerNull
+
+
+class A3OB_UL_mcfg_skeletons(bpy.types.UIList):
+    use_filter_sort_alpha: bpy.props.BoolProperty(
+        name = "Sort By Name",
+        description = "Sort items by their name"
+    )
+
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        if not item.protected:
+            layout.prop(item, "name", text="", icon='ARMATURE_DATA', emboss=False)
+            layout.prop(item, "protected", text="", icon='UNLOCKED', emboss=False)
+        else:
+            layout.label(text=item.name, icon='ARMATURE_DATA')
+            layout.prop(item, "protected", text="", icon='LOCKED', emboss=False)
+    
+    def draw_filter(self, context, layout):
+        row = layout.row(align=True)
+        row.prop(self, "filter_name", text="")
+        row.prop(self, "use_filter_invert", text="", icon='ARROW_LEFTRIGHT')
+        row.separator()
+        row.prop(self, "use_filter_sort_alpha", text="", icon='SORTALPHA')
+        row.prop(self, "use_filter_sort_reverse", text="", icon='SORT_DESC' if self.use_filter_sort_reverse else 'SORT_ASC')
+    
+    def filter_items(self, context, data, propname):
+        helper_funcs = bpy.types.UI_UL_list
+        flt_flags = []
+        flt_neworder = []
+        
+        skeletons = getattr(data, propname)
+        if self.filter_name:
+            flt_flags = helper_funcs.filter_items_by_name(self.filter_name, self.bitflag_filter_item, skeletons, "name")
+
+        if self.use_filter_sort_alpha:
+            flt_neworder = helper_funcs.sort_items_by_name(skeletons, "name")
+        
+        return flt_flags, flt_neworder
+
+
+class A3OB_UL_mcfg_skeletons_noedit(bpy.types.UIList):
+    use_filter_sort_alpha: bpy.props.BoolProperty(
+        name = "Sort By Name",
+        description = "Sort items by their name"
+    )
+
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        layout.label(text=item.name, icon='ARMATURE_DATA')
+    
+    def draw_filter(self, context, layout):
+        row = layout.row(align=True)
+        row.prop(self, "filter_name", text="")
+        row.prop(self, "use_filter_invert", text="", icon='ARROW_LEFTRIGHT')
+        row.separator()
+        row.prop(self, "use_filter_sort_alpha", text="", icon='SORTALPHA')
+        row.prop(self, "use_filter_sort_reverse", text="", icon='SORT_DESC' if self.use_filter_sort_reverse else 'SORT_ASC')
+
+    def filter_items(self, context, data, propname):
+        helper_funcs = bpy.types.UI_UL_list
+        flt_flags = []
+        flt_neworder = []
+        
+        skeletons = getattr(data, propname)
+        if self.filter_name:
+            flt_flags = helper_funcs.filter_items_by_name(self.filter_name, self.bitflag_filter_item, skeletons, "name")
+
+        if self.use_filter_sort_alpha:
+            flt_neworder = helper_funcs.sort_items_by_name(skeletons, "name")
+        
+        return flt_flags, flt_neworder
+
+
+class A3OB_UL_mcfg_bones(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index, flt_flag):
+        if not data.protected:
+            layout.alignment = 'LEFT'
+            layout.prop(item, "name", text="", icon='BONE_DATA', emboss=False)
+            layout.label(text=":")
+            layout.prop(item, "parent", text="", emboss=False)
+        elif item.parent:
+            layout.label(text="%s : %s" % (item.name, item.parent), icon='BONE_DATA')
+        else:
+            layout.label(text=item.name, icon='BONE_DATA')
 
 
 class A3OB_OT_import_mcfg(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
@@ -97,14 +179,14 @@ class A3OB_OT_export_mcfg(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
     @classmethod
     def poll(cls, context):
-        scene_props = context.scene.a3ob_rigging
+        scene_props = context.scene.a3ob_mcfg
         return len(scene_props.skeletons) > 0
     
     def draw(self, context):
         pass
 
     def execute(self, context):        
-        scene_props = context.scene.a3ob_rigging
+        scene_props = context.scene.a3ob_mcfg
         skeleton = scene_props.skeletons[self.skeleton_index]
 
         validator = SkeletonValidator(ProcessLoggerNull())
@@ -137,13 +219,16 @@ class A3OB_PT_export_mcfg_main(bpy.types.Panel):
         layout = self.layout
         sfile = context.space_data
         operator = sfile.active_operator
-        scene_props = context.scene.a3ob_rigging
+        scene_props = context.scene.a3ob_mcfg
 
-        layout.template_list("A3OB_UL_rigging_skeletons_noedit", "A3OB_armature_skeletons", scene_props, "skeletons", operator, "skeleton_index", rows=3)
+        layout.template_list("A3OB_UL_mcfg_skeletons_noedit", "A3OB_armature_skeletons", scene_props, "skeletons", operator, "skeleton_index", rows=3)
         layout.prop(operator, "force_lowercase")
 
 
 classes = (
+    A3OB_UL_mcfg_skeletons,
+    A3OB_UL_mcfg_skeletons_noedit,
+    A3OB_UL_mcfg_bones,
     A3OB_OT_import_mcfg,
     A3OB_PT_import_mcfg_main,
     A3OB_OT_export_mcfg,
@@ -172,6 +257,8 @@ def menu_func_export(self, context):
 
 
 def register():
+    props.register_props()
+
     for cls in classes:
         bpy.utils.register_class(cls)
         
@@ -187,5 +274,7 @@ def unregister():
         
     bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
+    
+    props.unregister_props()
     
     print("\t" + "IO: MCFG")
